@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>SpeakChain Progress</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --bg: #0f0f13;
+    --bg2: #1a1a22;
+    --bg3: #22222e;
+    --accent: #7c6ef7;
+    --accent2: #5ad8a6;
+    --accent3: #f7a35c;
+    --text: #e8e8f0;
+    --text2: #9898b0;
+    --border: rgba(255,255,255,0.07);
+    --done: #5ad8a6;
+    --next: #7c6ef7;
+    --locked: rgba(255,255,255,0.08);
+  }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+    min-height: 100vh;
+    padding: 0 0 40px;
+  }
+  .header {
+    padding: 20px 16px 16px;
+    border-bottom: 0.5px solid var(--border);
+    position: sticky; top: 0;
+    background: var(--bg);
+    z-index: 10;
+  }
+  .header-top {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .student-name { font-size: 18px; font-weight: 600; }
+  .level-badge {
+    background: var(--accent);
+    color: #fff;
+    font-size: 11px; font-weight: 700;
+    padding: 3px 10px; border-radius: 20px;
+    letter-spacing: 0.5px;
+  }
+  .overall-bar-wrap {
+    background: var(--bg3); border-radius: 6px; height: 6px; overflow: hidden;
+  }
+  .overall-bar {
+    height: 100%; border-radius: 6px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    transition: width 0.8s cubic-bezier(.4,0,.2,1);
+  }
+  .overall-label {
+    display: flex; justify-content: space-between;
+    font-size: 11px; color: var(--text2); margin-top: 5px;
+  }
+  .level-tabs {
+    display: flex; gap: 6px;
+    padding: 12px 16px 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .level-tabs::-webkit-scrollbar { display: none; }
+  .tab {
+    flex-shrink: 0;
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 13px; font-weight: 500;
+    cursor: pointer;
+    border: 0.5px solid var(--border);
+    background: var(--bg2);
+    color: var(--text2);
+    transition: all 0.2s;
+  }
+  .tab.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+  .tab.completed {
+    border-color: var(--accent2);
+    color: var(--accent2);
+  }
+  .section { padding: 16px; }
+  .section-title {
+    font-size: 11px; font-weight: 600;
+    color: var(--text2); letter-spacing: 1px;
+    text-transform: uppercase; margin-bottom: 10px;
+  }
+  .topic-card {
+    background: var(--bg2);
+    border-radius: 12px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+    border: 0.5px solid var(--border);
+    display: flex; align-items: center; gap: 12px;
+    transition: all 0.2s;
+    cursor: pointer;
+  }
+  .topic-card.done {
+    border-color: rgba(90,216,166,0.25);
+    background: rgba(90,216,166,0.05);
+  }
+  .topic-card.next-up {
+    border-color: rgba(124,110,247,0.4);
+    background: rgba(124,110,247,0.08);
+  }
+  .topic-icon {
+    width: 36px; height: 36px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; flex-shrink: 0;
+  }
+  .topic-icon.done { background: rgba(90,216,166,0.15); }
+  .topic-icon.next-up { background: rgba(124,110,247,0.15); }
+  .topic-icon.locked { background: var(--locked); }
+  .topic-info { flex: 1; min-width: 0; }
+  .topic-name {
+    font-size: 13px; font-weight: 500;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .topic-status {
+    font-size: 11px; margin-top: 2px;
+  }
+  .topic-status.done { color: var(--accent2); }
+  .topic-status.next-up { color: var(--accent); }
+  .topic-status.locked { color: var(--text2); }
+  .topic-score {
+    font-size: 11px; font-weight: 600;
+    color: var(--accent2);
+    flex-shrink: 0;
+  }
+  .stats-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 8px; margin-bottom: 16px;
+  }
+  .stat-card {
+    background: var(--bg2); border-radius: 12px;
+    padding: 12px 14px; border: 0.5px solid var(--border);
+  }
+  .stat-val { font-size: 22px; font-weight: 700; }
+  .stat-val.purple { color: var(--accent); }
+  .stat-val.green { color: var(--accent2); }
+  .stat-val.orange { color: var(--accent3); }
+  .stat-label { font-size: 11px; color: var(--text2); margin-top: 2px; }
+  .next-topic-banner {
+    background: rgba(124,110,247,0.1);
+    border: 0.5px solid rgba(124,110,247,0.3);
+    border-radius: 12px; padding: 14px;
+    margin-bottom: 8px;
+  }
+  .next-topic-label { font-size: 11px; color: var(--accent); font-weight: 600; margin-bottom: 4px; }
+  .next-topic-name { font-size: 15px; font-weight: 600; }
+  .next-topic-hint { font-size: 12px; color: var(--text2); margin-top: 4px; }
+  .level-progress-row {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 14px;
+  }
+  .level-progress-bar-wrap {
+    flex: 1; background: var(--bg3); border-radius: 4px; height: 5px;
+  }
+  .level-progress-bar {
+    height: 100%; border-radius: 4px; background: var(--accent2);
+    transition: width 0.8s cubic-bezier(.4,0,.2,1);
+  }
+  .level-progress-pct { font-size: 12px; color: var(--text2); min-width: 32px; text-align: right; }
+  .hidden { display: none; }
+  .close-btn {
+    width: 100%; margin: 16px 0 0;
+    padding: 13px;
+    background: var(--accent);
+    color: #fff; font-size: 15px; font-weight: 600;
+    border: none; border-radius: 12px;
+    cursor: pointer; transition: opacity 0.2s;
+  }
+  .close-btn:active { opacity: 0.8; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-top">
+    <div class="student-name" id="student-name">Завантаження...</div>
+    <div class="level-badge" id="level-badge">A1</div>
+  </div>
+  <div class="overall-bar-wrap">
+    <div class="overall-bar" id="overall-bar" style="width:0%"></div>
+  </div>
+  <div class="overall-label">
+    <span id="overall-label-left">Загальний прогрес</span>
+    <span id="overall-pct">0%</span>
+  </div>
+</div>
+
+<div class="level-tabs" id="level-tabs"></div>
+
+<div class="section">
+  <div class="stats-grid" id="stats-grid"></div>
+  <div id="next-topic-banner"></div>
+  <div id="level-progress-row"></div>
+  <div class="section-title">Теми рівня</div>
+  <div id="topics-list"></div>
+</div>
+
+<div class="section" style="padding-top:0">
+  <button class="close-btn" onclick="Telegram.WebApp.close()">Закрити</button>
+</div>
+
+<script>
+const CEFR_GRAMMAR = {
+  A1: ["Verb TO BE (am/is/are)","Simple Present (I work/I eat)","There is / There are","I like / I don't like + noun/-ing","CAN for ability (I can...)","Basic adjectives + colours","Frequency adverbs (always/usually/never)","Possessives (my/your/his/her)","Articles (a/an/the)","Numbers, time, dates"],
+  A2: ["Past Simple (went/saw/stayed)","Comparatives & superlatives","Future: going to / want to / plan to","Present Continuous (I am doing)","Can/Could for requests","Connectors: because / but / and / so","Prepositions of time and place","Questions: WH- and Yes/No","Have got","Imperatives"],
+  B1: ["Present Perfect (I have been/seen)","Used to (I used to think...)","Modal verbs (should/must/might/could)","Passive voice (it is made/was built)","Reported speech (She said that...)","First & Second Conditionals","Present Perfect Continuous","Relative clauses (who/which/that)","Opinion phrases (I believe / In my view)","Discourse markers (However / Although)"],
+  B2: ["Third Conditional & Mixed Conditionals","Advanced passive (have something done)","Subjunctive & wishes (I wish / If only)","Inversion (Never have I / Rarely does)","Cleft sentences (It was... that/who)","Advanced modals (would have / should have)","Discourse markers (Furthermore / Nevertheless)","Nominalisation (discussion → to discuss)","Hedging language (It could be argued...)","Future Perfect & Future Continuous"]
+};
+const LEVEL_NAMES = {A1:"Початківець A1", A2:"Базовий A2", B1:"Середній B1", B2:"Вище середнього B2"};
+const LEVELS = ["A1","A2","B1","B2"];
+const TOPIC_ICONS = ["📘","📗","📙","📕","📓","📒","📔","📃","📜","📄"];
+
+let data = {};
+let activeLevel = "A1";
+
+function init() {
+  Telegram.WebApp.ready();
+  Telegram.WebApp.expand();
+
+  const params = new URLSearchParams(window.location.search);
+  try {
+    const raw = params.get("d");
+    if (raw) data = JSON.parse(decodeURIComponent(raw));
+  } catch(e) {}
+
+  if (!data.level) data = getMockData();
+
+  activeLevel = data.level || "A1";
+  render();
+}
+
+function getMockData() {
+  return {
+    name: "Студент",
+    level: "B1",
+    mastered: ["Verb TO BE (am/is/are)","Simple Present (I work/I eat)","There is / There are","I like / I don't like + noun/-ing","CAN for ability (I can...)","Basic adjectives + colours","Frequency adverbs (always/usually/never)","Possessives (my/your/his/her)","Articles (a/an/the)","Numbers, time, dates","Past Simple (went/saw/stayed)","Comparatives & superlatives","Future: going to / want to / plan to","Present Continuous (I am doing)","Can/Could for requests","Present Perfect (I have been/seen)"],
+    scores: [65, 72, 78, 81, 85],
+    done_lessons: 12
+  };
+}
+
+function render() {
+  document.getElementById("student-name").textContent = data.name || "Студент";
+  document.getElementById("level-badge").textContent = activeLevel;
+
+  const mastered = data.mastered || [];
+  const allTopics = LEVELS.flatMap(l => CEFR_GRAMMAR[l]);
+  const totalMastered = mastered.length;
+  const pct = Math.round(totalMastered / allTopics.length * 100);
+  document.getElementById("overall-bar").style.width = pct + "%";
+  document.getElementById("overall-pct").textContent = pct + "%";
+  document.getElementById("overall-label-left").textContent =
+    `${totalMastered} / ${allTopics.length} тем`;
+
+  renderTabs();
+  renderStats();
+  renderTopics();
+}
+
+function renderTabs() {
+  const mastered = data.mastered || [];
+  const container = document.getElementById("level-tabs");
+  container.innerHTML = "";
+  LEVELS.forEach(l => {
+    const topics = CEFR_GRAMMAR[l];
+    const done = topics.filter(t => mastered.includes(t)).length;
+    const completed = done === topics.length;
+    const tab = document.createElement("div");
+    tab.className = "tab" + (l === activeLevel ? " active" : "") + (completed ? " completed" : "");
+    tab.textContent = l + (completed ? " ✓" : ` ${done}/${topics.length}`);
+    tab.onclick = () => { activeLevel = l; render(); };
+    container.appendChild(tab);
+  });
+}
+
+function renderStats() {
+  const mastered = data.mastered || [];
+  const scores = data.scores || [];
+  const topics = CEFR_GRAMMAR[activeLevel];
+  const doneCnt = topics.filter(t => mastered.includes(t)).length;
+  const avgScore = scores.length ? Math.round(scores.reduce((a,b)=>a+b,0)/scores.length) : 0;
+  const bestScore = scores.length ? Math.max(...scores) : 0;
+
+  document.getElementById("stats-grid").innerHTML = `
+    <div class="stat-card">
+      <div class="stat-val purple">${doneCnt}/${topics.length}</div>
+      <div class="stat-label">Тем ${activeLevel} пройдено</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val green">${avgScore || "—"}</div>
+      <div class="stat-label">Середній бал</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val orange">${bestScore || "—"}</div>
+      <div class="stat-label">Кращий бал</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val purple">${data.done_lessons || 0}</div>
+      <div class="stat-label">Уроків всього</div>
+    </div>
+  `;
+
+  const lvlPct = Math.round(doneCnt / topics.length * 100);
+  document.getElementById("level-progress-row").innerHTML = `
+    <div class="level-progress-row">
+      <span style="font-size:12px;color:var(--text2);">${LEVEL_NAMES[activeLevel]}</span>
+      <div class="level-progress-bar-wrap">
+        <div class="level-progress-bar" style="width:${lvlPct}%"></div>
+      </div>
+      <span class="level-progress-pct">${lvlPct}%</span>
+    </div>
+  `;
+
+  const nextTopic = topics.find(t => !(mastered.includes(t)));
+  const banner = document.getElementById("next-topic-banner");
+  if (nextTopic && activeLevel === (data.level || "A1")) {
+    banner.innerHTML = `
+      <div class="next-topic-banner">
+        <div class="next-topic-label">Наступна тема</div>
+        <div class="next-topic-name">${nextTopic}</div>
+        <div class="next-topic-hint">Натисни "Наступне відео" в боті щоб відпрацювати</div>
+      </div>
+    `;
+  } else {
+    banner.innerHTML = "";
+  }
+}
+
+function renderTopics() {
+  const mastered = data.mastered || [];
+  const topics = CEFR_GRAMMAR[activeLevel];
+  const currentLevel = data.level || "A1";
+  const currentLevelIdx = LEVELS.indexOf(currentLevel);
+  const tabIdx = LEVELS.indexOf(activeLevel);
+  const isCurrentOrBefore = tabIdx <= currentLevelIdx;
+
+  let firstNext = true;
+  const html = topics.map((topic, i) => {
+    const isDone = mastered.includes(topic);
+    const isLocked = !isCurrentOrBefore;
+    const isNext = !isDone && isCurrentOrBefore && firstNext;
+    if (isNext) firstNext = false;
+
+    const status = isDone ? "done" : (isNext ? "next-up" : (isLocked ? "locked" : "locked"));
+    const icon = isDone ? "✅" : (isNext ? "▶" : "○");
+    const statusText = isDone ? "Пройдено" : (isNext ? "Наступна тема" : "Ще попереду");
+
+    return `
+      <div class="topic-card ${status}">
+        <div class="topic-icon ${status}">${icon}</div>
+        <div class="topic-info">
+          <div class="topic-name">${topic}</div>
+          <div class="topic-status ${status}">${statusText}</div>
+        </div>
+        ${isDone ? `<div class="topic-score">✓</div>` : ""}
+      </div>
+    `;
+  }).join("");
+
+  document.getElementById("topics-list").innerHTML = html;
+}
+
+init();
+</script>
+</body>
+</html>
