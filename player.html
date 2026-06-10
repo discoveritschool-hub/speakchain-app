@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <title>SpeakChain Player</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #000;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+    iframe {
+      width: 100%;
+      aspect-ratio: 16/9;
+      border: none;
+    }
+    .btn {
+      margin-top: 16px;
+      padding: 13px 32px;
+      background: #2AABEE;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      width: 90%;
+      max-width: 360px;
+    }
+    .btn:active { opacity: 0.8; }
+    .error {
+      color: #fff;
+      text-align: center;
+      padding: 20px;
+      font-size: 15px;
+    }
+  </style>
+</head>
+<body>
+  <iframe id="player" allowfullscreen allow="autoplay; encrypted-media"></iframe>
+  <script>
+    Telegram.WebApp.ready();
+    Telegram.WebApp.expand();
+    const params = new URLSearchParams(window.location.search);
+    const videoId = params.get("v");
+    if (videoId) {
+      document.getElementById("player").src =
+        "https://www.youtube.com/embed/" + videoId + "?autoplay=1&rel=0";
+    } else {
+      document.getElementById("player").style.display = "none";
+      document.body.insertAdjacentHTML("afterbegin",
+        "<div class='error'>Відео не знайдено.<br>Поверніться в бот.</div>");
+    }
+  </script>
+</body>
+</html>
