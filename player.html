@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <title>SpeakChain Player</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --purple: #7c6ef7;
+      --green:  #5ad8a6;
+      --orange: #f7a35c;
+      --bg:     #0d0d14;
+      --bg2:    #16161f;
+      --text2:  #8888a8;
+      --border: rgba(255,255,255,0.07);
+    }
+    body {
+      background: var(--bg);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+    iframe {
+      width: 100%;
+      aspect-ratio: 16/9;
+      border: none;
+      display: block;
+    }
+
+    /* ── Journey progress strip ── */
+    .journey-strip {
+      padding: 12px 16px 8px;
+      background: var(--bg2);
+      border-bottom: 0.5px solid var(--border);
+    }
+    .journey-top {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 8px;
+    }
+    .journey-level {
+      font-size: 12px; font-weight: 700; color: var(--purple);
+    }
+    .journey-goal {
+      font-size: 11px; color: var(--orange); font-weight: 600;
+    }
+    .journey-track {
+      position: relative;
+      height: 7px; background: rgba(255,255,255,0.07);
+      border-radius: 8px; overflow: visible;
+      margin-bottom: 7px;
+    }
+    .journey-fill {
+      height: 100%; border-radius: 8px;
+      background: linear-gradient(90deg, #5ad8a6, #7c6ef7);
+      position: relative;
+      transition: width 0.8s cubic-bezier(.4,0,.2,1);
+    }
+    /* Бігунок */
+    .journey-thumb {
+      position: absolute; right: -7px; top: 50%;
+      transform: translateY(-50%);
+      width: 16px; height: 16px; border-radius: 50%;
+      background: #fff;
+      border: 2.5px solid var(--purple);
+      box-shadow: 0 0 8px rgba(124,110,247,0.7);
+    }
+    /* Кінцева мета */
+    .journey-c2 {
+      position: absolute; right: 0; top: 50%;
+      transform: translateY(-50%);
+      font-size: 14px;
+    }
+    .journey-marks {
+      display: flex; justify-content: space-between; padding: 0 1px;
+    }
+    .journey-mark {
+      font-size: 9px; font-weight: 700; color: var(--text2);
+    }
+    .journey-mark.done    { color: var(--green); }
+    .journey-mark.current { color: var(--purple); }
+    .journey-mark.goal    { color: var(--orange); }
+
+    .error {
+      color: #fff; text-align: center;
+      padding: 20px; font-size: 15px;
+      flex: 1; display: flex; align-items: center; justify-content: center;
+    }
+  </style>
+</head>
+<body>
+
+  <iframe id="player" allowfullscreen allow="autoplay; encrypted-media"></iframe>
+
+  <!-- Journey A1 → C2 strip -->
+  <div class="journey-strip" id="journey-strip" style="display:none">
+    <div class="journey-top">
+      <span class="journey-level" id="j-level">A1</span>
+      <span class="journey-goal">Ціль: C2 👑</span>
+    </div>
+    <div class="journey-track">
+      <div class="journey-fill" id="j-fill" style="width:0%">
+        <div class="journey-thumb"></div>
+      </div>
+      <span class="journey-c2">👑</span>
+    </div>
+    <div class="journey-marks" id="j-marks"></div>
+  </div>
+
+  <script>
+    Telegram.WebApp.ready();
+    Telegram.WebApp.expand();
+
+    const params  = new URLSearchParams(window.location.search);
+    const videoId = params.get("v");
+    const dataRaw = params.get("d");
+
+    // Відео
+    if (videoId) {
+      document.getElementById("player").src =
+        "https://www.youtube.com/embed/" + videoId + "?autoplay=1&rel=0";
+    } else {
+      document.getElementById("player").style.display = "none";
+      document.body.insertAdjacentHTML("afterbegin",
+        "<div class='error'>Відео не знайдено.<br>Поверніться в бот.</div>");
+    }
+
+    // Journey strip
+    if (dataRaw) {
+      try {
+        const D      = JSON.parse(decodeURIComponent(dataRaw));
+        const levels = D.levels || ["A1","A2","B1","B2","C1","C2"];
+        const grammar= D.cefr_grammar || {};
+        const mastered = D.mastered || [];
+        const curLevel = D.level || "A1";
+        const curIdx   = levels.indexOf(curLevel);
+
+        const allTopics  = levels.flatMap(l => (grammar[l] || []));
+        let   doneSoFar  = 0;
+        for (let i = 0; i <= curIdx; i++) {
+          const lvlT = grammar[levels[i]] || [];
+          doneSoFar += lvlT.filter(t => mastered.includes(t)).length;
+        }
+        const pct = allTopics.length ? Math.round(doneSoFar / allTopics.length * 100) : 0;
+
+        document.getElementById("journey-strip").style.display = "block";
+        document.getElementById("j-level").textContent = curLevel;
+        document.getElementById("j-fill").style.width  = pct + "%";
+
+        // Мітки
+        const marksEl = document.getElementById("j-marks");
+        levels.forEach(lvl => {
+          const topics = grammar[lvl] || [];
+          const done   = topics.filter(t => mastered.includes(t)).length;
+          const isAll  = done === topics.length && topics.length > 0;
+          const isCur  = lvl === curLevel;
+          const isGoal = lvl === "C2";
+          const el     = document.createElement("span");
+          el.className = "journey-mark" +
+            (isAll ? " done" : "") +
+            (isCur && !isAll ? " current" : "") +
+            (isGoal && !isAll ? " goal" : "");
+          el.textContent = isAll ? lvl + "✓" : lvl;
+          marksEl.appendChild(el);
+        });
+      } catch(e) {}
+    }
+  </script>
+</body>
+</html>
