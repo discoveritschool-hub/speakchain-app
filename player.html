@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>SpeakChain Player</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+    :root {
+      --purple:#7c6ef7; --green:#5ad8a6; --orange:#f7a35c;
+      --red:#f76e6e;    --bg:#0d0d14;    --bg2:#16161f;
+      --bg3:#1e1e2e;    --text:#e8e8f0;  --text2:#8888a8;
+      --border:rgba(255,255,255,0.07);
+    }
+    body {
+      background:var(--bg); min-height:100vh;
+      display:flex; flex-direction:column;
+      font-family:-apple-system,BlinkMacSystemFont,sans-serif;
+      color:var(--text);
+      padding-bottom:max(env(safe-area-inset-bottom),12px);
+      overflow-x:hidden;
+    }
+
+    /* ── Video ── */
+    #video-wrap { position:relative; width:100%; background:#000; aspect-ratio:16/9; }
+    #yt-player  { width:100%; height:100%; }
+    #yt-player iframe { width:100%!important; height:100%!important; border:none; }
+
+    #play-overlay {
+      position:absolute; inset:0;
+      display:flex; align-items:center; justify-content:center;
+      background:rgba(0,0,0,0.45); cursor:pointer; z-index:10;
+    }
+    #play-overlay.hidden { display:none; }
+    .play-circle {
+      width:64px; height:64px; border-radius:50%;
+      background:rgba(124,110,247,0.85);
+      display:flex; align-items:center; justify-content:center;
+      font-size:28px; padding-left:4px;
+      box-shadow:0 0 32px rgba(124,110,247,0.5);
+    }
+    #video-fallback {
+      display:none; width:100%; aspect-ratio:16/9; background:#000;
+      align-items:center; justify-content:center;
+      flex-direction:column; gap:14px; text-align:center; padding:20px;
+    }
+    #video-fallback.show { display:flex; }
+    .open-yt-btn {
+      padding:12px 24px; border-radius:24px; border:none;
+      background:var(--red); color:#fff;
+      font-size:15px; font-weight:700; cursor:pointer; text-decoration:none;
+    }
+
+    /* ── Transcript ── */
+    #transcript-wrap {
+      background:#0a0a12; padding:10px 16px; min-height:44px;
+      display:none; align-items:center; justify-content:center;
+      border-bottom:0.5px solid var(--border);
+    }
+    #transcript-wrap.show { display:flex; }
+    #transcript-text {
+      font-size:15px; font-weight:500; color:#fff;
+      text-align:center; line-height:1.5;
+      text-shadow:0 1px 8px rgba(124,110,247,0.6);
+      transition:opacity 0.2s;
+    }
+    #transcript-text.fade { opacity:0.3; }
+
+    /* ── Journey ── */
+    .journey-strip {
+      padding:10px 16px 8px; background:var(--bg2);
+      border-bottom:0.5px solid var(--border);
+    }
+    .journey-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
+    .journey-level { font-size:12px; font-weight:700; color:var(--purple); }
+    .journey-goal  { font-size:11px; color:var(--orange); font-weight:600; }
+    .journey-track {
+      position:relative; height:7px;
+      background:rgba(255,255,255,0.07); border-radius:8px; overflow:visible; margin-bottom:6px;
+    }
+    .journey-fill {
+      height:100%; border-radius:8px;
+      background:linear-gradient(90deg,#5ad8a6,#7c6ef7);
+      position:relative; transition:width 0.8s cubic-bezier(.4,0,.2,1);
+    }
+    .journey-thumb {
+      position:absolute; right:-7px; top:50%; transform:translateY(-50%);
+      width:16px; height:16px; border-radius:50%; background:#fff;
+      border:2.5px solid var(--purple); box-shadow:0 0 8px rgba(124,110,247,0.7);
+    }
+    .journey-c2 { position:absolute; right:0; top:50%; transform:translateY(-50%); font-size:14px; }
+    .journey-marks { display:flex; justify-content:space-between; }
+    .journey-mark { font-size:9px; font-weight:700; color:var(--text2); }
+    .journey-mark.done    { color:var(--green); }
+    .journey-mark.current { color:var(--purple); }
+    .journey-mark.goal    { color:var(--orange); }
+
+    /* ── Panel ── */
+    .shadow-panel {
+      background:var(--bg2); border-top:0.5px solid var(--border);
+      padding:14px 16px; display:flex; flex-direction:column; gap:14px;
+    }
+    .panel-label {
+      font-size:10px; font-weight:700; letter-spacing:0.08em;
+      color:var(--text2); text-transform:uppercase; margin-bottom:8px;
+    }
+    .divider { height:0.5px; background:var(--border); margin:0 -16px; }
+
+    /* Speed */
+    .speed-btns { display:flex; gap:6px; }
+    .speed-btn {
+      flex:1; padding:8px 0; border-radius:20px;
+      border:1.5px solid var(--border); background:var(--bg3);
+      color:var(--text2); font-size:13px; font-weight:600; cursor:pointer;
+    }
+    .speed-btn.active { border-color:var(--purple); color:var(--purple); background:rgba(124,110,247,0.12); }
+    .speed-btn:disabled { opacity:0.3; }
+
+    /* Loop */
+    .loop-row { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+    .loop-time {
+      font-size:11px; color:var(--green); font-weight:600;
+      background:rgba(90,216,166,0.1); border-radius:6px; padding:4px 8px; min-width:44px; text-align:center;
+    }
+    .loop-time.empty { color:var(--text2); background:var(--bg3); }
+    .icon-btn {
+      padding:7px 12px; border-radius:20px; border:1.5px solid var(--border);
+      background:var(--bg3); color:var(--text); font-size:12px; font-weight:600; cursor:pointer;
+    }
+    .icon-btn.loop-active { border-color:var(--green); color:var(--green); background:rgba(90,216,166,0.12); }
+    .icon-btn.danger { color:var(--red); border-color:rgba(247,110,110,0.3); }
+
+    /* Record */
+    .record-btn {
+      width:100%; padding:14px; border-radius:14px; border:none;
+      font-size:15px; font-weight:700; cursor:pointer;
+      display:flex; align-items:center; justify-content:center; gap:8px;
+      transition:all 0.2s; -webkit-appearance:none;
+    }
+    .record-btn.idle {
+      background:linear-gradient(135deg,var(--purple),#9b8dfb);
+      color:#fff; box-shadow:0 4px 16px rgba(124,110,247,0.35);
+    }
+    .record-btn.recording {
+      background:linear-gradient(135deg,var(--red),#f7a35c);
+      color:#fff;
+    }
+    .record-btn.has-audio {
+      background:var(--bg3); color:var(--text2); border:1.5px solid var(--border);
+    }
+
+    /* Waveform canvas */
+    #waveform-wrap {
+      display:none; width:100%; height:56px;
+      background:var(--bg3); border-radius:12px; overflow:hidden; position:relative;
+    }
+    #waveform-wrap.visible { display:block; }
+    #waveform { width:100%; height:100%; display:block; }
+    .rec-pulse {
+      position:absolute; top:8px; left:10px;
+      width:8px; height:8px; border-radius:50%;
+      background:var(--red); animation:blink 1s infinite;
+    }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+    .rec-label {
+      position:absolute; top:5px; left:24px;
+      font-size:10px; color:var(--red); font-weight:700;
+    }
+    .rec-time {
+      position:absolute; top:5px; right:10px;
+      font-size:10px; color:var(--text2); font-weight:600;
+    }
+    .mic-error { font-size:12px; color:var(--orange); text-align:center; display:none; }
+    .mic-error.visible { display:block; }
+
+    /* Compare */
+    .compare-row { display:flex; gap:8px; }
+    .play-btn {
+      flex:1; padding:10px; border-radius:12px;
+      border:1.5px solid var(--border); background:var(--bg3);
+      color:var(--text); font-size:13px; font-weight:600; cursor:pointer;
+    }
+    .play-btn.playing { border-color:var(--orange); color:var(--orange); }
+    .play-btn:disabled { opacity:0.35; cursor:not-allowed; }
+
+    /* Analysis results */
+    #analysis-wrap {
+      display:none; flex-direction:column; gap:8px;
+    }
+    #analysis-wrap.show { display:flex; }
+    .analysis-title { font-size:11px; font-weight:700; color:var(--text2); margin-bottom:2px; }
+    .score-row { display:flex; align-items:center; gap:10px; }
+    .score-bar-wrap { flex:1; height:8px; background:var(--bg3); border-radius:8px; overflow:hidden; }
+    .score-bar { height:100%; border-radius:8px; transition:width 0.8s cubic-bezier(.4,0,.2,1); }
+    .score-val { font-size:13px; font-weight:700; min-width:36px; text-align:right; }
+    .bpm-row { display:flex; gap:8px; }
+    .bpm-card {
+      flex:1; background:var(--bg3); border-radius:10px;
+      padding:10px 12px; display:flex; flex-direction:column; gap:2px;
+    }
+    .bpm-label { font-size:9px; color:var(--text2); font-weight:700; text-transform:uppercase; }
+    .bpm-val   { font-size:20px; font-weight:700; }
+    .bpm-unit  { font-size:10px; color:var(--text2); }
+
+    /* Phrase */
+    .phrase-input {
+      width:100%; background:var(--bg3); border:1.5px solid var(--border);
+      border-radius:12px; padding:11px 14px; color:var(--text);
+      font-size:15px; outline:none; -webkit-appearance:none;
+    }
+    .phrase-input::placeholder { color:var(--text2); }
+    .phrase-input:focus { border-color:var(--purple); }
+    .save-btn {
+      width:100%; padding:13px; border-radius:12px; border:none;
+      background:linear-gradient(135deg,var(--green),#3dc99a);
+      color:#0d1a14; font-size:15px; font-weight:700; cursor:pointer;
+    }
+    .save-btn:disabled { opacity:0.4; cursor:not-allowed; }
+
+    /* Toast */
+    .toast {
+      position:fixed; bottom:28px; left:50%;
+      transform:translateX(-50%) translateY(20px);
+      background:var(--bg3); border:1px solid var(--border);
+      color:var(--text); font-size:13px; font-weight:600;
+      padding:10px 20px; border-radius:24px;
+      opacity:0; transition:all 0.25s; pointer-events:none;
+      box-shadow:0 4px 24px rgba(0,0,0,0.4); white-space:nowrap; z-index:100;
+    }
+    .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+  </style>
+</head>
+<body>
+
+<!-- Video -->
+<div id="video-wrap">
+  <div id="yt-player"></div>
+  <div id="play-overlay"><div class="play-circle">▶</div></div>
+  <div id="video-fallback">
+    <div style="color:var(--text2);font-size:14px">YouTube не завантажився</div>
+    <a id="yt-link" class="open-yt-btn" target="_blank">▶ Відкрити на YouTube</a>
+  </div>
+</div>
+
+<!-- Transcript -->
+<div id="transcript-wrap">
+  <div id="transcript-text"></div>
+</div>
+
+<!-- Journey strip -->
+<div class="journey-strip" id="journey-strip" style="display:none">
+  <div class="journey-top">
+    <span class="journey-level" id="j-level">A1</span>
+    <span class="journey-goal">Ціль: C2 👑</span>
+  </div>
+  <div class="journey-track">
+    <div class="journey-fill" id="j-fill" style="width:0%"><div class="journey-thumb"></div></div>
+    <span class="journey-c2">👑</span>
+  </div>
+  <div class="journey-marks" id="j-marks"></div>
+</div>
+
+<!-- Shadowing panel -->
+<div class="shadow-panel">
+
+  <!-- Speed -->
+  <div>
+    <div class="panel-label">Швидкість</div>
+    <div class="speed-btns">
+      <button class="speed-btn" data-rate="0.5">0.5×</button>
+      <button class="speed-btn" data-rate="0.75">0.75×</button>
+      <button class="speed-btn active" data-rate="1">1×</button>
+      <button class="speed-btn" data-rate="1.25">1.25×</button>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- Loop -->
+  <div>
+    <div class="panel-label">Петля фрази</div>
+    <div class="loop-row">
+      <button class="icon-btn" id="btn-start">⏮ Початок</button>
+      <span class="loop-time empty" id="disp-start">--:--</span>
+      <button class="icon-btn" id="btn-end">⏭ Кінець</button>
+      <span class="loop-time empty" id="disp-end">--:--</span>
+      <button class="icon-btn" id="btn-loop">🔁 Петля</button>
+      <button class="icon-btn danger" id="btn-clear">✕</button>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- Record -->
+  <div style="display:flex;flex-direction:column;gap:10px">
+    <div class="panel-label">Shadowing — запиши себе</div>
+    <button class="record-btn idle" id="record-btn">🎙 Почати запис</button>
+
+    <!-- Waveform instead of timer -->
+    <div id="waveform-wrap">
+      <canvas id="waveform"></canvas>
+      <div class="rec-pulse"></div>
+      <div class="rec-label">REC</div>
+      <div class="rec-time" id="rec-time-label">0:00</div>
+    </div>
+
+    <div class="mic-error" id="mic-error"></div>
+
+    <div class="compare-row">
+      <button class="play-btn" id="play-orig" disabled>▶ Оригінал</button>
+      <button class="play-btn" id="play-my"   disabled>▶ Мій голос</button>
+    </div>
+
+    <!-- Analysis results -->
+    <div id="analysis-wrap">
+      <div class="analysis-title">Аналіз запису</div>
+
+      <!-- Rhythm score -->
+      <div class="score-row">
+        <span style="font-size:12px;color:var(--text2);min-width:80px">Ритм</span>
+        <div class="score-bar-wrap">
+          <div class="score-bar" id="bar-rhythm" style="width:0%;background:linear-gradient(90deg,var(--purple),#9b8dfb)"></div>
+        </div>
+        <span class="score-val" id="val-rhythm" style="color:var(--purple)">—</span>
+      </div>
+
+      <!-- Fluency score -->
+      <div class="score-row">
+        <span style="font-size:12px;color:var(--text2);min-width:80px">Fluency</span>
+        <div class="score-bar-wrap">
+          <div class="score-bar" id="bar-fluency" style="width:0%;background:linear-gradient(90deg,var(--green),#3dc99a)"></div>
+        </div>
+        <span class="score-val" id="val-fluency" style="color:var(--green)">—</span>
+      </div>
+
+      <!-- BPM -->
+      <div class="bpm-row">
+        <div class="bpm-card">
+          <div class="bpm-label">Твій темп</div>
+          <div class="bpm-val" id="my-bpm" style="color:var(--purple)">—</div>
+          <div class="bpm-unit">складів/сек</div>
+        </div>
+        <div class="bpm-card">
+          <div class="bpm-label">Оцінка</div>
+          <div class="bpm-val" id="bpm-verdict" style="font-size:14px;color:var(--green)">—</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- Save phrase -->
+  <div style="display:flex;flex-direction:column;gap:10px">
+    <div class="panel-label">Зберегти фразу в картотеку</div>
+    <input class="phrase-input" id="phrase-input"
+           placeholder="Напиши фразу англійською…" type="text" maxlength="200"
+           autocomplete="off" autocorrect="off" spellcheck="false">
+    <button class="save-btn" id="save-btn" disabled>💎 Зберегти фразу</button>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+Telegram.WebApp.ready();
+Telegram.WebApp.expand();
+
+const params  = new URLSearchParams(window.location.search);
+const videoId = params.get("v");
+const dataRaw = params.get("d");
+const isIOS   = /iPad|iPhone|iPod/.test(navigator.userAgent);
+
+// ── Toast ──
+function showToast(msg, dur=2200) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), dur);
+}
+
+// ── Parse data ──
+let apiBase = "";
+if (dataRaw) {
+  try { apiBase = JSON.parse(decodeURIComponent(dataRaw)).api || ""; } catch(e) {}
+}
+
+// ── Transcript ──
+let captions = []; // [{start, end, text}]
+let captionInterval = null;
+let lastCapIdx = -1;
+
+async function loadCaptions() {
+  if (!videoId || !apiBase) return;
+  try {
+    const url = `${apiBase}/captions?v=${videoId}&lang=en`;
+    const res = await fetch(url, { signal: AbortSignal.timeout(6000) });
+    if (!res.ok) return;
+    const data = await res.json();
+    if (!data.events) return;
+    captions = data.events
+      .filter(e => e.segs && e.tStartMs != null)
+      .map(e => ({
+        start: e.tStartMs / 1000,
+        end:   (e.tStartMs + (e.dDurationMs || 2000)) / 1000,
+        text:  e.segs.map(s => s.utf8 || "").join("").replace(/\n/g," ").trim()
+      }))
+      .filter(e => e.text.length > 0);
+
+    if (captions.length > 0) {
+      document.getElementById("transcript-wrap").classList.add("show");
+      document.getElementById("transcript-text").textContent = "⏳ Субтитри завантажено";
+      startCaptionSync();
+    }
+  } catch(e) {
+    // Subtitles unavailable — silent fail
+  }
+}
+
+function startCaptionSync() {
+  if (captionInterval) return;
+  captionInterval = setInterval(() => {
+    if (!ytPlayer || !ytReady) return;
+    const cur = ytPlayer.getCurrentTime();
+    const el  = document.getElementById("transcript-text");
+    let found = captions.find(c => cur >= c.start && cur <= c.end);
+    if (!found) found = captions.find(c => cur >= c.start - 0.3 && cur <= c.end + 0.3);
+    if (found) {
+      if (el.textContent !== found.text) {
+        el.classList.add("fade");
+        setTimeout(() => { el.textContent = found.text; el.classList.remove("fade"); }, 150);
+      }
+    } else {
+      if (el.textContent && captions.length) el.classList.add("fade");
+    }
+  }, 300);
+}
+
+// ── YouTube Player ──
+let ytPlayer = null, ytReady = false;
+let loopStart = null, loopEnd = null, loopActive = false, loopTimer = null;
+
+const apiTimeout = setTimeout(() => {
+  if (!ytReady) showFallback();
+}, 8000);
+
+function showFallback() {
+  document.getElementById("yt-player").style.display = "none";
+  document.getElementById("play-overlay").classList.add("hidden");
+  document.getElementById("video-fallback").classList.add("show");
+  if (videoId) document.getElementById("yt-link").href = "https://youtu.be/" + videoId;
+}
+
+document.getElementById("play-overlay").addEventListener("click", function() {
+  this.classList.add("hidden");
+  if (ytPlayer && ytReady) ytPlayer.playVideo();
+});
+
+if (!videoId) showFallback();
+
+window.onYouTubeIframeAPIReady = function() {
+  if (!videoId) return;
+  clearTimeout(apiTimeout);
+  try {
+    ytPlayer = new YT.Player("yt-player", {
+      height:"100%", width:"100%", videoId,
+      playerVars: { autoplay: isIOS ? 0 : 1, rel:0, modestbranding:1, playsinline:1 },
+      events: {
+        onReady: function(e) {
+          ytReady = true;
+          if (!isIOS) { document.getElementById("play-overlay").classList.add("hidden"); e.target.playVideo(); }
+          document.querySelectorAll(".speed-btn").forEach(b => b.disabled = false);
+          loadCaptions();
+        },
+        onError: function() { showFallback(); }
+      }
+    });
+  } catch(e) { showFallback(); }
+};
+</script>
+<script src="https://www.youtube.com/iframe_api" async></script>
+<script>
+function fmt(sec) {
+  if (sec == null) return "--:--";
+  return Math.floor(sec/60) + ":" + String(Math.floor(sec%60)).padStart(2,"0");
+}
+
+// ── Speed ──
+document.querySelectorAll(".speed-btn").forEach(btn => {
+  btn.disabled = true;
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".speed-btn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    if (ytPlayer && ytReady) ytPlayer.setPlaybackRate(parseFloat(btn.dataset.rate));
+  });
+});
+
+// ── Loop ──
+document.getElementById("btn-start").addEventListener("click", () => {
+  if (!ytPlayer || !ytReady) { showToast("Відео ще завантажується…"); return; }
+  loopStart = ytPlayer.getCurrentTime();
+  document.getElementById("disp-start").textContent = fmt(loopStart);
+  document.getElementById("disp-start").classList.remove("empty");
+  showToast("Початок: " + fmt(loopStart));
+});
+document.getElementById("btn-end").addEventListener("click", () => {
+  if (!ytPlayer || !ytReady) { showToast("Відео ще завантажується…"); return; }
+  loopEnd = ytPlayer.getCurrentTime();
+  document.getElementById("disp-end").textContent = fmt(loopEnd);
+  document.getElementById("disp-end").classList.remove("empty");
+  showToast("Кінець: " + fmt(loopEnd));
+});
+document.getElementById("btn-loop").addEventListener("click", () => {
+  if (loopStart == null || loopEnd == null || loopEnd <= loopStart) {
+    showToast("Встанови початок і кінець 👆"); return;
+  }
+  loopActive = !loopActive;
+  const btn = document.getElementById("btn-loop");
+  btn.classList.toggle("loop-active", loopActive);
+  btn.textContent = loopActive ? "⏹ Стоп" : "🔁 Петля";
+  clearInterval(loopTimer);
+  if (loopActive) {
+    ytPlayer.seekTo(loopStart, true);
+    ytPlayer.playVideo();
+    loopTimer = setInterval(() => {
+      if (!loopActive || !ytPlayer) return;
+      if (ytPlayer.getCurrentTime() >= loopEnd) ytPlayer.seekTo(loopStart, true);
+    }, 250);
+    showToast("Петля ввімкнена 🔁");
+  } else {
+    showToast("Петля вимкнена");
+  }
+});
+document.getElementById("btn-clear").addEventListener("click", () => {
+  loopStart = loopEnd = null; loopActive = false;
+  clearInterval(loopTimer);
+  ["disp-start","disp-end"].forEach(id => {
+    document.getElementById(id).textContent = "--:--";
+    document.getElementById(id).classList.add("empty");
+  });
+  const lb = document.getElementById("btn-loop");
+  lb.classList.remove("loop-active"); lb.textContent = "🔁 Петля";
+});
+
+// ── Recording + Waveform ──
+function getSupportedMime() {
+  const list = ["audio/webm;codecs=opus","audio/webm","audio/mp4;codecs=mp4a.40.2","audio/mp4","audio/ogg;codecs=opus","audio/ogg",""];
+  if (typeof MediaRecorder === "undefined") return null;
+  for (const t of list) if (t === "" || MediaRecorder.isTypeSupported(t)) return t;
+  return "";
+}
+
+let mediaRecorder = null, audioChunks = [], audioBlob = null, audioURL = null;
+let recSec = 0, recInterval = null, isRec = false;
+let audioCtx = null, analyser = null, animFrame = null;
+
+const recordBtn   = document.getElementById("record-btn");
+const waveWrap    = document.getElementById("waveform-wrap");
+const canvas      = document.getElementById("waveform");
+const recTimeLabel= document.getElementById("rec-time-label");
+const micError    = document.getElementById("mic-error");
+const playOrig    = document.getElementById("play-orig");
+const playMyBtn   = document.getElementById("play-my");
+const analysisWrap= document.getElementById("analysis-wrap");
+
+// Resize canvas for sharp rendering
+function resizeCanvas() {
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width  = canvas.offsetWidth  * dpr;
+  canvas.height = canvas.offsetHeight * dpr;
+  canvas.getContext("2d").scale(dpr, dpr);
+}
+
+function drawWaveform() {
+  if (!analyser || !isRec) return;
+  animFrame = requestAnimationFrame(drawWaveform);
+
+  const bufLen = analyser.frequencyBinCount;
+  const data   = new Uint8Array(bufLen);
+  analyser.getByteFrequencyData(data);
+
+  const w = canvas.offsetWidth, h = canvas.offsetHeight;
+  const ctx = canvas.getContext("2d");
+  ctx.clearRect(0, 0, w, h);
+
+  const barW   = w / bufLen * 2.5;
+  const gap    = 1;
+  const count  = Math.floor(w / (barW + gap));
+  const step   = Math.floor(bufLen / count);
+
+  for (let i = 0; i < count; i++) {
+    const val  = data[i * step] / 255;
+    const barH = Math.max(3, val * h * 0.9);
+    const x    = i * (barW + gap);
+    const y    = (h - barH) / 2;
+
+    const grad = ctx.createLinearGradient(0, y + barH, 0, y);
+    grad.addColorStop(0, "#5ad8a6");
+    grad.addColorStop(1, "#7c6ef7");
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.roundRect(x, y, barW, barH, 2);
+    ctx.fill();
+  }
+}
+
+recordBtn.addEventListener("click", async () => {
+  if (isRec) { stopRec(); return; }
+
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    micError.textContent = "Мікрофон недоступний у цьому браузері.";
+    micError.classList.add("visible"); return;
+  }
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+    const mime   = getSupportedMime();
+    micError.classList.remove("visible");
+
+    // Web Audio analyser for waveform
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 128;
+    audioCtx.createMediaStreamSource(stream).connect(analyser);
+
+    try {
+      mediaRecorder = mime ? new MediaRecorder(stream, { mimeType: mime }) : new MediaRecorder(stream);
+    } catch(e) { mediaRecorder = new MediaRecorder(stream); }
+
+    audioChunks = [];
+    mediaRecorder.addEventListener("dataavailable", e => {
+      if (e.data && e.data.size > 0) audioChunks.push(e.data);
+    });
+    mediaRecorder.addEventListener("stop", async () => {
+      stream.getTracks().forEach(t => t.stop());
+      const mimeUsed = mediaRecorder.mimeType || "audio/webm";
+      audioBlob = new Blob(audioChunks, { type: mimeUsed });
+      audioURL  = URL.createObjectURL(audioBlob);
+
+      cancelAnimationFrame(animFrame);
+      waveWrap.classList.remove("visible");
+      recordBtn.className   = "record-btn has-audio";
+      recordBtn.textContent = "🔄 Записати ще раз";
+      playMyBtn.disabled = false;
+      playOrig.disabled  = false;
+
+      showToast("✅ Запис готовий!");
+
+      // Аналізуємо запис
+      await analyzeBlob(audioBlob, recSec);
+    });
+
+    mediaRecorder.start(100);
+    isRec = true; recSec = 0;
+    recTimeLabel.textContent = "0:00";
+
+    // Show waveform
+    waveWrap.classList.add("visible");
+    setTimeout(resizeCanvas, 10);
+    drawWaveform();
+
+    recordBtn.className   = "record-btn recording";
+    recordBtn.textContent = "⏹ Зупинити";
+
+    if (loopActive && ytPlayer && ytReady) ytPlayer.seekTo(loopStart, true);
+
+    recInterval = setInterval(() => {
+      recSec++;
+      recTimeLabel.textContent = Math.floor(recSec/60) + ":" + String(recSec%60).padStart(2,"0");
+      if (recSec >= 120) stopRec();
+    }, 1000);
+
+  } catch(err) {
+    let msg = "Дозволь доступ до мікрофону 🎙";
+    if (err.name === "NotFoundError")   msg = "Мікрофон не знайдено";
+    if (err.name === "SecurityError")   msg = "Потрібен HTTPS для запису";
+    if (err.name === "NotAllowedError") msg = "Доступ до мікрофону заблоковано";
+    micError.textContent = msg; micError.classList.add("visible");
+    showToast(msg, 3000);
+  }
+});
+
+function stopRec() {
+  if (!mediaRecorder || !isRec) return;
+  isRec = false;
+  clearInterval(recInterval);
+  if (mediaRecorder.state === "recording") {
+    mediaRecorder.requestData();
+    setTimeout(() => mediaRecorder.stop(), 80);
+  }
+}
+
+// ── Audio Analysis ──
+async function analyzeBlob(blob, durSec) {
+  try {
+    const arrayBuf = await blob.arrayBuffer();
+    const ctx2     = new (window.AudioContext || window.webkitAudioContext)();
+    const audioBuf = await ctx2.decodeAudioData(arrayBuf);
+    const ch       = audioBuf.getChannelData(0);
+    const sr       = audioBuf.sampleRate;
+    const duration = audioBuf.duration;
+
+    // RMS envelope in 20ms windows
+    const winSize  = Math.floor(sr * 0.02);
+    const rms      = [];
+    for (let i = 0; i < ch.length; i += winSize) {
+      const slice = ch.slice(i, i + winSize);
+      const r = Math.sqrt(slice.reduce((s,v) => s + v*v, 0) / slice.length);
+      rms.push(r);
+    }
+
+    const maxRms   = Math.max(...rms, 0.001);
+    const normRms  = rms.map(v => v / maxRms);
+
+    // Count syllable onsets (peaks above threshold)
+    const thresh = 0.25;
+    let onsets = 0, inPeak = false;
+    for (const r of normRms) {
+      if (r > thresh && !inPeak) { onsets++; inPeak = true; }
+      else if (r < thresh * 0.5)   inPeak = false;
+    }
+
+    const syllPerSec = duration > 0.5 ? onsets / duration : 0;
+
+    // Fluency: ratio of "voiced" windows (above low threshold)
+    const voicedRatio = normRms.filter(r => r > 0.05).length / normRms.length;
+    const fluencyScore = Math.round(Math.min(100, voicedRatio * 130));
+
+    // Rhythm score: consistency of inter-onset intervals
+    const peakPositions = [];
+    inPeak = false;
+    normRms.forEach((r, i) => {
+      if (r > thresh && !inPeak) { peakPositions.push(i); inPeak = true; }
+      else if (r < thresh * 0.5) inPeak = false;
+    });
+    let rhythmScore = 50;
+    if (peakPositions.length > 2) {
+      const intervals = peakPositions.slice(1).map((p,i) => p - peakPositions[i]);
+      const mean = intervals.reduce((a,b) => a+b, 0) / intervals.length;
+      const variance = intervals.reduce((a,b) => a + (b-mean)**2, 0) / intervals.length;
+      const cv = mean > 0 ? Math.sqrt(variance) / mean : 1;
+      rhythmScore = Math.round(Math.max(0, Math.min(100, (1 - cv) * 100)));
+    }
+
+    // Verdict
+    let verdict = "—";
+    if (syllPerSec > 0) {
+      if (syllPerSec < 1.5)     verdict = "Повільно — нічого 👍";
+      else if (syllPerSec < 3)  verdict = "Хороший темп ✅";
+      else if (syllPerSec < 5)  verdict = "Швидко! 🔥";
+      else                      verdict = "Дуже швидко 🚀";
+    }
+
+    // Show results
+    showAnalysis(rhythmScore, fluencyScore, syllPerSec.toFixed(1), verdict);
+
+  } catch(e) {
+    // Silent fail — audio analysis not critical
+  }
+}
+
+function showAnalysis(rhythm, fluency, bpm, verdict) {
+  analysisWrap.classList.add("show");
+
+  // Animate bars
+  setTimeout(() => {
+    document.getElementById("bar-rhythm").style.width  = rhythm  + "%";
+    document.getElementById("bar-fluency").style.width = fluency + "%";
+  }, 100);
+
+  document.getElementById("val-rhythm").textContent  = rhythm  + "%";
+  document.getElementById("val-fluency").textContent = fluency + "%";
+  document.getElementById("my-bpm").textContent      = bpm;
+  document.getElementById("bpm-verdict").textContent = verdict;
+}
+
+// ── Compare ──
+playOrig.addEventListener("click", () => {
+  if (!ytPlayer || !ytReady) return;
+  const start = loopStart != null ? loopStart : Math.max(0, ytPlayer.getCurrentTime() - 2);
+  const dur   = (loopEnd != null && loopStart != null) ? (loopEnd - loopStart + 0.5) : 6;
+  ytPlayer.seekTo(start, true); ytPlayer.playVideo();
+  playOrig.classList.add("playing"); playOrig.textContent = "▶ Грає…";
+  setTimeout(() => {
+    if (!loopActive) ytPlayer.pauseVideo();
+    playOrig.classList.remove("playing"); playOrig.textContent = "▶ Оригінал";
+  }, dur * 1000);
+});
+
+let myAudio = null;
+playMyBtn.addEventListener("click", () => {
+  if (!audioURL) return;
+  if (myAudio) { myAudio.pause(); myAudio = null; }
+  myAudio = new Audio(audioURL);
+  playMyBtn.classList.add("playing"); playMyBtn.textContent = "▶ Грає…";
+  myAudio.play().catch(() => showToast("Натисни ще раз"));
+  myAudio.onended = () => {
+    playMyBtn.classList.remove("playing"); playMyBtn.textContent = "▶ Мій голос";
+  };
+});
+
+// ── Save phrase ──
+const phraseInput = document.getElementById("phrase-input");
+const saveBtn     = document.getElementById("save-btn");
+phraseInput.addEventListener("input", () => { saveBtn.disabled = phraseInput.value.trim().length < 3; });
+saveBtn.addEventListener("click", () => {
+  const phrase = phraseInput.value.trim();
+  if (!phrase) return;
+  try {
+    Telegram.WebApp.sendData(JSON.stringify({ action:"save_phrase", phrase }));
+    showToast("💎 Збережено в картотеку!");
+    phraseInput.value = ""; saveBtn.disabled = true;
+  } catch(e) { showToast("Помилка: " + e.message); }
+});
+
+// ── Journey strip ──
+if (dataRaw) {
+  try {
+    const D        = JSON.parse(decodeURIComponent(dataRaw));
+    const levels   = D.levels        || ["A1","A2","B1","B2","C1","C2"];
+    const grammar  = D.cefr_grammar  || {};
+    const mastered = D.mastered      || [];
+    const curLevel = D.level         || "A1";
+    const curIdx   = levels.indexOf(curLevel);
+
+    const allTopics = levels.flatMap(l => grammar[l] || []);
+    let doneSoFar   = 0;
+    for (let i = 0; i <= curIdx; i++) {
+      const t = grammar[levels[i]] || [];
+      doneSoFar += t.filter(x => mastered.includes(x)).length;
+    }
+    const pct = allTopics.length ? Math.round(doneSoFar / allTopics.length * 100) : 0;
+
+    document.getElementById("journey-strip").style.display = "block";
+    document.getElementById("j-level").textContent = curLevel;
+    document.getElementById("j-fill").style.width  = pct + "%";
+
+    const marksEl = document.getElementById("j-marks");
+    levels.forEach(lvl => {
+      const topics = grammar[lvl] || [];
+      const done   = topics.filter(t => mastered.includes(t)).length;
+      const isAll  = done === topics.length && topics.length > 0;
+      const el     = document.createElement("span");
+      el.className = "journey-mark" +
+        (isAll ? " done" : "") +
+        (lvl===curLevel && !isAll ? " current" : "") +
+        (lvl==="C2"     && !isAll ? " goal"    : "");
+      el.textContent = isAll ? lvl+"✓" : lvl;
+      marksEl.appendChild(el);
+    });
+  } catch(e) {}
+}
+</script>
+</body>
+</html>
