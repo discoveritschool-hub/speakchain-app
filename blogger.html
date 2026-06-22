@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>SpeakChain — Blogger Dashboard</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+    :root {
+      --purple:#7c6ef7; --green:#5ad8a6; --orange:#f7a35c;
+      --red:#f76e6e;    --bg:#0a0a12;    --bg2:#12121c;
+      --bg3:#1a1a28;    --bg4:#222236;   --text:#e8e8f0;
+      --text2:#9090b0;  --border:rgba(255,255,255,0.07);
+      --gold:#f5c842;
+    }
+    body {
+      background:var(--bg); min-height:100vh;
+      font-family:-apple-system,BlinkMacSystemFont,sans-serif;
+      color:var(--text);
+      padding-bottom:max(env(safe-area-inset-bottom),20px);
+    }
+
+    /* ── Header ── */
+    .header {
+      background:linear-gradient(135deg,#1a1530,#12121c);
+      padding:20px 16px 16px;
+      border-bottom:0.5px solid var(--border);
+      position:relative; overflow:hidden;
+    }
+    .header::before {
+      content:''; position:absolute; top:-40px; right:-40px;
+      width:140px; height:140px; border-radius:50%;
+      background:radial-gradient(circle,rgba(124,110,247,.18) 0%,transparent 70%);
+    }
+    .header-top { display:flex; align-items:center; gap:12px; margin-bottom:14px; }
+    .avatar {
+      width:48px; height:48px; border-radius:50%;
+      background:linear-gradient(135deg,var(--purple),#9b8dfb);
+      display:flex; align-items:center; justify-content:center;
+      font-size:20px; font-weight:700; color:#fff; flex-shrink:0;
+    }
+    .header-name { font-size:17px; font-weight:700; color:var(--text); }
+    .header-sub  { font-size:12px; color:var(--text2); margin-top:2px; }
+    .badge {
+      padding:3px 10px; border-radius:20px; font-size:10px; font-weight:700;
+      background:rgba(124,110,247,.2); color:var(--purple); border:1px solid rgba(124,110,247,.3);
+      margin-left:auto; white-space:nowrap;
+    }
+
+    /* ── Stat cards row ── */
+    .stats-row {
+      display:grid; grid-template-columns:repeat(4,1fr); gap:8px;
+    }
+    .stat-card {
+      background:var(--bg3); border-radius:12px; padding:10px 8px;
+      text-align:center; border:0.5px solid var(--border);
+    }
+    .stat-val  { font-size:20px; font-weight:700; line-height:1; }
+    .stat-label{ font-size:9px; color:var(--text2); margin-top:4px; font-weight:600; text-transform:uppercase; letter-spacing:.04em; }
+    .stat-card.purple .stat-val { color:var(--purple); }
+    .stat-card.green  .stat-val { color:var(--green); }
+    .stat-card.orange .stat-val { color:var(--orange); }
+    .stat-card.gold   .stat-val { color:var(--gold); }
+
+    /* ── Revenue banner ── */
+    .revenue-banner {
+      background:linear-gradient(135deg,rgba(124,110,247,.15),rgba(90,216,166,.08));
+      border:1px solid rgba(124,110,247,.25); border-radius:14px;
+      padding:14px 16px; display:flex; align-items:center; justify-content:space-between;
+    }
+    .revenue-left  { display:flex; flex-direction:column; gap:2px; }
+    .revenue-label { font-size:11px; color:var(--text2); font-weight:600; }
+    .revenue-val   { font-size:28px; font-weight:700; color:var(--green); line-height:1; }
+    .revenue-sub   { font-size:10px; color:var(--text2); }
+    .revenue-icon  { font-size:40px; opacity:.3; }
+
+    /* ── Plan breakdown ── */
+    .plan-row { display:flex; gap:8px; }
+    .plan-pill {
+      flex:1; padding:8px 10px; border-radius:10px;
+      display:flex; align-items:center; gap:6px;
+    }
+    .plan-pill.basic   { background:rgba(247,163,92,.12); border:1px solid rgba(247,163,92,.25); }
+    .plan-pill.premium { background:rgba(245,200,66,.12); border:1px solid rgba(245,200,66,.25); }
+    .plan-pill-val     { font-size:18px; font-weight:700; }
+    .plan-pill.basic   .plan-pill-val { color:var(--orange); }
+    .plan-pill.premium .plan-pill-val { color:var(--gold); }
+    .plan-pill-info    { display:flex; flex-direction:column; }
+    .plan-pill-name    { font-size:10px; font-weight:700; color:var(--text); }
+    .plan-pill-sub     { font-size:9px; color:var(--text2); }
+
+    /* ── Progress bar ── */
+    .prem-bar-wrap { display:flex; flex-direction:column; gap:4px; }
+    .prem-bar-track {
+      height:6px; background:rgba(255,255,255,.07); border-radius:6px; overflow:hidden;
+    }
+    .prem-bar-fill {
+      height:100%; border-radius:6px;
+      background:linear-gradient(90deg,var(--orange),var(--gold));
+      transition:width .8s cubic-bezier(.4,0,.2,1);
+    }
+    .prem-bar-labels { display:flex; justify-content:space-between; }
+    .prem-bar-label  { font-size:9px; color:var(--text2); font-weight:600; }
+
+    /* ── Section ── */
+    .section { padding:16px; }
+    .section-title {
+      font-size:10px; font-weight:700; color:var(--text2);
+      text-transform:uppercase; letter-spacing:.08em; margin-bottom:10px;
+    }
+
+    /* ── Student list ── */
+    .student-card {
+      background:var(--bg3); border-radius:12px; padding:10px 12px;
+      display:flex; align-items:center; gap:10px; margin-bottom:7px;
+      border:0.5px solid var(--border);
+    }
+    .student-avatar {
+      width:36px; height:36px; border-radius:50%; flex-shrink:0;
+      display:flex; align-items:center; justify-content:center;
+      font-size:13px; font-weight:700;
+    }
+    .student-avatar.basic   { background:rgba(247,163,92,.2); color:var(--orange); }
+    .student-avatar.premium { background:rgba(245,200,66,.2); color:var(--gold); }
+    .student-info { flex:1; min-width:0; }
+    .student-name { font-size:13px; font-weight:600; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .student-meta { font-size:10px; color:var(--text2); margin-top:2px; }
+    .student-right { display:flex; flex-direction:column; align-items:flex-end; gap:3px; }
+    .student-streak { font-size:11px; font-weight:700; color:var(--orange); }
+    .student-lessons{ font-size:10px; color:var(--text2); }
+    .level-badge {
+      padding:2px 7px; border-radius:6px; font-size:9px; font-weight:700;
+      background:rgba(124,110,247,.2); color:var(--purple);
+    }
+
+    /* ── Action buttons ── */
+    .actions { display:flex; flex-direction:column; gap:8px; }
+    .action-btn {
+      width:100%; padding:13px 16px; border-radius:13px; border:none;
+      display:flex; align-items:center; gap:10px; cursor:pointer;
+      font-size:14px; font-weight:600; text-align:left;
+    }
+    .action-btn .icon { font-size:18px; width:24px; text-align:center; }
+    .action-btn .label { flex:1; }
+    .action-btn .arr { color:var(--text2); font-size:16px; }
+    .action-btn.purple { background:linear-gradient(135deg,rgba(124,110,247,.2),rgba(124,110,247,.1)); color:var(--text); border:1px solid rgba(124,110,247,.25); }
+    .action-btn.green  { background:rgba(90,216,166,.1); color:var(--text); border:1px solid rgba(90,216,166,.2); }
+    .action-btn.orange { background:rgba(247,163,92,.1); color:var(--text); border:1px solid rgba(247,163,92,.2); }
+    .action-btn.red    { background:rgba(247,110,110,.1); color:var(--text); border:1px solid rgba(247,110,110,.2); }
+    .action-btn.neutral{ background:var(--bg3); color:var(--text); border:1px solid var(--border); }
+
+    /* ── Divider ── */
+    .divider { height:0.5px; background:var(--border); margin:0; }
+    .spacer  { height:12px; }
+  </style>
+</head>
+<body>
+
+<div id="app">
+  <!-- Header -->
+  <div class="header">
+    <div class="header-top">
+      <div class="avatar" id="avatar-initials">B</div>
+      <div>
+        <div class="header-name" id="header-name">Blogger</div>
+        <div class="header-sub">Партнер SpeakChain</div>
+      </div>
+      <div class="badge">👤 Blogger</div>
+    </div>
+    <div class="stats-row">
+      <div class="stat-card purple">
+        <div class="stat-val" id="stat-total">0</div>
+        <div class="stat-label">Студентів</div>
+      </div>
+      <div class="stat-card green">
+        <div class="stat-val" id="stat-active">0</div>
+        <div class="stat-label">Активних</div>
+      </div>
+      <div class="stat-card orange">
+        <div class="stat-val" id="stat-basic">0</div>
+        <div class="stat-label">Basic</div>
+      </div>
+      <div class="stat-card gold">
+        <div class="stat-val" id="stat-premium">0</div>
+        <div class="stat-label">Premium</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Revenue -->
+  <div class="section">
+    <div class="revenue-banner">
+      <div class="revenue-left">
+        <span class="revenue-label">Дохід цього місяця</span>
+        <span class="revenue-val" id="revenue-val">$0</span>
+        <span class="revenue-sub">25% комісія з кожного студента</span>
+      </div>
+      <span class="revenue-icon">💰</span>
+    </div>
+  </div>
+
+  <!-- Plan breakdown -->
+  <div class="section" style="padding-top:0">
+    <div class="section-title">Розподіл планів</div>
+    <div class="plan-row" style="margin-bottom:10px">
+      <div class="plan-pill basic">
+        <span class="plan-pill-val" id="basic-val">0</span>
+        <div class="plan-pill-info">
+          <span class="plan-pill-name">⚡️ Basic</span>
+          <span class="plan-pill-sub">студентів</span>
+        </div>
+      </div>
+      <div class="plan-pill premium">
+        <span class="plan-pill-val" id="premium-val">0</span>
+        <div class="plan-pill-info">
+          <span class="plan-pill-name">⭐️ Premium</span>
+          <span class="plan-pill-sub">студентів</span>
+        </div>
+      </div>
+    </div>
+    <div class="prem-bar-wrap">
+      <div class="prem-bar-track">
+        <div class="prem-bar-fill" id="prem-bar" style="width:0%"></div>
+      </div>
+      <div class="prem-bar-labels">
+        <span class="prem-bar-label">Basic</span>
+        <span class="prem-bar-label" id="prem-pct">0% Premium</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- Top students -->
+  <div class="section">
+    <div class="section-title">Топ студентів</div>
+    <div id="students-list">
+      <div style="text-align:center;color:var(--text2);font-size:13px;padding:20px">Завантаження…</div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- Actions -->
+  <div class="section">
+    <div class="section-title">Дії</div>
+    <div class="actions">
+      <button class="action-btn purple" onclick="sendAction('blogger_my_link')">
+        <span class="icon">🔗</span>
+        <span class="label">Моє реферальне посилання</span>
+        <span class="arr">›</span>
+      </button>
+      <button class="action-btn green" onclick="sendAction('blogger_gen_video_link')">
+        <span class="icon">🎬</span>
+        <span class="label">Посилання на відео для студентів</span>
+        <span class="arr">›</span>
+      </button>
+      <button class="action-btn red" onclick="sendAction('blogger_live_menu')">
+        <span class="icon">🔴</span>
+        <span class="label">Live заняття</span>
+        <span class="arr">›</span>
+      </button>
+      <button class="action-btn orange" onclick="sendAction('blogger_weekly_q')">
+        <span class="icon">🎯</span>
+        <span class="label">Питання тижня</span>
+        <span class="arr">›</span>
+      </button>
+      <button class="action-btn neutral" onclick="sendAction('blogger_feedback_q')">
+        <span class="icon">💬</span>
+        <span class="label">Черга фідбеків</span>
+        <span class="arr">›</span>
+      </button>
+      <button class="action-btn neutral" onclick="sendAction('blogger_full_stats')">
+        <span class="icon">📈</span>
+        <span class="label">Повна статистика</span>
+        <span class="arr">›</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+const TG = (typeof Telegram !== 'undefined' && Telegram.WebApp) ? Telegram.WebApp : null;
+if (TG) { try { TG.ready(); TG.expand(); } catch(e){} }
+
+const params  = new URLSearchParams(window.location.search);
+const dataRaw = params.get('d');
+let D = {};
+if (dataRaw) {
+  try { D = JSON.parse(decodeURIComponent(dataRaw)); } catch(e){}
+}
+
+function sendAction(cbData) {
+  if (TG) {
+    TG.sendData(JSON.stringify({action: cbData}));
+  }
+}
+
+function initials(name) {
+  if (!name) return 'B';
+  return name.split(/\s+/).map(w=>w[0]).join('').toUpperCase().slice(0,2);
+}
+
+function fill() {
+  const name    = D.name    || 'Blogger';
+  const total   = D.total   || 0;
+  const active  = D.active  || 0;
+  const basic   = D.basic   || 0;
+  const premium = D.premium || 0;
+  const revenue = D.revenue || 0;
+
+  document.getElementById('avatar-initials').textContent = initials(name);
+  document.getElementById('header-name').textContent     = '@' + name;
+  document.getElementById('stat-total').textContent      = total;
+  document.getElementById('stat-active').textContent     = active;
+  document.getElementById('stat-basic').textContent      = basic;
+  document.getElementById('stat-premium').textContent    = premium;
+  document.getElementById('revenue-val').textContent     = '$' + revenue;
+  document.getElementById('basic-val').textContent       = basic;
+  document.getElementById('premium-val').textContent     = premium;
+
+  const premPct = total > 0 ? Math.round(premium / total * 100) : 0;
+  document.getElementById('prem-bar').style.width = premPct + '%';
+  document.getElementById('prem-pct').textContent = premPct + '% Premium';
+
+  // Students list
+  const list = document.getElementById('students-list');
+  const students = D.top_students || [];
+  if (!students.length) {
+    list.innerHTML = '<div style="text-align:center;color:var(--text2);font-size:13px;padding:20px 0">Поки немає студентів</div>';
+    return;
+  }
+  list.innerHTML = students.map((s,i) => {
+    const isPrem = s.plan === 'premium';
+    const ini    = initials(s.name);
+    return `
+    <div class="student-card">
+      <div class="student-avatar ${isPrem?'premium':'basic'}">${ini}</div>
+      <div class="student-info">
+        <div class="student-name">${s.name}</div>
+        <div class="student-meta">${s.done} уроків · <span class="level-badge">${s.level}</span></div>
+      </div>
+      <div class="student-right">
+        <span class="student-streak">🔥 ${s.streak}</span>
+        <span class="student-lessons">${isPrem?'⭐️ Premium':'⚡️ Basic'}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+fill();
+</script>
+</body>
+</html>
