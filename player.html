@@ -56,15 +56,17 @@
       position:absolute; bottom:0; left:0; right:0;
       padding:8px 12px 10px;
       background:linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 70%, transparent 100%);
-      display:none; z-index:5; pointer-events:none;
-      min-height:48px; align-items:flex-end; justify-content:center;
+      display:flex; align-items:flex-end; justify-content:center;
+      z-index:20; pointer-events:none;
+      min-height:48px;
+      opacity:0; transition:opacity 0.3s;
     }
-    #transcript-overlay.show { display:flex; }
+    #transcript-overlay.show { opacity:1; }
     #transcript-text {
       font-size:15px; font-weight:600; color:#fff; text-align:center; line-height:1.5;
       text-shadow:0 1px 6px rgba(0,0,0,0.9); transition:opacity 0.2s; max-width:100%;
     }
-    #transcript-text.fade { opacity:0.2; }
+    /* fade керується через style.opacity в syncCaptions */
 
     /* ── Session bar ── */
     #session-bar {
@@ -505,7 +507,11 @@ function showFallback() {
 
 document.getElementById("play-overlay").addEventListener("click", function(){
   this.classList.add("hidden");
-  if (ytPlayer && ytReady) ytPlayer.playVideo();
+  if (ytPlayer && ytReady) {
+    ytPlayer.playVideo();
+    // iOS: завантажуємо субтитри при першому натисканні play
+    if (captions.length === 0) setTimeout(loadCaptions, 1000);
+  }
   resetInactivity();
 });
 
@@ -528,6 +534,8 @@ window.onYouTubeIframeAPIReady = function() {
             document.getElementById("play-overlay").classList.add("hidden");
             e.target.playVideo();
           }
+          // Завантажуємо субтитри після готовності плеєра
+          setTimeout(loadCaptions, 800);
         },
         onStateChange: function(e) {
           if (e.data === YT.PlayerState.PLAYING) resetInactivity();
@@ -886,23 +894,30 @@ async function loadCaptions(){
       .filter(e=>e.text.length>0);
     if (captions.length>0){
       document.getElementById("transcript-overlay").classList.add("show");
-      setInterval(syncCaptions,300);
+      setInterval(syncCaptions,150); // 150ms для плавніших субтитрів
     }
   } catch(e){}
 }
 
 function syncCaptions(){
   if (!ytPlayer||!ytReady) return;
-  const cur=ytPlayer.getCurrentTime();
+  let cur;
+  try { cur=ytPlayer.getCurrentTime(); } catch(_){ return; }
   const el=document.getElementById("transcript-text");
-  let found=captions.find(c=>cur>=c.start&&cur<=c.end);
-  if (!found) found=captions.find(c=>cur>=c.start-0.3&&cur<=c.end+0.3);
+  const overlay=document.getElementById("transcript-overlay");
+  // Розширений буфер пошуку — 0.5сек до і після
+  let found=captions.find(c=>cur>=c.start-0.1&&cur<=c.end+0.5);
   if (found){
+    overlay.classList.add("show");
     if (el.textContent!==found.text){
-      el.classList.add("fade");
-      setTimeout(()=>{el.textContent=found.text;el.classList.remove("fade");},150);
+      el.style.opacity="0";
+      setTimeout(()=>{ el.textContent=found.text; el.style.opacity="1"; },120);
+    } else {
+      el.style.opacity="1";
     }
-  } else { el.classList.add("fade"); }
+  } else {
+    el.style.opacity="0.3";
+  }
 }
 
 // ── Journey strip ──
@@ -965,8 +980,8 @@ if (dataRaw){
   } catch(e){}
 }
 
-// Завантажуємо субтитри після ініціалізації
-loadCaptions();
+// Субтитри завантажуємо після того як ytPlayer готовий
+// (викликається з onReady callback через невелику затримку)
 </script>
 </body>
 </html>
