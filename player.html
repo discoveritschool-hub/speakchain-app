@@ -380,6 +380,7 @@ if (TG) { try { TG.ready(); TG.expand(); } catch(e){} }
 const params     = new URLSearchParams(window.location.search);
 const startParam = TG?.initDataUnsafe?.start_param || "";
 let videoId      = params.get("v") || null;
+let videoTitle   = "";   // назва відео з YouTube
 let refCode      = null;
 const dataRaw    = params.get("d");
 
@@ -451,7 +452,9 @@ async function finishSession() {
           video_minutes:     minutes,            // тільки відео
           playback_sec:      sessionPlaybackSec, // приріст цієї сесії
           playback_total_sec: playbackTotalSec,  // накопичений загальний
-          video_id:       videoId||""
+          video_id:          videoId||"",
+          video_title:       videoTitle||"",
+          video_url:         videoId ? `https://youtu.be/${videoId}` : ""
         })
       });
     } catch(e){}
@@ -519,6 +522,8 @@ window.onYouTubeIframeAPIReady = function() {
       events: {
         onReady: function(e) {
           ytReady = true;
+          // Зберігаємо назву відео
+          try { videoTitle = e.target.getVideoData().title || ""; } catch(_){}
           if (!(/iPad|iPhone|iPod/.test(navigator.userAgent))) {
             document.getElementById("play-overlay").classList.add("hidden");
             e.target.playVideo();
