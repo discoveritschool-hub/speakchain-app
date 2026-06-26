@@ -19761,7 +19761,7 @@ CONTEXT_FREE         = 4
 CONTEXT_TRIAL        = 8
 CONTEXT_PAID         = 20
 
-_BUDDY_COUNTS: dict  = {}
+# Тимчасові кеші в RAM (картинки і rate limit) — не критичні для персистентності
 _PIXABAY_CACHE: dict = {}
 _REWARD_RATE: dict   = {}
 
@@ -19784,9 +19784,37 @@ def verify_telegram_init_data(init_data: str):
         return None
 
 
+def _get_buddy_daily(uid: int) -> dict:
+    """
+    Повертає buddy_daily стан з БД юзера. Якщо інший день — скидає лічильник.
+    Структура: {"date": "YYYY-MM-DD", "count": N}
+    """
+    import time as _t
+    today = _t.strftime("%Y-%m-%d", _t.localtime())
+    if not uid:
+        return {"date": today, "count": 0}
+    try:
+        s = get_s(uid)
+        bd = s.get("buddy_daily", {})
+        if bd.get("date") != today:
+            return {"date": today, "count": 0}
+        return bd
+    except Exception:
+        return {"date": today, "count": 0}
+
+
+def _save_buddy_daily(uid: int, bd: dict):
+    """Зберігає buddy_daily через upd_s (write-behind → PostgreSQL)."""
+    if not uid:
+        return
+    try:
+        upd_s(uid, {"buddy_daily": bd})
+    except Exception as e:
+        logger.warning(f"buddy_daily save error uid={uid}: {e}")
+
+
 def get_buddy_user_status(uid: int) -> dict:
     """Статус юзера для Speaking Buddy: 'demo' | 'trial' | 'paid'."""
-    import time as _t
     if not uid:
         return {"status": "demo", "max_msgs": DEMO_LIMIT, "msg_count": 0}
     try:
@@ -19800,29 +19828,24 @@ def get_buddy_user_status(uid: int) -> dict:
     except Exception:
         status, max_msgs = "demo", DEMO_LIMIT
 
-    today = _t.strftime("%Y-%m-%d", _t.localtime())
-    if uid not in _BUDDY_COUNTS or _BUDDY_COUNTS[uid].get("date") != today:
-        _BUDDY_COUNTS[uid] = {"count": 0, "date": today}
+    bd = _get_buddy_daily(uid)
     return {
         "status":    status,
         "max_msgs":  max_msgs,
-        "msg_count": _BUDDY_COUNTS[uid]["count"],
+        "msg_count": bd["count"],
     }
 
 
 def _check_and_increment_buddy(uid: int, status: str):
     """Перевірка ліміту і інкремент. Returns (allowed, remaining)."""
-    import time as _t
     limits = {"demo": DEMO_LIMIT, "trial": TRIAL_LIMIT, "paid": BASIC_LIMIT}
     limit = limits.get(status, DEMO_LIMIT)
-    today = _t.strftime("%Y-%m-%d", _t.localtime())
-    if uid not in _BUDDY_COUNTS or _BUDDY_COUNTS[uid].get("date") != today:
-        _BUDDY_COUNTS[uid] = {"count": 0, "date": today}
-    entry = _BUDDY_COUNTS[uid]
-    if entry["count"] >= limit:
+    bd = _get_buddy_daily(uid)
+    if bd["count"] >= limit:
         return False, 0
-    entry["count"] += 1
-    return True, limit - entry["count"]
+    bd["count"] += 1
+    _save_buddy_daily(uid, bd)
+    return True, limit - bd["count"]
 
 
 ROLE_PROMPTS_BUDDY = {
@@ -20012,6 +20035,38 @@ async def handle_buddy_chat(request):
         raw = response.content[0].text.strip()
         raw = raw[raw.find("{"):raw.rfind("}")+1]
         parsed = json.loads(raw)
+
+        # ── Зберігаємо статистику сесії в БД (write-behind) ──
+        if uid:
+            try:
+                _s = get_s(uid)
+                stats = _s.get("buddy_stats", {
+                    "total_messages": 0,
+                    "total_sessions": 0,
+                    "scenarios_tried": [],
+                    "last_session_date": None,
+                    "feedback_good_count": 0,
+                    "feedback_tip_count": 0,
+                })
+                stats["total_messages"] = stats.get("total_messages", 0) + 1
+                stats["last_session_date"] = datetime.now().isoformat()
+
+                scenario_name = data.get("scenario", "")
+                if scenario_name and scenario_name not in stats.get("scenarios_tried", []):
+                    stats.setdefault("scenarios_tried", []).append(scenario_name)
+                    stats["scenarios_tried"] = stats["scenarios_tried"][-50:]
+                    stats["total_sessions"] = stats.get("total_sessions", 0) + 1
+
+                for f in parsed.get("feedback", []):
+                    if f.get("type") == "good":
+                        stats["feedback_good_count"] = stats.get("feedback_good_count", 0) + 1
+                    elif f.get("type") == "tip":
+                        stats["feedback_tip_count"] = stats.get("feedback_tip_count", 0) + 1
+
+                upd_s(uid, {"buddy_stats": stats})
+            except Exception as e:
+                logger.warning(f"buddy_stats save error uid={uid}: {e}")
+
         return _web.json_response({
             "reply":     parsed.get("reply", raw),
             "feedback":  parsed.get("feedback", []),
