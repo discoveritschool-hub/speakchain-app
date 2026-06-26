@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>SpeakChain · Leaderboard</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --purple:#7c6ef7;--green:#5ad8a6;--orange:#f7a35c;
+  --red:#f76e6e;--gold:#f5c842;--blue:#5ab4f7;--pink:#f76e9e;
+  --bg:#0d0d14;--bg2:#16161f;--bg3:#1e1e2a;--bg4:#252535;
+  --text:#eaeaf5;--text2:#8888a8;--border:rgba(255,255,255,0.07);
+}
+body{
+  background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;
+  min-height:100vh;
+  padding-bottom:max(env(safe-area-inset-bottom),24px);
+  overflow-x:hidden;
+}
+
+/* ── Header ── */
+.header{
+  background:var(--bg2);padding:16px 14px 12px;
+  border-bottom:.5px solid var(--border);
+}
+.header-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.header-title{font-size:20px;font-weight:700;letter-spacing:-.3px;}
+.period-pills{display:flex;gap:6px;}
+.period-pill{
+  padding:5px 12px;border-radius:20px;font-size:11px;font-weight:700;
+  cursor:pointer;transition:background .15s,color .15s;
+  border:.5px solid var(--border);color:var(--text2);background:var(--bg3);
+}
+.period-pill.active{background:rgba(124,110,247,.2);color:var(--purple);border-color:rgba(124,110,247,.3);}
+
+/* ── Category tabs ── */
+.cat-tabs{
+  display:flex;gap:6px;padding:12px 14px 10px;
+  border-bottom:.5px solid var(--border);overflow-x:auto;
+  scrollbar-width:none;
+}
+.cat-tabs::-webkit-scrollbar{display:none;}
+.cat-tab{
+  flex-shrink:0;padding:6px 14px;border-radius:20px;
+  font-size:11px;font-weight:700;cursor:pointer;
+  border:.5px solid var(--border);color:var(--text2);background:var(--bg3);
+  transition:background .15s,color .15s,border-color .15s;
+  white-space:nowrap;
+}
+.cat-tab.active.chain    {background:rgba(124,110,247,.2);color:var(--purple);border-color:rgba(124,110,247,.3);}
+.cat-tab.active.xp       {background:rgba(245,200,66,.15); color:var(--gold);  border-color:rgba(245,200,66,.3);}
+.cat-tab.active.streak   {background:rgba(247,163,92,.15); color:var(--orange);border-color:rgba(247,163,92,.3);}
+.cat-tab.active.jump     {background:rgba(90,216,166,.12); color:var(--green); border-color:rgba(90,216,166,.3);}
+.cat-tab.active.consist  {background:rgba(90,180,247,.12); color:var(--blue);  border-color:rgba(90,180,247,.3);}
+
+/* ── My position card ── */
+.my-card{
+  margin:12px 14px;padding:12px 14px;border-radius:14px;
+  background:rgba(124,110,247,.1);border:1px solid rgba(124,110,247,.25);
+  display:flex;align-items:center;gap:10px;
+}
+.my-rank{
+  width:36px;height:36px;border-radius:10px;flex-shrink:0;
+  background:rgba(124,110,247,.2);
+  display:flex;align-items:center;justify-content:center;
+  font-size:16px;font-weight:700;color:var(--purple);
+}
+.my-info{flex:1;}
+.my-name{font-size:14px;font-weight:700;}
+.my-score-row{display:flex;align-items:center;gap:8px;margin-top:3px;}
+.my-score{font-size:13px;font-weight:700;color:var(--purple);}
+.my-level{font-size:10px;color:var(--text2);}
+.my-delta{
+  padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;
+  margin-left:auto;
+}
+.my-delta.up  {background:rgba(90,216,166,.15);color:var(--green);}
+.my-delta.down{background:rgba(247,110,110,.15);color:var(--red);}
+.my-delta.same{background:var(--bg4);color:var(--text2);}
+
+/* ── FOMO banner ── */
+.fomo-banner{
+  margin:0 14px 10px;padding:10px 14px;border-radius:12px;
+  background:rgba(247,110,110,.1);border:1px solid rgba(247,110,110,.2);
+  display:flex;align-items:center;gap:8px;
+}
+.fomo-icon{font-size:18px;flex-shrink:0;}
+.fomo-text{font-size:12px;color:var(--red);font-weight:600;line-height:1.4;}
+.fomo-cta{
+  margin-left:auto;flex-shrink:0;
+  padding:5px 10px;border-radius:8px;border:none;cursor:pointer;
+  background:rgba(247,110,110,.2);color:var(--red);
+  font-size:11px;font-weight:700;
+}
+
+/* ── Leaderboard list ── */
+.lb-list{padding:0 14px;}
+.lb-item{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 0;border-bottom:.5px solid var(--border);
+  position:relative;
+  transition:background .15s;
+}
+.lb-item:last-child{border-bottom:none;}
+.lb-item.me{
+  background:rgba(124,110,247,.06);margin:0 -14px;padding:10px 14px;
+  border-radius:0;border-bottom:.5px solid rgba(124,110,247,.2);
+}
+.lb-item.friend-above .lb-rank::after{
+  content:'↑';position:absolute;font-size:8px;color:var(--red);top:-2px;right:-4px;
+}
+
+/* rank */
+.lb-rank{
+  width:28px;text-align:center;font-size:14px;font-weight:700;
+  color:var(--text2);flex-shrink:0;position:relative;
+}
+.lb-rank.gold  {color:var(--gold);}
+.lb-rank.silver{color:#b0b0c8;}
+.lb-rank.bronze{color:#cd8b5a;}
+
+/* avatar */
+.lb-avatar{
+  width:36px;height:36px;border-radius:50%;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:700;
+}
+.lb-avatar.me    {background:rgba(124,110,247,.25);color:var(--purple);border:1.5px solid var(--purple);}
+.lb-avatar.friend{background:rgba(90,216,166,.2); color:var(--green);}
+.lb-avatar.other {background:var(--bg3);color:var(--text2);}
+
+/* info */
+.lb-info{flex:1;min-width:0;}
+.lb-name{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.lb-sub {font-size:10px;color:var(--text2);margin-top:2px;}
+.lb-badge{
+  display:inline-block;padding:1px 6px;border-radius:6px;
+  font-size:9px;font-weight:700;margin-left:4px;
+  background:rgba(90,216,166,.15);color:var(--green);
+}
+
+/* score */
+.lb-score{text-align:right;flex-shrink:0;}
+.lb-score-val{font-size:15px;font-weight:700;}
+.lb-score-unit{font-size:10px;color:var(--text2);display:block;margin-top:1px;}
+
+/* delta */
+.lb-delta{
+  font-size:10px;font-weight:700;padding:2px 6px;border-radius:6px;
+  flex-shrink:0;
+}
+.lb-delta.up  {background:rgba(90,216,166,.15);color:var(--green);}
+.lb-delta.down{background:rgba(247,110,110,.15);color:var(--red);}
+.lb-delta.same{display:none;}
+
+/* ── Consistency bar ── */
+.consist-bar{
+  display:flex;gap:2px;margin-top:4px;
+}
+.consist-day{
+  width:8px;height:8px;border-radius:2px;
+}
+.consist-day.done  {background:var(--blue);}
+.consist-day.empty {background:var(--bg4);}
+
+/* ── Empty state ── */
+.empty{
+  text-align:center;padding:40px 20px;
+  color:var(--text2);font-size:14px;
+}
+.empty-icon{font-size:40px;margin-bottom:12px;}
+
+/* ── Separator ── */
+.lb-sep{
+  text-align:center;font-size:10px;color:var(--text2);
+  padding:6px 0;letter-spacing:.08em;font-weight:600;
+}
+
+/* ── CTA ── */
+.bottom-cta{
+  padding:12px 14px 0;
+}
+.cta-btn{
+  width:100%;padding:14px;border-radius:14px;border:none;cursor:pointer;
+  font-size:14px;font-weight:700;color:#fff;background:var(--purple);
+  transition:transform .1s,opacity .15s;
+}
+.cta-btn:active{transform:scale(.98);opacity:.9;}
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div class="header-top">
+    <div class="header-title">🏆 Leaderboard</div>
+    <div class="period-pills">
+      <div class="period-pill active" id="pill-week" onclick="setPeriod('week',this)">Тиждень</div>
+      <div class="period-pill" id="pill-all"  onclick="setPeriod('all',this)">Весь час</div>
+    </div>
+  </div>
+  <!-- Category tabs -->
+  <div class="cat-tabs">
+    <div class="cat-tab active chain"  onclick="setCat('chain',this)">🔗 Ланцюжок</div>
+    <div class="cat-tab xp"           onclick="setCat('xp',this)">⚡️ XP</div>
+    <div class="cat-tab streak"       onclick="setCat('streak',this)">🔥 Стрік</div>
+    <div class="cat-tab jump"         onclick="setCat('jump',this)">📈 Стрибок</div>
+    <div class="cat-tab consist"      onclick="setCat('consist',this)">📅 Стабільність</div>
+  </div>
+</div>
+
+<!-- My position -->
+<div class="my-card" id="my-card">
+  <div class="my-rank" id="my-rank">#—</div>
+  <div class="my-info">
+    <div class="my-name" id="my-name">Ти</div>
+    <div class="my-score-row">
+      <span class="my-score" id="my-score">—</span>
+      <span class="my-level" id="my-level"></span>
+      <span class="my-delta same" id="my-delta"></span>
+    </div>
+  </div>
+</div>
+
+<!-- FOMO banner (friend overtook) -->
+<div class="fomo-banner" id="fomo-banner" style="display:none">
+  <span class="fomo-icon">⚡️</span>
+  <span class="fomo-text" id="fomo-text"></span>
+  <button class="fomo-cta" onclick="act('start_lesson')">Зробити урок</button>
+</div>
+
+<!-- List -->
+<div class="lb-list" id="lb-list"></div>
+
+<!-- CTA -->
+<div class="bottom-cta">
+  <button class="cta-btn" onclick="act('start_lesson')">🎬 Зробити урок зараз</button>
+</div>
+
+<script>
+const TG=(typeof Telegram!=='undefined'&&Telegram.WebApp)?Telegram.WebApp:null;
+if(TG){try{TG.ready();TG.expand();}catch(e){}}
+
+const params=new URLSearchParams(window.location.search);
+let D={};
+try{D=JSON.parse(decodeURIComponent(params.get('d')||'{}'));}catch(e){}
+
+/* ── Mock data ── */
+if(!D.my_uid){
+  const today=new Date();
+  const mkUser=(name,chain,xp,streak,consist,isMe,isFriend)=>({
+    name,chain,xp,streak,consist,
+    jump:Math.floor(Math.random()*15),
+    level:xp>14000?'🎯 Practitioner':xp>6000?'🗺️ Explorer':'🌱 Beginner',
+    done_this_week:Math.floor(Math.random()*7),
+    me:isMe||false, friend:isFriend||false,
+    badges:isMe?['speaking_partner']:[],
+  });
+  D={
+    my_uid:42, my_name:'Олексій',
+    period:'week', category:'chain',
+    users:[
+      mkUser('Katia',    24,18500,24,  [1,1,1,1,1,1,1],false,false),
+      mkUser('Dmytro',   18,14200,18,  [1,1,0,1,1,0,1],false,false),
+      mkUser('Аня',      12,9800, 12,  [1,1,1,0,1,1,1],false,true),
+      mkUser('Олексій',   4,340,  4,   [0,0,1,1,0,0,0],true, false),
+      mkUser('Oksana',    3,210,  3,   [0,1,0,1,0,0,0],false,false),
+      mkUser('Sergiy',    2,180,  2,   [1,0,0,0,1,0,0],false,false),
+      mkUser('Lena',      1,90,   1,   [0,0,0,0,0,1,0],false,false),
+    ],
+    friend_name:'Аня', friend_overtook:true,
+    reset_day:'понеділок',
+  };
+}
+
+let currentPeriod = D.period || 'week';
+let currentCat    = D.category || 'chain';
+
+const CAT_META = {
+  chain:  {key:'chain',  unit:'ланок',   color:'purple', label:'🔗 Ланцюжок'},
+  xp:     {key:'xp',    unit:'XP',      color:'gold',   label:'⚡️ XP'},
+  streak: {key:'streak', unit:'дн.',     color:'orange', label:'🔥 Стрік'},
+  jump:   {key:'jump',   unit:'балів↑',  color:'green',  label:'📈 Стрибок'},
+  consist:{key:'consist',unit:'%',       color:'blue',   label:'📅 Стабільність'},
+};
+
+function getScore(u, cat){
+  if(cat==='consist'){
+    const days=u.consist||[];
+    return days.length?Math.round(days.filter(Boolean).length/days.length*100):0;
+  }
+  return u[CAT_META[cat].key]||0;
+}
+
+function scoreLabel(val, cat){
+  const m=CAT_META[cat];
+  if(cat==='xp') return val.toLocaleString()+' '+m.unit;
+  return val+' '+m.unit;
+}
+
+function ini(n){return(n||'?').split(/\s+/).map(w=>w[0]).join('').toUpperCase().slice(0,2);}
+
+function rankClass(i){
+  if(i===0)return'gold';if(i===1)return'silver';if(i===2)return'bronze';return'';
+}
+function rankEmoji(i){
+  return i===0?'🥇':i===1?'🥈':i===2?'🥉':`${i+1}`;
+}
+
+function render(){
+  const users   = (D.users||[]).slice();
+  const cat     = currentCat;
+  const isWeek  = currentPeriod==='week';
+
+  // Sort
+  users.sort((a,b)=>getScore(b,cat)-getScore(a,cat));
+
+  // My position
+  const myIdx  = users.findIndex(u=>u.me);
+  const myUser = myIdx>=0?users[myIdx]:null;
+  const myRank = myIdx+1;
+
+  // My card
+  if(myUser){
+    const myVal=getScore(myUser,cat);
+    document.getElementById('my-rank').textContent  = '#'+myRank;
+    document.getElementById('my-name').textContent  = myUser.name||'Ти';
+    document.getElementById('my-score').textContent = scoreLabel(myVal,cat);
+    document.getElementById('my-level').textContent = myUser.level||'';
+
+    // Delta (mock — в реальному передається з бота)
+    const deltaEl=document.getElementById('my-delta');
+    const delta=myUser.delta||0;
+    if(delta>0){deltaEl.className='my-delta up';deltaEl.textContent='▲ '+delta;}
+    else if(delta<0){deltaEl.className='my-delta down';deltaEl.textContent='▼ '+Math.abs(delta);}
+    else{deltaEl.className='my-delta same';deltaEl.textContent='';}
+  }
+
+  // FOMO banner
+  const fomoEl=document.getElementById('fomo-banner');
+  const fomoText=document.getElementById('fomo-text');
+  if(D.friend_overtook&&D.friend_name&&myUser){
+    const friendIdx=users.findIndex(u=>u.friend);
+    if(friendIdx>=0&&friendIdx<myIdx){
+      fomoEl.style.display='flex';
+      fomoText.textContent=`${D.friend_name} обігнав тебе — вона на #${friendIdx+1}, ти на #${myRank}`;
+    } else {
+      fomoEl.style.display='none';
+    }
+  } else {
+    fomoEl.style.display='none';
+  }
+
+  // List
+  const list=document.getElementById('lb-list');
+  list.innerHTML='';
+
+  if(!users.length){
+    list.innerHTML='<div class="empty"><div class="empty-icon">🏆</div>Поки немає даних</div>';
+    return;
+  }
+
+  let meSeparatorAdded=false;
+  const topN=10;
+
+  users.forEach((u,i)=>{
+    // Якщо юзер далеко від топу — додаємо сепаратор перед ним
+    if(u.me&&i>=topN&&!meSeparatorAdded){
+      meSeparatorAdded=true;
+      const sep=document.createElement('div');
+      sep.className='lb-sep';sep.textContent='· · ·';
+      list.appendChild(sep);
+    }
+    // Показуємо топ-10 + завжди показуємо me
+    if(i>=topN&&!u.me) return;
+
+    const val   =getScore(u,cat);
+    const item  =document.createElement('div');
+    const rc    =rankClass(i);
+    const avCls =u.me?'me':u.friend?'friend':'other';
+
+    let subHtml='';
+    if(cat==='consist'){
+      const days=u.consist||[];
+      const dots=days.map(d=>`<div class="consist-day ${d?'done':'empty'}"></div>`).join('');
+      subHtml=`<div class="consist-bar">${dots}</div>`;
+    } else {
+      const parts=[];
+      if(u.level)    parts.push(u.level);
+      if(cat!=='chain'&&u.chain) parts.push(`🔗 ${u.chain}`);
+      if(cat!=='streak'&&u.streak) parts.push(`🔥 ${u.streak}`);
+      subHtml=`<div class="lb-sub">${parts.join('  ')}</div>`;
+    }
+
+    let badgesHtml='';
+    (u.badges||[]).forEach(b=>{
+      if(b==='speaking_partner') badgesHtml+=`<span class="lb-badge">🏅 Partner</span>`;
+    });
+
+    // Delta
+    const delta=u.delta||0;
+    let deltaHtml='';
+    if(isWeek){
+      if(delta>0)     deltaHtml=`<div class="lb-delta up">▲${delta}</div>`;
+      else if(delta<0)deltaHtml=`<div class="lb-delta down">▼${Math.abs(delta)}</div>`;
+    }
+
+    item.className='lb-item'+(u.me?' me':'')+(u.friend?' friend':'');
+    item.innerHTML=`
+      <div class="lb-rank ${rc}">${rankEmoji(i)}</div>
+      <div class="lb-avatar ${avCls}">${ini(u.name)}</div>
+      <div class="lb-info">
+        <div class="lb-name">${u.name||'—'}${u.me?' 👤':''}${badgesHtml}</div>
+        ${subHtml}
+      </div>
+      ${deltaHtml}
+      <div class="lb-score" style="color:var(--${CAT_META[cat].color==='gold'?'gold':CAT_META[cat].color==='orange'?'orange':CAT_META[cat].color==='green'?'green':CAT_META[cat].color==='blue'?'blue':'purple'})">
+        <span class="lb-score-val">${cat==='xp'?val.toLocaleString():val}</span>
+        <span class="lb-score-unit">${CAT_META[cat].unit}</span>
+      </div>`;
+    list.appendChild(item);
+  });
+
+  // Reset hint
+  if(isWeek&&D.reset_day){
+    const hint=document.createElement('div');
+    hint.style.cssText='text-align:center;font-size:10px;color:var(--text2);padding:12px 0 4px;';
+    hint.textContent=`Скидається щo${D.reset_day}`;
+    list.appendChild(hint);
+  }
+}
+
+function setPeriod(p, el){
+  currentPeriod=p;
+  document.querySelectorAll('.period-pill').forEach(x=>x.classList.remove('active'));
+  el.classList.add('active');
+  // В реальному — робить act('lb_period', {period:p}) і бот оновлює дані
+  act('lb_period',{period:p});
+  render();
+}
+
+function setCat(c, el){
+  currentCat=c;
+  document.querySelectorAll('.cat-tab').forEach(x=>x.classList.remove('active'));
+  el.classList.add('active',c);
+  // Видаляємо старий color class і ставимо новий
+  ['chain','xp','streak','jump','consist'].forEach(cls=>el.classList.remove(cls));
+  el.classList.add(c);
+  render();
+}
+
+function act(action, payload={}){
+  if(TG) TG.sendData(JSON.stringify({action,...payload}));
+}
+
+render();
+</script>
+</body>
+</html>

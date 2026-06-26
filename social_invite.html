@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>SpeakChain · Social</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --purple:#7c6ef7;--green:#5ad8a6;--orange:#f7a35c;
+  --red:#f76e6e;--gold:#f5c842;--blue:#5ab4f7;
+  --bg:#0d0d14;--bg2:#16161f;--bg3:#1e1e2a;--bg4:#252535;
+  --text:#eaeaf5;--text2:#8888a8;--border:rgba(255,255,255,0.07);
+}
+body{
+  background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;
+  min-height:100vh;
+  padding-bottom:max(env(safe-area-inset-bottom),24px);
+  overflow-x:hidden;
+}
+
+/* ── Tabs ── */
+.tabs{
+  display:flex;background:var(--bg);
+  border-bottom:.5px solid var(--border);
+  position:sticky;top:0;z-index:30;
+}
+.tab{
+  flex:1;padding:13px 4px 11px;text-align:center;
+  font-size:11px;font-weight:600;color:var(--text2);
+  letter-spacing:.03em;cursor:pointer;
+  border-bottom:2px solid transparent;transition:color .2s,border-color .2s;
+}
+.tab.active{color:var(--purple);border-bottom-color:var(--purple);}
+
+/* ── Screens ── */
+.screen{display:none}
+.screen.active{display:block}
+
+/* ════════════════════════════
+   SCREEN 1 — CHAIN SPLIT VIEW
+   ════════════════════════════ */
+.split{
+  display:grid;grid-template-columns:1fr auto 1fr;
+  gap:0;padding:16px 12px;align-items:start;
+  border-bottom:.5px solid var(--border);
+}
+.split-col{display:flex;flex-direction:column;align-items:center;gap:6px;}
+.split-vs{
+  display:flex;align-items:center;justify-content:center;
+  padding:0 6px;padding-top:40px;
+}
+.vs-text{
+  font-size:11px;font-weight:700;color:var(--text2);
+  background:var(--bg3);border:.5px solid var(--border);
+  border-radius:20px;padding:4px 8px;
+}
+.col-avatar{
+  width:44px;height:44px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:16px;font-weight:700;
+}
+.col-avatar.me    {background:rgba(124,110,247,.2);color:var(--purple);}
+.col-avatar.friend{background:rgba(90,216,166,.2); color:var(--green);}
+.col-avatar.empty {background:var(--bg3);color:var(--text2);font-size:20px;}
+.col-name{font-size:13px;font-weight:600;text-align:center;}
+.col-role{font-size:10px;color:var(--text2);font-weight:600;text-align:center;}
+.chain-dots{display:flex;gap:3px;flex-wrap:wrap;justify-content:center;max-width:110px;}
+.dot{
+  width:11px;height:11px;border-radius:3px;
+  transition:background .3s,transform .2s;
+}
+.dot.done{background:var(--purple);}
+.dot.done.me{background:var(--purple);}
+.dot.done.friend{background:var(--green);}
+.dot.today{background:var(--gold);transform:scale(1.2);}
+.dot.empty{background:var(--bg3);}
+.col-len{font-size:24px;font-weight:700;}
+.col-len.me{color:var(--purple);}
+.col-len.friend{color:var(--green);}
+.col-len.empty{color:var(--text2);}
+.col-label{font-size:10px;color:var(--text2);}
+.fomo-strip{
+  margin:0 12px 12px;padding:10px 14px;
+  border-radius:12px;
+  background:rgba(247,110,110,.1);border:1px solid rgba(247,110,110,.2);
+  font-size:12px;color:var(--red);font-weight:600;text-align:center;
+}
+.sync-strip{
+  margin:0 12px 12px;padding:10px 14px;border-radius:12px;
+  background:rgba(90,216,166,.1);border:1px solid rgba(90,216,166,.2);
+  font-size:12px;color:var(--green);font-weight:600;text-align:center;
+}
+
+/* ── Section ── */
+.sec{padding:14px 12px 4px;}
+.sec-title{
+  font-size:10px;font-weight:700;color:var(--text2);
+  text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;
+}
+
+/* ── Invite card ── */
+.invite-card{
+  background:var(--bg3);border-radius:14px;padding:14px;
+  border:.5px solid var(--border);margin-bottom:8px;
+}
+.invite-row{display:flex;gap:10px;align-items:center;margin-bottom:10px;}
+.invite-icon{
+  width:40px;height:40px;border-radius:12px;flex-shrink:0;
+  background:rgba(124,110,247,.15);
+  display:flex;align-items:center;justify-content:center;font-size:20px;
+}
+.invite-title{font-size:14px;font-weight:700;}
+.invite-sub{font-size:11px;color:var(--text2);margin-top:2px;line-height:1.4;}
+.share-btns{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
+.share-btn{
+  padding:11px;border-radius:12px;border:none;cursor:pointer;
+  font-size:13px;font-weight:600;
+  display:flex;align-items:center;justify-content:center;gap:7px;
+  transition:transform .1s,opacity .15s;
+}
+.share-btn:active{transform:scale(.97);opacity:.85;}
+.share-btn.tg   {background:rgba(90,180,247,.15);color:var(--blue);border:.5px solid rgba(90,180,247,.25);}
+.share-btn.wa   {background:rgba(90,216,166,.12);color:var(--green);border:.5px solid rgba(90,216,166,.25);}
+.share-btn.copy {background:var(--bg4);color:var(--text2);border:.5px solid var(--border);}
+.share-btn.full {grid-column:1/-1;}
+
+/* ── Bonus pills ── */
+.bonus-list{display:flex;flex-direction:column;gap:7px;}
+.bonus-item{
+  background:var(--bg3);border-radius:12px;padding:11px 14px;
+  border:.5px solid var(--border);
+  display:flex;align-items:center;gap:10px;
+}
+.bonus-icon{font-size:20px;flex-shrink:0;}
+.bonus-info{flex:1;}
+.bonus-title{font-size:13px;font-weight:600;}
+.bonus-sub{font-size:11px;color:var(--text2);margin-top:2px;}
+.bonus-xp{
+  font-size:12px;font-weight:700;color:var(--gold);
+  white-space:nowrap;
+}
+
+/* ════════════════════════════
+   SCREEN 2 — SPEAKING CHALLENGE
+   ════════════════════════════ */
+.challenge-hero{
+  padding:20px 16px 14px;text-align:center;
+  border-bottom:.5px solid var(--border);
+}
+.challenge-title{font-size:20px;font-weight:700;letter-spacing:-.3px;margin-bottom:6px;}
+.challenge-sub{font-size:13px;color:var(--text2);line-height:1.5;}
+
+.phrase-card{
+  background:var(--bg3);border-radius:16px;padding:16px;
+  border:.5px solid var(--purple);margin:14px 12px 0;
+}
+.phrase-label{font-size:10px;font-weight:700;color:var(--purple);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;}
+.phrase-text{font-size:16px;font-weight:600;color:var(--text);line-height:1.5;}
+.phrase-translation{font-size:12px;color:var(--text2);margin-top:6px;font-style:italic;}
+
+.result-split{
+  display:grid;grid-template-columns:1fr 1fr;gap:8px;
+  margin:14px 12px 0;
+}
+.result-card{
+  background:var(--bg3);border-radius:14px;padding:14px;
+  border:.5px solid var(--border);text-align:center;
+}
+.result-card.me{border-color:rgba(124,110,247,.3);}
+.result-card.friend{border-color:rgba(90,216,166,.3);}
+.result-who{font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;}
+.result-score{font-size:32px;font-weight:700;line-height:1;}
+.result-card.me     .result-score{color:var(--purple);}
+.result-card.friend .result-score{color:var(--green);}
+.result-label{font-size:10px;color:var(--text2);margin-top:4px;}
+.result-feedback{font-size:11px;color:var(--text);margin-top:8px;line-height:1.4;text-align:left;}
+.result-badge{
+  display:inline-block;margin-top:8px;padding:3px 10px;
+  border-radius:20px;font-size:10px;font-weight:700;
+}
+.result-card.me .result-badge{background:rgba(124,110,247,.2);color:var(--purple);}
+.result-card.friend .result-badge{background:rgba(90,216,166,.2);color:var(--green);}
+
+.rec-btn{
+  width:calc(100% - 24px);margin:14px 12px 0;
+  padding:16px;border-radius:16px;border:none;cursor:pointer;
+  font-size:15px;font-weight:700;color:#fff;
+  transition:transform .1s,opacity .15s;
+}
+.rec-btn:active{transform:scale(.98);opacity:.9;}
+.rec-btn.record{background:var(--purple);}
+.rec-btn.recording{background:var(--red);}
+.rec-btn.submit{background:var(--green);color:#111;}
+.rec-btn.disabled{background:var(--bg3);color:var(--text2);border:.5px solid var(--border);}
+
+.rec-wave{
+  margin:12px 12px 0;height:48px;background:var(--bg3);
+  border-radius:12px;overflow:hidden;position:relative;
+  display:none;align-items:center;justify-content:center;
+}
+.rec-wave.show{display:flex;}
+.wave-bar{
+  width:3px;border-radius:3px;background:var(--purple);margin:0 1px;
+  animation:wave .8s ease-in-out infinite;
+}
+.wave-bar:nth-child(2){animation-delay:.1s;}
+.wave-bar:nth-child(3){animation-delay:.2s;}
+.wave-bar:nth-child(4){animation-delay:.3s;}
+.wave-bar:nth-child(5){animation-delay:.4s;}
+.wave-bar:nth-child(6){animation-delay:.3s;}
+.wave-bar:nth-child(7){animation-delay:.2s;}
+.wave-bar:nth-child(8){animation-delay:.1s;}
+@keyframes wave{
+  0%,100%{height:8px;opacity:.4;}
+  50%{height:32px;opacity:1;}
+}
+.rec-timer{
+  text-align:center;font-size:13px;font-weight:700;
+  color:var(--red);margin-top:8px;display:none;
+}
+.rec-timer.show{display:block;}
+
+/* ════════════════════════════
+   SCREEN 3 — NETWORK
+   ════════════════════════════ */
+.network-list{padding:0 12px;}
+.network-item{
+  background:var(--bg3);border-radius:14px;padding:13px 14px;
+  border:.5px solid var(--border);margin-bottom:8px;
+  display:flex;align-items:center;gap:10px;
+}
+.net-avatar{
+  width:38px;height:38px;border-radius:50%;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-size:14px;font-weight:700;
+}
+.net-avatar.me    {background:rgba(124,110,247,.2);color:var(--purple);border:1.5px solid var(--purple);}
+.net-avatar.friend{background:rgba(90,216,166,.2); color:var(--green);}
+.net-avatar.top   {background:rgba(245,200,66,.2);  color:var(--gold);}
+.net-info{flex:1;min-width:0;}
+.net-name{font-size:13px;font-weight:600;}
+.net-role{font-size:10px;color:var(--text2);margin-top:1px;}
+.net-chain-wrap{display:flex;align-items:center;gap:6px;}
+.net-dots{display:flex;gap:2px;}
+.net-dot{width:8px;height:8px;border-radius:2px;}
+.net-dot.done{background:var(--purple);}
+.net-dot.done.friend{background:var(--green);}
+.net-dot.done.top{background:var(--gold);}
+.net-dot.empty{background:var(--bg4);}
+.net-count{font-size:14px;font-weight:700;}
+.net-count.me    {color:var(--purple);}
+.net-count.friend{color:var(--green);}
+.net-count.top   {color:var(--gold);}
+
+/* ── CTA button ── */
+.cta{
+  width:calc(100% - 24px);margin:12px 12px 0;
+  padding:15px;border-radius:14px;border:none;cursor:pointer;
+  font-size:14px;font-weight:700;color:#fff;
+  background:var(--purple);
+  transition:transform .1s,opacity .15s;
+}
+.cta:active{transform:scale(.98);opacity:.9;}
+.cta.green{background:transparent;color:var(--green);border:.5px solid rgba(90,216,166,.3);}
+.cta.ghost{background:var(--bg3);color:var(--text2);border:.5px solid var(--border);}
+
+/* ── Divider ── */
+.divider{height:.5px;background:var(--border);margin:14px 12px 0;}
+
+/* ── Copy toast ── */
+.toast{
+  position:fixed;bottom:calc(env(safe-area-inset-bottom)+16px);
+  left:50%;transform:translateX(-50%) translateY(20px);
+  background:rgba(90,216,166,.2);border:1px solid rgba(90,216,166,.4);
+  color:var(--green);padding:10px 20px;border-radius:20px;
+  font-size:13px;font-weight:700;
+  opacity:0;transition:opacity .25s,transform .25s;pointer-events:none;z-index:100;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('invite',this)">🔗 Запросити</div>
+  <div class="tab" onclick="switchTab('challenge',this)">🎤 Виклик</div>
+  <div class="tab" onclick="switchTab('network',this)">👥 Мережа</div>
+</div>
+
+<!-- ══ SCREEN 1: INVITE ══ -->
+<div class="screen active" id="screen-invite">
+
+  <!-- Chain split view -->
+  <div class="split" id="split-view">
+    <!-- Моя колонка -->
+    <div class="split-col">
+      <div class="col-avatar me" id="my-avatar">Я</div>
+      <div class="col-name" id="my-name">Ти</div>
+      <div class="col-role">Мій ланцюжок</div>
+      <div class="chain-dots" id="my-dots"></div>
+      <div class="col-len me" id="my-len">0</div>
+      <div class="col-label">ланок</div>
+    </div>
+
+    <!-- VS -->
+    <div class="split-vs"><div class="vs-text">VS</div></div>
+
+    <!-- Друг / запрошення -->
+    <div class="split-col">
+      <div class="col-avatar friend" id="friend-avatar">?</div>
+      <div class="col-name" id="friend-name">Друг</div>
+      <div class="col-role" id="friend-role">Ще не приєднався</div>
+      <div class="chain-dots" id="friend-dots"></div>
+      <div class="col-len friend" id="friend-len">—</div>
+      <div class="col-label" id="friend-label">ланок</div>
+    </div>
+  </div>
+
+  <!-- FOMO / Sync banner -->
+  <div id="fomo-strip" class="fomo-strip" style="display:none"></div>
+  <div id="sync-strip" class="sync-strip" style="display:none"></div>
+
+  <!-- Invite card -->
+  <div class="sec"><div class="sec-title">Зміцни свій ланцюжок</div></div>
+  <div style="padding:0 12px">
+    <div class="invite-card">
+      <div class="invite-row">
+        <div class="invite-icon">🔗</div>
+        <div>
+          <div class="invite-title">Запросити друга</div>
+          <div class="invite-sub">Він стартує з ланки 3 · Обидва отримаєте +20% XP</div>
+        </div>
+      </div>
+      <div class="share-btns">
+        <button class="share-btn tg"   onclick="shareTg()">📱 Telegram</button>
+        <button class="share-btn wa"   onclick="shareWa()">💬 WhatsApp</button>
+        <button class="share-btn copy full" onclick="copyLink()">📋 Скопіювати посилання</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bonus list -->
+  <div class="sec"><div class="sec-title">Бонуси за мережу</div></div>
+  <div style="padding:0 12px" class="bonus-list">
+    <div class="bonus-item">
+      <span class="bonus-icon">🚀</span>
+      <div class="bonus-info">
+        <div class="bonus-title">Друг стартує з ланки 3</div>
+        <div class="bonus-sub">Не з нуля — одразу з прогресом</div>
+      </div>
+    </div>
+    <div class="bonus-item">
+      <span class="bonus-icon">⚡️</span>
+      <div class="bonus-info">
+        <div class="bonus-title">+20% XP boost на 7 днів</div>
+        <div class="bonus-sub">Коли друг зробить першу ланку</div>
+      </div>
+      <span class="bonus-xp">обом</span>
+    </div>
+    <div class="bonus-item">
+      <span class="bonus-icon">🔗</span>
+      <div class="bonus-info">
+        <div class="bonus-title">+1 бонусна ланка</div>
+        <div class="bonus-sub">Зараховується одразу</div>
+      </div>
+      <span class="bonus-xp">обом</span>
+    </div>
+    <div class="bonus-item">
+      <span class="bonus-icon">⚡️</span>
+      <div class="bonus-info">
+        <div class="bonus-title">Speaking Sync +25 XP</div>
+        <div class="bonus-sub">Коли обидва зробили урок в один день</div>
+      </div>
+      <span class="bonus-xp">щодня</span>
+    </div>
+    <div class="bonus-item">
+      <span class="bonus-icon">🏅</span>
+      <div class="bonus-info">
+        <div class="bonus-title">Speaking Partners бейдж</div>
+        <div class="bonus-sub">Після першого спільного виклику</div>
+      </div>
+    </div>
+  </div>
+  <div style="height:16px"></div>
+</div>
+
+<!-- ══ SCREEN 2: SPEAKING CHALLENGE ══ -->
+<div class="screen" id="screen-challenge">
+
+  <div class="challenge-hero">
+    <div class="challenge-title">Speaking Challenge 🎤</div>
+    <div class="challenge-sub" id="ch-sub">Запиши фразу — AI оцінить тебе і друга незалежно</div>
+  </div>
+
+  <!-- Фраза для повторення -->
+  <div class="phrase-card" id="phrase-card" style="display:none">
+    <div class="phrase-label">Фраза для повторення</div>
+    <div class="phrase-text" id="phrase-text"></div>
+    <div class="phrase-translation" id="phrase-translation"></div>
+  </div>
+
+  <!-- Результати (показуються після запису) -->
+  <div class="result-split" id="result-split" style="display:none">
+    <div class="result-card me">
+      <div class="result-who">Ти</div>
+      <div class="result-score" id="my-score">—</div>
+      <div class="result-label">з 100</div>
+      <div class="result-feedback" id="my-feedback"></div>
+      <div class="result-badge" id="my-badge"></div>
+    </div>
+    <div class="result-card friend">
+      <div class="result-who" id="friend-result-who">Друг</div>
+      <div class="result-score" id="friend-score">—</div>
+      <div class="result-label">з 100</div>
+      <div class="result-feedback" id="friend-feedback"></div>
+      <div class="result-badge" id="friend-badge">чекаємо...</div>
+    </div>
+  </div>
+
+  <!-- Кнопка запису -->
+  <button class="rec-btn record" id="rec-btn" onclick="toggleRecord()">🎙 Записати відповідь</button>
+
+  <!-- Хвиля запису -->
+  <div class="rec-wave" id="rec-wave">
+    <div class="wave-bar" style="height:8px"></div>
+    <div class="wave-bar" style="height:12px"></div>
+    <div class="wave-bar" style="height:8px"></div>
+    <div class="wave-bar" style="height:20px"></div>
+    <div class="wave-bar" style="height:8px"></div>
+    <div class="wave-bar" style="height:16px"></div>
+    <div class="wave-bar" style="height:8px"></div>
+    <div class="wave-bar" style="height:10px"></div>
+  </div>
+  <div class="rec-timer" id="rec-timer">⏺ 0:00</div>
+
+  <!-- Надіслати виклик другу -->
+  <div style="display:none" id="send-challenge-wrap">
+    <div class="divider"></div>
+    <div class="sec"><div class="sec-title">Кинути виклик</div></div>
+    <div style="padding:0 12px">
+      <div class="invite-card">
+        <div class="invite-row">
+          <div class="invite-icon">🎯</div>
+          <div>
+            <div class="invite-title">Надіслати другу цю фразу</div>
+            <div class="invite-sub">Він запише — AI порівняє результати</div>
+          </div>
+        </div>
+        <div class="share-btns">
+          <button class="share-btn tg  full" onclick="sendChallenge('tg')">📱 Надіслати в Telegram</button>
+          <button class="share-btn copy full" onclick="sendChallenge('copy')">📋 Скопіювати виклик</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="height:16px"></div>
+</div>
+
+<!-- ══ SCREEN 3: NETWORK ══ -->
+<div class="screen" id="screen-network">
+  <div class="sec"><div class="sec-title">Ваші ланцюжки</div></div>
+  <div class="network-list" id="network-list"></div>
+
+  <div class="divider"></div>
+  <div class="sec"><div class="sec-title">Приєднати друга</div></div>
+  <div style="padding:0 12px">
+    <button class="cta" onclick="shareTg()">🔗 Запросити в мій ланцюжок</button>
+    <button class="cta green" onclick="switchTab('challenge', document.querySelectorAll('.tab')[1])" style="margin-top:8px">🎤 Speaking Challenge</button>
+  </div>
+  <div style="height:16px"></div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast">✅ Скопійовано!</div>
+
+<script>
+const TG = (typeof Telegram!=='undefined'&&Telegram.WebApp)?Telegram.WebApp:null;
+if(TG){try{TG.ready();TG.expand();}catch(e){}}
+
+const params=new URLSearchParams(window.location.search);
+let D={};
+try{D=JSON.parse(decodeURIComponent(params.get('d')||'{}'));}catch(e){}
+
+/* ── Mock data ── */
+if(!D.my_name){
+  D={
+    my_name:'Олексій', my_uid:123,
+    my_chain:4, my_xp:340,
+    friend_name:'Аня', friend_uid:456,
+    friend_chain:6, friend_has:true,
+    bot_username:'SpeakChain_bot',
+    ref_link:'https://t.me/SpeakChain_bot?start=ref_oleksii',
+    challenge_phrase:'I have been learning English for two years',
+    challenge_translation:'Я вчу англійську вже два роки',
+    sc_state:'idle',
+    my_score:null, my_feedback:'',
+    friend_score:null,
+    network:[
+      {name:'Олексій',chain:4,role:'me'},
+      {name:'Аня',    chain:6,role:'friend'},
+      {name:'Katia',  chain:24,role:'top'},
+    ],
+  };
+}
+
+function ini(n){return(n||'?').split(/\s+/).map(w=>w[0]).join('').toUpperCase().slice(0,2);}
+
+/* ══ TAB 1: INVITE ══ */
+function fillInvite(){
+  const myChain  = D.my_chain  || 0;
+  const frChain  = D.friend_chain || 0;
+  const hasFriend= D.friend_has || false;
+  const TOTAL    = 7;
+
+  // My avatar
+  document.getElementById('my-avatar').textContent = ini(D.my_name);
+  document.getElementById('my-name').textContent   = D.my_name || 'Ти';
+
+  // My dots
+  const myDots = document.getElementById('my-dots');
+  for(let i=1;i<=TOTAL;i++){
+    const d=document.createElement('div');
+    d.className='dot me '+(i<myChain?'done':i===myChain?'today':'empty');
+    myDots.appendChild(d);
+  }
+  document.getElementById('my-len').textContent = myChain;
+
+  // Friend
+  const frAvatar = document.getElementById('friend-avatar');
+  const frName   = document.getElementById('friend-name');
+  const frRole   = document.getElementById('friend-role');
+  const frDots   = document.getElementById('friend-dots');
+  const frLen    = document.getElementById('friend-len');
+  const frLabel  = document.getElementById('friend-label');
+
+  if(hasFriend){
+    frAvatar.textContent = ini(D.friend_name);
+    frName.textContent   = D.friend_name || 'Друг';
+    frRole.textContent   = 'Ланцюжок друга';
+    frLen.textContent    = frChain;
+    frLabel.textContent  = 'ланок';
+    for(let i=1;i<=TOTAL;i++){
+      const d=document.createElement('div');
+      d.className='dot friend '+(i<frChain?'done':i===frChain?'today':'empty');
+      frDots.appendChild(d);
+    }
+    // FOMO / Sync
+    if(frChain===myChain+1){
+      const f=document.getElementById('fomo-strip');
+      f.style.display='block';
+      f.textContent=`⚡️ ${D.friend_name} обігнав тебе на 1 ланку! Зроби урок зараз.`;
+    }
+    if(D.synced_today){
+      const s=document.getElementById('sync-strip');
+      s.style.display='block';
+      s.textContent=`🔗 Speaking Sync сьогодні! +25 XP кожному`;
+    }
+  } else {
+    frAvatar.textContent='👥';
+    frAvatar.className='col-avatar empty';
+    frName.textContent='Друг';
+    frRole.textContent='Ще не приєднався';
+    frLen.textContent='—';
+    frLabel.textContent='';
+    const d=document.createElement('div');
+    d.style.cssText='font-size:11px;color:var(--text2);margin-top:6px;text-align:center';
+    d.textContent='Запроси — стартує з ланки 3';
+    frDots.appendChild(d);
+  }
+}
+
+/* ══ TAB 2: CHALLENGE ══ */
+function fillChallenge(){
+  const state  = D.sc_state || 'idle';
+  const phrase = D.challenge_phrase || '';
+  const transl = D.challenge_translation || '';
+
+  if(phrase){
+    document.getElementById('phrase-card').style.display='block';
+    document.getElementById('phrase-text').textContent        = phrase;
+    document.getElementById('phrase-translation').textContent = transl;
+  }
+
+  if(state==='done'&&D.my_score!==null){
+    document.getElementById('result-split').style.display='grid';
+    document.getElementById('rec-btn').className='rec-btn disabled';
+    document.getElementById('rec-btn').textContent='✅ Записано';
+    document.getElementById('rec-btn').onclick=null;
+
+    document.getElementById('my-score').textContent    = D.my_score||'—';
+    document.getElementById('my-feedback').textContent = D.my_feedback||'';
+    document.getElementById('my-badge').textContent    = scoreBadge(D.my_score);
+
+    if(D.friend_score!==null){
+      document.getElementById('friend-score').textContent   = D.friend_score;
+      document.getElementById('friend-feedback').textContent= D.friend_feedback||'';
+      document.getElementById('friend-badge').textContent   = scoreBadge(D.friend_score);
+    }
+    document.getElementById('friend-result-who').textContent = D.friend_name||'Друг';
+
+    document.getElementById('send-challenge-wrap').style.display='block';
+    document.getElementById('ch-sub').textContent='Результати Speaking Challenge';
+  } else if(phrase){
+    document.getElementById('send-challenge-wrap').style.display='block';
+  }
+}
+
+function scoreBadge(s){
+  if(!s) return '';
+  if(s>=90) return '🌟 Відмінно';
+  if(s>=75) return '⭐️ Добре';
+  if(s>=50) return '👍 Непогано';
+  return '💪 Є куди рости';
+}
+
+/* ══ TAB 3: NETWORK ══ */
+function fillNetwork(){
+  const list = document.getElementById('network-list');
+  const net  = D.network||[];
+  const max  = Math.max(...net.map(n=>n.chain),7);
+
+  net.forEach(p=>{
+    const item=document.createElement('div');
+    item.className='network-item';
+
+    const dots=Array.from({length:Math.min(max,10)},(_,i)=>{
+      const cls='net-dot '+(i<p.chain?`done ${p.role}`:'empty');
+      return `<div class="${cls}"></div>`;
+    }).join('');
+
+    item.innerHTML=`
+      <div class="net-avatar ${p.role}">${ini(p.name)}</div>
+      <div class="net-info">
+        <div class="net-name">${p.name}${p.role==='me'?' (Ти)':''}</div>
+        <div class="net-role">${p.role==='me'?'Я':p.role==='top'?'🏆 Топ':'Друг'}</div>
+      </div>
+      <div class="net-chain-wrap">
+        <div class="net-dots">${dots}</div>
+        <span class="net-count ${p.role}">${p.chain}</span>
+      </div>`;
+    list.appendChild(item);
+  });
+}
+
+/* ══ RECORDING ══ */
+let mediaRecorder=null, audioChunks=[], recInterval=null, recSecs=0, recBlob=null;
+
+async function toggleRecord(){
+  const btn=document.getElementById('rec-btn');
+  if(btn.classList.contains('recording')){
+    stopRecord();
+  } else {
+    await startRecord();
+  }
+}
+
+async function startRecord(){
+  try{
+    const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+    mediaRecorder=new MediaRecorder(stream);
+    audioChunks=[];
+    mediaRecorder.ondataavailable=e=>{if(e.data.size>0)audioChunks.push(e.data);};
+    mediaRecorder.onstop=()=>{
+      recBlob=new Blob(audioChunks,{type:'audio/ogg'});
+      showSubmitBtn();
+      stream.getTracks().forEach(t=>t.stop());
+    };
+    mediaRecorder.start(100);
+    recSecs=0;
+    document.getElementById('rec-btn').className='rec-btn recording';
+    document.getElementById('rec-btn').textContent='⏹ Зупинити запис';
+    document.getElementById('rec-wave').classList.add('show');
+    document.getElementById('rec-timer').classList.add('show');
+    recInterval=setInterval(()=>{
+      recSecs++;
+      const m=Math.floor(recSecs/60),s=recSecs%60;
+      document.getElementById('rec-timer').textContent=`⏺ ${m}:${s.toString().padStart(2,'0')}`;
+      if(recSecs>=60) stopRecord();
+    },1000);
+  }catch(e){
+    alert('Мікрофон недоступний. Дозволь доступ в налаштуваннях.');
+  }
+}
+
+function stopRecord(){
+  if(mediaRecorder&&mediaRecorder.state!=='inactive'){
+    mediaRecorder.stop();
+  }
+  clearInterval(recInterval);
+  document.getElementById('rec-wave').classList.remove('show');
+  document.getElementById('rec-timer').classList.remove('show');
+}
+
+function showSubmitBtn(){
+  const btn=document.getElementById('rec-btn');
+  btn.className='rec-btn submit';
+  btn.textContent='✅ Надіслати на оцінку AI';
+  btn.onclick=submitRecord;
+}
+
+async function submitRecord(){
+  if(!recBlob) return;
+  const btn=document.getElementById('rec-btn');
+  btn.className='rec-btn disabled';
+  btn.textContent='⏳ AI оцінює...';
+
+  // Надсилаємо в бот через sendData
+  const reader=new FileReader();
+  reader.onload=()=>{
+    const b64=reader.result.split(',')[1];
+    act('sc_voice_reply',{
+      audio_b64:b64,
+      phrase: D.challenge_phrase||'',
+      referrer: D.sc_referrer||null,
+    });
+  };
+  reader.readAsDataURL(recBlob);
+}
+
+/* ══ SHARE ══ */
+function getRefLink(){
+  return D.ref_link || `https://t.me/${D.bot_username||'SpeakChain_bot'}?start=ref_${D.my_uid||''}`;
+}
+
+function getChallengeLink(){
+  const phrase = encodeURIComponent(D.challenge_phrase||'');
+  return `https://t.me/${D.bot_username||'SpeakChain_bot'}?start=sc_${D.my_uid||''}_${phrase.slice(0,50)}`;
+}
+
+function shareTg(){
+  const link=getRefLink();
+  const text=encodeURIComponent(`Я будую мовний ланцюжок у SpeakChain 🔗\nПриєднуйся — почнемо разом з першої ланки.\n${link}`);
+  window.open(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=${text}`,'_blank');
+}
+
+function shareWa(){
+  const link=getRefLink();
+  const text=encodeURIComponent(`Я будую мовний ланцюжок у SpeakChain 🔗 Приєднуйся — стартуєш одразу з ланки 3. ${link}`);
+  window.open(`https://wa.me/?text=${text}`,'_blank');
+}
+
+function copyLink(){
+  const link=getRefLink();
+  if(navigator.clipboard){
+    navigator.clipboard.writeText(link).then(()=>showToast('✅ Посилання скопійовано!'));
+  } else {
+    const ta=document.createElement('textarea');
+    ta.value=link;document.body.appendChild(ta);ta.select();
+    document.execCommand('copy');document.body.removeChild(ta);
+    showToast('✅ Скопійовано!');
+  }
+}
+
+function sendChallenge(method){
+  const link=getChallengeLink();
+  const phrase=D.challenge_phrase||'';
+  if(method==='tg'){
+    const text=encodeURIComponent(`🎤 Speaking Challenge!\n\nПовтори цю фразу:\n"${phrase}"\n\nAI оцінить кожного незалежно 🎯\n${link}`);
+    window.open(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=${text}`,'_blank');
+  } else {
+    const full=`🎤 Speaking Challenge!\nФраза: "${phrase}"\n${link}`;
+    if(navigator.clipboard){
+      navigator.clipboard.writeText(full).then(()=>showToast('✅ Виклик скопійовано!'));
+    }
+  }
+  act('sc_challenge_sent',{phrase});
+}
+
+/* ══ UTILS ══ */
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2200);
+}
+
+function act(action,payload={}){
+  if(TG) TG.sendData(JSON.stringify({action,...payload}));
+}
+
+function switchTab(name,el){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  if(el) el.classList.add('active');
+  document.getElementById('screen-'+name).classList.add('active');
+}
+
+/* ══ INIT ══ */
+fillInvite();
+fillChallenge();
+fillNetwork();
+</script>
+</body>
+</html>

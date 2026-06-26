@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>SpeakChain · Chain Dashboard</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+:root {
+  --purple:#7c6ef7; --green:#5ad8a6; --orange:#f7a35c;
+  --red:#f76e6e;    --gold:#f5c842;  --blue:#5ab4f7;
+  --bg:#0d0d14;     --bg2:#16161f;   --bg3:#1e1e2a;
+  --bg4:#252535;    --text:#eaeaf5;  --text2:#8888a8;
+  --border:rgba(255,255,255,0.07);
+}
+body {
+  background:var(--bg); color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;
+  min-height:100vh;
+  padding-bottom:max(env(safe-area-inset-bottom),24px);
+  overflow-x:hidden;
+}
+
+/* ── Tab bar ── */
+.tab-bar {
+  position:sticky; top:0; z-index:30;
+  background:var(--bg); border-bottom:0.5px solid var(--border);
+  display:flex;
+}
+.tab {
+  flex:1; padding:13px 4px 11px; text-align:center;
+  font-size:11px; font-weight:600; color:var(--text2);
+  letter-spacing:.03em; cursor:pointer;
+  border-bottom:2px solid transparent; transition:color .2s,border-color .2s;
+}
+.tab.active { color:var(--purple); border-bottom-color:var(--purple); }
+
+/* ── Screens ── */
+.screen { display:none; }
+.screen.active { display:block; }
+
+/* ── Chain Hero ── */
+.chain-hero {
+  padding:20px 16px 16px;
+  background:var(--bg2);
+  border-bottom:0.5px solid var(--border);
+  text-align:center;
+}
+.chain-name {
+  font-size:11px; font-weight:700; color:var(--text2);
+  text-transform:uppercase; letter-spacing:.08em; margin-bottom:6px;
+}
+.chain-links-row {
+  display:flex; align-items:center; justify-content:center;
+  gap:4px; margin-bottom:10px; flex-wrap:wrap;
+}
+.chain-link {
+  width:32px; height:32px; border-radius:8px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:16px; transition:transform .2s;
+}
+.chain-link.done   { background:rgba(124,110,247,.25); }
+.chain-link.today  { background:var(--purple); box-shadow:0 0 12px rgba(124,110,247,.5); transform:scale(1.12); }
+.chain-link.empty  { background:var(--bg3); }
+.chain-link.bonus  { background:rgba(245,200,66,.2); }
+.chain-counter {
+  font-size:42px; font-weight:700; color:var(--text); line-height:1; margin-bottom:2px;
+  letter-spacing:-1px;
+}
+.chain-counter span { font-size:20px; color:var(--text2); font-weight:400; }
+.chain-status {
+  font-size:12px; color:var(--text2); margin-bottom:14px;
+}
+.chain-status.active { color:var(--green); }
+.chain-status.broken { color:var(--red); }
+.trial-bar-wrap { margin-bottom:6px; }
+.trial-bar-labels {
+  display:flex; justify-content:space-between;
+  font-size:10px; color:var(--text2); margin-bottom:4px; font-weight:600;
+}
+.trial-bar-track {
+  height:6px; background:var(--bg3); border-radius:6px; overflow:hidden;
+}
+.trial-bar-fill {
+  height:100%; border-radius:6px;
+  background:linear-gradient(90deg,var(--purple),var(--green));
+  transition:width .9s cubic-bezier(.4,0,.2,1);
+}
+
+/* ── XP strip ── */
+.xp-strip {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:10px 16px; background:var(--bg3);
+  border-bottom:0.5px solid var(--border);
+}
+.xp-left { display:flex; align-items:center; gap:8px; }
+.xp-icon { font-size:20px; }
+.xp-val  { font-size:20px; font-weight:700; color:var(--purple); }
+.xp-label{ font-size:11px; color:var(--text2); margin-top:1px; }
+.xp-boost {
+  padding:4px 10px; border-radius:20px; font-size:11px; font-weight:700;
+  background:rgba(245,200,66,.15); color:var(--gold);
+  border:1px solid rgba(245,200,66,.25);
+}
+
+/* ── Section ── */
+.section { padding:14px 16px; }
+.section-title {
+  font-size:10px; font-weight:700; color:var(--text2);
+  text-transform:uppercase; letter-spacing:.08em; margin-bottom:10px;
+}
+
+/* ── Action grid ── */
+.action-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.action-card {
+  background:var(--bg3); border-radius:14px; padding:14px 12px;
+  border:0.5px solid var(--border); cursor:pointer;
+  display:flex; flex-direction:column; gap:6px;
+  transition:background .15s, transform .1s;
+  -webkit-tap-highlight-color:transparent;
+}
+.action-card:active { transform:scale(.97); background:var(--bg4); }
+.action-icon { font-size:24px; }
+.action-label { font-size:13px; font-weight:600; color:var(--text); line-height:1.3; }
+.action-sub   { font-size:10px; color:var(--text2); }
+
+/* ── Network chains ── */
+.network-card {
+  background:var(--bg3); border-radius:14px; padding:14px;
+  border:0.5px solid var(--border); margin-bottom:8px;
+}
+.network-row {
+  display:flex; align-items:center; gap:10px; padding:6px 0;
+  border-bottom:0.5px solid var(--border);
+}
+.network-row:last-child { border-bottom:none; padding-bottom:0; }
+.network-avatar {
+  width:34px; height:34px; border-radius:50%; flex-shrink:0;
+  display:flex; align-items:center; justify-content:center;
+  font-size:13px; font-weight:700;
+}
+.network-avatar.me     { background:rgba(124,110,247,.2); color:var(--purple); }
+.network-avatar.friend { background:rgba(90,216,166,.2);  color:var(--green); }
+.network-avatar.top    { background:rgba(245,200,66,.2);  color:var(--gold); }
+.network-info { flex:1; min-width:0; }
+.network-name { font-size:13px; font-weight:600; }
+.network-role { font-size:10px; color:var(--text2); margin-top:1px; }
+.network-chain-bar {
+  display:flex; align-items:center; gap:6px;
+}
+.mini-links { display:flex; gap:2px; }
+.mini-link {
+  width:10px; height:10px; border-radius:3px;
+}
+.mini-link.done  { background:var(--purple); }
+.mini-link.empty { background:var(--bg4); }
+.network-num { font-size:12px; font-weight:700; }
+.network-num.me     { color:var(--purple); }
+.network-num.friend { color:var(--green); }
+.network-num.top    { color:var(--gold); }
+.fomo-banner {
+  margin-top:8px; padding:8px 12px; border-radius:10px;
+  background:rgba(247,110,110,.1); border:1px solid rgba(247,110,110,.2);
+  font-size:12px; color:var(--red); font-weight:600;
+}
+
+/* ── Leaderboard ── */
+.lb-row {
+  display:flex; align-items:center; gap:10px;
+  padding:10px 0; border-bottom:0.5px solid var(--border);
+}
+.lb-row:last-child { border-bottom:none; }
+.lb-rank {
+  width:24px; font-size:13px; font-weight:700;
+  color:var(--text2); text-align:center; flex-shrink:0;
+}
+.lb-rank.gold   { color:var(--gold); }
+.lb-rank.silver { color:#b0b0c0; }
+.lb-rank.bronze { color:#cd7f32; }
+.lb-avatar {
+  width:36px; height:36px; border-radius:50%; flex-shrink:0;
+  background:var(--bg4); display:flex; align-items:center; justify-content:center;
+  font-size:13px; font-weight:700; color:var(--purple);
+}
+.lb-avatar.me { background:rgba(124,110,247,.2); border:1.5px solid var(--purple); }
+.lb-info { flex:1; min-width:0; }
+.lb-name { font-size:13px; font-weight:600; }
+.lb-meta { font-size:10px; color:var(--text2); margin-top:2px; }
+.lb-score {
+  font-size:15px; font-weight:700; color:var(--purple);
+  text-align:right;
+}
+.lb-score span { font-size:10px; color:var(--text2); font-weight:400; }
+
+/* ── Identity banner ── */
+.identity-banner {
+  margin:14px 16px 0;
+  padding:12px 14px; border-radius:14px;
+  background:rgba(124,110,247,.1); border:1px solid rgba(124,110,247,.2);
+  display:flex; align-items:center; gap:10px;
+}
+.identity-icon { font-size:28px; flex-shrink:0; }
+.identity-title { font-size:13px; font-weight:700; color:var(--purple); }
+.identity-sub   { font-size:11px; color:var(--text2); margin-top:2px; line-height:1.4; }
+
+/* ── CTA button ── */
+.cta-btn {
+  width:calc(100% - 32px); margin:12px 16px;
+  padding:15px; border-radius:14px; border:none;
+  font-size:15px; font-weight:700; cursor:pointer;
+  transition:transform .1s, opacity .15s;
+}
+.cta-btn:active { transform:scale(.98); }
+.cta-btn.primary {
+  background:var(--purple); color:#fff;
+}
+.cta-btn.green {
+  background:rgba(90,216,166,.15); color:var(--green);
+  border:1px solid rgba(90,216,166,.25);
+}
+.cta-btn.ghost {
+  background:var(--bg3); color:var(--text2);
+  border:0.5px solid var(--border);
+}
+
+/* ── Trial complete paywall ── */
+.paywall-screen {
+  padding:24px 16px;
+  display:flex; flex-direction:column; align-items:center; text-align:center; gap:10px;
+}
+.paywall-trophy { font-size:56px; margin-bottom:4px; }
+.paywall-title  { font-size:22px; font-weight:700; letter-spacing:-.5px; }
+.paywall-sub    { font-size:14px; color:var(--text2); line-height:1.5; }
+.paywall-stats  {
+  display:grid; grid-template-columns:repeat(3,1fr); gap:8px; width:100%; margin:8px 0;
+}
+.paywall-stat {
+  background:var(--bg3); border-radius:12px; padding:10px 8px;
+  text-align:center; border:0.5px solid var(--border);
+}
+.paywall-stat-val { font-size:22px; font-weight:700; color:var(--purple); }
+.paywall-stat-lbl { font-size:9px; color:var(--text2); font-weight:700; text-transform:uppercase; letter-spacing:.04em; margin-top:3px; }
+.plan-cards { display:flex; flex-direction:column; gap:8px; width:100%; }
+.plan-card {
+  background:var(--bg3); border-radius:14px; padding:14px 16px;
+  border:0.5px solid var(--border); text-align:left;
+  display:flex; align-items:center; gap:12px; cursor:pointer;
+  transition:background .15s;
+}
+.plan-card:active { background:var(--bg4); }
+.plan-card.featured { border-color:rgba(124,110,247,.4); background:rgba(124,110,247,.08); }
+.plan-card-icon { font-size:28px; flex-shrink:0; }
+.plan-card-info { flex:1; }
+.plan-card-name { font-size:14px; font-weight:700; }
+.plan-card-feats { font-size:11px; color:var(--text2); margin-top:3px; line-height:1.4; }
+.plan-card-price {
+  font-size:18px; font-weight:700; color:var(--green);
+  text-align:right; flex-shrink:0;
+}
+.plan-card-price span { font-size:10px; color:var(--text2); font-weight:400; display:block; }
+
+/* ── Divider ── */
+.divider { height:.5px; background:var(--border); margin:0 16px; }
+
+/* ── Speaking Partner preview ── */
+.buddy-preview {
+  background:var(--bg3); border-radius:14px; border:0.5px solid var(--border);
+  overflow:hidden;
+}
+.buddy-msg {
+  padding:10px 14px; display:flex; gap:10px; align-items:flex-start;
+}
+.buddy-msg + .buddy-msg { border-top:.5px solid var(--border); }
+.buddy-bubble-ai {
+  background:rgba(124,110,247,.15); border-radius:12px 12px 12px 3px;
+  padding:8px 12px; font-size:13px; color:var(--text); max-width:80%; line-height:1.5;
+}
+.buddy-bubble-user {
+  background:rgba(90,216,166,.12); border-radius:12px 12px 3px 12px;
+  padding:8px 12px; font-size:13px; color:var(--text); max-width:80%; line-height:1.5;
+  margin-left:auto;
+}
+.buddy-lock {
+  padding:12px 14px; background:rgba(245,200,66,.08);
+  border-top:.5px solid rgba(245,200,66,.15);
+  text-align:center;
+}
+.buddy-lock-text { font-size:12px; color:var(--gold); font-weight:600; }
+</style>
+</head>
+<body>
+
+<!-- Tab bar -->
+<div class="tab-bar">
+  <div class="tab active" onclick="switchTab('chain')">🔗 Ланцюжок</div>
+  <div class="tab" onclick="switchTab('network')">👥 Мережа</div>
+  <div class="tab" onclick="switchTab('leaders')">🏆 Топ</div>
+  <div class="tab" onclick="switchTab('upgrade')">⚡️ Доступ</div>
+</div>
+
+<!-- ══ TAB 1: CHAIN ══ -->
+<div class="screen active" id="screen-chain">
+
+  <!-- Chain hero -->
+  <div class="chain-hero">
+    <div class="chain-name">Мій ланцюжок</div>
+    <div class="chain-links-row" id="chain-links-row"></div>
+    <div class="chain-counter" id="chain-counter">0 <span>/ 7</span></div>
+    <div class="chain-status" id="chain-status">Почни перший урок</div>
+    <div class="trial-bar-wrap" id="trial-bar-wrap">
+      <div class="trial-bar-labels">
+        <span>Пробний доступ</span>
+        <span id="trial-label">0 / 7 ланок</span>
+      </div>
+      <div class="trial-bar-track">
+        <div class="trial-bar-fill" id="trial-bar-fill" style="width:0%"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- XP strip -->
+  <div class="xp-strip">
+    <div class="xp-left">
+      <span class="xp-icon">⚡️</span>
+      <div>
+        <div class="xp-val" id="xp-val">0 XP</div>
+        <div class="xp-label">Загальний рейтинг</div>
+      </div>
+    </div>
+    <div class="xp-boost" id="xp-boost" style="display:none">+20% boost</div>
+  </div>
+
+  <!-- Identity -->
+  <div class="identity-banner" id="identity-banner">
+    <div class="identity-icon" id="identity-icon">🔗</div>
+    <div>
+      <div class="identity-title" id="identity-title">Новачок</div>
+      <div class="identity-sub" id="identity-sub">Зроби перший урок і почни будувати ланцюжок</div>
+    </div>
+  </div>
+
+  <!-- Quick actions -->
+  <div class="section">
+    <div class="section-title">Дії</div>
+    <div class="action-grid">
+      <div class="action-card" onclick="act('start_lesson')">
+        <span class="action-icon">🎬</span>
+        <span class="action-label">Почати урок</span>
+        <span class="action-sub">Додай ланку сьогодні</span>
+      </div>
+      <div class="action-card" onclick="act('chain_invite_screen')">
+        <span class="action-icon">🔗</span>
+        <span class="action-label">Запросити друга</span>
+        <span class="action-sub">+бонус для обох</span>
+      </div>
+      <div class="action-card" onclick="act('show_progress')">
+        <span class="action-icon">📊</span>
+        <span class="action-label">Мій прогрес</span>
+        <span class="action-sub">A1 → C2 шлях</span>
+      </div>
+      <div class="action-card" onclick="act('revive_chain')">
+        <span class="action-icon" id="revive-icon">💪</span>
+        <span class="action-label" id="revive-label">Серія завдань</span>
+        <span class="action-sub" id="revive-sub">XP челендж</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Speaking Buddy preview -->
+  <div class="section" style="padding-top:0">
+    <div class="section-title">Speaking Buddy <span style="font-size:9px;background:rgba(245,200,66,.15);color:var(--gold);padding:2px 7px;border-radius:10px;font-weight:700;letter-spacing:.03em">PREMIUM</span></div>
+    <div class="buddy-preview">
+      <div class="buddy-msg">
+        <div class="buddy-bubble-ai">Tell me about yourself — where are you from and what do you do?</div>
+      </div>
+      <div class="buddy-msg" style="justify-content:flex-end">
+        <div class="buddy-bubble-user">I'm from Ukraine and I work as a developer...</div>
+      </div>
+      <div class="buddy-lock">
+        <div class="buddy-lock-text">🔒 Розблокуй AI-розмови з Premium</div>
+      </div>
+    </div>
+    <button class="cta-btn green" style="margin:10px 0 0;width:100%" onclick="act('paywall_fluent')">Спробувати Speaking Buddy →</button>
+  </div>
+
+</div>
+
+<!-- ══ TAB 2: NETWORK ══ -->
+<div class="screen" id="screen-network">
+
+  <div class="section">
+    <div class="section-title">Ваші ланцюжки</div>
+    <div class="network-card" id="network-card">
+      <!-- filled by JS -->
+    </div>
+    <div class="fomo-banner" id="fomo-banner" style="display:none"></div>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="section">
+    <div class="section-title">Speaking Challenge</div>
+    <div class="action-grid">
+      <div class="action-card" onclick="act('sc_send_challenge')">
+        <span class="action-icon">🎤</span>
+        <span class="action-label">Кинути виклик</span>
+        <span class="action-sub">Надіслати фразу</span>
+      </div>
+      <div class="action-card" onclick="act('chain_invite_screen')">
+        <span class="action-icon">🔗</span>
+        <span class="action-label">Зміцнити ланцюжок</span>
+        <span class="action-sub">Запросити друга</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" style="padding-top:0">
+    <div class="section-title">Бонуси за мережу</div>
+    <div style="display:flex;flex-direction:column;gap:7px">
+      <div style="background:var(--bg3);border-radius:12px;padding:12px 14px;border:.5px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <div style="font-size:13px;font-weight:600">Друг зробив 1-у ланку</div>
+          <div style="font-size:11px;color:var(--text2);margin-top:2px">Обидва отримують +20% XP × 7 днів</div>
+        </div>
+        <span style="font-size:20px">⚡️</span>
+      </div>
+      <div style="background:var(--bg3);border-radius:12px;padding:12px 14px;border:.5px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <div style="font-size:13px;font-weight:600">Обидва зробили урок сьогодні</div>
+          <div style="font-size:11px;color:var(--text2);margin-top:2px">Speaking Sync — +25 XP кожному</div>
+        </div>
+        <span style="font-size:20px">🔗</span>
+      </div>
+      <div style="background:var(--bg3);border-radius:12px;padding:12px 14px;border:.5px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <div style="font-size:13px;font-weight:600">Speaking Partners бейдж</div>
+          <div style="font-size:11px;color:var(--text2);margin-top:2px">Після першого спільного виклику</div>
+        </div>
+        <span style="font-size:20px">🏅</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══ TAB 3: LEADERBOARD ══ -->
+<div class="screen" id="screen-leaders">
+  <div class="section">
+    <div style="display:flex;gap:8px;margin-bottom:12px">
+      <button id="lb-tab-chain" onclick="lbSwitch('chain')"
+        style="flex:1;padding:8px;border-radius:10px;border:.5px solid var(--purple);background:rgba(124,110,247,.15);color:var(--purple);font-size:12px;font-weight:700;cursor:pointer">
+        🔗 Ланцюжки
+      </button>
+      <button id="lb-tab-xp" onclick="lbSwitch('xp')"
+        style="flex:1;padding:8px;border-radius:10px;border:.5px solid var(--border);background:var(--bg3);color:var(--text2);font-size:12px;font-weight:700;cursor:pointer">
+        ⚡️ XP тижня
+      </button>
+    </div>
+    <div id="lb-list"></div>
+  </div>
+</div>
+
+<!-- ══ TAB 4: UPGRADE ══ -->
+<div class="screen" id="screen-upgrade">
+  <!-- Trial in progress view (shown when chain_len < 7) -->
+  <div id="upgrade-trial">
+    <div class="section" style="padding-bottom:0">
+      <div class="section-title">Пробний доступ</div>
+      <div style="background:var(--bg3);border-radius:14px;border:.5px solid var(--border);padding:16px;text-align:center;margin-bottom:12px">
+        <div style="font-size:36px;margin-bottom:6px">🔗</div>
+        <div style="font-size:20px;font-weight:700" id="upgrade-counter-text">0 з 7 ланок</div>
+        <div class="trial-bar-track" style="margin:10px 0 6px">
+          <div class="trial-bar-fill" id="upgrade-bar-fill" style="width:0%"></div>
+        </div>
+        <div style="font-size:12px;color:var(--text2)" id="upgrade-bar-sub">Залишилось 7 ланок</div>
+      </div>
+    </div>
+    <div class="section" style="padding-top:8px">
+      <div class="section-title">Що доступно зараз</div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <div style="background:var(--bg3);border-radius:12px;padding:11px 14px;border:.5px solid var(--border);display:flex;gap:10px;align-items:center">
+          <span style="font-size:20px">🎬</span>
+          <div><div style="font-size:13px;font-weight:600">AI-уроки з відео</div><div style="font-size:11px;color:var(--text2)">Аналіз вимови і граматики</div></div>
+          <span style="margin-left:auto;font-size:11px;color:var(--green);font-weight:700">✓ Активно</span>
+        </div>
+        <div style="background:var(--bg3);border-radius:12px;padding:11px 14px;border:.5px solid var(--border);display:flex;gap:10px;align-items:center">
+          <span style="font-size:20px">🔗</span>
+          <div><div style="font-size:13px;font-weight:600">Chain ланцюжок</div><div style="font-size:11px;color:var(--text2)">XP і прогрес</div></div>
+          <span style="margin-left:auto;font-size:11px;color:var(--green);font-weight:700">✓ Активно</span>
+        </div>
+        <div style="background:var(--bg3);border-radius:12px;padding:11px 14px;border:.5px solid var(--border);display:flex;gap:10px;align-items:center;opacity:.5">
+          <span style="font-size:20px">🎙</span>
+          <div><div style="font-size:13px;font-weight:600">Speaking Buddy</div><div style="font-size:11px;color:var(--text2)">AI-розмова в реальному часі</div></div>
+          <span style="margin-left:auto;font-size:11px;color:var(--gold);font-weight:700">🔒 Premium</span>
+        </div>
+        <div style="background:var(--bg3);border-radius:12px;padding:11px 14px;border:.5px solid var(--border);display:flex;gap:10px;align-items:center;opacity:.5">
+          <span style="font-size:20px">📊</span>
+          <div><div style="font-size:13px;font-weight:600">Gap аналіз</div><div style="font-size:11px;color:var(--text2)">Персональні прогалини</div></div>
+          <span style="margin-left:auto;font-size:11px;color:var(--orange);font-weight:700">🔒 Basic+</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Paywall view (shown when chain_len >= 7) -->
+  <div id="upgrade-paywall" style="display:none">
+    <div class="paywall-screen">
+      <div class="paywall-trophy">🏁</div>
+      <div class="paywall-title">Пробний завершено!</div>
+      <div class="paywall-sub" id="paywall-sub">Ти пройшов далі ніж 80% тих хто починав.</div>
+      <div class="paywall-stats" id="paywall-stats"></div>
+      <div style="font-size:13px;color:var(--text2);margin:4px 0 8px;line-height:1.5">
+        Ти вже побудував основу мовного ланцюжка.<br>
+        <strong style="color:var(--text)">Розблокуй продовження.</strong>
+      </div>
+      <div class="plan-cards" id="plan-cards"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const TG = (typeof Telegram!=='undefined'&&Telegram.WebApp)?Telegram.WebApp:null;
+if(TG){try{TG.ready();TG.expand();}catch(e){}}
+
+const params=new URLSearchParams(window.location.search);
+let D={};
+try{ D=JSON.parse(decodeURIComponent(params.get('d')||'{}')); }catch(e){}
+
+/* ── Mock data for standalone preview ── */
+if(!D.name){
+  D={
+    name:'Олексій', uid:123,
+    chain_length:4, chain_status:'active',
+    trial_links:7, xp_total:340, xp_boost:true, xp_boost_days:5,
+    identity_state:'speaker_in_progress',
+    done_lessons:12, streak_days:4,
+    friends:[
+      {name:'Аня',    chain:3, role:'friend'},
+      {name:'Вова',   chain:6, role:'friend'},
+    ],
+    top_user:{name:'Katia', chain:24},
+    leaderboard_chain:[
+      {name:'Katia',    chain:24, xp:1820, me:false},
+      {name:'Dmitro',   chain:18, xp:1540, me:false},
+      {name:'Аня',      chain:12, xp:980,  me:false},
+      {name:'Олексій',  chain:4,  xp:340,  me:true},
+      {name:'Oksana',   chain:3,  xp:210,  me:false},
+    ],
+    basic_price:'22', basic_link:'', prem_price:'93', prem_link:'',
+  };
+}
+
+const IDENTITY={
+  new:              {icon:'🔗', title:'Новачок',              sub:'Зроби перший урок і почни будувати ланцюжок'},
+  speaker_in_progress:{icon:'🗣',title:'Speaker in Progress',   sub:'Ти вже будуєш мовну звичку'},
+  chain_builder:    {icon:'⚡️',title:'Chain Builder',           sub:'7+ ланок — ти серйозно налаштований'},
+  fluent_seeker:    {icon:'🌟',title:'Fluent Seeker',           sub:'30+ уроків. Англійська стає частиною тебе'},
+};
+
+function ini(n){return(n||'?').split(/\s+/).map(w=>w[0]).join('').toUpperCase().slice(0,2);}
+
+/* ── Render chain links ── */
+function renderChainLinks(len,total){
+  const row=document.getElementById('chain-links-row');
+  let html='';
+  for(let i=1;i<=total;i++){
+    if(i<len)      html+=`<div class="chain-link done">◆</div>`;
+    else if(i===len)html+=`<div class="chain-link today">🔗</div>`;
+    else            html+=`<div class="chain-link empty">◇</div>`;
+  }
+  row.innerHTML=html;
+}
+
+/* ── Tab 1: Chain ── */
+function fillChain(){
+  const len   = D.chain_length||0;
+  const total = D.trial_links||7;
+  const status= D.chain_status||'new';
+  const xp    = D.xp_total||0;
+
+  renderChainLinks(len,total);
+
+  document.getElementById('chain-counter').innerHTML=`${len} <span>/ ${total}</span>`;
+  document.getElementById('trial-label').textContent=`${len} / ${total} ланок`;
+  document.getElementById('trial-bar-fill').style.width=`${Math.min(len/total*100,100)}%`;
+
+  const statusEl=document.getElementById('chain-status');
+  if(status==='broken'){
+    statusEl.textContent='💔 Ланцюжок розірваний — відновити?';
+    statusEl.className='chain-status broken';
+    document.getElementById('revive-icon').textContent='🔄';
+    document.getElementById('revive-label').textContent='Відновити';
+    document.getElementById('revive-sub').textContent='Витратити XP';
+  } else if(len===0){
+    statusEl.textContent='Почни перший урок';
+    statusEl.className='chain-status';
+  } else {
+    statusEl.textContent=`✅ Ланцюжок активний · ${len} ${len===1?'день':'днів'}`;
+    statusEl.className='chain-status active';
+  }
+
+  document.getElementById('xp-val').textContent=xp+' XP';
+  if(D.xp_boost){
+    const b=document.getElementById('xp-boost');
+    b.style.display='block';
+    b.textContent=`+20% XP · ще ${D.xp_boost_days||7} дн.`;
+  }
+
+  const id=IDENTITY[D.identity_state]||IDENTITY['new'];
+  document.getElementById('identity-icon').textContent=id.icon;
+  document.getElementById('identity-title').textContent=id.title;
+  document.getElementById('identity-sub').textContent=id.sub;
+}
+
+/* ── Tab 2: Network ── */
+function fillNetwork(){
+  const myLen=D.chain_length||0;
+  const friends=D.friends||[];
+  const top=D.top_user||null;
+
+  let rows='';
+  const allPeople=[{name:D.name||'Ти',chain:myLen,role:'me'},...friends];
+  if(top&&!friends.find(f=>f.name===top.name)) allPeople.push({...top,role:'top'});
+
+  allPeople.forEach(p=>{
+    const max=Math.max(...allPeople.map(x=>x.chain),7);
+    let links='';
+    for(let i=1;i<=Math.min(max,10);i++){
+      links+=`<div class="mini-link ${i<=p.chain?'done':'empty'}"></div>`;
+    }
+    const roleLabel=p.role==='me'?'Я':p.role==='top'?'🏆 Топ':'Друг';
+    rows+=`
+    <div class="network-row">
+      <div class="network-avatar ${p.role}">${ini(p.name)}</div>
+      <div class="network-info">
+        <div class="network-name">${p.name}</div>
+        <div class="network-role">${roleLabel}</div>
+      </div>
+      <div class="network-chain-bar">
+        <div class="mini-links">${links}</div>
+        <span class="network-num ${p.role}">${p.chain}</span>
+      </div>
+    </div>`;
+  });
+  document.getElementById('network-card').innerHTML=rows;
+
+  // FOMO
+  const fomoFriend=friends.find(f=>f.chain===myLen+1);
+  const fomoBanner=document.getElementById('fomo-banner');
+  if(fomoFriend){
+    fomoBanner.style.display='block';
+    fomoBanner.textContent=`⚡️ ${fomoFriend.name} обігнав тебе на 1 ланку! Зроби урок зараз.`;
+  }
+}
+
+/* ── Tab 3: Leaderboard ── */
+let currentLbType='chain';
+function lbSwitch(type){
+  currentLbType=type;
+  document.getElementById('lb-tab-chain').style.background=type==='chain'?'rgba(124,110,247,.15)':'var(--bg3)';
+  document.getElementById('lb-tab-chain').style.color=type==='chain'?'var(--purple)':'var(--text2)';
+  document.getElementById('lb-tab-chain').style.borderColor=type==='chain'?'var(--purple)':'var(--border)';
+  document.getElementById('lb-tab-xp').style.background=type==='xp'?'rgba(124,110,247,.15)':'var(--bg3)';
+  document.getElementById('lb-tab-xp').style.color=type==='xp'?'var(--purple)':'var(--text2)';
+  document.getElementById('lb-tab-xp').style.borderColor=type==='xp'?'var(--purple)':'var(--border)';
+  fillLeaderboard();
+}
+function fillLeaderboard(){
+  const data=(D.leaderboard_chain||[]).slice().sort((a,b)=>
+    currentLbType==='chain'?(b.chain-a.chain):(b.xp-a.xp)
+  );
+  const rankClass=['','gold','silver','bronze'];
+  let html='';
+  data.forEach((u,i)=>{
+    const rank=i+1;
+    const rc=rankClass[rank]||'';
+    const emoji=rank===1?'🥇':rank===2?'🥈':rank===3?'🥉':rank;
+    const score=currentLbType==='chain'?`${u.chain} <span>ланок</span>`:`${u.xp} <span>XP</span>`;
+    html+=`
+    <div class="lb-row">
+      <div class="lb-rank ${rc}">${emoji}</div>
+      <div class="lb-avatar ${u.me?'me':''}">${ini(u.name)}</div>
+      <div class="lb-info">
+        <div class="lb-name">${u.name}${u.me?' (Ти)':''}</div>
+        <div class="lb-meta">${currentLbType==='chain'?'🔗 ланцюжок':'⚡️ XP цього тижня'}</div>
+      </div>
+      <div class="lb-score">${score}</div>
+    </div>`;
+  });
+  document.getElementById('lb-list').innerHTML=html||'<div style="text-align:center;color:var(--text2);padding:24px">Немає даних</div>';
+}
+
+/* ── Tab 4: Upgrade ── */
+function fillUpgrade(){
+  const len=D.chain_length||0;
+  const total=D.trial_links||7;
+  const trialDone=len>=total;
+
+  document.getElementById('upgrade-trial').style.display=trialDone?'none':'block';
+  document.getElementById('upgrade-paywall').style.display=trialDone?'block':'none';
+
+  if(!trialDone){
+    document.getElementById('upgrade-counter-text').textContent=`${len} з ${total} ланок`;
+    document.getElementById('upgrade-bar-fill').style.width=`${Math.min(len/total*100,100)}%`;
+    document.getElementById('upgrade-bar-sub').textContent=`Залишилось ${total-len} ланок`;
+  } else {
+    document.getElementById('paywall-sub').textContent=
+      `Ти пройшов ${D.done_lessons||0} уроків за пробний період.`;
+    document.getElementById('paywall-stats').innerHTML=`
+      <div class="paywall-stat"><div class="paywall-stat-val">${D.chain_length||0}</div><div class="paywall-stat-lbl">Ланок</div></div>
+      <div class="paywall-stat"><div class="paywall-stat-val">${D.done_lessons||0}</div><div class="paywall-stat-lbl">Уроків</div></div>
+      <div class="paywall-stat"><div class="paywall-stat-val">${D.xp_total||0}</div><div class="paywall-stat-lbl">XP</div></div>
+    `;
+    const basic_price=D.basic_price||'22';
+    const prem_price=D.prem_price||'93';
+    document.getElementById('plan-cards').innerHTML=`
+      <div class="plan-card featured" onclick="act('buy_premium')">
+        <span class="plan-card-icon">🌟</span>
+        <div class="plan-card-info">
+          <div class="plan-card-name">Premium</div>
+          <div class="plan-card-feats">Все + Live sessions + Speaking Buddy</div>
+        </div>
+        <div class="plan-card-price">$${prem_price}<span>/міс</span></div>
+      </div>
+      <div class="plan-card" onclick="act('buy_basic')">
+        <span class="plan-card-icon">⚡️</span>
+        <div class="plan-card-info">
+          <div class="plan-card-name">Basic</div>
+          <div class="plan-card-feats">Безлімітні уроки · Gap аналіз · Community</div>
+        </div>
+        <div class="plan-card-price">$${basic_price}<span>/міс</span></div>
+      </div>
+    `;
+  }
+}
+
+/* ── Tabs ── */
+function switchTab(name){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+  document.getElementById('screen-'+name).classList.add('active');
+  if(name==='leaders') fillLeaderboard();
+}
+
+/* ── Actions → bot ── */
+function act(action){
+  if(TG) TG.sendData(JSON.stringify({action}));
+}
+
+/* ── Init ── */
+fillChain();
+fillNetwork();
+fillUpgrade();
+</script>
+</body>
+</html>
