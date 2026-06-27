@@ -143,7 +143,22 @@ if not YOUTUBE_API_KEY:
 
 print("=== [11] CREATING CLAUDE CLIENT ===", flush=True)
 claude_client = anthropic.Anthropic(api_key=CLAUDE_API_KEY)
+async_claude_client = anthropic.AsyncAnthropic(api_key=CLAUDE_API_KEY)
 print("=== [12] CLAUDE CLIENT OK ===", flush=True)
+
+
+# ── Async wrapper для Claude (нативний AsyncAnthropic — не блокує event loop) ──
+async def claude_create_async(**kwargs):
+    """
+    Нативний асинхронний виклик Claude API через AsyncAnthropic.
+    SDK сам внутрішньо async — використовує httpx замість requests.
+    Не блокує event loop, не використовує threads.
+    
+    Використання: cr = await claude_create_async(model=..., max_tokens=..., messages=[...])
+    
+    Повертає той самий об'єкт що й sync виклик — .content[0].text доступне.
+    """
+    return await async_claude_client.messages.create(**kwargs)
 
 # ── Google Sheets sync ───────────────────────────────
 _gs_client = None
@@ -2526,7 +2541,7 @@ async def _enrich_phrase(phrase: str, level: str) -> dict:
             '{"translation": "Ukrainian translation", '
             '"example": "Short example sentence in English"}'
         )
-        cr = claude_client.messages.create(
+        cr = await claude_create_async(
             model="claude-haiku-4-5-20251001",
             max_tokens=120,
             messages=[{"role": "user", "content": prompt}]
@@ -2661,11 +2676,20 @@ DATABASE_URL = os.environ.get("DATABASE_URL", "")
 # PERFORMANCE LAYER — connection pool + write-behind cache
 # ════════════════════════════════════════════════════════════
 
-# ── PostgreSQL Connection Pool (2-8 з'єднань) ──────────────
+# ── PostgreSQL Connection Pool (5-20 з'єднань) ─────────────
 _PG_POOL = None
 
 def _get_pg_pool():
-    """Ліниво ініціалізує connection pool."""
+    """
+    Ліниво ініціалізує connection pool.
+    
+    min=5  — завжди готові з'єднання (без затримки при старті запиту)
+    max=50 — до 50 паралельних з'єднань
+             (Railway max_connections=100, залишаємо 50 про запас)
+             (кожне PG з'єднання ~ 5-10 MB RAM на Railway)
+    
+    При 4000+ юзерів — asyncpg + Redis + горизонтальне масштабування.
+    """
     global _PG_POOL
     if not DATABASE_URL:
         return None
@@ -2673,23 +2697,50 @@ def _get_pg_pool():
         try:
             import psycopg2.pool
             _PG_POOL = psycopg2.pool.ThreadedConnectionPool(
-                2, 8, DATABASE_URL, sslmode="require",
-                connect_timeout=5
+                5,   # minconn — завжди тримаємо 5 готових
+                50,  # maxconn — до 50 паралельних з'єднань
+                DATABASE_URL,
+                sslmode="require",
+                connect_timeout=5,
+                keepalives=1,           # TCP keepalive — щоб з'єднання не рвались
+                keepalives_idle=30,     # після 30 сек idle — надсилаємо keepalive
+                keepalives_interval=10, # кожні 10 сек повторюємо
+                keepalives_count=5,     # 5 спроб перш ніж вважати з'єднання мертвим
             )
-            logger.info("✅ PG connection pool ready (2-8 conns)")
+            logger.info("✅ PG connection pool ready (5-50 conns)")
         except Exception as e:
             logger.warning(f"PG pool init error: {e}")
     return _PG_POOL
 
 def _pg_conn():
-    """Бере з'єднання з пулу (не створює нове щоразу)."""
+    """
+    Бере з'єднання з пулу.
+    Якщо з'єднання мертве (timeout, network drop) — автоматично reconnect.
+    """
     pool = _get_pg_pool()
     if not pool:
         return None
     try:
-        return pool.getconn()
+        conn = pool.getconn()
+        if conn is None:
+            return None
+        # Перевіряємо чи з'єднання живе (ping)
+        try:
+            conn.cursor().execute("SELECT 1")
+            conn.rollback()  # rollback після ping щоб не було відкритої транзакції
+        except Exception:
+            # З'єднання мертве — закриваємо і беремо нове
+            try:
+                pool.putconn(conn, close=True)
+            except Exception:
+                pass
+            conn = pool.getconn()
+        return conn
     except Exception as e:
         logger.warning(f"PG pool getconn: {e}")
+        # Спробуємо перестворити пул якщо він зламаний
+        global _PG_POOL
+        _PG_POOL = None
         return None
 
 def _pg_release(conn):
@@ -3275,7 +3326,7 @@ async def youtube_search_lesson(s: dict) -> dict | None:
                     f"GRAMMAR: [{cefr_topic or 'grammar focus for ' + level}]\n"
                     f"HINT: [2-3 English sentence starters from the video adapted to their interests]"
                 )
-                cr = claude_client.messages.create(
+                cr = await claude_create_async(
                     model="claude-haiku-4-5-20251001", max_tokens=200,
                     messages=[{"role": "user", "content": pr}]
                 )
@@ -3330,7 +3381,7 @@ Reply ONLY JSON (no markdown):
 {{"grammar_gap":"Ukrainian description","vocab_gap":"Ukrainian description","grammar_query":"youtube search query","vocab_query":"youtube search query","reinforce_query":"youtube search query"}}"""
 
     try:
-        cr = claude_client.messages.create(
+        cr = await claude_create_async(
             model="claude-haiku-4-5-20251001", max_tokens=200,
             messages=[{"role": "user", "content": prompt}]
         )
@@ -5350,7 +5401,7 @@ async def _send_first_video_task(message, ctx, video_url: str, user_id: int):
             f"GRAMMAR: [one simple grammar point]\n"
             f"HINT: [2-3 simple English phrases from the video to repeat]"
         )
-        cr = claude_client.messages.create(
+        cr = await claude_create_async(
             model="claude-haiku-4-5-20251001", max_tokens=200,
             messages=[{"role": "user", "content": pr}]
         )
@@ -7844,7 +7895,7 @@ async def _send_grammar_exercise(bot, uid: int, topic_key: str, level: str, coun
     prompt = build_exercise_prompt(topic_key, level, form)
 
     try:
-        cr = claude_client.messages.create(
+        cr = await claude_create_async(
             model="claude-haiku-4-5-20251001",
             max_tokens=400,
             messages=[{"role": "user", "content": prompt}]
@@ -8381,7 +8432,7 @@ async def classify_topic_llm(phrase: str) -> str | None:
         f'{{\"topic\": \"past_simple\", \"confidence\": 0.95}}'
     )
     try:
-        cr = claude_client.messages.create(
+        cr = await claude_create_async(
             model="claude-haiku-4-5-20251001",
             max_tokens=60,
             messages=[{"role": "user", "content": prompt}]
@@ -12879,7 +12930,7 @@ async def handle_syllabus_custom_profile(update: Update, ctx: ContextTypes.DEFAU
         '"diffs": [["BrE_word","AmE_word"],["BrE2","AmE2"],["BrE3","AmE3"]]}'
     )
     try:
-        cr = claude_client.messages.create(
+        cr = await claude_create_async(
             model="claude-haiku-4-5-20251001", max_tokens=600,
             messages=[{"role": "user", "content": prompt}]
         )
@@ -14836,7 +14887,7 @@ async def cb_voice_action(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
                 "Max 130 words. If score>=75 add: 🌟 Опублікуй з #SpeakChain!"
             )
 
-            cr = claude_client.messages.create(
+            cr = await claude_create_async(
                 model="claude-haiku-4-5-20251001",
                 max_tokens=600,
                 messages=[{"role": "user", "content": prompt}]
@@ -15166,7 +15217,7 @@ FORMAT (keep emoji, bold, and exact sub-score lines):
 
 Max 150 words. If score>=75 add: 🌟 Опублікуй з #SpeakChain!"""
 
-        cr = claude_client.messages.create(
+        cr = await claude_create_async(
             model="claude-haiku-4-5-20251001", max_tokens=600,
             messages=[{"role":"user","content":prompt}]
         )
@@ -15690,7 +15741,7 @@ Rules:
 - One clearly correct answer per question"""
 
     try:
-        cr = claude_client.messages.create(
+        cr = await claude_create_async(
             model="claude-haiku-4-5-20251001", max_tokens=1500,
             messages=[{"role": "user", "content": prompt}]
         )
@@ -15734,7 +15785,7 @@ async def extract_vocab_from_video(title: str, topic: str, grammar: str, level: 
             f"Reply ONLY with valid JSON, no markdown:\n"
             f'[{{"word":"...","translation":"...","example":"..."}},...5 items]'
         )
-        cr = claude_client.messages.create(
+        cr = await claude_create_async(
             model="claude-haiku-4-5-20251001", max_tokens=400,
             messages=[{"role":"user","content":prompt}]
         )
@@ -16365,7 +16416,7 @@ FORMAT (keep emoji and bold):
 
 Max 130 words. If score>=75 add: 🌟 Опублікуй з #SpeakChain!"""
 
-            cr = claude_client.messages.create(
+            cr = await claude_create_async(
                 model="claude-haiku-4-5-20251001", max_tokens=600,
                 messages=[{"role": "user", "content": prompt}]
             )
@@ -16596,7 +16647,7 @@ async def cb_video_ai_eval(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
                 "🚀 *Спробуй наступного разу:*\n[конкретна порада]\n\n"
                 "Max 130 words. If score>=75: 🌟 Опублікуй з #SpeakChain!"
             )
-            cr = claude_client.messages.create(
+            cr = await claude_create_async(
                 model="claude-haiku-4-5-20251001", max_tokens=600,
                 messages=[{"role":"user","content": prompt}]
             )
@@ -16740,7 +16791,7 @@ FORMAT:
 
 Max 130 words."""
 
-        cr = claude_client.messages.create(
+        cr = await claude_create_async(
             model="claude-haiku-4-5-20251001", max_tokens=500,
             messages=[{"role": "user", "content": prompt}]
         )
@@ -17314,7 +17365,7 @@ async def handle_video_link(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
             f"HINT: [2-3 English sentence starters adapted to their interests]\n"
             f"KEYWORDS: [3-5 key English words/phrases from this topic for vocabulary]"
         )
-        cr = claude_client.messages.create(
+        cr = await claude_create_async(
             model="claude-haiku-4-5-20251001", max_tokens=250,
             messages=[{"role": "user", "content": pr}]
         )
@@ -18507,7 +18558,23 @@ def main():
     # ═══════════════════════════════════════════════════
     async def error_handler(update: object, ctx: ContextTypes.DEFAULT_TYPE):
         import traceback
-        err     = ctx.error
+        from telegram.error import RetryAfter, TimedOut, NetworkError
+        err = ctx.error
+
+        # ── RetryAfter (429) — Telegram rate limit ──────────────
+        # Не логуємо як помилку, просто чекаємо і повторюємо
+        if isinstance(err, RetryAfter):
+            wait = err.retry_after + 1
+            logger.warning(f"Telegram RetryAfter: waiting {wait}s")
+            await asyncio.sleep(wait)
+            return  # PTB автоматично повторить update
+
+        # ── TimedOut / NetworkError — тимчасові мережеві проблеми ──
+        if isinstance(err, (TimedOut, NetworkError)):
+            logger.warning(f"Telegram network issue: {err}")
+            await asyncio.sleep(2)
+            return  # не відправляємо адміну — це норма
+
         tb_str  = "".join(traceback.format_exception(type(err), err, err.__traceback__))
 
         # 1. Завжди пишемо в Railway Logs
@@ -20026,7 +20093,7 @@ async def handle_buddy_chat(request):
     )
 
     try:
-        response = claude_client.messages.create(
+        response = await claude_create_async(
             model="claude-haiku-4-5-20251001",
             max_tokens=400,
             system=system,
