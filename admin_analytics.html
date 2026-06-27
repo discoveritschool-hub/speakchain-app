@@ -181,7 +181,7 @@ function switchTab(tab) {
 async function loadData() {
   document.getElementById('last-updated').textContent = 'Завантаження...';
   try {
-    const res = await fetch('/admin_analytics', {
+    const res = await fetch('https://speakchain-bot-production.up.railway.app/admin_analytics', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({init_data: tg?.initData || ''})

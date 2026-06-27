@@ -285,7 +285,7 @@
     // Якщо є user ID — відправляємо на backend для запису XP/chain
     const uid = window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
     if (uid && cfg.xp) {
-      fetch('/sc_reward', {
+      fetch('https://speakchain-bot-production.up.railway.app/sc_reward', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

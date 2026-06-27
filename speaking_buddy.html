@@ -5,901 +5,599 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Speaking Buddy</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
-<script src="/toast_rewards.js"></script>
 <style>
-:root {
-  --bg:#0f0f0f;--surface:#1a1a1a;--surface2:#242424;--border:rgba(255,255,255,0.08);
-  --text:#f0f0f0;--text2:#888;--text3:#444;
-  --accent:#4f8ef7;--accent-dim:rgba(79,142,247,0.12);
-  --green:#3ecf8e;--green-dim:rgba(62,207,142,0.12);
-  --amber:#f59e0b;--amber-dim:rgba(245,158,11,0.12);
-  --purple:#a78bfa;--purple-dim:rgba(167,139,250,0.12);
-  --r:14px;--r-sm:8px;
-}
-*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif;font-size:15px;overflow:hidden}
-.screen{display:none;height:100vh;flex-direction:column;overflow:hidden}
-.screen.active{display:flex}
+  :root {
+    --bg: #0f0f0f;
+    --surface: #1a1a1a;
+    --surface2: #242424;
+    --border: rgba(255,255,255,0.08);
+    --text: #f0f0f0;
+    --text2: #888;
+    --text3: #555;
+    --accent: #4f8ef7;
+    --accent-dim: rgba(79,142,247,0.15);
+    --green: #3ecf8e;
+    --green-dim: rgba(62,207,142,0.15);
+    --amber: #f59e0b;
+    --red: #ef4444;
+    --radius: 14px;
+    --radius-sm: 8px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif; font-size: 15px; overflow: hidden; }
 
-/* HOME */
-.home-top{padding:16px 16px 0;flex-shrink:0}
-.home-title{font-size:22px;font-weight:700;letter-spacing:-.5px}
-.home-sub{font-size:13px;color:var(--text2);margin-top:3px}
-.cat-tabs{display:flex;gap:8px;padding:12px 16px;overflow-x:auto;flex-shrink:0;scrollbar-width:none}
-.cat-tabs::-webkit-scrollbar{display:none}
-.cat-tab{flex-shrink:0;padding:6px 14px;border-radius:20px;border:1px solid var(--border);background:var(--surface);color:var(--text2);font-size:13px;font-weight:500;cursor:pointer;transition:all .15s}
-.cat-tab.active{border-color:transparent;color:#fff}
-.sc-list{flex:1;overflow-y:auto;padding:0 16px 100px;display:flex;flex-direction:column;gap:8px;scrollbar-width:none}
-.sc-list::-webkit-scrollbar{display:none}
-.sc-card{border-radius:var(--r);border:1px solid var(--border);background:var(--surface);overflow:hidden;cursor:pointer;display:flex;align-items:center;height:74px;transition:border-color .15s}
-.sc-card:active{transform:scale(.98)}
-.sc-img{width:84px;height:100%;flex-shrink:0;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:30px;overflow:hidden}
-.sc-img img{width:100%;height:100%;object-fit:cover}
-.sc-body{padding:0 14px;flex:1;min-width:0}
-.sc-title{font-size:14px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.sc-sub{font-size:12px;color:var(--text2);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  /* ── Screens ── */
+  .screen { display: none; height: 100vh; flex-direction: column; overflow: hidden; }
+  .screen.active { display: flex; }
 
-/* FLOAT BTN */
-.float-btn{position:fixed;bottom:16px;left:16px;right:16px;z-index:100;border-radius:var(--r);background:linear-gradient(135deg,#7c3aed,#4f8ef7);padding:14px 16px;cursor:pointer;display:flex;align-items:center;gap:12px;box-shadow:0 4px 24px rgba(79,142,247,.3)}
-.float-icon{font-size:24px;flex-shrink:0}
-.float-text{flex:1}
-.float-title{font-size:14px;font-weight:700;color:#fff}
-.float-sub{font-size:11px;color:rgba(255,255,255,.7);margin-top:2px}
-.float-arr{font-size:18px;color:rgba(255,255,255,.8)}
+  /* ── Screen 1: Category picker ── */
+  #s-home { background: var(--bg); }
+  .home-header { padding: 16px 16px 0; flex-shrink: 0; }
+  .home-title { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; }
+  .home-sub { font-size: 13px; color: var(--text2); margin-top: 4px; }
+  .cat-tabs { display: flex; gap: 8px; padding: 14px 16px; overflow-x: auto; flex-shrink: 0; scrollbar-width: none; }
+  .cat-tabs::-webkit-scrollbar { display: none; }
+  .cat-tab { flex-shrink: 0; padding: 7px 14px; border-radius: 20px; border: 1px solid var(--border); background: var(--surface); color: var(--text2); font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.18s; }
+  .cat-tab.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .scenarios-list { flex: 1; overflow-y: auto; padding: 0 16px 24px; display: flex; flex-direction: column; gap: 10px; scrollbar-width: none; }
+  .scenarios-list::-webkit-scrollbar { display: none; }
+  .scenario-card { border-radius: var(--radius); border: 1px solid var(--border); background: var(--surface); overflow: hidden; cursor: pointer; transition: border-color 0.15s, transform 0.1s; active:transform: scale(0.98); display: flex; align-items: center; gap: 0; height: 76px; }
+  .scenario-card:active { transform: scale(0.98); }
+  .sc-photo { width: 88px; height: 100%; object-fit: cover; flex-shrink: 0; background: var(--surface2); display: flex; align-items: center; justify-content: center; font-size: 32px; }
+  .sc-photo img { width: 100%; height: 100%; object-fit: cover; }
+  .sc-body { padding: 0 14px; flex: 1; min-width: 0; }
+  .sc-title { font-size: 14px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sc-sub { font-size: 12px; color: var(--text2); margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sc-badge { font-size: 10px; padding: 2px 7px; border-radius: 10px; display: inline-block; margin-top: 5px; font-weight: 500; }
 
-/* SHARED */
-.hdr{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;flex-shrink:0;background:var(--surface)}
-.back-btn{width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer}
-.back-btn svg{width:20px;height:20px;stroke:var(--text);fill:none;stroke-width:2.5}
-.hdr-title{font-size:17px;font-weight:600}
-.scroll-body{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:16px;scrollbar-width:none;padding-bottom:24px}
-.scroll-body::-webkit-scrollbar{display:none}
-.sec-label{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px}
-.field-label{font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
-.field-hint{font-size:12px;color:var(--text3);margin-bottom:7px;line-height:1.5}
-.field-input{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-sm);padding:11px 13px;font-size:14px;color:var(--text);font-family:inherit;resize:none;outline:none;line-height:1.5}
-.field-input:focus{border-color:var(--accent)}
-.field-input::placeholder{color:var(--text3)}
-.chips-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
-.chip{font-size:12px;padding:5px 10px;border-radius:20px;border:1px solid var(--border);color:var(--text2);cursor:pointer;background:var(--surface);transition:all .15s}
-.chip.active{border-color:var(--accent);color:var(--accent);background:var(--accent-dim)}
-.persona-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.persona-btn{padding:10px 12px;border-radius:var(--r-sm);border:1px solid var(--border);background:var(--surface);cursor:pointer;text-align:left;transition:all .15s}
-.persona-btn.active{border-color:var(--purple);background:var(--purple-dim)}
-.persona-btn-name{font-size:13px;font-weight:600;color:var(--text)}
-.persona-btn-desc{font-size:11px;color:var(--text2);margin-top:2px}
-.persona-btn.active .persona-btn-name{color:var(--purple)}
-.level-row{display:flex;gap:8px}
-.level-btn{flex:1;padding:9px;border-radius:var(--r-sm);border:1px solid var(--border);background:var(--surface);cursor:pointer;text-align:center;font-size:13px;font-weight:500;color:var(--text2);transition:all .15s}
-.level-btn.active{border-color:var(--green);background:var(--green-dim);color:var(--green)}
-.role-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.role-btn{padding:10px 12px;border-radius:var(--r-sm);border:1px solid var(--border);background:var(--surface);cursor:pointer;text-align:left;transition:all .15s}
-.role-btn.active{border-color:var(--accent);background:var(--accent-dim)}
-.role-btn-name{font-size:13px;font-weight:600;color:var(--text)}
-.role-btn-desc{font-size:11px;color:var(--text2);margin-top:2px;line-height:1.4}
-.role-btn.active .role-btn-name{color:var(--accent)}
-.start-btn{width:100%;padding:15px;border-radius:var(--r);background:var(--accent);border:none;color:#fff;font-size:16px;font-weight:700;cursor:pointer;letter-spacing:-.2px}
-.start-btn:active{opacity:.85}
-.limit-note{font-size:12px;color:var(--text3);text-align:center}
+  /* ── Screen 2: Scenario detail ── */
+  #s-detail { background: var(--bg); }
+  .detail-scroll { flex: 1; overflow-y: auto; scrollbar-width: none; }
+  .detail-scroll::-webkit-scrollbar { display: none; }
+  .detail-hero { height: 200px; position: relative; background: var(--surface2); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .detail-hero img { width: 100%; height: 100%; object-fit: cover; }
+  .detail-hero-emoji { font-size: 72px; }
+  .detail-hero-overlay { position: absolute; inset: 0; background: linear-gradient(to bottom, transparent 30%, rgba(0,0,0,0.85) 100%); }
+  .detail-hero-back { position: absolute; top: 12px; left: 12px; width: 36px; height: 36px; border-radius: 50%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; cursor: pointer; backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.1); }
+  .detail-hero-back svg { width: 18px; height: 18px; stroke: #fff; fill: none; }
+  .detail-hero-cat { position: absolute; top: 12px; right: 12px; font-size: 11px; padding: 4px 10px; border-radius: 12px; font-weight: 600; backdrop-filter: blur(8px); }
+  .detail-hero-title { position: absolute; bottom: 14px; left: 16px; right: 16px; }
+  .detail-hero-title h2 { font-size: 20px; font-weight: 700; color: #fff; letter-spacing: -0.3px; }
+  .detail-hero-title p { font-size: 13px; color: rgba(255,255,255,0.65); margin-top: 3px; }
+  .detail-body { padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+  .detail-desc { font-size: 14px; color: var(--text2); line-height: 1.6; }
+  .section-title { font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 8px; }
+  .video-block { border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface); overflow: hidden; }
+  .video-placeholder { height: 80px; display: flex; align-items: center; gap: 12px; padding: 0 16px; cursor: pointer; }
+  .video-play { width: 40px; height: 40px; border-radius: 50%; background: var(--accent-dim); border: 1px solid var(--accent); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .video-play svg { width: 16px; height: 16px; fill: var(--accent); margin-left: 2px; }
+  .video-info p { font-size: 13px; font-weight: 500; color: var(--text); }
+  .video-info span { font-size: 12px; color: var(--text2); }
+  .video-yt { display: none; width: 100%; aspect-ratio: 16/9; border: none; }
+  .role-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .role-btn { padding: 10px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface); cursor: pointer; transition: all 0.15s; text-align: left; }
+  .role-btn.active { border-color: var(--accent); background: var(--accent-dim); }
+  .role-btn-name { font-size: 13px; font-weight: 600; color: var(--text); }
+  .role-btn-desc { font-size: 11px; color: var(--text2); margin-top: 2px; line-height: 1.4; }
+  .role-btn.active .role-btn-name { color: var(--accent); }
+  .level-row { display: flex; gap: 8px; }
+  .level-btn { flex: 1; padding: 9px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface); cursor: pointer; text-align: center; font-size: 13px; font-weight: 500; color: var(--text2); transition: all 0.15s; }
+  .level-btn.active { border-color: var(--green); background: var(--green-dim); color: var(--green); }
+  .start-btn { width: 100%; padding: 15px; border-radius: var(--radius); background: var(--accent); border: none; color: #fff; font-size: 16px; font-weight: 700; cursor: pointer; letter-spacing: -0.2px; transition: opacity 0.15s; }
+  .start-btn:active { opacity: 0.85; }
+  .limit-info { font-size: 12px; color: var(--text3); text-align: center; }
 
-/* DETAIL */
-#s-detail{background:var(--bg)}
-.detail-scroll{flex:1;overflow-y:auto;scrollbar-width:none}
-.detail-scroll::-webkit-scrollbar{display:none}
-.detail-hero{height:190px;position:relative;background:var(--surface2);display:flex;align-items:center;justify-content:center;overflow:hidden}
-.hero-emoji{font-size:68px;position:relative;z-index:1}
-.hero-overlay{position:absolute;inset:0;background:linear-gradient(to bottom,transparent 30%,rgba(0,0,0,.85) 100%)}
-.hero-back{position:absolute;top:12px;left:12px;z-index:2;width:36px;height:36px;border-radius:50%;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;cursor:pointer;border:1px solid rgba(255,255,255,.1)}
-.hero-back svg{width:18px;height:18px;stroke:#fff;fill:none;stroke-width:2.5}
-.hero-cat{position:absolute;top:12px;right:12px;z-index:2;font-size:11px;padding:4px 10px;border-radius:12px;font-weight:600}
-.hero-info{position:absolute;bottom:14px;left:16px;right:16px;z-index:2}
-.hero-info h2{font-size:19px;font-weight:700;color:#fff;letter-spacing:-.3px}
-.hero-info p{font-size:13px;color:rgba(255,255,255,.6);margin-top:3px}
-.detail-body{padding:16px;display:flex;flex-direction:column;gap:14px;padding-bottom:24px}
-.detail-desc{font-size:14px;color:var(--text2);line-height:1.65}
-.video-block{border-radius:var(--r-sm);border:1px solid var(--border);background:var(--surface);overflow:hidden}
-.video-row{height:76px;display:flex;align-items:center;gap:12px;padding:0 16px;cursor:pointer}
-.video-play{width:40px;height:40px;border-radius:50%;background:var(--accent-dim);border:1px solid var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.video-play svg{width:16px;height:16px;fill:var(--accent);margin-left:2px}
-.video-info p{font-size:13px;font-weight:500;color:var(--text)}
-.video-info span{font-size:12px;color:var(--text2)}
-.video-yt{display:none;width:100%;aspect-ratio:16/9;border:none}
-
-/* CHAT */
-#s-chat{background:var(--bg)}
-.chat-avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;background:var(--surface2)}
-.chat-hdr-info{flex:1;min-width:0}
-.chat-hdr-name{font-size:14px;font-weight:600}
-.chat-hdr-status{font-size:12px;color:var(--green)}
-.chat-counter{font-size:12px;color:var(--text3)}
-.chat-msgs{flex:1;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:10px;scrollbar-width:none}
-.chat-msgs::-webkit-scrollbar{display:none}
-.msg{max-width:84%;display:flex;flex-direction:column;gap:4px}
-.msg.user{align-self:flex-end;align-items:flex-end}
-.msg.ai{align-self:flex-start}
-.bubble{padding:10px 14px;border-radius:18px;font-size:14px;line-height:1.55}
-.msg.user .bubble{background:var(--accent);color:#fff;border-bottom-right-radius:4px}
-.msg.ai .bubble{background:var(--surface2);color:var(--text);border-bottom-left-radius:4px}
-.fb-row{display:flex;gap:5px;flex-wrap:wrap}
-.fb-tag{font-size:11px;padding:3px 8px;border-radius:10px;font-weight:500}
-.fb-good{background:var(--green-dim);color:var(--green)}
-.fb-tip{background:var(--amber-dim);color:var(--amber)}
-.typing-b{display:flex;gap:5px;align-items:center;background:var(--surface2);padding:12px 16px;border-radius:18px;border-bottom-left-radius:4px}
-.dot{width:6px;height:6px;border-radius:50%;background:var(--text3);animation:bounce 1s infinite}
-.dot:nth-child(2){animation-delay:.15s}
-.dot:nth-child(3){animation-delay:.3s}
-@keyframes bounce{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-5px)}}
-.chat-input-wrap{padding:10px 12px;border-top:1px solid var(--border);display:flex;gap:8px;align-items:flex-end;flex-shrink:0;background:var(--surface)}
-.chat-input-wrap textarea{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:10px 14px;font-size:14px;color:var(--text);resize:none;max-height:100px;min-height:40px;font-family:inherit;line-height:1.4;outline:none}
-.chat-input-wrap textarea::placeholder{color:var(--text3)}
-.chat-input-wrap textarea:focus{border-color:var(--accent)}
-.send-btn{width:40px;height:40px;border-radius:50%;background:var(--accent);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.send-btn:disabled{opacity:.35}
-.send-btn svg{width:17px;height:17px;fill:#fff}
-
-/* PAYWALL */
-#s-paywall{background:var(--bg)}
-.paywall-scroll{flex:1;overflow-y:auto;padding:24px 20px;display:flex;flex-direction:column;gap:18px;align-items:center;scrollbar-width:none}
-.paywall-scroll::-webkit-scrollbar{display:none}
-.pw-emoji{font-size:52px}
-.pw-title{font-size:22px;font-weight:700;letter-spacing:-.4px;text-align:center;line-height:1.25}
-.pw-sub{font-size:14px;color:var(--text2);text-align:center;line-height:1.6}
-.feat-list{width:100%;display:flex;flex-direction:column;gap:10px}
-.feat-row{display:flex;align-items:flex-start;gap:12px;padding:12px 14px;border-radius:var(--r-sm);background:var(--surface);border:1px solid var(--border)}
-.feat-icon{font-size:22px;flex-shrink:0;margin-top:1px}
-.feat-text{flex:1}
-.feat-title{font-size:13px;font-weight:600;color:var(--text)}
-.feat-desc{font-size:12px;color:var(--text2);margin-top:2px;line-height:1.45}
-.pw-cta{width:100%;padding:15px;border-radius:var(--r);background:linear-gradient(135deg,#7c3aed,#4f8ef7);border:none;color:#fff;font-size:16px;font-weight:700;cursor:pointer;letter-spacing:-.2px}
-.pw-note{font-size:12px;color:var(--text3);text-align:center}
+  /* ── Screen 3: Chat ── */
+  #s-chat { background: var(--bg); }
+  .chat-header { padding: 12px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; flex-shrink: 0; background: var(--surface); }
+  .chat-back { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; border-radius: 50%; }
+  .chat-back svg { width: 20px; height: 20px; stroke: var(--text); fill: none; }
+  .chat-avatar { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+  .chat-info { flex: 1; min-width: 0; }
+  .chat-info-name { font-size: 14px; font-weight: 600; color: var(--text); }
+  .chat-info-status { font-size: 12px; color: var(--green); }
+  .chat-counter { font-size: 12px; color: var(--text3); text-align: right; flex-shrink: 0; }
+  .chat-messages { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; scrollbar-width: none; }
+  .chat-messages::-webkit-scrollbar { display: none; }
+  .msg { max-width: 82%; display: flex; flex-direction: column; gap: 4px; }
+  .msg.user { align-self: flex-end; align-items: flex-end; }
+  .msg.ai { align-self: flex-start; align-items: flex-start; }
+  .bubble { padding: 10px 14px; border-radius: 18px; font-size: 14px; line-height: 1.55; }
+  .msg.user .bubble { background: var(--accent); color: #fff; border-bottom-right-radius: 4px; }
+  .msg.ai .bubble { background: var(--surface2); color: var(--text); border-bottom-left-radius: 4px; }
+  .feedback-row { display: flex; gap: 5px; flex-wrap: wrap; }
+  .fb-tag { font-size: 11px; padding: 3px 8px; border-radius: 10px; font-weight: 500; }
+  .fb-good { background: var(--green-dim); color: var(--green); }
+  .fb-tip { background: rgba(245,158,11,0.15); color: var(--amber); }
+  .typing-bubble { background: var(--surface2); padding: 12px 16px; border-radius: 18px; border-bottom-left-radius: 4px; display: flex; gap: 5px; align-items: center; }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text3); animation: bounce 1s infinite; }
+  .dot:nth-child(2) { animation-delay: 0.15s; }
+  .dot:nth-child(3) { animation-delay: 0.3s; }
+  @keyframes bounce { 0%,80%,100%{transform:translateY(0)} 40%{transform:translateY(-5px)} }
+  .chat-input-area { padding: 10px 12px; border-top: 1px solid var(--border); display: flex; gap: 8px; align-items: flex-end; flex-shrink: 0; background: var(--surface); }
+  .chat-input-area textarea { flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 20px; padding: 10px 14px; font-size: 14px; color: var(--text); resize: none; max-height: 100px; min-height: 40px; font-family: inherit; line-height: 1.4; outline: none; }
+  .chat-input-area textarea::placeholder { color: var(--text3); }
+  .send-btn { width: 40px; height: 40px; border-radius: 50%; background: var(--accent); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: opacity 0.15s; }
+  .send-btn:disabled { opacity: 0.4; }
+  .send-btn svg { width: 18px; height: 18px; fill: #fff; }
+  .limit-banner { margin: 0 16px 8px; padding: 10px 14px; border-radius: var(--radius-sm); background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.2); font-size: 12px; color: var(--amber); text-align: center; display: none; }
 </style>
 </head>
 <body>
 
-<!-- HOME -->
+<!-- ══ SCREEN 1: HOME ══ -->
 <div class="screen active" id="s-home">
-  <div class="home-top">
+  <div class="home-header">
     <div class="home-title">Speaking Buddy</div>
-    <div class="home-sub">Обери сценарій і говори англійською</div>
+    <div class="home-sub">Обери сценарій і починай говорити</div>
   </div>
   <div class="cat-tabs" id="cat-tabs"></div>
-  <div class="sc-list" id="sc-list"></div>
-  <div class="float-btn" onclick="openCustom()">
-    <div class="float-icon">⭐</div>
-    <div class="float-text">
-      <div class="float-title">Своя ситуація</div>
-      <div class="float-sub">Інвестор, декан, роботодавець — будь-хто</div>
-    </div>
-    <div class="float-arr">→</div>
-  </div>
+  <div class="scenarios-list" id="scenarios-list"></div>
 </div>
 
-<!-- CUSTOM ROLE -->
-<div class="screen" id="s-custom">
-  <div class="hdr">
-    <div class="back-btn" onclick="showScreen('s-home')">
-      <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"></polyline></svg>
-    </div>
-    <div class="hdr-title">⭐ Своя ситуація</div>
-  </div>
-  <div class="scroll-body">
-    <div>
-      <div class="field-label">Хто твій співрозмовник?</div>
-      <div class="field-hint">Опиши людину — роль, досвід, характер. Або обери готову персону нижче</div>
-      <textarea class="field-input" id="custom-person" rows="2" placeholder="напр: суворий HR-директор з Google, 15 років досвіду, задає каверзні питання"></textarea>
-      <div class="chips-row" id="persona-chips"></div>
-    </div>
-    <div>
-      <div class="field-label">Яка ситуація?</div>
-      <div class="field-hint">Що відбувається? Де ви? Що тобі потрібно зробити або сказати?</div>
-      <textarea class="field-input" id="custom-situation" rows="2" placeholder="напр: фінальний раунд співбесіди на Product Manager, питч стартапу інвестору, захист дисертації"></textarea>
-    </div>
-    <div>
-      <div class="field-label">Предметна область</div>
-      <div class="field-hint">Вкажи тему — Buddy буде говорити правильною термінологією цієї сфери</div>
-      <textarea class="field-input" id="custom-domain" rows="1" placeholder="напр: venture capital, архітектура, кардіохірургія, машинобудування, право..."></textarea>
-      <div class="chips-row" id="domain-chips"></div>
-    </div>
-    <div>
-      <div class="field-label">Що хочеш відпрацювати? <span style="font-weight:400;text-transform:none;font-size:11px">(необов'язково)</span></div>
-      <div class="field-hint">Конкретний страх або задача — Buddy врахує це в розмові</div>
-      <textarea class="field-input" id="custom-goal" rows="2" placeholder="напр: не губитися від несподіваних питань, пояснити unit economics, захистити свою позицію"></textarea>
-    </div>
-    <div>
-      <div class="field-label">Твій рівень</div>
-      <div class="level-row" id="custom-level-row"></div>
-    </div>
-    <button class="start-btn" onclick="startCustomChat()">Почати розмову →</button>
-    <div class="limit-note" id="custom-limit-note"></div>
-  </div>
-</div>
-
-<!-- DETAIL -->
+<!-- ══ SCREEN 2: DETAIL ══ -->
 <div class="screen" id="s-detail">
   <div class="detail-scroll">
     <div class="detail-hero" id="detail-hero">
-      <div class="hero-emoji" id="detail-emoji"></div>
-      <div class="hero-overlay"></div>
-      <div class="hero-back" onclick="showScreen('s-home')">
-        <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"></polyline></svg>
+      <div class="detail-hero-emoji" id="detail-emoji"></div>
+      <div class="detail-hero-overlay"></div>
+      <div class="detail-hero-back" onclick="showScreen('s-home')">
+        <svg viewBox="0 0 24 24" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
       </div>
-      <div class="hero-cat" id="detail-badge"></div>
-      <div class="hero-info"><h2 id="detail-title"></h2><p id="detail-sub"></p></div>
+      <div class="detail-hero-cat" id="detail-cat-badge"></div>
+      <div class="detail-hero-title">
+        <h2 id="detail-title"></h2>
+        <p id="detail-sub"></p>
+      </div>
     </div>
     <div class="detail-body">
       <div class="detail-desc" id="detail-desc"></div>
-      <div id="video-section" style="display:none">
-        <div class="sec-label">Приклад діалогу</div>
+
+      <div id="video-section">
+        <div class="section-title">Приклад діалогу</div>
         <div class="video-block">
-          <div class="video-row" id="video-row" onclick="playVideo()">
-            <div class="video-play"><svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg></div>
-            <div class="video-info"><p id="video-title"></p><span>~2 хв · реальний діалог</span></div>
+          <div class="video-placeholder" id="video-placeholder" onclick="openVideo()">
+            <div class="video-play">
+              <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+            </div>
+            <div class="video-info">
+              <p id="video-title">Дивитись приклад на YouTube</p>
+              <span>~2 хв · реальний діалог</span>
+            </div>
           </div>
           <iframe class="video-yt" id="video-yt" allowfullscreen></iframe>
         </div>
       </div>
+
       <div>
-        <div class="sec-label">Стиль бадді</div>
+        <div class="section-title">Стиль бадді</div>
         <div class="role-grid" id="role-grid"></div>
       </div>
+
       <div>
-        <div class="sec-label">Твій рівень</div>
+        <div class="section-title">Твій рівень</div>
         <div class="level-row" id="level-row"></div>
       </div>
-      <button class="start-btn" onclick="startScenarioChat()">Почати розмову →</button>
-      <div class="limit-note" id="detail-limit-note"></div>
+
+      <button class="start-btn" onclick="startChat()">Почати розмову →</button>
+      <div class="limit-info" id="limit-info"></div>
     </div>
   </div>
 </div>
 
-<!-- CHAT -->
+<!-- ══ SCREEN 3: CHAT ══ -->
 <div class="screen" id="s-chat">
-  <div class="hdr">
-    <div class="back-btn" onclick="goBackFromChat()">
-      <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"></polyline></svg>
+  <div class="chat-header">
+    <div class="chat-back" onclick="showScreen('s-detail')">
+      <svg viewBox="0 0 24 24" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
     </div>
     <div class="chat-avatar" id="chat-avatar"></div>
-    <div class="chat-hdr-info">
-      <div class="chat-hdr-name" id="chat-name"></div>
-      <div class="chat-hdr-status">online</div>
+    <div class="chat-info">
+      <div class="chat-info-name" id="chat-name"></div>
+      <div class="chat-info-status">online</div>
     </div>
     <div class="chat-counter" id="chat-counter"></div>
   </div>
-  <div class="chat-msgs" id="chat-msgs"></div>
-  <div class="chat-input-wrap">
-    <textarea id="chat-input" placeholder="Пиши англійською..." rows="1" onkeydown="onKey(event)" oninput="autoResize(this)"></textarea>
-    <button class="send-btn" id="send-btn" onclick="send()">
+  <div class="chat-messages" id="chat-messages"></div>
+  <div class="limit-banner" id="limit-banner">Досягнуто денний ліміт 20 повідомлень. Повертайся завтра!</div>
+  <div class="chat-input-area">
+    <textarea id="chat-input" placeholder="Пиши англійською..." rows="1" onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+    <button class="send-btn" id="send-btn" onclick="sendMessage()">
       <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
     </button>
   </div>
 </div>
 
-<!-- PAYWALL -->
-<div class="screen" id="s-paywall">
-  <div class="paywall-scroll">
-    <div class="pw-emoji">🔥</div>
-    <div class="pw-title">Розмова тільки починалась!</div>
-    <div class="pw-sub">Speaking Buddy — частина SpeakChain, платформи де ти реально починаєш говорити англійською.</div>
-    <div class="feat-list">
-      <div class="feat-row"><div class="feat-icon">🗣️</div><div class="feat-text"><div class="feat-title">Speaking Buddy — без обмежень</div><div class="feat-desc">Будь-яка роль, будь-яка ситуація. Інвестор, декан, лікар — скільки завгодно</div></div></div>
-      <div class="feat-row"><div class="feat-icon">🎬</div><div class="feat-text"><div class="feat-title">Shadowing плеєр</div><div class="feat-desc">Чуєш носія → повторюєш → записуєш себе. Фрази залишаються назавжди</div></div></div>
-      <div class="feat-row"><div class="feat-icon">🧠</div><div class="feat-text"><div class="feat-title">AI-tutor по граматиці</div><div class="feat-desc">Відстежує твої помилки, закріплює патерни через мовлення, веде до досконалості</div></div></div>
-      <div class="feat-row"><div class="feat-icon">💡</div><div class="feat-text"><div class="feat-title">Фраза дня</div><div class="feat-desc">Одна жива фраза щоранку. За місяць — 30 фраз які ти реально використовуєш</div></div></div>
-      <div class="feat-row"><div class="feat-icon">🔥</div><div class="feat-text"><div class="feat-title">Челенджі</div><div class="feat-desc">Змагайся з іншими студентами. Блогер обирає переможця тижня</div></div></div>
-    </div>
-    <button class="pw-cta" onclick="goToBot()">Спробувати безкоштовно — 7 уроків →</button>
-    <div class="pw-note">Без карти · Без зобов'язань · Скасувати будь-коли</div>
-  </div>
-</div>
-
 <script>
-const tg=window.Telegram?.WebApp;
-if(tg){tg.ready();tg.expand();}
-const UID=tg?.initDataUnsafe?.user?.id||0;
-const INIT_DATA=tg?.initData||'';
-const BOT_URL='https://t.me/SpeakChain_bot';
-const DEMO_LIMIT=5;
+const tg = window.Telegram?.WebApp;
+if (tg) { tg.ready(); tg.expand(); }
 
-// ── Google Noto Emoji helper ──
-// Перетворює emoji символ на <img> з Google Noto Emoji CDN
-function emojiImg(emoji, size){
-  if(!emoji) return '';
-  size = size || 30;
-  // Конвертуємо emoji в codepoints для URL
-  const codepoints = [];
-  for(const ch of emoji){
-    const cp = ch.codePointAt(0);
-    // Пропускаємо variation selectors (FE0F) і ZWJ (200D) — Noto їх не потребує в URL
-    if(cp === 0xFE0F) continue;
-    codepoints.push(cp.toString(16));
-  }
-  const code = codepoints.join('_');
-  const url = `https://fonts.gstatic.com/s/e/notoemoji/latest/${code}/emoji.svg`;
-  return `<img src="${url}" alt="${emoji}" style="width:${size}px;height:${size}px;vertical-align:middle;display:inline-block" onerror="this.outerHTML='<span style=&quot;font-size:${size}px&quot;>${emoji}</span>'">`;
-}
+const BOT_API = 'https://speakchain-bot-production.up.railway.app';
 
-const CATS=[
-  {id:'basics', label:'💬 Спілкування',color:'#4f8ef7',bg:'#1a2340'},
-  {id:'daily',  label:'🏙️ Побут',      color:'#3ecf8e',bg:'#0f2820'},
-  {id:'travel', label:'✈️ Подорожі',   color:'#f59e0b',bg:'#2a1f0a'},
-  {id:'work',   label:'💼 Робота',      color:'#a78bfa',bg:'#1e1a30'},
-  {id:'move',   label:'🌍 Переїзд',     color:'#fb7185',bg:'#2a1020'},
+const UID = tg?.initDataUnsafe?.user?.id || 0;
+const USER_LEVEL = 'intermediate';
+
+const CATEGORIES = [
+  { id: 'basics',   label: '💬 Спілкування', color: '#4f8ef7', bg: '#1a2340' },
+  { id: 'daily',    label: '🏙️ Побут',        color: '#3ecf8e', bg: '#0f2820' },
+  { id: 'travel',   label: '✈️ Подорожі',     color: '#f59e0b', bg: '#2a1f0a' },
+  { id: 'work',     label: '💼 Робота',        color: '#a78bfa', bg: '#1e1a30' },
+  { id: 'move',     label: '🌍 Переїзд',       color: '#fb7185', bg: '#2a1020' },
 ];
 
-const PERSONAS=[
-  {id:'vc',         name:'💰 VC Investor',       desc:'Venture capital, startups'},
-  {id:'hr',         name:'👔 HR Director',        desc:'Interviews, career'},
-  {id:'professor',  name:'🎓 Professor',           desc:'Academic, research'},
-  {id:'doctor',     name:'🏥 Medical specialist',  desc:'Healthcare terminology'},
-  {id:'judge',      name:'⚖️ Judge / Lawyer',      desc:'Legal language'},
-  {id:'ceo',        name:'🚀 CEO / Founder',       desc:'Business, strategy'},
-  {id:'journalist', name:'📰 Journalist',          desc:'Press, interviews'},
-  {id:'client',     name:'🤝 Demanding client',    desc:'Sales, negotiations'},
-  {id:'engineer',   name:'⚙️ Senior Engineer',     desc:'Technical deep dive'},
-  {id:'dean',       name:'🏫 University Dean',     desc:'Admissions, academic life'},
-];
-
-const DOMAINS=[
-  'Venture capital','Architecture','Medicine','Law',
-  'Engineering','AI & tech','Finance','Marketing',
-  'Education','Real estate','Aviation','Logistics',
-  'Fashion','Pharmaceuticals','Urban planning','Psychology',
-];
-
-const ROLES=[
-  {id:'friendly',name:'😊 Friendly',    desc:'Підтримує, не критикує кожну помилку'},
-  {id:'strict',  name:'📝 Strict',      desc:'Виправляє все, детальний фідбек'},
-  {id:'native',  name:'🗣️ Native',      desc:'Говорить природно, не підлаштовується'},
-  {id:'patient', name:'🤗 Patient',     desc:'Повільно, з підказками і поясненнями'},
-];
-
-const LEVELS=[
-  {id:'beginner',    label:'A1–A2'},
-  {id:'intermediate',label:'B1–B2'},
-  {id:'advanced',    label:'C1–C2'},
-];
-
-const SCENARIOS={
-  basics:[
-    {emoji:'👋',title:'Greeting someone new',sub:'Перші слова, знайомство',desc:'Ти зустрічаєш нову людину на вечірці або в офісі. Треба представитися і почати розмову.',video:'dQw4w9WgXcQ',videoTitle:'How to introduce yourself in English'},
-    {emoji:'☕',title:'Small talk over coffee',sub:'Легка розмова ні про що',desc:'Ти з колегою п\'єте каву. Треба підтримати невимушену розмову.',video:'',videoTitle:''},
-    {emoji:'🌤️',title:'Weather small talk',sub:'Класичний British small talk',desc:'Погода — найпоширеніша тема для small talk.',video:'',videoTitle:''},
-    {emoji:'🎬',title:'Movies & TV shows',sub:'Обговорення фільмів',desc:'Обговорюєш з другом улюблені серіали і фільми.',video:'',videoTitle:''},
-    {emoji:'🏋️',title:'Hobbies & interests',sub:'Що ти любиш робити',desc:'Розповідаєш про свої захоплення і дізнаєшся про інтереси.',video:'',videoTitle:''},
-    {emoji:'💕',title:'First date',sub:'Романтична зустріч',desc:'Перше побачення — питання, відповіді, флірт. Ввічливо і природно.',video:'',videoTitle:''},
-    {emoji:'😔',title:'Expressing sympathy',sub:'Підтримка у важкий момент',desc:'Твій друг переживає щось складне. Потрібно висловити підтримку.',video:'',videoTitle:''},
-    {emoji:'🙏',title:'Apologizing sincerely',sub:'Вибачення щиро і правильно',desc:'Ти зробив помилку і маєш вибачитися на роботі або особисто.',video:'',videoTitle:''},
-    {emoji:'🤔',title:'Ask to repeat',sub:'Не зрозумів — питаєш знову',desc:'Не зрозумів що сказали. Ввічливо просиш повторити або пояснити.',video:'',videoTitle:''},
-    {emoji:'🎉',title:'Giving compliments',sub:'Похвала і реакція на неї',desc:'Даєш і приймаєш компліменти природно — без незручності.',video:'',videoTitle:''},
-    {emoji:'😠',title:'Disagreeing politely',sub:'Не погоджуєшся але тактовно',desc:'Маєш іншу думку. Висловлюєш незгоду так щоб не образити.',video:'',videoTitle:''},
-    {emoji:'🎂',title:'Celebrating with friends',sub:'День народження, привітання',desc:'Вечірка або зустріч. Вітаєш, тостуєш, підтримуєш розмову.',video:'',videoTitle:''},
-    {emoji:'📱',title:'Making plans',sub:'Домовляєшся про зустріч',desc:'Телефонуєш другу щоб домовитись про вихідні або зустріч.',video:'',videoTitle:''},
-    {emoji:'🏡',title:'Talking about your home country',sub:'Розповідаєш про Україну',desc:'Іноземець питає про твою країну. Розповідаєш цікаво і з гордістю.',video:'',videoTitle:''},
-    {emoji:'✈️',title:'Talking about travel experiences',sub:'Ділишся враженнями',desc:'Розповідаєш про подорож яка тебе вразила. Передаєш емоції.',video:'',videoTitle:''},
-    {emoji:'👋',title:'Saying goodbye',sub:'Прощання у різних ситуаціях',desc:'Як попрощатися з другом, колегою, на вечірці чи на роботі — різні рівні формальності.',video:'',videoTitle:''},
-    {emoji:'👨‍👩‍👧',title:'Talking about family',sub:'Батьки, діти, родичі',desc:'Розповідаєш про свою сім\'ю, дізнаєшся про родину співрозмовника. Імена, відносини, історії.',video:'',videoTitle:''},
-    {emoji:'🎂',title:'Talking about age and life',sub:'Скільки років, етапи життя',desc:'Питання про вік, життєвий етап, освіту, життєвий досвід. Ввічливо і цікаво.',video:'',videoTitle:''},
-    {emoji:'🔢',title:'Numbers, time and dates',sub:'У реальних ситуаціях',desc:'Розумієш і кажеш числа, час, дати в магазині, на зустрічі, по телефону.',video:'',videoTitle:''},
-    {emoji:'😊',title:'Expressing feelings',sub:'Емоції — позитивні і складні',desc:'Кажеш як ти себе почуваєш — радість, втома, тривога, ентузіазм. Точно і природно.',video:'',videoTitle:''},
+const SCENARIOS = {
+  basics: [
+    { emoji:'👋', title:'Greeting someone new', sub:'Перші слова, знайомство', desc:'Ти зустрічаєш нову людину — на вечірці, в офісі або на курсах. Потрібно представитися і почати розмову.', video:'dQw4w9WgXcQ', videoTitle:'How to introduce yourself in English' },
+    { emoji:'☕', title:'Small talk over coffee', sub:'Легка розмова ні про що', desc:'Ти з колегою або знайомим п\'єте каву. Треба підтримати невимушену розмову про будь-що.', video:'', videoTitle:'' },
+    { emoji:'🌤️', title:'Talking about the weather', sub:'Класичний British small talk', desc:'Погода — найпоширеніша тема для small talk. Навчись говорити про неї природно.', video:'', videoTitle:'' },
+    { emoji:'🎬', title:'Movies & TV shows', sub:'Обговорення фільмів', desc:'Обговорюєш з другом або колегою улюблені серіали та фільми. Ділишся думками і рекомендаціями.', video:'', videoTitle:'' },
+    { emoji:'🏋️', title:'Hobbies & interests', sub:'Що ти любиш робити', desc:'Розповідаєш про свої захоплення і дізнаєшся про інтереси співрозмовника.', video:'', videoTitle:'' },
+    { emoji:'💕', title:'First date', sub:'Романтична зустріч', desc:'Перше побачення — питання, відповіді, флірт і спроба справити враження. Ввічливо і природно.', video:'', videoTitle:'' },
+    { emoji:'😔', title:'Expressing sympathy', sub:'Підтримка у важкий момент', desc:'Твій друг переживає щось складне. Потрібно висловити підтримку правильними словами.', video:'', videoTitle:'' },
+    { emoji:'🙏', title:'Apologizing', sub:'Вибачення щиро і правильно', desc:'Ти зробив помилку і маєш вибачитися — на роботі або в особистому спілкуванні.', video:'', videoTitle:'' },
+    { emoji:'🤔', title:'Asking someone to repeat', sub:'Не зрозумів — питаєш ще раз', desc:'Не зрозумів що сказали. Ввічливо просиш повторити або пояснити іншими словами.', video:'', videoTitle:'' },
+    { emoji:'🎉', title:'Giving compliments', sub:'Похвала і реакція на неї', desc:'Даєш і приймаєш компліменти природно — без незручності і надмірної скромності.', video:'', videoTitle:'' },
   ],
-  daily:[
-    {emoji:'🏥',title:'Doctor\'s appointment',sub:'Симптоми, діагноз',desc:'Ти у лікаря. Описуєш симптоми і отримуєш рекомендації.',video:'K8sAbPkQYMo',videoTitle:'At the doctor – English conversation'},
-    {emoji:'💊',title:'At the pharmacy',sub:'Ліки, дозування, рецепт',desc:'В аптеці питаєш про ліки без рецепту. Фармацевт уточнює симптоми.',video:'',videoTitle:''},
-    {emoji:'🛒',title:'Supermarket',sub:'Знайти продукти, каса',desc:'В супермаркеті не можеш знайти потрібний товар. Питаєш персонал.',video:'',videoTitle:''},
-    {emoji:'👔',title:'Clothing store',sub:'Розмір, примірка, повернення',desc:'Хочеш повернути одяг не того розміру. Розмовляєш з продавцем.',video:'',videoTitle:''},
-    {emoji:'🏫',title:'Parent-teacher meeting',sub:'Успішність дитини',desc:'Зустріч з вчителем. Обговорюєте прогрес і поведінку дитини.',video:'',videoTitle:''},
-    {emoji:'🔧',title:'Calling a plumber',sub:'Проблема в квартирі',desc:'Труба тече. Телефонуєш майстру і пояснюєш проблему.',video:'',videoTitle:''},
-    {emoji:'🏦',title:'At the bank',sub:'Рахунок, картка, помилка',desc:'В банку вирішуєш питання з рахунком або помилковим списанням.',video:'',videoTitle:''},
-    {emoji:'📦',title:'Accepting a delivery',sub:'Кур\'єр, посилка, підпис',desc:'Кур\'єр привіз посилку. Перевіряєш і вирішуєш проблему якщо є.',video:'',videoTitle:''},
-    {emoji:'😤',title:'Neighbor dispute',sub:'Шум, паркування, конфлікт',desc:'Проблема з сусідом. Вирішуєш ввічливо але твердо.',video:'',videoTitle:''},
-    {emoji:'💻',title:'Tech support call',sub:'Інтернет не працює',desc:'Телефонуєш в техпідтримку. Описуєш проблему і виконуєш інструкції.',video:'',videoTitle:''},
-    {emoji:'🦷',title:'Dentist visit',sub:'Біль, процедура, страх',desc:'У стоматолога. Описуєш де болить і домовляєшся про лікування.',video:'',videoTitle:''},
-    {emoji:'🚗',title:'Car service',sub:'Ремонт, діагностика',desc:'Привіз машину в сервіс. Пояснюєш що не так і питаєш про терміни.',video:'',videoTitle:''},
-    {emoji:'👁️',title:'Eye test / Optician',sub:'Зір, окуляри, лінзи',desc:'У окуліста. Описуєш проблеми із зором і вибираєш окуляри.',video:'',videoTitle:''},
-    {emoji:'🏋️',title:'Gym / Personal trainer',sub:'Перше заняття, план',desc:'В тренажерному залі. Тренер питає про цілі і складає програму.',video:'',videoTitle:''},
-    {emoji:'🐶',title:'At the vet',sub:'Тварина хвора',desc:'Ведеш тварину до ветеринара. Описуєш симптоми і розумієш рекомендації.',video:'',videoTitle:''},
-    {emoji:'📮',title:'Post office',sub:'Посилка, відправлення',desc:'На пошті відправляєш посилку за кордон. Вибираєш тип і страховку.',video:'',videoTitle:''},
-    {emoji:'🔑',title:'Locksmith emergency',sub:'Замкнувся, втратив ключі',desc:'Замкнувся за дверима або загубив ключі. Телефонуєш і пояснюєш.',video:'',videoTitle:''},
-    {emoji:'💇',title:'Hair salon',sub:'Стрижка, фарбування',desc:'У перукарні. Пояснюєш що хочеш і реагуєш на пропозиції.',video:'',videoTitle:''},
-    {emoji:'🏠',title:'Renting a property',sub:'Перегляд квартири',desc:'Ріелтор показує квартиру. Питаєш деталі і оцінюєш варіант.',video:'',videoTitle:''},
-    {emoji:'📚',title:'Library',sub:'Знайти книгу, продовжити',desc:'В бібліотеці шукаєш книгу або продовжуєш термін позики.',video:'',videoTitle:''},
-    {emoji:'🏃',title:'Joining a fitness class',sub:'Перша тренування в групі',desc:'Перший раз в груповому занятті. Знайомишся з тренером і людьми.',video:'',videoTitle:''},
-    {emoji:'🎓',title:'University admissions',sub:'Подача документів, вимоги',desc:'В приймальній комісії питаєш про вступ і необхідні документи.',video:'',videoTitle:''},
-    {emoji:'👨‍🏫',title:'Asking teacher for extension',sub:'Прохання про відстрочку',desc:'Не встиг здати завдання. Ввічливо просиш у викладача додатковий час.',video:'',videoTitle:''},
-    {emoji:'🎒',title:'Study group meetup',sub:'Підготовка до екзамену разом',desc:'Організовуєш групу для спільної підготовки. Розподіляєш теми.',video:'',videoTitle:''},
-    {emoji:'💬',title:'School counselor talk',sub:'Особисті питання, поради',desc:'Розмова зі шкільним психологом про проблеми чи плани на майбутнє.',video:'',videoTitle:''},
-    {emoji:'📵',title:'Phone plan upgrade',sub:'Зміна тарифу',desc:'В магазині мобільного зв\'язку обираєш новий тариф або змінюєш умови.',video:'',videoTitle:''},
-    {emoji:'🛍️',title:'Returning a product',sub:'Гарантія, обмін',desc:'Повертаєш зламаний товар. Пояснюєш проблему і вимагаєш обміну.',video:'',videoTitle:''},
-    {emoji:'💳',title:'Lost credit card',sub:'Блокування, заміна',desc:'Загубив банківську карту. Телефонуєш у банк щоб заблокувати і випустити нову.',video:'',videoTitle:''},
-    {emoji:'🅿️',title:'Parking ticket dispute',sub:'Сперечаєшся з інспектором',desc:'Отримав штраф несправедливо. Сперечаєшся з паркувальним інспектором.',video:'',videoTitle:''},
-    {emoji:'🚇',title:'Lost in public transport',sub:'Не та лінія, не та зупинка',desc:'Сів не на той автобус або метро. Просиш допомогу щоб знайти правильний маршрут.',video:'',videoTitle:''},
-    {emoji:'🏪',title:'Convenience store',sub:'Дрібниці, питання',desc:'У магазині біля дому. Шукаєш конкретний товар і питаєш персонал.',video:'',videoTitle:''},
-    {emoji:'🍞',title:'Bakery / Farmers market',sub:'Свіжі продукти, торг',desc:'На ринку чи в пекарні. Питаєш про свіжість і вибираєш найкраще.',video:'',videoTitle:''},
-    {emoji:'🐾',title:'Pet grooming appointment',sub:'Стрижка тварини',desc:'Ведеш собаку чи кота на грумінг. Пояснюєш що хочеш.',video:'',videoTitle:''},
-    {emoji:'🎨',title:'Art class enrollment',sub:'Запис на курс',desc:'Записуєшся на курс малювання або іншого хобі. Питаєш про програму.',video:'',videoTitle:''},
-    {emoji:'🍕',title:'Food delivery problem',sub:'Замовлення прийшло не те',desc:'Привезли не те що замовляв. Дзвониш на гарячу лінію.',video:'',videoTitle:''},
-    {emoji:'🎵',title:'Concert ticket booking',sub:'Вибір місць, ціна',desc:'Купуєш квитки на концерт. Питаєш про місця, ціни, дату.',video:'',videoTitle:''},
-    {emoji:'🎮',title:'Tech store / gadget shop',sub:'Вибір ноутбука, телефону',desc:'В магазині електроніки. Консультуєшся з продавцем про вибір моделі.',video:'',videoTitle:''},
-    {emoji:'🏊',title:'Swimming pool admission',sub:'Перепустка, правила',desc:'Перший раз у новому басейні. Питаєш про абонемент і правила.',video:'',videoTitle:''},
-    {emoji:'💼',title:'Insurance claim',sub:'ДТП, страховий випадок',desc:'Подаєш заяву про страховий випадок. Пояснюєш деталі агенту.',video:'',videoTitle:''},
-    {emoji:'🚿',title:'Apartment maintenance',sub:'Поломка, ремонт',desc:'Щось зламалось у квартирі. Дзвониш в управління дому щоб полагодили.',video:'',videoTitle:''},
-    {emoji:'🍻',title:'Inviting neighbors over',sub:'Соцальна зустріч',desc:'Запрошуєш сусідів до себе. Знайомитесь ближче, ведете small talk.',video:'',videoTitle:''},
-    {emoji:'🪪',title:'Renewing documents',sub:'Паспорт, права',desc:'У державному офісі продовжуєш термін дії документів. Заповнюєш форми.',video:'',videoTitle:''},
-    {emoji:'⚖️',title:'Calling a lawyer',sub:'Юридична консультація',desc:'Звертаєшся до юриста за консультацією. Описуєш свою ситуацію.',video:'',videoTitle:''},
-    {emoji:'📰',title:'Subscription cancellation',sub:'Відписка від послуги',desc:'Хочеш скасувати підписку. Дзвониш у компанію і твердо стоїш на своєму.',video:'',videoTitle:''},
-    {emoji:'🚑',title:'Emergency room visit',sub:'Гостра ситуація, прийом',desc:'Прийшов до приймального відділення лікарні. Описуєш гостру проблему медсестрі.',video:'',videoTitle:''},
-    {emoji:'📞',title:'Booking medical appointment',sub:'По телефону до клініки',desc:'Дзвониш у клініку записатися. Адміністратор питає про симптоми і дату.',video:'',videoTitle:''},
-    {emoji:'🧠',title:'Mental health check-in',sub:'Розмова з терапевтом',desc:'У психотерапевта вперше. Описуєш стан, тривоги, відносини, ставиш питання про процес.',video:'',videoTitle:''},
-    {emoji:'🤰',title:'Pregnancy / women\'s health',sub:'Гінеколог, акушер',desc:'Прийом у жіночого лікаря. Питання здоров\'я, вагітності, планування.',video:'',videoTitle:''},
-    {emoji:'☕',title:'Coffee shop order',sub:'Барист, кастомізація напою',desc:'У кав\'ярні замовляєш складний напій з модифікаціями. Розумієш сленг бариста.',video:'',videoTitle:''},
-    {emoji:'🍽️',title:'Restaurant reservation by phone',sub:'Бронюєш стіл',desc:'Дзвониш у ресторан забронювати стіл. Дата, час, кількість, особливі побажання.',video:'',videoTitle:''},
-    {emoji:'🏧',title:'ATM / payment problem',sub:'Банкомат не дає гроші',desc:'Банкомат проковтнув картку або не видав готівку. Дзвониш у банк або питаєш персонал.',video:'',videoTitle:''},
-    {emoji:'💸',title:'Sending money abroad',sub:'Переказ за кордон',desc:'У банку оформляєш міжнародний переказ. Питання курсу, комісій, термінів.',video:'',videoTitle:''},
+  daily: [
+    { emoji:'🏥', title:'Doctor\'s appointment', sub:'Симптоми, діагноз', desc:'Ти у лікаря. Описуєш симптоми, відповідаєш на питання і отримуєш рекомендації по лікуванню.', video:'K8sAbPkQYMo', videoTitle:'At the doctor – English conversation' },
+    { emoji:'💊', title:'At the pharmacy', sub:'Ліки, дозування, рецепт', desc:'В аптеці питаєш про ліки без рецепту. Фармацевт уточнює симптоми і рекомендує препарат.', video:'', videoTitle:'' },
+    { emoji:'🛒', title:'Supermarket', sub:'Знайти продукти, каса', desc:'В супермаркеті не можеш знайти потрібний товар. Питаєш персонал і розбираєшся з касою.', video:'', videoTitle:'' },
+    { emoji:'👔', title:'Clothing store', sub:'Розмір, примірка, повернення', desc:'Хочеш повернути одяг не того розміру або знайти потрібну річ. Розмовляєш з продавцем.', video:'', videoTitle:'' },
+    { emoji:'🏫', title:'Parent-teacher meeting', sub:'Успішність дитини', desc:'Зустріч з вчителем. Обговорюєте прогрес дитини, поведінку і домашні завдання.', video:'', videoTitle:'' },
+    { emoji:'🔧', title:'Calling a plumber', sub:'Проблема в квартирі', desc:'Труба тече або щось зламалось. Телефонуєш майстру, пояснюєш проблему і домовляєшся про виклик.', video:'', videoTitle:'' },
+    { emoji:'🏦', title:'At the bank', sub:'Рахунок, картка, проблема', desc:'В банку вирішуєш питання з рахунком, картою або помилковим списанням.', video:'', videoTitle:'' },
+    { emoji:'🚗', title:'Car service', sub:'Ремонт, діагностика', desc:'Привіз машину в сервіс. Пояснюєш що не так, питаєш про вартість і терміни ремонту.', video:'', videoTitle:'' },
+    { emoji:'📦', title:'Accepting a delivery', sub:'Кур\'єр, посилка, підпис', desc:'Кур\'єр привіз посилку. Перевіряєш товар, підписуєш документи, вирішуєш проблему якщо щось не так.', video:'', videoTitle:'' },
+    { emoji:'😤', title:'Neighbor dispute', sub:'Шум, паркування, конфлікт', desc:'Проблема з сусідом — шум вночі або зайняте місце. Вирішуєш ввічливо але твердо.', video:'', videoTitle:'' },
+    { emoji:'🦷', title:'Dentist visit', sub:'Біль, процедура, страх', desc:'У стоматолога. Описуєш де болить, розумієш що він пояснює і домовляєшся про лікування.', video:'', videoTitle:'' },
+    { emoji:'💻', title:'Tech support call', sub:'Інтернет не працює', desc:'Телефонуєш в техпідтримку. Описуєш проблему і виконуєш інструкції оператора.', video:'', videoTitle:'' },
   ],
-  travel:[
-    {emoji:'🛫',title:'Airport check-in',sub:'Реєстрація, місця, багаж',desc:'На стійці реєстрації. Агент перевіряє документи і питає про багаж.',video:'VBYcITmAMgU',videoTitle:'Airport check-in – real English conversation'},
-    {emoji:'🏨',title:'Hotel check-in',sub:'Бронювання, номер, ключ',desc:'Прибув у готель. Ресепшн перевіряє бронювання і вирішує проблеми.',video:'',videoTitle:''},
-    {emoji:'🚕',title:'Taxi ride',sub:'Маршрут, рекомендації',desc:'Таксист везе тебе по місту і хоче поговорити.',video:'',videoTitle:''},
-    {emoji:'🗺️',title:'Asking for directions',sub:'Заблукав у місті',desc:'Загубився в незнайомому місті. Питаєш перехожого як дістатись.',video:'',videoTitle:''},
-    {emoji:'🧳',title:'Lost luggage',sub:'Авіакомпанія, скарга',desc:'Твій багаж не прилетів. Розмовляєш з представником авіакомпанії.',video:'',videoTitle:''},
-    {emoji:'🍽️',title:'Restaurant order',sub:'Меню, алергії, рахунок',desc:'В ресторані. Офіціант приймає замовлення і допомагає з вибором.',video:'',videoTitle:''},
-    {emoji:'🚨',title:'Lost passport',sub:'Поліція, консульство',desc:'Загубив паспорт. Звертаєшся до поліції і консульства.',video:'',videoTitle:''},
-    {emoji:'🏖️',title:'Booking a tour',sub:'Екскурсія, маршрут, ціна',desc:'В туристичному офісі вибираєш екскурсію і домовляєшся про ціну.',video:'',videoTitle:''},
-    {emoji:'🤒',title:'Medical emergency abroad',sub:'Швидка, страховка',desc:'Тобі погано за кордоном. Телефонуєш в швидку і пояснюєш симптоми.',video:'',videoTitle:''},
-    {emoji:'✈️',title:'Flight delayed',sub:'Авіакомпанія, компенсація',desc:'Рейс затримали. Питаєш про права і компенсацію.',video:'',videoTitle:''},
-    {emoji:'🏕️',title:'Meeting travelers',sub:'Хостел, нові знайомства',desc:'У хостелі познайомився з мандрівниками. Обмінюєшся порадами.',video:'',videoTitle:''},
-    {emoji:'🛍️',title:'Market haggling',sub:'Торгуєшся на ринку',desc:'На туристичному ринку хочеш купити сувенір. Торгуєшся.',video:'',videoTitle:''},
-    {emoji:'🚌',title:'Bus / Metro navigation',sub:'Квиток, зупинка, маршрут',desc:'В незнайомому транспорті. Купуєш квиток і питаєш де виходити.',video:'',videoTitle:''},
-    {emoji:'🚆',title:'Train journey',sub:'Розклад, платформа, місця',desc:'На залізниці. Купуєш квиток і знаходиш своє місце.',video:'',videoTitle:''},
-    {emoji:'🚁',title:'Tour guide',sub:'Питання під час екскурсії',desc:'На екскурсії. Питаєш гіда про місця і ділишся враженнями.',video:'',videoTitle:''},
-    {emoji:'🏔️',title:'Adventure / Outdoor activity',sub:'Інструктор, безпека',desc:'Перший урок серфінгу, скелелазіння або гірських лиж. Слухаєш інструктора.',video:'',videoTitle:''},
-    {emoji:'🍺',title:'Bar / Pub conversation',sub:'Замовлення, знайомство',desc:'В барі. Замовляєш напої і знайомишся з людьми поруч.',video:'',videoTitle:''},
-    {emoji:'🎭',title:'Booking show tickets',sub:'Театр, концерт, кіно',desc:'Купуєш квитки на шоу. Питаєш про місця і програму.',video:'',videoTitle:''},
-    {emoji:'🏄',title:'Beach resort',sub:'Сервіс, оренда, активності',desc:'На курорті. Орендуєш обладнання і домовляєшся про послуги.',video:'',videoTitle:''},
-    {emoji:'🛂',title:'Customs declaration',sub:'Митниця, що декларувати',desc:'На митниці після перельоту. Відповідаєш на питання офіцера.',video:'',videoTitle:''},
-    {emoji:'🚙',title:'Renting a car',sub:'Страховка, GPS, умови',desc:'Орендуєш авто на час подорожі. Обираєш страховку, читаєш угоду.',video:'',videoTitle:''},
-    {emoji:'🚦',title:'Car accident abroad',sub:'Інший водій, поліція',desc:'Незначна аварія за кордоном. Спілкуєшся з іншим водієм і поліцією.',video:'',videoTitle:''},
-    {emoji:'🏛️',title:'Museum visit',sub:'Гід, експозиція, питання',desc:'У музеї. Питаєш гіда про експонати або беречь аудіогід.',video:'',videoTitle:''},
-    {emoji:'📷',title:'Photographing locals',sub:'Питаєш дозволу зняти',desc:'Хочеш сфотографувати людей у незнайомій культурі. Ввічливо питаєш дозволу.',video:'',videoTitle:''},
-    {emoji:'🍷',title:'Wine tasting / Restaurant recommendations',sub:'Дегустація, рекомендації',desc:'У ресторані сомельє рекомендує вино. Питаєш про сорти і пару до страв.',video:'',videoTitle:''},
-    {emoji:'🥢',title:'Trying local cuisine',sub:'Незвичні страви',desc:'У місцевому ресторані. Питаєш що це за страва і як її їдять.',video:'',videoTitle:''},
-    {emoji:'❌',title:'Wrong order at restaurant',sub:'Ввічлива скарга',desc:'Принесли не те що замовляв або не свіже. Ввічливо повертаєш страву.',video:'',videoTitle:''},
-    {emoji:'💵',title:'Splitting the bill',sub:'З попутниками, мови різні',desc:'У ресторані з групою. Домовляєтесь як розділити рахунок.',video:'',videoTitle:''},
-    {emoji:'🆘',title:'Pickpocket / Theft report',sub:'Поліція, втратив речі',desc:'У тебе щось вкрали. У поліції описуєш злочинця і втрачені речі.',video:'',videoTitle:''},
-    {emoji:'💊',title:'Pharmacy abroad',sub:'Симптоми без рецепту',desc:'У аптеці без рецепту. Пояснюєш симптоми і питаєш про ліки без перекладача.',video:'',videoTitle:''},
-    {emoji:'🚄',title:'Train ticket exchange',sub:'Запізнення, зміна квитка',desc:'Запізнився на потяг. Просиш обміняти квиток на наступний рейс.',video:'',videoTitle:''},
-    {emoji:'💼',title:'Travel insurance claim',sub:'Дзвінок про випадок',desc:'Звертаєшся у страхову через хворобу чи аварію в подорожі.',video:'',videoTitle:''},
-    {emoji:'🛂',title:'Embassy visit abroad',sub:'Консульські послуги',desc:'У своєму консульстві за кордоном. Просиш допомогу або документи.',video:'',videoTitle:''},
-    {emoji:'🎟️',title:'Last-minute deal',sub:'Знижки, торг',desc:'Шукаєш last-minute путівку чи квиток. Дзвониш у агентство і торгуєшся.',video:'',videoTitle:''},
-    {emoji:'🚿',title:'Hotel complaint',sub:'Шум, температура, чистота',desc:'У готелі щось не так. Скаржишся на ресепшн і вимагаєш вирішення.',video:'',videoTitle:''},
-    {emoji:'🛏️',title:'Couchsurfing host',sub:'Знайомство, правила',desc:'Перша зустріч з couchsurfing хостом. Знайомишся, дізнаєшся правила.',video:'',videoTitle:''},
-    {emoji:'🤙',title:'Hitchhiking conversation',sub:'Водій підвозить, балакає',desc:'Водій підвіз і хоче поговорити. Розповідаєш про себе і подорож.',video:'',videoTitle:''},
-    {emoji:'🚁',title:'Helicopter / Heli tour',sub:'Інструктаж, безпека',desc:'Перед оглядовим польотом. Слухаєш правила безпеки і питаєш деталі.',video:'',videoTitle:''},
-    {emoji:'🛶',title:'Boat trip / Cruise',sub:'Екіпаж, програма',desc:'На круїзі або човновій прогулянці. Питаєш про маршрут і активності.',video:'',videoTitle:''},
-    {emoji:'🏕️',title:'Camping registration',sub:'Кемпінг, правила',desc:'Реєструєшся в кемпінгу. Орендуєш місце і дізнаєшся про правила.',video:'',videoTitle:''},
-    {emoji:'🎪',title:'Festival ticketing',sub:'Каса, паспорт відвідувача',desc:'На фестивалі. Купуєш браслет учасника і питаєш про програму.',video:'',videoTitle:''},
-    {emoji:'🛒',title:'Buying gifts for family',sub:'Сувеніри, упаковка',desc:'Купуєш подарунки додому. Питаєш про традиційні сувеніри і упаковку.',video:'',videoTitle:''},
-    {emoji:'🚲',title:'Bike rental',sub:'Оренда велосипеда, маршрути',desc:'Орендуєш велосипед і питаєш про маршрути та правила в місті.',video:'',videoTitle:''},
-    {emoji:'🌃',title:'Nightclub entry',sub:'Dress code, ID',desc:'На вході в нічний клуб. Охоронець перевіряє документи і одяг.',video:'',videoTitle:''},
-    {emoji:'🤿',title:'Diving / Snorkeling lesson',sub:'Перший раз під водою',desc:'Перший дайв або снорклінг. Інструктор пояснює сигнали і безпеку.',video:'',videoTitle:''},
-    {emoji:'💱',title:'Currency exchange',sub:'Обмін валюти, курс, комісія',desc:'В обмінному пункті обмінюєш валюту. Питаєш про курс, приховані комісії, ліміти.',video:'',videoTitle:''},
+  travel: [
+    { emoji:'🛫', title:'Airport check-in', sub:'Реєстрація, місця, багаж', desc:'Ти стоїш на стійці реєстрації. Агент перевіряє документи, питає про багаж і пропонує місця.', video:'VBYcITmAMgU', videoTitle:'Airport check-in – real English conversation' },
+    { emoji:'🏨', title:'Hotel check-in', sub:'Бронювання, номер, ключ', desc:'Прибув у готель. Ресепшн перевіряє бронювання, вирішує проблему якщо номер не готовий.', video:'', videoTitle:'' },
+    { emoji:'🚕', title:'Taxi ride', sub:'Маршрут, рекомендації', desc:'Таксист везе тебе по місту. Балакучий, знає все про місто і хоче поговорити.', video:'', videoTitle:'' },
+    { emoji:'🗺️', title:'Asking for directions', sub:'Заблукав у місті', desc:'Ти загубився в незнайомому місті. Питаєш перехожого як дістатись до потрібного місця.', video:'', videoTitle:'' },
+    { emoji:'🧳', title:'Lost luggage', sub:'Авіакомпанія, скарга', desc:'Твій багаж не прилетів. Розмовляєш з представником авіакомпанії про пошук і компенсацію.', video:'', videoTitle:'' },
+    { emoji:'🍽️', title:'Restaurant order', sub:'Меню, алергії, рахунок', desc:'В ресторані. Офіціант приймає замовлення, пояснює страви і допомагає з вибором вина.', video:'', videoTitle:'' },
+    { emoji:'🚨', title:'Lost passport', sub:'Поліція, консульство', desc:'Ти загубив або у тебе вкрали паспорт. Звертаєшся до поліції і консульства.', video:'', videoTitle:'' },
+    { emoji:'🏖️', title:'Booking a tour', sub:'Екскурсія, маршрут, ціна', desc:'В туристичному офісі вибираєш екскурсію. Питаєш деталі, торгуєшся і бронюєш.', video:'', videoTitle:'' },
+    { emoji:'🤒', title:'Medical emergency abroad', sub:'Швидка, страховка', desc:'Тобі погано за кордоном. Телефонуєш в швидку, пояснюєш симптоми і розбираєшся зі страховкою.', video:'', videoTitle:'' },
+    { emoji:'✈️', title:'Flight delayed', sub:'Авіакомпанія, компенсація', desc:'Рейс затримали на 5 годин. Розмовляєш з представником авіакомпанії про права і компенсацію.', video:'', videoTitle:'' },
+    { emoji:'🏕️', title:'Meeting travelers', sub:'Хостел, нові знайомства', desc:'У хостелі познайомився з мандрівниками з різних країн. Обмінюєшся порадами і планами.', video:'', videoTitle:'' },
+    { emoji:'🛍️', title:'Market haggling', sub:'Торгуєшся на ринку', desc:'На туристичному ринку. Хочеш купити сувенір але ціна завищена. Торгуєшся ввічливо.', video:'', videoTitle:'' },
   ],
-  work:[
-    {emoji:'💼',title:'Job interview',sub:'HR задає питання',desc:'На співбесіді. HR питає про досвід, мотивацію і кар\'єрні цілі.',video:'1mHjMNZZvFo',videoTitle:'Job interview in English – full practice'},
-    {emoji:'📊',title:'Status update',sub:'Звіт менеджеру',desc:'Weekly sync з менеджером. Розповідаєш що зроблено і що блокує.',video:'',videoTitle:''},
-    {emoji:'💰',title:'Salary negotiation',sub:'Проси підвищення',desc:'Розмова з менеджером про підвищення. Аргументуєш свою цінність.',video:'',videoTitle:''},
-    {emoji:'😷',title:'Calling in sick',sub:'Пояснюєш відсутність',desc:'Телефонуєш менеджеру. Пояснюєш що погано і коли повернешся.',video:'',videoTitle:''},
-    {emoji:'🤝',title:'Meeting new team',sub:'Перший день, small talk',desc:'Перший день. Знайомишся з командою за кавою після standup.',video:'',videoTitle:''},
-    {emoji:'😬',title:'Giving difficult feedback',sub:'Говориш правду колезі',desc:'Маєш дати складний фідбек колезі. Чесно і тактовно.',video:'',videoTitle:''},
-    {emoji:'🗣️',title:'Leading a meeting',sub:'Ти ведеш зустріч',desc:'Ведеш командну зустріч. Відкриваєш, тримаєш порядок, підводиш підсумки.',video:'',videoTitle:''},
-    {emoji:'🌐',title:'Call with foreign client',sub:'Business English',desc:'Відеодзвінок з іноземним клієнтом. Презентуєш рішення.',video:'',videoTitle:''},
-    {emoji:'✉️',title:'Resigning politely',sub:'Звільнення без конфлікту',desc:'Розмова з менеджером про звільнення. Дякуєш і домовляєшся.',video:'',videoTitle:''},
-    {emoji:'📈',title:'Performance review',sub:'Оцінка роботи за рік',desc:'Щорічна оцінка. Обговорюєш досягнення і ставиш цілі.',video:'',videoTitle:''},
-    {emoji:'🤯',title:'Conflict with coworker',sub:'Вирішуєш конфлікт',desc:'Напружена ситуація з колегою. Вирішуєш спокійно і конструктивно.',video:'',videoTitle:''},
-    {emoji:'📋',title:'Project kickoff meeting',sub:'Запуск нового проекту',desc:'Перша зустріч по новому проекту. Обговорюєте цілі і ролі.',video:'',videoTitle:''},
-    {emoji:'🎯',title:'Pitching your idea',sub:'Презентуєш ідею команді',desc:'Презентуєш нову ідею або ініціативу. Переконуєш колег і менеджера.',video:'',videoTitle:''},
-    {emoji:'🏆',title:'Networking at conference',sub:'Знайомишся з людьми',desc:'На конференції. Знайомишся з людьми у твоїй сфері.',video:'',videoTitle:''},
-    {emoji:'📱',title:'Following up after interview',sub:'Дзвінок або лист після',desc:'Після співбесіди. Дзвониш або пишеш щоб уточнити статус.',video:'',videoTitle:''},
-    {emoji:'🤝',title:'Freelance project negotiation',sub:'Умови, ціна, дедлайни',desc:'Фріланс. Обговорюєш умови проекту з новим клієнтом.',video:'',videoTitle:''},
-    {emoji:'📉',title:'Explaining a mistake',sub:'Помилка, причини, рішення',desc:'Щось пішло не так. Пояснюєш менеджеру що сталось і як виправиш.',video:'',videoTitle:''},
-    {emoji:'🎓',title:'Mentoring a junior',sub:'Ти пояснюєш молодшому',desc:'Менторська розмова з молодшим колегою. Направляєш і мотивуєш.',video:'',videoTitle:''},
-    {emoji:'🎯',title:'Onboarding new hire',sub:'Перші тижні на роботі',desc:'Допомагаєш новачку влитись в команду. Розповідаєш про процеси.',video:'',videoTitle:''},
-    {emoji:'🚀',title:'Pitching to investors',sub:'Презентація стартапу',desc:'Питч-сесія перед інвесторами. Презентуєш продукт і відповідаєш на каверзні питання.',video:'',videoTitle:''},
-    {emoji:'📞',title:'Cold call to client',sub:'Перший контакт, продаж',desc:'Холодний дзвінок потенційному клієнту. Представляєш компанію і продукт.',video:'',videoTitle:''},
-    {emoji:'📅',title:'Scheduling across time zones',sub:'Міжнародна зустріч',desc:'Координуєш дзвінок з людьми з різних континентів. Враховуєш часові зони.',video:'',videoTitle:''},
-    {emoji:'🤐',title:'Confidential talk with boss',sub:'Особисте, конфіденційне',desc:'Складна особиста розмова з керівником. Просиш про допомогу або зміну ролі.',video:'',videoTitle:''},
-    {emoji:'😡',title:'Customer complaint call',sub:'Розлючений клієнт',desc:'Клієнт дзвонить розлючений. Слухаєш, заспокоюєш, пропонуєш рішення.',video:'',videoTitle:''},
-    {emoji:'🆕',title:'Asking for new role',sub:'Внутрішня вакансія',desc:'Хочеш перейти на іншу позицію в компанії. Обговорюєш це з керівником.',video:'',videoTitle:''},
-    {emoji:'🎤',title:'Public speaking at conference',sub:'Доповідь, Q&A сесія',desc:'Виступаєш на конференції. Презентуєш доповідь і відповідаєш на питання.',video:'',videoTitle:''},
-    {emoji:'🏆',title:'Receiving recognition',sub:'Премія, нагорода, тост',desc:'Тебе нагороджують. Дякуєш команді і керівнику, говориш кілька слів.',video:'',videoTitle:''},
-    {emoji:'📊',title:'Board meeting',sub:'Звіт на найвищому рівні',desc:'Презентуєш квартальні результати раді директорів. Готовий до жорстких питань.',video:'',videoTitle:''},
-    {emoji:'⚖️',title:'HR mediation',sub:'Конфлікт через HR',desc:'У HR медіації між тобою і колегою. Висловлюєш свою позицію спокійно.',video:'',videoTitle:''},
-    {emoji:'🧑‍💼',title:'Reference check call',sub:'Тебе питають про колишнього',desc:'Дзвонять перевірити рекомендацію колишнього співробітника. Чесно відповідаєш.',video:'',videoTitle:''},
-    {emoji:'📬',title:'Email follow-up call',sub:'"Did you get my email?"',desc:'Хтось не відповідає на пошту. Дзвониш щоб ввічливо нагадати.',video:'',videoTitle:''},
-    {emoji:'🌐',title:'Cross-cultural team conflict',sub:'Непорозуміння через культуру',desc:'Конфлікт у міжнародній команді через культурні розбіжності. Вирішуєш дипломатично.',video:'',videoTitle:''},
-    {emoji:'💸',title:'Discussing layoffs',sub:'Звільнення, скорочення',desc:'Менеджер повідомляє про скорочення. Реагуєш, питаєш про умови, наступні кроки.',video:'',videoTitle:''},
-    {emoji:'🎁',title:'End of year party',sub:'Корпоратив, тости',desc:'На корпоративі знайомишся з іншими відділами і ведеш small talk.',video:'',videoTitle:''},
+  work: [
+    { emoji:'💼', title:'Job interview', sub:'HR задає питання', desc:'Ти на співбесіді. HR питає про досвід, мотивацію, слабкі сторони і кар\'єрні цілі.', video:'1mHjMNZZvFo', videoTitle:'Job interview in English – full practice' },
+    { emoji:'📊', title:'Status update', sub:'Звіт менеджеру', desc:'Weekly sync з менеджером. Розповідаєш що зроблено, що блокує роботу і що планується.', video:'', videoTitle:'' },
+    { emoji:'💰', title:'Salary negotiation', sub:'Проси підвищення', desc:'Розмова з менеджером про підвищення зарплати. Аргументуєш свою цінність і цифри.', video:'', videoTitle:'' },
+    { emoji:'😷', title:'Calling in sick', sub:'Пояснюєш відсутність', desc:'Телефонуєш менеджеру вранці. Пояснюєш що погано себе почуваєш і коли повернешся.', video:'', videoTitle:'' },
+    { emoji:'🤝', title:'Meeting new team', sub:'Перший день, small talk', desc:'Перший день на новій роботі. Знайомишся з командою за кавою після ранкового standup.', video:'', videoTitle:'' },
+    { emoji:'😬', title:'Giving difficult feedback', sub:'Говориш правду колезі', desc:'Маєш дати складний фідбек колезі про якість роботи. Треба бути чесним і тактовним.', video:'', videoTitle:'' },
+    { emoji:'🗣️', title:'Leading a meeting', sub:'Ти ведеш зустріч', desc:'Ти ведеш командну зустріч. Відкриваєш, тримаєш порядок денний і підводиш підсумки.', video:'', videoTitle:'' },
+    { emoji:'🌐', title:'Call with foreign client', sub:'Business English', desc:'Відеодзвінок з іноземним клієнтом. Презентуєш рішення і відповідаєш на питання.', video:'', videoTitle:'' },
+    { emoji:'✉️', title:'Resigning politely', sub:'Звільнення без конфлікту', desc:'Розмова з менеджером про звільнення. Повідомляєш про рішення, дякуєш і домовляєшся про перехід.', video:'', videoTitle:'' },
+    { emoji:'📈', title:'Performance review', sub:'Оцінка роботи за рік', desc:'Щорічна оцінка. Обговорюєш досягнення, отримуєш фідбек і ставиш цілі на наступний рік.', video:'', videoTitle:'' },
   ],
-  move:[
-    {emoji:'🛂',title:'Border control',sub:'Офіцер, мета в\'їзду',desc:'Паспортний контроль. Офіцер питає про мету в\'їзду і фінанси.',video:'sI2yjFMKQaE',videoTitle:'Border control English – what to say'},
-    {emoji:'🏠',title:'Apartment hunting',sub:'Landlord, умови оренди',desc:'Дзвониш по оголошенню. Питаєш про умови, депозит і комунальні.',video:'',videoTitle:''},
-    {emoji:'🏦',title:'Opening bank account',sub:'Документи для нерезидента',desc:'В банку для нових резидентів. Менеджер пояснює вимоги.',video:'',videoTitle:''},
-    {emoji:'📋',title:'Visa interview',sub:'Консульство, деталі планів',desc:'Співбесіда у консульстві. Офіцер питає про плани і зв\'язки.',video:'',videoTitle:''},
-    {emoji:'💉',title:'Health insurance signup',sub:'Вибір плану, питання',desc:'Реєструєшся в страховій. Агент пояснює плани і питає про потреби.',video:'',videoTitle:''},
-    {emoji:'🤝',title:'Meeting the neighbors',sub:'Знайомство, small talk',desc:'Познайомився з сусідом. Він питає звідки ти і чи потрібна допомога.',video:'',videoTitle:''},
-    {emoji:'🏫',title:'Enrolling child in school',sub:'Директор, документи',desc:'Записуєш дитину в школу. Розмовляєш з адміністрацією.',video:'',videoTitle:''},
-    {emoji:'📱',title:'Getting a SIM card',sub:'Тариф, документи',desc:'В магазині мобільного зв\'язку. Вибираєш тариф і підключаєшся.',video:'',videoTitle:''},
-    {emoji:'🚗',title:'Driving license exchange',sub:'Транспортна інспекція',desc:'Обмін іноземного посвідчення. Розбираєшся з процедурою.',video:'',videoTitle:''},
-    {emoji:'🏥',title:'Registering with a GP',sub:'Сімейний лікар',desc:'Реєструєшся у місцевого лікаря. Заповнюєш анкету.',video:'',videoTitle:''},
-    {emoji:'🏢',title:'City hall registration',sub:'Реєстрація адреси',desc:'Реєструєш адресу проживання. Чиновник перевіряє документи.',video:'',videoTitle:''},
-    {emoji:'🛒',title:'First grocery shop abroad',sub:'Незнайомий магазин',desc:'Перший похід в супермаркет нової країни. Шукаєш звичні продукти.',video:'',videoTitle:''},
-    {emoji:'🏗️',title:'Hiring a contractor',sub:'Ремонт, кошторис',desc:'Наймаєш майстра для ремонту. Обговорюєш роботу і ціну.',video:'',videoTitle:''},
-    {emoji:'📜',title:'Tax office visit',sub:'Декларація, питання',desc:'В податковій. Питаєш про обов\'язки і подаєш документи.',video:'',videoTitle:''},
-    {emoji:'🤱',title:'Maternity / childcare services',sub:'Дитячий садок, nursery',desc:'Записуєш дитину в садок. Питаєш про програму і режим.',video:'',videoTitle:''},
-    {emoji:'🐾',title:'Registering a pet',sub:'Ветеринарна служба',desc:'Реєструєш домашнього улюбленця. Питаєш про вакцинацію і чіп.',video:'',videoTitle:''},
-    {emoji:'⚡',title:'Utility setup',sub:'Електрика, газ, вода',desc:'Підключаєш комунальні послуги. Телефонуєш в компанію.',video:'',videoTitle:''},
-    {emoji:'🏛️',title:'Embassy visit',sub:'Документи, консульські послуги',desc:'В посольстві. Отримуєш документи або вирішуєш консульське питання.',video:'',videoTitle:''},
+  move: [
+    { emoji:'🛂', title:'Border control', sub:'Офіцер, мета в\'їзду', desc:'Паспортний контроль. Офіцер детально питає про мету в\'їзду, плани і фінансові можливості.', video:'sI2yjFMKQaE', videoTitle:'Border control English – what to say' },
+    { emoji:'🏠', title:'Apartment hunting', sub:'Landlord, умови оренди', desc:'Дзвониш по оголошенню про оренду. Питаєш про умови, депозит, комунальні і що включено.', video:'', videoTitle:'' },
+    { emoji:'🏦', title:'Opening bank account', sub:'Документи для нерезидента', desc:'В банку для нових резидентів. Менеджер пояснює вимоги і допомагає відкрити рахунок.', video:'', videoTitle:'' },
+    { emoji:'📋', title:'Visa interview', sub:'Консульство, деталі планів', desc:'Співбесіда у консульстві. Офіцер детально питає про плани, роботу і зв\'язки з країною.', video:'', videoTitle:'' },
+    { emoji:'💉', title:'Health insurance signup', sub:'Вибір плану, питання', desc:'Реєструєшся в страховій компанії. Агент пояснює плани і питає про твої медичні потреби.', video:'', videoTitle:'' },
+    { emoji:'🤝', title:'Meeting the neighbors', sub:'Знайомство, small talk', desc:'Познайомився з сусідом у ліфті. Він питає звідки ти, як тобі тут і чи потрібна допомога.', video:'', videoTitle:'' },
+    { emoji:'🏫', title:'Enrolling child in school', sub:'Директор, документи', desc:'Записуєш дитину в місцеву школу. Розмовляєш з адміністрацією про документи і клас.', video:'', videoTitle:'' },
+    { emoji:'📱', title:'Getting a SIM card', sub:'Тариф, документи', desc:'В магазині мобільного зв\'язку. Вибираєш тариф, питаєш що потрібно і підключаєшся.', video:'', videoTitle:'' },
+    { emoji:'🚗', title:'Driving license exchange', sub:'Транспортна інспекція', desc:'Обмін іноземного водійського посвідчення. Розбираєшся з процедурою і документами.', video:'', videoTitle:'' },
+    { emoji:'🏥', title:'Registering with a GP', sub:'Сімейний лікар', desc:'Реєструєшся у місцевого сімейного лікаря. Заповнюєш анкету і пояснюєш медичну історію.', video:'', videoTitle:'' },
   ],
 };
 
-// STATE
-let currentCat='basics';
-let currentScenario=null;
-let selectedRole='friendly';
-let selectedLevel='intermediate';
-let selectedPersona='';
-let selectedDomain='';
-let customLevel='intermediate';
-let history=[];
-let msgCount=0;
-let maxMsgs=DEMO_LIMIT;
-let isLoading=false;
-let isDemo=false;
-let prevScreen='s-home';
-let imgCache={};
-let userStatus='demo';
-let chatMeta={};
+const ROLES = [
+  { id:'friendly',  name:'Friendly',        desc:'Підтримує, не виправляє кожну помилку',  emoji:'😊' },
+  { id:'strict',    name:'Strict teacher',   desc:'Виправляє все, дає детальний фідбек',     emoji:'📝' },
+  { id:'native',    name:'Native speaker',   desc:'Говорить природно, не підлаштовується',   emoji:'🗣️' },
+  { id:'patient',   name:'Patient',          desc:'Повторює, спрощує, дає підказки',         emoji:'🤗' },
+];
 
-async function checkUserStatus(){
-  if(!UID){userStatus='demo';maxMsgs=DEMO_LIMIT;updateLimitNotes();return;}
-  try{
-    const r=await fetch('/buddy_status',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({uid:UID,init_data:INIT_DATA})});
-    const d=await r.json();
-    userStatus=d.status||'demo';
-    maxMsgs=d.max_msgs||DEMO_LIMIT;
-    msgCount=d.msg_count||0;
-  }catch{userStatus='demo';maxMsgs=DEMO_LIMIT;}
-  updateLimitNotes();
+const LEVELS = [
+  { id:'beginner',      label:'A1–A2' },
+  { id:'intermediate',  label:'B1–B2' },
+  { id:'advanced',      label:'C1–C2' },
+];
+
+const DAILY_LIMIT = 20;
+
+let currentCat = 'basics';
+let currentScenario = null;
+let selectedRole = 'friendly';
+let selectedLevel = 'intermediate';
+let msgCount = 0;
+let maxMsgs = DAILY_LIMIT;
+let history = [];
+let isLoading = false;
+let pixabayCache = {};
+
+async function fetchPixabayImage(query) {
+  if (pixabayCache[query]) return pixabayCache[query];
+  try {
+    const res = await fetch(`/buddy_image?q=${encodeURIComponent(query)}`);
+    if (!res.ok) return null;
+    const data = await res.json();
+    pixabayCache[query] = data.url || null;
+    return pixabayCache[query];
+  } catch { return null; }
 }
 
-function updateLimitNotes(){
-  const note=userStatus==='demo'?`${DEMO_LIMIT} повідомлень безкоштовно · Потім тріал →`:
-    userStatus==='trial'?`Тріал активний · Залишилось ${Math.max(0,maxMsgs-msgCount)} повідомлень`:'';
-  ['detail-limit-note','custom-limit-note'].forEach(id=>{
-    const el=document.getElementById(id);
-    if(el)el.textContent=note;
-  });
-}
-
-function showScreen(id){
-  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
+  if (id === 's-home') renderScenarios();
 }
 
-function renderCats(){
-  document.getElementById('cat-tabs').innerHTML=CATS.map(c=>
-    `<div class="cat-tab ${c.id===currentCat?'active':''}"
-      style="${c.id===currentCat?`background:${c.color};border-color:${c.color}`:''}"
-      onclick="selectCat('${c.id}')">${c.label}</div>`
+function renderCategories() {
+  const tabs = document.getElementById('cat-tabs');
+  tabs.innerHTML = CATEGORIES.map(c =>
+    `<div class="cat-tab ${c.id === currentCat ? 'active' : ''}" 
+      onclick="selectCat('${c.id}')" style="${c.id === currentCat ? `background:${c.color};border-color:${c.color}` : ''}">${c.label}</div>`
   ).join('');
 }
 
-function selectCat(id){currentCat=id;renderCats();renderScenarios();}
-
-function renderScenarios(){
-  const items=SCENARIOS[currentCat]||[];
-  document.getElementById('sc-list').innerHTML=items.map((s,i)=>
-    `<div class="sc-card" onclick="openScenario('${currentCat}',${i})">
-      <div class="sc-img" id="scimg-${currentCat}-${i}">${emojiImg(s.emoji, 30)}</div>
+function renderScenarios() {
+  renderCategories();
+  const list = document.getElementById('scenarios-list');
+  const scenarios = SCENARIOS[currentCat] || [];
+  list.innerHTML = scenarios.map((s, i) =>
+    `<div class="scenario-card" onclick="openScenario('${currentCat}', ${i})">
+      <div class="sc-photo" id="sc-photo-${currentCat}-${i}">
+        <span style="font-size:32px">${s.emoji}</span>
+      </div>
       <div class="sc-body">
         <div class="sc-title">${s.title}</div>
         <div class="sc-sub">${s.sub}</div>
       </div>
     </div>`
   ).join('');
-  items.forEach((s,i)=>loadImg(s.title,`scimg-${currentCat}-${i}`,s.emoji));
+  scenarios.forEach((s, i) => {
+    fetchPixabayImage(s.title).then(url => {
+      if (!url) return;
+      const el = document.getElementById(`sc-photo-${currentCat}-${i}`);
+      if (el) el.innerHTML = `<img src="${url}" alt="${s.title}" onerror="this.parentNode.innerHTML='<span style=font-size:32px>${s.emoji}</span>'">`;
+    });
+  });
 }
 
-async function loadImg(query,elId,fallback){
-  if(imgCache[query]){setImg(elId,imgCache[query],fallback);return;}
-  try{
-    const r=await fetch(`/buddy_image?q=${encodeURIComponent(query)}`);
-    const d=await r.json();
-    if(d.url){imgCache[query]=d.url;setImg(elId,d.url,fallback);}
-  }catch{}
+function selectCat(id) {
+  currentCat = id;
+  renderScenarios();
 }
 
-function setImg(elId,url,fallback){
-  const el=document.getElementById(elId);
-  if(!el)return;
-  // При помилці фото повертаємо emoji через Noto Emoji
-  el.innerHTML=`<img src="${url}" alt="" style="width:100%;height:100%;object-fit:cover" onerror="this.parentNode.innerHTML=window.__emojiImgFallback?window.__emojiImgFallback('${fallback}',30):'<span style=font-size:30px>${fallback}</span>'">`;
-}
-// Експортуємо emojiImg для onerror callback
-window.__emojiImgFallback = emojiImg;
+async function openScenario(catId, idx) {
+  const cat = CATEGORIES.find(c => c.id === catId);
+  const s = SCENARIOS[catId][idx];
+  currentScenario = { catId, idx, ...s };
 
-async function openScenario(catId,idx){
-  const cat=CATS.find(c=>c.id===catId);
-  const s=SCENARIOS[catId][idx];
-  currentScenario={catId,idx,...s};
-  prevScreen='s-detail';
+  document.getElementById('detail-emoji').textContent = s.emoji;
+  document.getElementById('detail-title').textContent = s.title;
+  document.getElementById('detail-sub').textContent = s.sub;
+  document.getElementById('detail-desc').textContent = s.desc;
 
-  document.getElementById('detail-emoji').innerHTML=emojiImg(s.emoji, 68);
-  document.getElementById('detail-emoji').style.display='block';
-  document.getElementById('detail-title').textContent=s.title;
-  document.getElementById('detail-sub').textContent=s.sub;
-  document.getElementById('detail-desc').textContent=s.desc;
-  document.getElementById('detail-badge').textContent=cat.label;
-  document.getElementById('detail-badge').style.cssText=`background:${cat.bg};color:${cat.color};border:1px solid ${cat.color}40`;
+  const badge = document.getElementById('detail-cat-badge');
+  badge.textContent = cat.label;
+  badge.style.background = cat.bg;
+  badge.style.color = cat.color;
+  badge.style.border = `1px solid ${cat.color}40`;
 
-  const hero=document.getElementById('detail-hero');
-  hero.querySelectorAll('img.hero-photo').forEach(i=>i.remove());
-  hero.style.background=cat.bg;
+  const hero = document.getElementById('detail-hero');
+  hero.style.background = cat.bg;
 
-  const url=imgCache[s.title];
-  if(url)injectHero(url);
-  else loadImg(s.title,'__none__',s.emoji).then(()=>{if(imgCache[s.title])injectHero(imgCache[s.title]);});
-
-  const vsec=document.getElementById('video-section');
-  vsec.style.display=s.video?'block':'none';
-  if(s.video){
-    document.getElementById('video-title').textContent=s.videoTitle||'Дивитись приклад';
-    document.getElementById('video-yt').src='';
-    document.getElementById('video-yt').style.display='none';
-    document.getElementById('video-row').style.display='flex';
+  const url = await fetchPixabayImage(s.title);
+  if (url) {
+    hero.innerHTML = `
+      <img src="${url}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover" 
+        onerror="this.remove()">
+      <div class="detail-hero-overlay"></div>
+      <div class="detail-hero-back" onclick="showScreen('s-home')">
+        <svg viewBox="0 0 24 24" stroke-width="2.5" style="width:18px;height:18px;stroke:#fff;fill:none"><polyline points="15 18 9 12 15 6"></polyline></svg>
+      </div>
+      <div class="detail-hero-cat" id="detail-cat-badge" style="position:absolute;top:12px;right:12px;font-size:11px;padding:4px 10px;border-radius:12px;font-weight:600;backdrop-filter:blur(8px);background:${cat.bg};color:${cat.color};border:1px solid ${cat.color}40">${cat.label}</div>
+      <div class="detail-hero-title" style="position:absolute;bottom:14px;left:16px;right:16px">
+        <h2 style="font-size:20px;font-weight:700;color:#fff;letter-spacing:-0.3px">${s.title}</h2>
+        <p style="font-size:13px;color:rgba(255,255,255,0.65);margin-top:3px">${s.sub}</p>
+      </div>`;
+  } else {
+    document.getElementById('detail-emoji').textContent = s.emoji;
   }
 
-  document.getElementById('role-grid').innerHTML=ROLES.map(r=>
-    `<div class="role-btn ${r.id===selectedRole?'active':''}" onclick="pickRole('${r.id}',event)">
-      <div class="role-btn-name">${r.name}</div>
+  const videoSection = document.getElementById('video-section');
+  if (s.video) {
+    videoSection.style.display = 'block';
+    document.getElementById('video-title').textContent = s.videoTitle || 'Дивитись приклад';
+    document.getElementById('video-yt').src = '';
+  } else {
+    videoSection.style.display = 'none';
+  }
+
+  document.getElementById('role-grid').innerHTML = ROLES.map(r =>
+    `<div class="role-btn ${r.id === selectedRole ? 'active' : ''}" onclick="selectRole('${r.id}')">
+      <div class="role-btn-name">${r.emoji} ${r.name}</div>
       <div class="role-btn-desc">${r.desc}</div>
     </div>`
   ).join('');
 
-  document.getElementById('level-row').innerHTML=LEVELS.map(l=>
-    `<div class="level-btn ${l.id===selectedLevel?'active':''}" onclick="pickLevel('${l.id}',event)">${l.label}</div>`
+  document.getElementById('level-row').innerHTML = LEVELS.map(l =>
+    `<div class="level-btn ${l.id === selectedLevel ? 'active' : ''}" onclick="selectLevel('${l.id}')">${l.label}</div>`
   ).join('');
 
-  updateLimitNotes();
+  document.getElementById('limit-info').textContent =
+    `${DAILY_LIMIT - msgCount} повідомлень залишилось сьогодні`;
+
   showScreen('s-detail');
 }
 
-function injectHero(url){
-  const hero=document.getElementById('detail-hero');
-  const img=document.createElement('img');
-  img.className='hero-photo';
-  img.src=url;
-  img.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:cover';
-  img.onerror=()=>img.remove();
-  img.onload=()=>{document.getElementById('detail-emoji').style.display='none';};
-  hero.insertBefore(img,hero.firstChild);
+function openVideo() {
+  if (!currentScenario?.video) return;
+  const yt = document.getElementById('video-yt');
+  const ph = document.getElementById('video-placeholder');
+  yt.src = `https://www.youtube.com/embed/${currentScenario.video}?autoplay=1`;
+  yt.style.display = 'block';
+  ph.style.display = 'none';
 }
 
-function playVideo(){
-  if(!currentScenario?.video)return;
-  document.getElementById('video-yt').src=`https://www.youtube.com/embed/${currentScenario.video}?autoplay=1`;
-  document.getElementById('video-yt').style.display='block';
-  document.getElementById('video-row').style.display='none';
+function selectRole(id) {
+  selectedRole = id;
+  document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector(`.role-btn[onclick*="${id}"]`)?.classList.add('active');
 }
 
-function pickRole(id,e){
-  selectedRole=id;
-  document.querySelectorAll('.role-btn').forEach(b=>b.classList.remove('active'));
-  e.currentTarget.classList.add('active');
+function selectLevel(id) {
+  selectedLevel = id;
+  document.querySelectorAll('.level-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector(`.level-btn[onclick*="${id}"]`)?.classList.add('active');
 }
 
-function pickLevel(id,e){
-  selectedLevel=id;
-  document.querySelectorAll('#level-row .level-btn').forEach(b=>b.classList.remove('active'));
-  e.currentTarget.classList.add('active');
-}
+function startChat() {
+  if (!currentScenario) return;
+  history = [];
+  const msgs = document.getElementById('chat-messages');
+  msgs.innerHTML = '';
 
-function openCustom(){
-  document.getElementById('persona-chips').innerHTML=PERSONAS.map(p=>
-    `<div class="chip ${selectedPersona===p.id?'active':''}" onclick="pickPersona('${p.id}')">${p.name}</div>`
-  ).join('');
-  document.getElementById('domain-chips').innerHTML=DOMAINS.map(d=>
-    `<div class="chip ${selectedDomain===d?'active':''}" onclick="pickDomain('${d}')">${d}</div>`
-  ).join('');
-  document.getElementById('custom-level-row').innerHTML=LEVELS.map(l=>
-    `<div class="level-btn ${l.id===customLevel?'active':''}" onclick="pickCustomLevel('${l.id}',event)">${l.label}</div>`
-  ).join('');
-  updateLimitNotes();
-  prevScreen='s-custom';
-  showScreen('s-custom');
-}
+  const cat = CATEGORIES.find(c => c.id === currentScenario.catId);
+  const role = ROLES.find(r => r.id === selectedRole);
 
-function pickPersona(id){
-  selectedPersona=selectedPersona===id?'':id;
-  const p=PERSONAS.find(x=>x.id===id);
-  const inp=document.getElementById('custom-person');
-  if(selectedPersona&&!inp.value.trim())inp.value=p.name.replace(/^.+? /,'');
-  document.querySelectorAll('#persona-chips .chip').forEach(c=>{
-    c.classList.toggle('active',c.textContent.trim()===p.name);
-  });
-}
-
-function pickDomain(d){
-  selectedDomain=selectedDomain===d?'':d;
-  const inp=document.getElementById('custom-domain');
-  if(selectedDomain&&!inp.value.trim())inp.value=d;
-  document.querySelectorAll('#domain-chips .chip').forEach(c=>{
-    c.classList.toggle('active',c.textContent.trim()===d);
-  });
-}
-
-function pickCustomLevel(id,e){
-  customLevel=id;
-  document.querySelectorAll('#custom-level-row .level-btn').forEach(b=>b.classList.remove('active'));
-  e.currentTarget.classList.add('active');
-}
-
-function startScenarioChat(){
-  if(!currentScenario)return;
-  const s=currentScenario;
-  const cat=CATS.find(c=>c.id===s.catId);
-  initChat(s.emoji,cat?.bg||'#1a1a1a',s.title,
-    `You are playing a role in this English conversation practice scenario.\nScenario: ${s.title}\nContext: ${s.desc}`,
-    selectedRole,selectedLevel,'s-detail');
-}
-
-function startCustomChat(){
-  const person=document.getElementById('custom-person').value.trim();
-  const situation=document.getElementById('custom-situation').value.trim();
-  const domain=document.getElementById('custom-domain').value.trim();
-  const goal=document.getElementById('custom-goal').value.trim();
-  if(!person&&!situation){document.getElementById('custom-person').focus();return;}
-  const desc=[
-    person?`You are playing this person: ${person}.`:'',
-    situation?`Situation: ${situation}.`:'',
-    domain?`Domain: ${domain}. Use correct professional terminology from this field. Speak as a genuine expert in ${domain}.`:'',
-    goal?`The learner specifically wants to practice: ${goal}. Challenge them on this.`:'',
-    'Stay fully in character. Maintain the professional level and personality described.',
-  ].filter(Boolean).join(' ');
-  initChat('⭐','#1e1a30',person||situation||'Custom',desc,'strict',customLevel,'s-custom');
-}
-
-function initChat(emoji,bg,name,desc,role,level,back){
-  history=[];
-  if(userStatus!=='demo')msgCount=0;
-  isDemo=userStatus==='demo';
-  prevScreen=back;
-  chatMeta={desc,role,level};
-  document.getElementById('chat-avatar').innerHTML=emojiImg(emoji, 22);
-  document.getElementById('chat-avatar').style.background=bg;
-  document.getElementById('chat-name').textContent=name;
-  document.getElementById('chat-msgs').innerHTML='';
+  document.getElementById('chat-avatar').textContent = currentScenario.emoji;
+  document.getElementById('chat-avatar').style.background = cat?.bg || '#1a1a1a';
+  document.getElementById('chat-name').textContent = currentScenario.title;
   updateCounter();
+
   showScreen('s-chat');
-  const greets={
-    friendly:`Hey! Ready to practice "${name}"? I'll play the other person naturally and give you gentle feedback. Let's go! 😊`,
-    strict:`Good. We're practicing "${name}". I will correct every grammar mistake. Begin.`,
-    native:`Hey! So we're doing "${name}" — I'll just speak like a native. Keep going even if you make mistakes!`,
-    patient:`Hi! We're practicing "${name}" together. Take your time, I'll give hints if needed. Ready when you are 🤗`,
+
+  const greeting = buildGreeting();
+  addMessage('ai', greeting, []);
+  history.push({ role: 'user', content: '[START]' });
+  history.push({ role: 'assistant', content: greeting });
+}
+
+function buildGreeting() {
+  const s = currentScenario;
+  const role = ROLES.find(r => r.id === selectedRole);
+  const greetings = {
+    friendly:  `Hey! Ready to practice "${s.title}"? I'll play the other person in this situation. Just type what you'd say and we'll have a natural conversation. I'll give you gentle feedback after your messages. Let's go! 😊`,
+    strict:    `Good. We're practicing "${s.title}". I will play the other person and correct every grammar mistake you make. Speak naturally and I'll give detailed feedback. Begin.`,
+    native:    `Hey! So we're doing "${s.title}" — I'll just talk naturally like a native speaker would. Don't worry if you miss some things, just keep going!`,
+    patient:   `Hi! We're going to practice "${s.title}" together. Take your time, I'll repeat things if needed and give you hints. No rush at all! Ready when you are 🤗`,
   };
-  const g=greets[role]||greets.friendly;
-  addMsg('ai',g,[]);
-  history.push({role:'user',content:'[START]'});
-  history.push({role:'assistant',content:g});
+  return greetings[selectedRole] || greetings.friendly;
 }
 
-function goBackFromChat(){
-  // Якщо була повноцінна розмова (≥3 повідомлень юзера) — toast
-  const userMsgs=history.filter(m=>m.role==='user'&&m.content!=='[START]').length;
-  if(userMsgs>=3&&window.showReward){
-    showReward('buddy_session');
+function updateCounter() {
+  const left = maxMsgs - msgCount;
+  document.getElementById('chat-counter').textContent = `${left} left`;
+  const banner = document.getElementById('limit-banner');
+  const inputArea = document.querySelector('.chat-input-area');
+  if (left <= 0) {
+    banner.style.display = 'block';
+    inputArea.style.display = 'none';
+  } else {
+    banner.style.display = 'none';
+    inputArea.style.display = 'flex';
   }
-  showScreen(prevScreen||'s-home');
 }
 
-function updateCounter(){
-  document.getElementById('chat-counter').textContent=
-    isDemo?`${Math.max(0,DEMO_LIMIT-msgCount)} демо`:'';
-}
-
-function addMsg(role,text,feedback){
-  const msgs=document.getElementById('chat-msgs');
-  const div=document.createElement('div');
-  div.className=`msg ${role}`;
-  const b=document.createElement('div');
-  b.className='bubble';b.textContent=text;
-  div.appendChild(b);
-  if(feedback?.length){
-    const row=document.createElement('div');
-    row.className='fb-row';
-    feedback.forEach(f=>{
-      const t=document.createElement('span');
-      t.className=`fb-tag ${f.type==='good'?'fb-good':'fb-tip'}`;
-      t.textContent=f.text;row.appendChild(t);
+function addMessage(role, text, feedback) {
+  const msgs = document.getElementById('chat-messages');
+  const div = document.createElement('div');
+  div.className = `msg ${role}`;
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble';
+  bubble.textContent = text;
+  div.appendChild(bubble);
+  if (feedback && feedback.length) {
+    const row = document.createElement('div');
+    row.className = 'feedback-row';
+    feedback.forEach(f => {
+      const tag = document.createElement('span');
+      tag.className = `fb-tag ${f.type === 'good' ? 'fb-good' : 'fb-tip'}`;
+      tag.textContent = f.text;
+      row.appendChild(tag);
     });
     div.appendChild(row);
   }
   msgs.appendChild(div);
-  msgs.scrollTop=msgs.scrollHeight;
+  msgs.scrollTop = msgs.scrollHeight;
 }
 
-function showTyping(){
-  const msgs=document.getElementById('chat-msgs');
-  const d=document.createElement('div');
-  d.className='msg ai';d.id='typing-ind';
-  d.innerHTML='<div class="typing-b"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>';
-  msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight;
+function showTyping() {
+  const msgs = document.getElementById('chat-messages');
+  const div = document.createElement('div');
+  div.className = 'msg ai';
+  div.id = 'typing';
+  div.innerHTML = '<div class="typing-bubble"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>';
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
 }
-function removeTyping(){document.getElementById('typing-ind')?.remove();}
-function onKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();}}
-function autoResize(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,100)+'px';}
 
-async function send(){
-  const inp=document.getElementById('chat-input');
-  const text=inp.value.trim();
-  if(!text||isLoading)return;
-  if(isDemo&&msgCount>=DEMO_LIMIT){showScreen('s-paywall');return;}
-  addMsg('user',text);
-  history.push({role:'user',content:text});
-  inp.value='';inp.style.height='auto';
-  isLoading=true;document.getElementById('send-btn').disabled=true;
+function removeTyping() {
+  document.getElementById('typing')?.remove();
+}
+
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 100) + 'px';
+}
+
+async function sendMessage() {
+  const input = document.getElementById('chat-input');
+  const text = input.value.trim();
+  if (!text || isLoading || msgCount >= maxMsgs) return;
+
+  addMessage('user', text);
+  history.push({ role: 'user', content: text });
+  input.value = '';
+  input.style.height = 'auto';
+  isLoading = true;
+  document.getElementById('send-btn').disabled = true;
   showTyping();
-  try{
-    const r=await fetch('/buddy_chat',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({uid:UID,init_data:INIT_DATA,
-        scenario:document.getElementById('chat-name').textContent,
-        scenario_desc:chatMeta.desc||'',role:chatMeta.role||'friendly',
-        level:chatMeta.level||'intermediate',
-        history:history.filter(m=>m.content!=='[START]').slice(-8),
-        is_demo:isDemo})});
-    const d=await r.json();
+
+  try {
+    const res = await fetch(BOT_API + '/buddy_chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        uid: UID,
+        scenario: currentScenario.title,
+        scenario_desc: currentScenario.desc,
+        role: selectedRole,
+        level: selectedLevel,
+        history: history.slice(-8),
+        init_data: tg?.initData || '',
+      })
+    });
+
+    const data = await res.json();
     removeTyping();
-    if(d.show_paywall){
-      addMsg('ai',d.reply||'Дякую за розмову!',[]);
-      setTimeout(()=>showScreen('s-paywall'),1200);return;
-    }
-    if(d.error){addMsg('ai',d.error,[]);}
-    else{
-      msgCount++;updateCounter();
-      history.push({role:'assistant',content:d.reply});
-      addMsg('ai',d.reply,d.feedback||[]);
 
-      // Toast: визначаємо тип події за фідбеком
-      if(window.showReward){
-        const hasFeedback=(d.feedback||[]).length>0;
-        const hasTip=(d.feedback||[]).some(f=>f.type==='tip');
-        if(hasTip){
-          // Юзер зробив помилку — виправлення
-          showReward('topic_error_corrected');
-        } else if(hasFeedback) {
-          // Юзер написав правильно — позитивний фідбек
-          showReward('topic_used_correctly',{topic:d.topic||''});
-        }
-      }
-
-      if(isDemo&&msgCount>=DEMO_LIMIT){
-        setTimeout(()=>{
-          addMsg('ai','✨ Ось і 5 повідомлень демо. Щоб продовжити — починай безкоштовний тріал!',[]);
-          setTimeout(()=>showScreen('s-paywall'),1500);
-        },600);
-      }
+    if (data.error) {
+      addMessage('ai', data.error, []);
+    } else {
+      msgCount++;
+      updateCounter();
+      history.push({ role: 'assistant', content: data.reply });
+      addMessage('ai', data.reply, data.feedback || []);
     }
-  }catch{removeTyping();addMsg('ai','Something went wrong. Try again.',[]); }
-  isLoading=false;document.getElementById('send-btn').disabled=false;
+  } catch (e) {
+    removeTyping();
+    addMessage('ai', 'Something went wrong. Please try again.', []);
+  }
+
+  isLoading = false;
+  document.getElementById('send-btn').disabled = false;
 }
 
-function goToBot(){
-  const url=`${BOT_URL}?start=source_buddy`;
-  if(tg)tg.openTelegramLink(url);
-  else window.open(url,'_blank');
-}
-
-renderCats();renderScenarios();checkUserStatus();
+renderScenarios();
 </script>
 </body>
 </html>

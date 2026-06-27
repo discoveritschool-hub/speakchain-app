@@ -5,198 +5,144 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <title>SpeakChain · Мій шлях</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="/toast_rewards.js"></script>
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  :root {
-    --bg:      #0d0d14;
-    --bg2:     #16161f;
-    --bg3:     #1e1e2a;
-    --purple:  #7c6ef7;
-    --green:   #5ad8a6;
-    --orange:  #f7a35c;
-    --text:    #eaeaf5;
-    --text2:   #8888a8;
-    --border:  rgba(255,255,255,0.07);
-  }
-  body {
-    background: var(--bg); color: var(--text);
-    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
-    min-height: 100vh; padding-bottom: 48px;
-  }
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#0d0d14;--bg2:#16161f;--bg3:#1e1e2a;
+  --purple:#7c6ef7;--green:#5ad8a6;--yellow:#f7c95c;--red:#f76e6e;--gray:#3a3a48;
+  --orange:#f7a35c;
+  --text:#eaeaf5;--text2:#8888a8;--text3:#5a5a72;
+  --border:rgba(255,255,255,0.07);
+}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;min-height:100vh;padding-bottom:48px}
 
-  /* ── Header ── */
-  .hdr {
-    position: sticky; top: 0; z-index: 20;
-    background: var(--bg);
-    border-bottom: 0.5px solid var(--border);
-    padding: 18px 16px 14px;
-  }
-  .hdr-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
-  .hdr-name { font-size: 18px; font-weight: 700; letter-spacing: -0.3px; }
-  .hdr-level {
-    background: var(--purple); color: #fff;
-    font-size: 11px; font-weight: 700;
-    padding: 3px 11px; border-radius: 20px; letter-spacing: 0.5px;
-  }
+.hdr{position:sticky;top:0;z-index:20;background:var(--bg);border-bottom:.5px solid var(--border);padding:18px 16px 14px}
+.hdr-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.hdr-name{font-size:18px;font-weight:700;letter-spacing:-.3px}
+.hdr-level{background:var(--purple);color:#fff;font-size:11px;font-weight:700;padding:3px 11px;border-radius:20px;letter-spacing:.5px}
+.overall-track{height:6px;background:var(--bg3);border-radius:10px;overflow:hidden}
+.overall-fill{height:100%;background:linear-gradient(90deg,var(--purple),#a78bfa);border-radius:10px;transition:width .5s}
+.overall-meta{display:flex;justify-content:space-between;font-size:12px;color:var(--text2);margin-top:6px}
 
-  /* ── A1 → C2 Journey slider ── */
-  .journey {
-    padding: 14px 16px 4px;
-    background: var(--bg);
-  }
-  .journey-label {
-    display: flex; justify-content: space-between; align-items: center;
-    margin-bottom: 8px;
-  }
-  .journey-title { font-size: 11px; color: var(--text2); font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; }
-  .journey-pct   { font-size: 12px; color: var(--green); font-weight: 700; }
-  .journey-track {
-    position: relative;
-    height: 8px; background: var(--bg3); border-radius: 8px; overflow: visible;
-    margin-bottom: 8px;
-  }
-  .journey-fill {
-    height: 100%; border-radius: 8px;
-    background: linear-gradient(90deg, #5ad8a6, #7c6ef7, #f7a35c);
-    transition: width 1s cubic-bezier(.4,0,.2,1);
-    position: relative;
-  }
-  /* Бігунок */
-  .journey-thumb {
-    position: absolute; right: -8px; top: 50%;
-    transform: translateY(-50%);
-    width: 18px; height: 18px; border-radius: 50%;
-    background: #fff;
-    border: 3px solid var(--purple);
-    box-shadow: 0 0 8px rgba(124,110,247,0.6);
-    transition: right 1s cubic-bezier(.4,0,.2,1);
-  }
-  /* Мітки рівнів */
-  .journey-marks {
-    display: flex; justify-content: space-between;
-    padding: 0 2px;
-  }
-  .journey-mark {
-    font-size: 10px; font-weight: 600;
-    color: var(--text2); text-align: center;
-    transition: color 0.3s;
-    min-width: 24px;
-  }
-  .journey-mark.done    { color: var(--green); }
-  .journey-mark.current { color: var(--purple); }
-  .journey-mark.goal    { color: var(--orange); }
+.journey{padding:14px 16px 4px;background:var(--bg)}
+.journey-label{display:flex;justify-content:space-between;margin-bottom:8px}
+.journey-title{font-size:12px;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.06em}
+.journey-pct{font-size:12px;color:var(--purple);font-weight:700}
+.journey-track{height:8px;background:var(--bg3);border-radius:10px;position:relative;overflow:hidden}
+.journey-fill{height:100%;background:linear-gradient(90deg,var(--purple),var(--green));border-radius:10px;position:relative;transition:width .5s}
+.journey-thumb{position:absolute;right:-8px;top:50%;transform:translateY(-50%);width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 2px 8px rgba(124,110,247,.5)}
+.journey-marks{display:flex;justify-content:space-between;margin-top:8px}
+.journey-mark{font-size:11px;color:var(--text3);font-weight:600}
+.journey-mark.done{color:var(--green)}
+.journey-mark.current{color:var(--purple)}
+.journey-mark.goal{color:var(--orange)}
 
-  /* ── Overall bar ── */
-  .overall-track { background: var(--bg3); border-radius: 6px; height: 5px; overflow: hidden; margin-top: 8px; }
-  .overall-fill {
-    height: 100%; border-radius: 6px;
-    background: linear-gradient(90deg, var(--purple), var(--green));
-    transition: width 0.9s cubic-bezier(.4,0,.2,1);
-  }
-  .overall-meta {
-    display: flex; justify-content: space-between;
-    font-size: 11px; color: var(--text2); margin-top: 5px;
-  }
+.streak-strip{margin:10px 16px;padding:8px 12px;background:rgba(247,163,92,.1);border:1px solid rgba(247,163,92,.2);border-radius:10px;font-size:13px;color:var(--orange);text-align:center}
 
-  /* ── Streak ── */
-  .streak-strip {
-    display: flex; gap: 8px; align-items: center;
-    padding: 10px 16px;
-    background: rgba(247,163,92,0.07);
-    border-bottom: 0.5px solid rgba(247,163,92,0.15);
-    font-size: 13px;
-  }
-  .streak-strip span { color: var(--orange); font-weight: 600; }
+.tabs{display:flex;gap:6px;padding:14px 16px 0;overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{flex-shrink:0;padding:6px 12px;background:var(--bg2);color:var(--text2);font-size:12px;font-weight:600;border-radius:20px;border:1px solid var(--border);cursor:pointer;transition:all .15s}
+.tab.active{background:var(--purple);color:#fff;border-color:var(--purple)}
+.tab.done{color:var(--green)}
+.tab.locked{opacity:.4}
 
-  /* ── Tabs ── */
-  .tabs {
-    display: flex; gap: 6px;
-    padding: 12px 16px 4px;
-    overflow-x: auto; scrollbar-width: none;
-  }
-  .tabs::-webkit-scrollbar { display: none; }
-  .tab {
-    flex-shrink: 0; padding: 6px 14px;
-    border-radius: 20px; font-size: 12px; font-weight: 600;
-    cursor: pointer; border: 0.5px solid var(--border);
-    background: var(--bg2); color: var(--text2);
-    transition: all 0.2s;
-  }
-  .tab.active { background: var(--purple); border-color: var(--purple); color: #fff; }
-  .tab.done   { border-color: var(--green); color: var(--green); }
-  .tab.locked { opacity: 0.4; }
+.section{padding:14px 16px}
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.stat{background:var(--bg2);border-radius:10px;padding:10px;text-align:center;border:1px solid var(--border)}
+.stat-v{font-size:18px;font-weight:700;letter-spacing:-.3px}
+.stat-v.p{color:var(--purple)}
+.stat-v.g{color:var(--green)}
+.stat-v.o{color:var(--orange)}
+.stat-l{font-size:10px;color:var(--text2);margin-top:2px;text-transform:uppercase;letter-spacing:.05em}
 
-  /* ── Stats ── */
-  .section { padding: 14px 16px; }
-  .stats-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 12px; }
-  .stat {
-    background: var(--bg2); border-radius: 12px;
-    padding: 12px 10px; border: 0.5px solid var(--border); text-align: center;
-  }
-  .stat-v { font-size: 20px; font-weight: 700; }
-  .stat-v.p { color: var(--purple); }
-  .stat-v.g { color: var(--green); }
-  .stat-v.o { color: var(--orange); }
-  .stat-l { font-size: 10px; color: var(--text2); margin-top: 3px; }
+.lvl-progress{background:var(--bg2);border-radius:14px;padding:14px;margin-bottom:14px;border:1px solid var(--border)}
+.lvl-progress-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.lvl-progress-name{font-size:14px;font-weight:600}
+.lvl-progress-pct{font-size:14px;font-weight:700;color:var(--purple)}
+.lvl-track{height:6px;background:var(--bg3);border-radius:10px;overflow:hidden}
+.lvl-fill{height:100%;background:linear-gradient(90deg,var(--purple),#a78bfa);transition:width .5s}
+.lvl-hint{font-size:12px;color:var(--text2);margin-top:8px}
 
-  /* ── Level progress ── */
-  .lvl-progress {
-    background: var(--bg2); border-radius: 12px;
-    padding: 12px 14px; border: 0.5px solid var(--border); margin-bottom: 10px;
-  }
-  .lvl-progress-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-  .lvl-progress-name { font-size: 13px; font-weight: 600; }
-  .lvl-progress-pct  { font-size: 13px; font-weight: 700; color: var(--green); }
-  .lvl-track { background: var(--bg3); border-radius: 4px; height: 5px; overflow: hidden; }
-  .lvl-fill  { height: 100%; border-radius: 4px; background: var(--green); transition: width 0.9s cubic-bezier(.4,0,.2,1); }
-  .lvl-hint  { font-size: 11px; color: var(--text2); margin-top: 6px; }
+.topics-title{font-size:12px;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin:14px 0 10px}
 
-  /* ── Next topic ── */
-  .next-banner {
-    background: rgba(124,110,247,0.08); border: 0.5px solid rgba(124,110,247,0.3);
-    border-radius: 12px; padding: 12px 14px; margin-bottom: 10px;
-  }
-  .next-label { font-size: 10px; color: var(--purple); font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 4px; }
-  .next-name  { font-size: 15px; font-weight: 600; }
-  .next-hint  { font-size: 11px; color: var(--text2); margin-top: 3px; }
+/* ── Topic card with colored bar ── */
+.topic{display:flex;align-items:center;gap:10px;padding:12px;background:var(--bg2);border-radius:12px;margin-bottom:8px;border:1px solid var(--border);cursor:pointer;transition:all .15s}
+.topic:active{transform:scale(.98)}
+.topic-num{font-size:14px;color:var(--text3);font-weight:600;width:18px;flex-shrink:0;text-align:center}
+.topic-body{flex:1;min-width:0}
+.topic-name{font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:6px}
+.topic-bar-row{display:flex;align-items:center;gap:8px}
+.topic-bar-track{flex:1;height:5px;background:var(--bg3);border-radius:8px;overflow:hidden}
+.topic-bar-fill{height:100%;border-radius:8px;transition:width .4s}
+.topic-bar-fill.green{background:var(--green)}
+.topic-bar-fill.yellow{background:var(--yellow)}
+.topic-bar-fill.red{background:var(--red)}
+.topic-bar-fill.gray{background:var(--gray)}
+.topic-pct{font-size:11px;font-weight:700;width:34px;text-align:right;flex-shrink:0}
+.topic-pct.green{color:var(--green)}
+.topic-pct.yellow{color:var(--yellow)}
+.topic-pct.red{color:var(--red)}
+.topic-pct.gray{color:var(--text3)}
+.topic-arr{font-size:14px;color:var(--text3);flex-shrink:0}
+.topic-warn{font-size:11px;color:var(--red);margin-left:6px}
 
-  /* ── Topics ── */
-  .topics-title {
-    font-size: 10px; font-weight: 700; color: var(--text2);
-    letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px;
-  }
-  .topic {
-    display: flex; align-items: center; gap: 10px;
-    background: var(--bg2); border-radius: 10px;
-    padding: 10px 12px; margin-bottom: 6px;
-    border: 0.5px solid var(--border);
-  }
-  .topic.done    { border-color: rgba(90,216,166,0.25); background: rgba(90,216,166,0.04); }
-  .topic.current { border-color: rgba(124,110,247,0.4); background: rgba(124,110,247,0.06); }
-  .topic-num { width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; background: var(--bg3); }
-  .topic.done    .topic-num { background: rgba(90,216,166,0.15); }
-  .topic.current .topic-num { background: rgba(124,110,247,0.15); }
-  .topic-name { font-size: 12px; font-weight: 500; flex: 1; min-width: 0; }
-  .topic-badge { font-size: 10px; font-weight: 600; flex-shrink: 0; padding: 2px 7px; border-radius: 10px; }
-  .topic.done    .topic-badge { color: var(--green); }
-  .topic.current .topic-badge { color: var(--purple); }
-  .topic.locked  .topic-badge { color: var(--text2); }
+/* ── Topic detail modal ── */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;display:none;align-items:flex-end}
+.modal.active{display:flex}
+.modal-content{background:var(--bg);width:100%;max-height:92vh;border-top-left-radius:20px;border-top-right-radius:20px;display:flex;flex-direction:column;overflow:hidden;animation:slideUp .3s}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal-hdr{padding:14px 16px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border);flex-shrink:0}
+.modal-close{width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:24px;color:var(--text2)}
+.modal-title{flex:1;font-size:16px;font-weight:600}
+.modal-body{flex:1;overflow-y:auto;padding:16px;scrollbar-width:none}
+.modal-body::-webkit-scrollbar{display:none}
 
-  .close-btn {
-    width: calc(100% - 32px); margin: 8px 16px 0;
-    padding: 13px; background: var(--purple);
-    color: #fff; font-size: 15px; font-weight: 600;
-    border: none; border-radius: 12px;
-    cursor: pointer; transition: opacity 0.2s;
-  }
-  .close-btn:active { opacity: 0.8; }
+.detail-progress{background:var(--bg2);border-radius:12px;padding:14px;margin-bottom:16px;border:1px solid var(--border)}
+.detail-progress-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
+.detail-progress-label{font-size:12px;color:var(--text2);text-transform:uppercase;letter-spacing:.05em}
+.detail-progress-pct{font-size:22px;font-weight:700}
+.detail-progress-pct.green{color:var(--green)}
+.detail-progress-pct.yellow{color:var(--yellow)}
+.detail-progress-pct.red{color:var(--red)}
+.detail-progress-pct.gray{color:var(--text3)}
+.detail-bar-track{height:8px;background:var(--bg3);border-radius:10px;overflow:hidden}
+.detail-bar-fill{height:100%;border-radius:10px}
+
+.workflow{margin-bottom:20px}
+.workflow-title{font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px}
+.workflow-hint{font-size:12px;color:var(--text2);margin-bottom:12px;line-height:1.5}
+.step{display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg2);border-radius:10px;margin-bottom:8px;border:1px solid var(--border);transition:all .15s;cursor:pointer}
+.step:active{transform:scale(.98)}
+.step.done{border-color:rgba(90,216,166,.3)}
+.step.next{border-color:var(--purple);background:rgba(124,110,247,.08);box-shadow:0 0 0 1px var(--purple)}
+.step.locked{opacity:.5}
+.step-num{width:28px;height:28px;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--text2);flex-shrink:0}
+.step.done .step-num{background:var(--green);color:#0d0d14}
+.step.next .step-num{background:var(--purple);color:#fff}
+.step-content{flex:1;min-width:0}
+.step-title{font-size:13px;font-weight:600;color:var(--text)}
+.step-desc{font-size:11px;color:var(--text2);margin-top:2px}
+.step-arr{font-size:18px;color:var(--text3)}
+.step.done .step-arr{color:var(--green)}
+.step.next .step-arr{color:var(--purple)}
+
+.errors-section{background:var(--bg2);border:1px solid rgba(247,110,110,.2);border-radius:12px;padding:14px;margin-bottom:16px}
+.errors-title{font-size:13px;font-weight:700;color:var(--red);margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.error-item{padding:10px;background:var(--bg);border-radius:8px;margin-bottom:6px;border:1px solid var(--border)}
+.error-wrong{font-size:13px;color:var(--red);text-decoration:line-through;margin-bottom:4px}
+.error-right{font-size:13px;color:var(--green);font-weight:600;margin-bottom:6px}
+.error-expl{font-size:11px;color:var(--text2);line-height:1.5}
+.error-date{font-size:10px;color:var(--text3);margin-top:4px}
+
+.close-btn{display:block;margin:24px auto 0;background:transparent;border:1px solid var(--border);color:var(--text2);padding:10px 24px;border-radius:20px;font-size:13px;cursor:pointer}
 </style>
 </head>
 <body>
 
 <div class="hdr">
   <div class="hdr-top">
-    <div class="hdr-name" id="hdr-name">Завантаження...</div>
+    <div class="hdr-name" id="hdr-name">Студент</div>
     <div class="hdr-level" id="hdr-level">—</div>
   </div>
   <div class="overall-track">
@@ -208,7 +154,6 @@
   </div>
 </div>
 
-<!-- A1 → C2 Journey Slider -->
 <div class="journey">
   <div class="journey-label">
     <span class="journey-title">Шлях A1 → C2</span>
@@ -223,8 +168,7 @@
 </div>
 
 <div class="streak-strip" id="streak-strip" style="display:none">
-  🔥 Стрік: <span id="streak-val">0</span> днів поспіль
-  &nbsp;·&nbsp; Рекорд: <span id="streak-best">0</span>
+  🔥 Стрік: <span id="streak-val">0</span> днів поспіль &nbsp;·&nbsp; Рекорд: <span id="streak-best">0</span>
 </div>
 
 <div class="tabs" id="tabs"></div>
@@ -232,27 +176,52 @@
 <div class="section">
   <div class="stats-row" id="stats-row"></div>
   <div id="lvl-progress"></div>
-  <div id="next-banner"></div>
   <div class="topics-title">Теми рівня</div>
   <div id="topics-list"></div>
 </div>
 
 <button class="close-btn" onclick="Telegram.WebApp.close()">Закрити</button>
 
+<!-- TOPIC DETAIL MODAL -->
+<div class="modal" id="topic-modal">
+  <div class="modal-content">
+    <div class="modal-hdr">
+      <div class="modal-close" onclick="closeModal()">×</div>
+      <div class="modal-title" id="modal-title">Тема</div>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
+</div>
+
 <script>
 const DEFAULT_GRAMMAR = {
   A1: ["The ABC, spelling","The Numbers","a / an","Countable nouns with a/an and some","Present Simple","Present Continuous","Non-Continuous Verbs (stative)","Imperative Mood","Possessive Case ('s / s')","In, on, at — time","Comparative and Superlative Degrees","Zero Conditional","Modal Verbs: basic (can/must/should)","Going to (future plans)","Question Tags"],
   A2: ["Past Simple","Future Simple (will)","The (definite article)","Uncountable nouns","Few, little, a few, a little, much, many","Adverbs","As … as / Than","Used to","First Conditional","Gerund + V (basic)","Infinitive + V (basic)","Modal Verbs: extended (might/may/have to/could)"],
-  B1: ["Present Perfect","Present Perfect Continuous","Past Continuous","Passive Voice (Present & Past)","Second Conditional","Enough and too","Because / Because of","Despite / In spite of","As soon as / As long as","Gerund + V (full system)","Infinitive + V (full system)","Would rather / sooner / better","Be used to / Get used to","Either … or / Neither … nor","Modal Verbs: advanced (must have / can't have / should have)","Reported Speech"],
-  B2: ["Past Perfect","Past Perfect Continuous","Future Perfect","Future Continuous","Future Perfect Continuous","Third Conditional","Passive Voice (Continuous)","Participle 1 (Present Participle)","Participle 2 (Past Participle)","It is said that …","Complex Object","Everyone, everybody / Either, neither of + Prep","Wish / If only","Mixed Conditionals"],
-  C1: ["He is said to / He is supposed to","Complex Subject","The Prepositional Infinitive Complex","Inversion (emphatic structures)","Cleft Sentences"],
-  C2: ["Stylistic inversion for literary effect","Nuanced modal meanings (epistemic / deontic / dynamic)","Advanced ellipsis in complex discourse","Rhetoric devices (anaphora, chiasmus, litotes)","Discourse cohesion across paragraphs","Irony, understatement and euphemism in context","Complex syntax: multiple embedded clauses","Idiomatic and colloquial precision","Lexical density and academic register","Pragmatics: implicature and indirect speech acts"]
+  B1: ["Present Perfect","Present Perfect Continuous","Past Continuous","Passive Voice (Present & Past)","Second Conditional","Enough and too","Because / Because of","Despite / In spite of","As soon as / As long as","Gerund + V (full system)","Infinitive + V (full system)","Would rather / sooner / better","Be used to / Get used to","Either … or / Neither … nor","Modal Verbs: advanced","Reported Speech"],
+  B2: ["Past Perfect","Past Perfect Continuous","Future Perfect","Future Continuous","Future Perfect Continuous","Third Conditional","Passive Voice (Continuous)","Participle 1","Participle 2","It is said that …","Complex Object","Everyone, everybody","Wish / If only","Mixed Conditionals"],
+  C1: ["He is said to","Complex Subject","The Prepositional Infinitive Complex","Inversion","Cleft Sentences"],
+  C2: ["Stylistic inversion","Nuanced modal meanings","Advanced ellipsis","Rhetoric devices","Discourse cohesion","Irony, understatement","Complex syntax","Idiomatic precision","Lexical density","Pragmatics"]
 };
 const DEFAULT_LEVEL_NAMES = {A1:"Beginner A1",A2:"Elementary A2",B1:"Intermediate B1",B2:"Upper-Intermediate B2",C1:"Advanced C1",C2:"Proficiency C2"};
 const DEFAULT_LEVELS = ["A1","A2","B1","B2","C1","C2"];
 
 let D = {};
 let activeLevel = "A1";
+
+// ── Google Noto Emoji helper ──
+function emojiImg(emoji, size){
+  if(!emoji) return '';
+  size = size || 18;
+  const codepoints = [];
+  for(const ch of emoji){
+    const cp = ch.codePointAt(0);
+    if(cp === 0xFE0F) continue;
+    codepoints.push(cp.toString(16));
+  }
+  const code = codepoints.join('_');
+  const url = 'https://fonts.gstatic.com/s/e/notoemoji/latest/' + code + '/emoji.svg';
+  return '<img src="' + url + '" alt="' + emoji + '" style="width:' + size + 'px;height:' + size + 'px;vertical-align:middle;display:inline-block" onerror="this.outerHTML=\'<span>' + emoji + '</span>\'">';
+}
 
 function init() {
   Telegram.WebApp.ready();
@@ -261,86 +230,97 @@ function init() {
     const raw = new URLSearchParams(window.location.search).get("d");
     if (raw) D = JSON.parse(decodeURIComponent(raw));
   } catch(e) {}
-  if (!D.cefr_grammar) D.cefr_grammar = DEFAULT_GRAMMAR;
-  if (!D.levels)       D.levels       = DEFAULT_LEVELS;
-  if (!D.level_names)  D.level_names  = DEFAULT_LEVEL_NAMES;
-  if (!D.mastered)     D.mastered     = [];
-  if (!D.level)        D.level        = "A1";
+  if (!D.cefr_grammar)   D.cefr_grammar   = DEFAULT_GRAMMAR;
+  if (!D.levels)         D.levels         = DEFAULT_LEVELS;
+  if (!D.level_names)    D.level_names    = DEFAULT_LEVEL_NAMES;
+  if (!D.topics_data)    D.topics_data    = {};  // нові дані з grammar_engine
+  if (!D.level)          D.level          = "A1";
   activeLevel = D.level;
   render();
 }
 
-function render() {
-  const mastered   = D.mastered || [];
-  const levels     = D.levels   || DEFAULT_LEVELS;
-  const levelNames = D.level_names || DEFAULT_LEVEL_NAMES;
-  const grammar    = D.cefr_grammar || DEFAULT_GRAMMAR;
-  const allTopics  = levels.flatMap(l => grammar[l] || []);
-  const totalDone  = mastered.length;
-  const totalAll   = allTopics.length;
-  const overallPct = totalAll ? Math.round(totalDone / totalAll * 100) : 0;
+function getMastery(topicName) {
+  // Пріоритет: дані з grammar_engine (topics_data)
+  const td = D.topics_data || {};
+  if (td[topicName]) return td[topicName];
+  // Fallback: старий список mastered (бінарно)
+  const mastered = D.mastered || [];
+  return {
+    mastery: mastered.includes(topicName) ? 100 : 0,
+    color: mastered.includes(topicName) ? "green" : "gray",
+    buddy_uses: 0,
+    buddy_errors: 0,
+    buddy_examples: [],
+    steps_done: { video: mastered.includes(topicName), table: false, exercises: false, buddy: false },
+    next_step: mastered.includes(topicName) ? null : "video"
+  };
+}
 
-  // Header
+function render() {
+  const levels     = D.levels;
+  const levelNames = D.level_names;
+  const grammar    = D.cefr_grammar;
+  const allTopics  = levels.flatMap(l => grammar[l] || []);
+
+  // Загальний прогрес = середня mastery всіх тем
+  let totalScore = 0;
+  let totalTopics = 0;
+  let fullyDone = 0;
+  allTopics.forEach(t => {
+    const m = getMastery(t).mastery;
+    totalScore += m;
+    totalTopics++;
+    if (m >= 80) fullyDone++;
+  });
+  const overallPct = totalTopics ? Math.round(totalScore / totalTopics) : 0;
+
   document.getElementById("hdr-name").textContent  = D.name || "Студент";
   document.getElementById("hdr-level").textContent = activeLevel;
   document.getElementById("overall-fill").style.width = overallPct + "%";
-  document.getElementById("overall-left").textContent = totalDone + " / " + totalAll + " тем";
+  document.getElementById("overall-left").textContent = fullyDone + " з " + totalTopics + " тем";
   document.getElementById("overall-right").textContent = overallPct + "%";
 
-  // ── Journey A1→C2 slider ──
-  const curIdx   = levels.indexOf(D.level);
-  // Рахуємо позицію бігунка по темах до поточного рівня
+  // Journey A1→C2
+  const curIdx = levels.indexOf(D.level);
   let topicsBeforeCurrent = 0;
-  for (let i = 0; i < curIdx; i++) {
-    topicsBeforeCurrent += (grammar[levels[i]] || []).length;
-  }
+  for (let i = 0; i < curIdx; i++) topicsBeforeCurrent += (grammar[levels[i]] || []).length;
   const curLvlTopics  = grammar[D.level] || [];
-  const curLvlDone    = curLvlTopics.filter(t => mastered.includes(t)).length;
+  const curLvlDone    = curLvlTopics.filter(t => getMastery(t).mastery >= 80).length;
   const journeyDone   = topicsBeforeCurrent + curLvlDone;
-  const journeyPct    = totalAll ? Math.round(journeyDone / totalAll * 100) : 0;
+  const journeyPct    = totalTopics ? Math.round(journeyDone / totalTopics * 100) : 0;
   document.getElementById("journey-pct").textContent  = journeyPct + "%";
   document.getElementById("journey-fill").style.width = journeyPct + "%";
 
-  // Мітки рівнів на слайдері
   const marksEl = document.getElementById("journey-marks");
   marksEl.innerHTML = "";
-  levels.forEach((lvl, i) => {
+  levels.forEach(lvl => {
     const lvlTopics = grammar[lvl] || [];
-    const lvlDone   = lvlTopics.filter(t => mastered.includes(t)).length;
+    const lvlDone   = lvlTopics.filter(t => getMastery(t).mastery >= 80).length;
     const isAll     = lvlDone === lvlTopics.length && lvlTopics.length > 0;
     const isCur     = lvl === D.level;
     const isGoal    = lvl === "C2";
-    const mark      = document.createElement("div");
-    mark.className  = "journey-mark" +
-      (isAll ? " done" : "") +
-      (isCur ? " current" : "") +
-      (isGoal && !isAll ? " goal" : "");
-    mark.textContent = lvl + (isAll ? "✓" : "");
-    if (isGoal && !isAll) mark.textContent = "C2 👑";
-    marksEl.appendChild(mark);
+    const m = document.createElement("div");
+    m.className = "journey-mark" + (isAll ? " done" : "") + (isCur ? " current" : "") + (isGoal && !isAll ? " goal" : "");
+    m.textContent = lvl + (isAll ? "✓" : "");
+    if (isGoal && !isAll) m.textContent = "C2 👑";
+    marksEl.appendChild(m);
   });
 
-  // Streak
-  const streak = D.streak || 0;
-  if (streak > 0) {
+  if ((D.streak || 0) > 0) {
     document.getElementById("streak-strip").style.display = "flex";
-    document.getElementById("streak-val").textContent  = streak;
+    document.getElementById("streak-val").textContent  = D.streak;
     document.getElementById("streak-best").textContent = D.best_streak || 0;
   }
 
-  // Tabs
   const tabsEl = document.getElementById("tabs");
   tabsEl.innerHTML = "";
   levels.forEach((lvl, i) => {
     const topics = grammar[lvl] || [];
-    const done   = topics.filter(t => mastered.includes(t)).length;
-    const isAll  = done === topics.length && topics.length > 0;
+    const done = topics.filter(t => getMastery(t).mastery >= 80).length;
+    const isAll = done === topics.length && topics.length > 0;
     const isLocked = i > curIdx;
-    const tab    = document.createElement("div");
-    tab.className = "tab" +
-      (lvl === activeLevel ? " active" : "") +
-      (isAll ? " done" : "") +
-      (isLocked ? " locked" : "");
+    const tab = document.createElement("div");
+    tab.className = "tab" + (lvl === activeLevel ? " active" : "") + (isAll ? " done" : "") + (isLocked ? " locked" : "");
     tab.textContent = lvl + (isAll ? " ✓" : " " + done + "/" + topics.length);
     tab.onclick = () => { activeLevel = lvl; renderLevel(); };
     tabsEl.appendChild(tab);
@@ -350,28 +330,22 @@ function render() {
 }
 
 function renderLevel() {
-  const mastered   = D.mastered || [];
-  const levels     = D.levels   || DEFAULT_LEVELS;
-  const levelNames = D.level_names || DEFAULT_LEVEL_NAMES;
-  const grammar    = D.cefr_grammar || DEFAULT_GRAMMAR;
-  const curIdx     = levels.indexOf(D.level);
-  const tabIdx     = levels.indexOf(activeLevel);
+  const grammar    = D.cefr_grammar;
+  const levelNames = D.level_names;
   const lvlTopics  = grammar[activeLevel] || [];
-  const lvlDone    = lvlTopics.filter(t => mastered.includes(t)).length;
-  const lvlPct     = lvlTopics.length ? Math.round(lvlDone / lvlTopics.length * 100) : 0;
-  const scores     = D.scores || [];
-  const avgScore   = scores.length ? Math.round(scores.reduce((a,b)=>a+b,0)/scores.length) : 0;
+  
+  let totalScore = 0;
+  lvlTopics.forEach(t => totalScore += getMastery(t).mastery);
+  const lvlPct = lvlTopics.length ? Math.round(totalScore / lvlTopics.length) : 0;
+  const lvlDoneFully = lvlTopics.filter(t => getMastery(t).mastery >= 80).length;
+  
+  const scores = D.scores || [];
+  const avgScore = scores.length ? Math.round(scores.reduce((a,b) => a + (typeof b === 'number' ? b : b.score || 0), 0) / scores.length) : 0;
 
   document.getElementById("stats-row").innerHTML =
-    '<div class="stat"><div class="stat-v p">' + lvlDone + '/' + lvlTopics.length + '</div><div class="stat-l">Тем ' + activeLevel + '</div></div>' +
+    '<div class="stat"><div class="stat-v p">' + lvlDoneFully + '/' + lvlTopics.length + '</div><div class="stat-l">Тем готово</div></div>' +
     '<div class="stat"><div class="stat-v g">' + (avgScore || "—") + '</div><div class="stat-l">Середній бал</div></div>' +
     '<div class="stat"><div class="stat-v o">' + (D.done_lessons || 0) + '</div><div class="stat-l">Уроків</div></div>';
-
-  const topicsLeft = lvlTopics.length - lvlDone;
-  const nextLevel  = levels[tabIdx + 1];
-  const hintText   = nextLevel && topicsLeft > 0
-    ? "До " + (levelNames[nextLevel] || nextLevel) + ": ще " + topicsLeft + " тем"
-    : (topicsLeft === 0 ? "Рівень пройдено! 🎉" : "");
 
   document.getElementById("lvl-progress").innerHTML =
     '<div class="lvl-progress">' +
@@ -380,35 +354,114 @@ function renderLevel() {
         '<div class="lvl-progress-pct">' + lvlPct + '%</div>' +
       '</div>' +
       '<div class="lvl-track"><div class="lvl-fill" style="width:' + lvlPct + '%"></div></div>' +
-      (hintText ? '<div class="lvl-hint">' + hintText + '</div>' : '') +
     '</div>';
 
-  const nextTopic = lvlTopics.find(t => !mastered.includes(t));
-  const bannerEl  = document.getElementById("next-banner");
-  if (nextTopic && activeLevel === D.level) {
-    bannerEl.innerHTML =
-      '<div class="next-banner">' +
-        '<div class="next-label">Наступна тема</div>' +
-        '<div class="next-name">' + nextTopic + '</div>' +
-        '<div class="next-hint">Натисни "🚀 Рухатись далі" в боті</div>' +
+  document.getElementById("topics-list").innerHTML = lvlTopics.map((topic, i) => {
+    const data = getMastery(topic);
+    const warnIcon = data.buddy_errors > 0 ? ' <span class="topic-warn">⚠ ' + data.buddy_errors + ' помилок</span>' : '';
+    return '<div class="topic" onclick="openTopic(\'' + topic.replace(/'/g, "\\'") + '\')">' +
+      '<div class="topic-num">' + (i + 1) + '</div>' +
+      '<div class="topic-body">' +
+        '<div class="topic-name">' + topic + warnIcon + '</div>' +
+        '<div class="topic-bar-row">' +
+          '<div class="topic-bar-track"><div class="topic-bar-fill ' + data.color + '" style="width:' + data.mastery + '%"></div></div>' +
+          '<div class="topic-pct ' + data.color + '">' + data.mastery + '%</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="topic-arr">›</div>' +
+    '</div>';
+  }).join("");
+}
+
+function openTopic(topicName) {
+  const data = getMastery(topicName);
+  document.getElementById("modal-title").textContent = topicName;
+
+  const steps = [
+    { id: 'video',     icon: '📺', title: 'Подивись відео урок',  desc: 'Почни з реального прикладу мовлення',  cmd: 'lesson' },
+    { id: 'table',     icon: '📖', title: 'Прочитай таблицю правил вголос', desc: 'Структура і формула — щоб закріпити логіку', cmd: 'topic' },
+    { id: 'exercises', icon: '🗣', title: 'Проговори 30 речень для автоматизму', desc: 'Положення, заперечення, питання',     cmd: 'tutor_me' },
+    { id: 'buddy',     icon: '💬', title: 'Закріпи в Speaking Buddy', desc: 'Використай в живій розмові з AI',   cmd: 'buddy' },
+  ];
+
+  let nextFound = false;
+  const stepsHTML = steps.map(s => {
+    const done = data.steps_done[s.id];
+    let cls = "step";
+    if (done) cls += " done";
+    else if (!nextFound) { cls += " next"; nextFound = true; }
+    else cls += " locked";
+
+    const arr = done ? '✓' : '→';
+    return '<div class="' + cls + '" onclick="goToStep(\'' + s.cmd + '\', \'' + topicName.replace(/'/g, "\\'") + '\')">' +
+      '<div class="step-num">' + (done ? '✓' : steps.indexOf(s) + 1) + '</div>' +
+      '<div class="step-content">' +
+        '<div class="step-title">' + emojiImg(s.icon, 18) + ' ' + s.title + '</div>' +
+        '<div class="step-desc">' + s.desc + '</div>' +
+      '</div>' +
+      '<div class="step-arr">' + arr + '</div>' +
+    '</div>';
+  }).join("");
+
+  let errorsHTML = "";
+  if (data.buddy_examples && data.buddy_examples.length) {
+    errorsHTML = '<div class="errors-section">' +
+      '<div class="errors-title">⚠️ Твої помилки в Speaking Buddy</div>' +
+      data.buddy_examples.map(ex =>
+        '<div class="error-item">' +
+          '<div class="error-wrong">' + (ex.phrase || '') + '</div>' +
+          '<div class="error-right">→ ' + (ex.correction || '') + '</div>' +
+          (ex.explanation ? '<div class="error-expl">💡 ' + ex.explanation + '</div>' : '') +
+          (ex.date ? '<div class="error-date">' + ex.date + '</div>' : '') +
+        '</div>'
+      ).join('') +
       '</div>';
-  } else {
-    bannerEl.innerHTML = "";
   }
 
-  let firstNext = true;
-  document.getElementById("topics-list").innerHTML = lvlTopics.map((topic, i) => {
-    const isDone   = mastered.includes(topic);
-    const isLocked = tabIdx > curIdx;
-    const isCur    = !isDone && !isLocked && firstNext;
-    if (isCur) firstNext = false;
-    const cls   = isDone ? "done" : (isCur ? "current" : "locked");
-    const icon  = isDone ? "✅" : (isCur ? "▶️" : "○");
-    const badge = isDone ? "✓ Пройдено" : (isCur ? "Наступна" : "Попереду");
-    return '<div class="topic ' + cls + '"><div class="topic-num">' + icon + '</div>' +
-           '<div class="topic-name">' + (i+1) + '. ' + topic + '</div>' +
-           '<div class="topic-badge">' + badge + '</div></div>';
-  }).join("");
+  document.getElementById("modal-body").innerHTML =
+    '<div class="detail-progress">' +
+      '<div class="detail-progress-row">' +
+        '<div class="detail-progress-label">Прогрес теми</div>' +
+        '<div class="detail-progress-pct ' + data.color + '">' + data.mastery + '%</div>' +
+      '</div>' +
+      '<div class="detail-bar-track"><div class="detail-bar-fill" style="width:' + data.mastery + '%;background:var(--' + data.color + ')"></div></div>' +
+    '</div>' +
+    '<div class="workflow">' +
+      '<div class="workflow-title">Як вчити цю тему</div>' +
+      '<div class="workflow-hint">Проходь у такому порядку — кожен крок будує наступний. Підсвічений крок наступний.</div>' +
+      stepsHTML +
+    '</div>' +
+    errorsHTML;
+
+  document.getElementById("topic-modal").classList.add("active");
+}
+
+function closeModal() {
+  document.getElementById("topic-modal").classList.remove("active");
+}
+
+function goToStep(cmd, topic) {
+  // Toast винагорода за крок
+  if (window.showReward) {
+    const rewardMap = {
+      "lesson":    "video_lesson_done",
+      "table":     "table_read_aloud",
+      "sentences": "sentences_30_done",
+      "buddy":     "buddy_session",
+    };
+    const rewardKey = rewardMap[cmd];
+    if (rewardKey) showReward(rewardKey, {topic: topic});
+  }
+
+  // Передаємо команду + тему боту через sendData
+  setTimeout(() => {
+    Telegram.WebApp.sendData(JSON.stringify({
+      action: "open_topic_step",
+      cmd: cmd,
+      topic: topic
+    }));
+    Telegram.WebApp.close();
+  }, 600); // даємо побачити toast перед закриттям
 }
 
 init();
