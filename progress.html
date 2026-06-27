@@ -128,6 +128,30 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .step.next .step-arr{color:var(--purple)}
 
 .errors-section{background:var(--bg2);border:1px solid rgba(247,110,110,.2);border-radius:12px;padding:14px;margin-bottom:16px}
+
+/* ── Exercises panel (крок 3) ── */
+.exercises-panel{display:none;margin-top:12px}
+.exercises-panel.show{display:block}
+.ex-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.ex-title{font-size:14px;font-weight:700;color:var(--text)}
+.ex-counter{font-size:12px;color:var(--text2);background:var(--bg3);padding:3px 10px;border-radius:20px}
+.ex-progress{height:4px;background:var(--bg3);border-radius:4px;overflow:hidden;margin-bottom:14px}
+.ex-progress-fill{height:100%;background:linear-gradient(90deg,var(--purple),var(--green));border-radius:4px;transition:width .4s}
+.ex-sentence{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:14px;font-size:16px;font-weight:500;color:var(--text);line-height:1.5;text-align:center;min-height:72px;display:flex;align-items:center;justify-content:center}
+.ex-actions{display:flex;gap:10px;margin-bottom:14px;justify-content:center}
+.ex-btn{padding:10px 18px;border-radius:20px;border:1px solid var(--border);background:var(--bg2);
+  font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;color:var(--text);transition:all .15s}
+.ex-btn:active{transform:scale(.95)}
+.ex-btn.recording{background:rgba(247,110,110,.15);border-color:var(--red);color:var(--red);animation:micPulse 1s infinite}
+@keyframes micPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+.ex-btn.spoken{background:rgba(90,216,166,.1);border-color:var(--green);color:var(--green)}
+.ex-next{width:100%;padding:13px;border-radius:12px;background:var(--purple);border:none;
+  color:#fff;font-size:14px;font-weight:700;cursor:pointer;transition:opacity .15s}
+.ex-next:disabled{opacity:.4}
+.ex-done-banner{background:rgba(90,216,166,.1);border:1px solid rgba(90,216,166,.3);border-radius:12px;
+  padding:16px;text-align:center}
+.ex-done-title{font-size:16px;font-weight:700;color:var(--green);margin-bottom:4px}
+.ex-done-sub{font-size:13px;color:var(--text2)}
 .errors-title{font-size:13px;font-weight:700;color:var(--red);margin-bottom:10px;display:flex;align-items:center;gap:6px}
 .error-item{padding:10px;background:var(--bg);border-radius:8px;margin-bottom:6px;border:1px solid var(--border)}
 .error-wrong{font-size:13px;color:var(--red);text-decoration:line-through;margin-bottom:4px}
@@ -207,6 +231,11 @@ const DEFAULT_LEVELS = ["A1","A2","B1","B2","C1","C2"];
 
 let D = {};
 let activeLevel = "A1";
+
+const tg        = window.Telegram?.WebApp;
+const UID       = tg?.initDataUnsafe?.user?.id || 0;
+const INIT_DATA = tg?.initData || '';
+const API       = 'https://speakchain-bot-production.up.railway.app';
 
 // ── Google Noto Emoji helper ──
 function emojiImg(emoji, size){
@@ -441,19 +470,24 @@ function closeModal() {
 }
 
 function goToStep(cmd, topic) {
-  // Toast винагорода за крок
+  // Крок 3 — відкриваємо exercises прямо тут
+  if (cmd === 'tutor_me') {
+    openExercises(topic);
+    return;
+  }
+
+  // Toast винагорода
   if (window.showReward) {
     const rewardMap = {
       "lesson":    "video_lesson_done",
       "table":     "table_read_aloud",
-      "sentences": "sentences_30_done",
       "buddy":     "buddy_session",
     };
     const rewardKey = rewardMap[cmd];
     if (rewardKey) showReward(rewardKey, {topic: topic});
   }
 
-  // Передаємо команду + тему боту через sendData
+  // Передаємо команду боту
   setTimeout(() => {
     Telegram.WebApp.sendData(JSON.stringify({
       action: "open_topic_step",
@@ -461,7 +495,275 @@ function goToStep(cmd, topic) {
       topic: topic
     }));
     Telegram.WebApp.close();
-  }, 600); // даємо побачити toast перед закриттям
+  }, 600);
+}
+
+// ══════════════════════════════════════════════════════════════
+// EXERCISES — 30 речень з TTS і мікрофоном
+// ══════════════════════════════════════════════════════════════
+
+let exSentences   = [];
+let exIdx         = 0;
+let exSpoken      = 0;
+let exTopic       = '';
+let exRecognition = null;
+let exIsRecording = false;
+let exMediaStream = null;
+
+async function openExercises(topic) {
+  exTopic   = topic;
+  exIdx     = 0;
+  exSpoken  = 0;
+
+  // Показуємо panel в модалці
+  let panel = document.getElementById('exercises-panel');
+  if (!panel) {
+    panel = document.createElement('div');
+    panel.id = 'exercises-panel';
+    panel.className = 'exercises-panel show';
+    document.getElementById('modal-body').appendChild(panel);
+  }
+  panel.classList.add('show');
+  panel.innerHTML = '<div class="ex-sentence" style="color:var(--text2)">Генерую речення...</div>';
+
+  // Скролимо вниз щоб показати panel
+  document.getElementById('modal-body').scrollTo({top: 99999, behavior: 'smooth'});
+
+  // Завантажуємо речення з API
+  try {
+    const res = await fetch(API + '/exercises_data', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        uid: UID, init_data: INIT_DATA,
+        topic: topic,
+        level: D.level || 'B1'
+      })
+    });
+    const d = await res.json();
+    exSentences = d.sentences || generateLocalSentences(topic);
+  } catch(e) {
+    exSentences = generateLocalSentences(topic);
+  }
+
+  renderExercise();
+}
+
+function generateLocalSentences(topic) {
+  // Fallback — базові речення для практики
+  const templates = [
+    "I use this structure every day.",
+    "She doesn't understand the question.",
+    "Do they speak English at work?",
+    "He has already finished his homework.",
+    "We were talking when the phone rang.",
+    "Have you ever been to London?",
+    "I will call you tomorrow morning.",
+    "They didn't go to the party last night.",
+    "Is she coming to the meeting?",
+    "I had never seen such a beautiful place.",
+    "We have been waiting for an hour.",
+    "Did he tell you the news?",
+    "She won't be able to come today.",
+    "I was reading when she arrived.",
+    "Have they finished the project yet?",
+    "He doesn't usually work on weekends.",
+    "We had already eaten when they arrived.",
+    "Are you studying English now?",
+    "I haven't spoken to him since Monday.",
+    "She will have finished by tomorrow.",
+    "Do you want to go for a walk?",
+    "They were living in Paris at that time.",
+    "I don't know what to say.",
+    "Has she ever tried sushi?",
+    "We'll be leaving early in the morning.",
+    "He used to play football every Saturday.",
+    "I've been learning English for two years.",
+    "She didn't say anything about it.",
+    "Will you help me with this?",
+    "They have just arrived at the airport.",
+  ];
+  return templates.slice(0, 30);
+}
+
+function renderExercise() {
+  const panel = document.getElementById('exercises-panel');
+  if (!panel) return;
+
+  if (exIdx >= exSentences.length) {
+    // Завершено!
+    if (window.showReward) showReward('sentences_30_done', {topic: exTopic});
+
+    // Відправляємо в бот
+    try {
+      fetch(API + '/session_activity', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          uid: UID, init_data: INIT_DATA,
+          activity: 'exercises_done',
+          topic: exTopic,
+          spoken_count: exSpoken,
+        })
+      });
+    } catch(e) {}
+
+    panel.innerHTML = `
+      <div class="ex-done-banner">
+        <div class="ex-done-title">🎉 30 речень завершено!</div>
+        <div class="ex-done-sub">Проговорено: ${exSpoken} з ${exSentences.length}<br>Тема зараховується ✅</div>
+      </div>`;
+    return;
+  }
+
+  const sentence = exSentences[exIdx];
+  const pct = Math.round((exIdx / exSentences.length) * 100);
+
+  panel.innerHTML = `
+    <div class="ex-header">
+      <div class="ex-title">🗣 Речення ${exIdx + 1}/30</div>
+      <div class="ex-counter">Проговорено: ${exSpoken}</div>
+    </div>
+    <div class="ex-progress">
+      <div class="ex-progress-fill" style="width:${pct}%"></div>
+    </div>
+    <div class="ex-sentence" id="ex-sentence">${sentence}</div>
+    <div class="ex-actions">
+      <button class="ex-btn" id="ex-tts-btn" onclick="exSpeak()">🔊 Послухати</button>
+      <button class="ex-btn" id="ex-mic-btn" onclick="exToggleRecord()">🎤 Проговорити</button>
+    </div>
+    <button class="ex-next" id="ex-next-btn" onclick="exNext()">
+      Далі →
+    </button>`;
+
+  // Автоматично озвучуємо кожне нове речення
+  setTimeout(() => exSpeak(), 400);
+}
+
+function exSpeak() {
+  const sentence = exSentences[exIdx];
+  if (!sentence) return;
+  window.speechSynthesis.cancel();
+  const utt = new SpeechSynthesisUtterance(sentence);
+  utt.lang = 'en-US';
+  utt.rate = 0.85;
+  const voices = speechSynthesis.getVoices();
+  const v = voices.find(v => v.lang.startsWith('en') && !v.localService)
+         || voices.find(v => v.lang.startsWith('en'));
+  if (v) utt.voice = v;
+  speechSynthesis.speak(utt);
+}
+
+async function exToggleRecord() {
+  if (exIsRecording) {
+    exStopRecord();
+    return;
+  }
+
+  const btn = document.getElementById('ex-mic-btn');
+
+  // Спробуємо Speech Recognition
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (SR) {
+    exRecognition = new SR();
+    exRecognition.lang = 'en-US';
+    exRecognition.interimResults = false;
+    exRecognition.onresult = (e) => {
+      const transcript = e.results[0][0].transcript;
+      // Показуємо що сказав юзер
+      const sentEl = document.getElementById('ex-sentence');
+      if (sentEl) {
+        sentEl.innerHTML =
+          '<span style="color:var(--text2);font-size:12px">Ти сказав:</span><br>' +
+          '<span style="color:var(--green)">' + transcript + '</span><br>' +
+          '<span style="color:var(--text2);font-size:12px;margin-top:4px;display:block">' +
+          exSentences[exIdx] + '</span>';
+      }
+      exMarkSpoken();
+      exStopRecord();
+    };
+    exRecognition.onerror = () => {
+      // Fallback на запис без розпізнавання
+      exRecognition = null;
+      exStartMediaRecord(btn);
+    };
+    exRecognition.onend = () => exStopRecord();
+    try {
+      window.speechSynthesis.cancel();
+      exRecognition.start();
+      exIsRecording = true;
+      if (btn) { btn.classList.add('recording'); btn.textContent = '⏹ Зупинити'; }
+      return;
+    } catch(e) {
+      exRecognition = null;
+    }
+  }
+
+  // Fallback — просто запис
+  exStartMediaRecord(btn);
+}
+
+async function exStartMediaRecord(btn) {
+  try {
+    exMediaStream = await navigator.mediaDevices.getUserMedia({audio: true});
+    exIsRecording = true;
+    if (btn) { btn.classList.add('recording'); btn.textContent = '⏹ Зупинити'; }
+    window.speechSynthesis.cancel();
+
+    const chunks = [];
+    const recorder = new MediaRecorder(exMediaStream);
+    recorder.ondataavailable = e => chunks.push(e.data);
+    recorder.onstop = () => {
+      const blob = new Blob(chunks, {type: 'audio/webm'});
+      const url  = URL.createObjectURL(blob);
+      // Спочатку TTS оригінал, потім запис юзера
+      exSpeak();
+      setTimeout(() => new Audio(url).play(), 2000);
+      exMarkSpoken();
+    };
+    recorder.start();
+    exIsRecording = true;
+
+    // Автозупинка 8 сек
+    setTimeout(() => {
+      if (recorder.state === 'recording') recorder.stop();
+      exStopRecord();
+    }, 8000);
+  } catch(e) {
+    exIsRecording = false;
+  }
+}
+
+function exStopRecord() {
+  exIsRecording = false;
+  if (exRecognition) {
+    try { exRecognition.stop(); } catch(e) {}
+    exRecognition = null;
+  }
+  if (exMediaStream) {
+    exMediaStream.getTracks().forEach(t => t.stop());
+    exMediaStream = null;
+  }
+  const btn = document.getElementById('ex-mic-btn');
+  if (btn) { btn.classList.remove('recording'); btn.textContent = '🎤 Проговорити'; }
+}
+
+function exMarkSpoken() {
+  exSpoken++;
+  const btn = document.getElementById('ex-mic-btn');
+  if (btn) { btn.classList.add('spoken'); btn.textContent = '✓ Проговорив'; }
+  const counter = document.querySelector('.ex-counter');
+  if (counter) counter.textContent = `Проговорено: ${exSpoken}`;
+}
+
+function exNext() {
+  exStopRecord();
+  window.speechSynthesis.cancel();
+  exIdx++;
+  renderExercise();
+  // Скролимо до exercises panel
+  const panel = document.getElementById('exercises-panel');
+  if (panel) panel.scrollIntoView({behavior: 'smooth', block: 'start'});
 }
 
 init();
