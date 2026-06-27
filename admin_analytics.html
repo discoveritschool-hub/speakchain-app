@@ -184,7 +184,10 @@ async function loadData() {
     const res = await fetch('https://speakchain-bot-production.up.railway.app/admin_analytics', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({init_data: tg?.initData || ''})
+      body: JSON.stringify({
+        init_data: tg?.initData || '',
+        uid: tg?.initDataUnsafe?.user?.id || 0,
+      })
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     data = await res.json();
