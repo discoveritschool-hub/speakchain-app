@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Мій словник</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+:root{
+  --bg:#0f0f0f;--surface:#1a1a1a;--surface2:#242424;
+  --border:rgba(255,255,255,0.08);--text:#f0f0f0;--text2:#888;--text3:#444;
+  --accent:#4f8ef7;--green:#3ecf8e;--amber:#f59e0b;--red:#ef4444;
+  --r:12px;--r-sm:8px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif;font-size:15px;overflow:hidden}
+
+/* ── Header ── */
+.header{padding:14px 16px 10px;display:flex;align-items:center;gap:10px;flex-shrink:0}
+.header-title{font-size:18px;font-weight:700;letter-spacing:-.4px;flex:1}
+.repeat-btn{padding:8px 14px;border-radius:20px;background:var(--accent);border:none;
+  color:#fff;font-size:13px;font-weight:600;cursor:pointer;flex-shrink:0;display:flex;align-items:center;gap:6px}
+.repeat-btn:disabled{opacity:.5}
+.repeat-badge{background:rgba(255,255,255,.25);border-radius:10px;
+  padding:1px 6px;font-size:11px;font-weight:700}
+
+/* ── Search ── */
+.search-wrap{padding:0 16px 10px;flex-shrink:0}
+.search-input{width:100%;background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r);padding:10px 14px;font-size:14px;color:var(--text);
+  outline:none;font-family:inherit}
+.search-input:focus{border-color:var(--accent)}
+.search-input::placeholder{color:var(--text3)}
+
+/* ── List ── */
+.phrase-list{flex:1;overflow-y:auto;padding:0 16px 80px;
+  display:flex;flex-direction:column;gap:2px;scrollbar-width:none}
+.phrase-list::-webkit-scrollbar{display:none}
+
+.phrase-row{display:flex;align-items:center;gap:8px;padding:12px 14px;
+  background:var(--surface);border-radius:var(--r-sm);border:1px solid var(--border)}
+.phrase-row.due{border-color:rgba(79,142,247,.3);background:rgba(79,142,247,.05)}
+.phrase-text{flex:1;font-size:14px;font-weight:500;color:var(--text);line-height:1.4}
+.phrase-actions{display:flex;gap:4px;flex-shrink:0}
+.icon-btn{width:34px;height:34px;border-radius:50%;border:1px solid var(--border);
+  background:var(--surface2);display:flex;align-items:center;justify-content:center;
+  cursor:pointer;font-size:16px;transition:all .15s}
+.icon-btn:active{transform:scale(.9);background:var(--surface)}
+.icon-btn.recording{background:rgba(239,68,68,.15);border-color:var(--red);animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.6}}
+
+/* ── Empty ── */
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;
+  height:200px;gap:12px;color:var(--text2);font-size:14px;text-align:center}
+.empty-icon{font-size:40px}
+
+/* ── Add button ── */
+.add-btn{position:fixed;bottom:20px;right:20px;width:52px;height:52px;border-radius:50%;
+  background:var(--accent);border:none;color:#fff;font-size:24px;cursor:pointer;
+  box-shadow:0 4px 20px rgba(79,142,247,.4);display:flex;align-items:center;justify-content:center}
+
+/* ── Add modal ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:100;
+  display:flex;align-items:flex-end;opacity:0;pointer-events:none;transition:opacity .2s}
+.modal-overlay.show{opacity:1;pointer-events:all}
+.modal{background:var(--surface);border-radius:var(--r) var(--r) 0 0;
+  padding:20px 16px;width:100%;transform:translateY(100%);transition:transform .25s ease}
+.modal-overlay.show .modal{transform:translateY(0)}
+.modal-title{font-size:16px;font-weight:600;margin-bottom:14px}
+.modal-input{width:100%;background:var(--bg);border:1px solid var(--border);
+  border-radius:var(--r-sm);padding:12px 14px;font-size:14px;color:var(--text);
+  font-family:inherit;outline:none;margin-bottom:12px}
+.modal-input:focus{border-color:var(--accent)}
+.modal-input::placeholder{color:var(--text3)}
+.modal-actions{display:flex;gap:8px}
+.btn-cancel{flex:1;padding:12px;border-radius:var(--r-sm);background:var(--surface2);
+  border:1px solid var(--border);color:var(--text2);font-size:14px;cursor:pointer}
+.btn-save{flex:2;padding:12px;border-radius:var(--r-sm);background:var(--accent);
+  border:none;color:#fff;font-size:14px;font-weight:600;cursor:pointer}
+
+/* ── SRS Modal ── */
+.srs-overlay{position:fixed;inset:0;background:var(--bg);z-index:200;
+  display:flex;flex-direction:column;opacity:0;pointer-events:none;transition:opacity .2s}
+.srs-overlay.show{opacity:1;pointer-events:all}
+.srs-header{padding:16px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border)}
+.srs-back{width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.srs-back svg{width:20px;height:20px;stroke:var(--text);fill:none;stroke-width:2.5}
+.srs-title{font-size:16px;font-weight:600;flex:1}
+.srs-progress-txt{font-size:12px;color:var(--text2)}
+.srs-body{flex:1;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;padding:24px;gap:20px}
+.srs-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);
+  padding:32px 24px;width:100%;text-align:center}
+.srs-phrase{font-size:20px;font-weight:600;color:var(--text);line-height:1.4}
+.srs-actions-top{display:flex;gap:12px;justify-content:center}
+.srs-icon-btn{padding:10px 20px;border-radius:20px;border:1px solid var(--border);
+  background:var(--surface);font-size:14px;cursor:pointer;display:flex;align-items:center;gap:6px}
+.srs-icon-btn.recording{background:rgba(239,68,68,.15);border-color:var(--red)}
+.srs-actions-bottom{display:flex;gap:12px;width:100%}
+.srs-know{flex:1;padding:14px;border-radius:var(--r-sm);background:rgba(62,207,142,.15);
+  border:1px solid rgba(62,207,142,.3);color:var(--green);font-size:15px;font-weight:600;cursor:pointer}
+.srs-dontknow{flex:1;padding:14px;border-radius:var(--r-sm);background:rgba(239,68,68,.1);
+  border:1px solid rgba(239,68,68,.25);color:var(--red);font-size:15px;font-weight:600;cursor:pointer}
+.srs-progress-bar{width:100%;height:4px;background:var(--surface2);border-radius:2px;overflow:hidden}
+.srs-progress-fill{height:100%;background:var(--accent);border-radius:2px;transition:width .4s ease}
+.srs-done{display:flex;flex-direction:column;align-items:center;gap:16px;text-align:center}
+.srs-done-icon{font-size:56px}
+.srs-done-title{font-size:20px;font-weight:700}
+.srs-done-sub{font-size:14px;color:var(--text2)}
+.srs-done-btn{padding:13px 32px;border-radius:var(--r);background:var(--accent);
+  border:none;color:#fff;font-size:15px;font-weight:600;cursor:pointer}
+
+/* ── Loading ── */
+.loading{display:flex;align-items:center;justify-content:center;height:200px;
+  flex-direction:column;gap:12px;color:var(--text2);font-size:13px}
+.spinner{width:28px;height:28px;border:2px solid var(--border);border-top-color:var(--accent);
+  border-radius:50%;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body style="display:flex;flex-direction:column;height:100vh;overflow:hidden">
+
+<div class="header">
+  <div class="header-title">📚 Мій словник</div>
+  <button class="repeat-btn" id="repeat-btn" onclick="openSRS()" disabled>
+    🔁 Повторити <span class="repeat-badge" id="due-badge">0</span>
+  </button>
+</div>
+
+<div class="search-wrap">
+  <input class="search-input" id="search" placeholder="🔍 Пошук фраз..." oninput="filterPhrases()">
+</div>
+
+<div class="phrase-list" id="phrase-list">
+  <div class="loading"><div class="spinner"></div>Завантаження...</div>
+</div>
+
+<button class="add-btn" onclick="openAddModal()" title="Додати фразу">+</button>
+
+<!-- Add Modal -->
+<div class="modal-overlay" id="add-modal" onclick="closeAddModal(event)">
+  <div class="modal">
+    <div class="modal-title">➕ Додати фразу</div>
+    <input class="modal-input" id="new-phrase" placeholder="Введи фразу англійською..." maxlength="200"
+      onkeydown="if(event.key==='Enter')saveNewPhrase()">
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeAddModal()">Скасувати</button>
+      <button class="btn-save" onclick="saveNewPhrase()">Зберегти</button>
+    </div>
+  </div>
+</div>
+
+<!-- SRS Modal -->
+<div class="srs-overlay" id="srs-overlay">
+  <div class="srs-header">
+    <div class="srs-back" onclick="closeSRS()">
+      <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"></polyline></svg>
+    </div>
+    <div class="srs-title">🔁 Повторення</div>
+    <div class="srs-progress-txt" id="srs-progress-txt"></div>
+  </div>
+  <div class="srs-progress-bar" style="margin:0 16px">
+    <div class="srs-progress-fill" id="srs-progress-fill" style="width:0%"></div>
+  </div>
+  <div class="srs-body" id="srs-body"></div>
+</div>
+
+<script>
+const tg = window.Telegram?.WebApp;
+if (tg) { tg.ready(); tg.expand(); }
+
+const UID       = tg?.initDataUnsafe?.user?.id || 0;
+const INIT_DATA = tg?.initData || '';
+const API       = 'https://speakchain-bot-production.up.railway.app';
+const GH        = 'https://discoveritschool-hub.github.io/speakchain-app';
+
+let allPhrases  = [];   // [{phrase, video_url, grammar_topic, date, srs}]
+let duePhrases  = [];   // фрази для сьогоднішнього повторення
+let srsQueue    = [];
+let srsIdx      = 0;
+let srsKnown    = 0;
+let activeRecorder = null;
+let isRecording = false;
+let mediaStream = null;
+
+// ── Load data ──
+async function loadData() {
+  try {
+    const res = await fetch(`${API}/vocab_data`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({uid: UID, init_data: INIT_DATA})
+    });
+    const d = await res.json();
+    allPhrases = d.phrases || [];
+    duePhrases = d.due    || [];
+    renderList(allPhrases);
+    updateDueBadge();
+  } catch(e) {
+    document.getElementById('phrase-list').innerHTML =
+      `<div class="empty"><div class="empty-icon">⚠️</div>Помилка завантаження</div>`;
+  }
+}
+
+function updateDueBadge() {
+  const n = duePhrases.length;
+  document.getElementById('due-badge').textContent = n;
+  document.getElementById('repeat-btn').disabled = n === 0;
+}
+
+// ── Render list ──
+function renderList(phrases) {
+  const el = document.getElementById('phrase-list');
+  if (!phrases.length) {
+    el.innerHTML = `<div class="empty">
+      <div class="empty-icon">📖</div>
+      <div>Словник порожній<br><span style="font-size:12px;color:var(--text3)">
+        Збережи фрази з відео або натисни +</span></div>
+    </div>`;
+    return;
+  }
+  el.innerHTML = phrases.map((p, i) => {
+    const isDue = duePhrases.some(d => d.phrase === p.phrase);
+    const ytId  = extractYTId(p.video_url);
+    return `<div class="phrase-row ${isDue ? 'due' : ''}" id="row-${i}">
+      <div class="phrase-text">${escHtml(p.phrase)}</div>
+      <div class="phrase-actions">
+        <div class="icon-btn" onclick="speakTTS('${escAttr(p.phrase)}')" title="Послухати">🔊</div>
+        <div class="icon-btn" id="mic-${i}" onclick="toggleRecord(${i}, '${escAttr(p.phrase)}')" title="Проговорити">🎤</div>
+        ${ytId ? `<div class="icon-btn" onclick="openYT('${ytId}')" title="Відкрити відео">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="#ef4444">
+            <path d="M23 7s-.3-2-1.2-2.8c-1.1-1.2-2.4-1.2-3-1.3C16.2 2.8 12 2.8 12 2.8s-4.2 0-6.8.1c-.6.1-1.9.1-3 1.3C1.3 5 1 7 1 7S.7 9.1.7 11.2v2c0 2.1.3 4.2.3 4.2s.3 2 1.2 2.8c1.1 1.2 2.6 1.1 3.3 1.2C7.3 21.6 12 21.6 12 21.6s4.2 0 6.8-.2c.6-.1 1.9-.1 3-1.3.9-.8 1.2-2.8 1.2-2.8s.3-2.1.3-4.2v-2C23.3 9.1 23 7 23 7zM9.7 15.5V8.4l6.6 3.6-6.6 3.5z"/>
+          </svg>
+        </div>` : ''}
+        <div class="icon-btn" onclick="deletePhrase('${escAttr(p.phrase)}')" title="Видалити"
+          style="font-size:14px;color:var(--text3)">✕</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── Filter ──
+function filterPhrases() {
+  const q = document.getElementById('search').value.toLowerCase().trim();
+  const filtered = q ? allPhrases.filter(p => p.phrase.toLowerCase().includes(q)) : allPhrases;
+  renderList(filtered);
+}
+
+// ── TTS ──
+function speakTTS(phrase) {
+  if (!phrase) return;
+  window.speechSynthesis.cancel();
+  const utt = new SpeechSynthesisUtterance(phrase);
+  utt.lang = 'en-US';
+  utt.rate = 0.85;
+  const voices = speechSynthesis.getVoices();
+  const enVoice = voices.find(v => v.lang.startsWith('en') && v.localService === false)
+                || voices.find(v => v.lang.startsWith('en'));
+  if (enVoice) utt.voice = enVoice;
+  speechSynthesis.speak(utt);
+}
+
+// ── Record ──
+async function toggleRecord(idx, phrase) {
+  const btn = document.getElementById(`mic-${idx}`);
+  if (!btn) return;
+
+  if (isRecording) {
+    // Зупиняємо запис
+    if (mediaStream) {
+      mediaStream.getTracks().forEach(t => t.stop());
+      mediaStream = null;
+    }
+    isRecording = false;
+    btn.classList.remove('recording');
+    btn.textContent = '🎤';
+    return;
+  }
+
+  try {
+    mediaStream = await navigator.mediaDevices.getUserMedia({audio: true});
+    isRecording = true;
+    btn.classList.add('recording');
+    btn.textContent = '⏹';
+
+    const chunks = [];
+    const recorder = new MediaRecorder(mediaStream);
+    recorder.ondataavailable = e => chunks.push(e.data);
+    recorder.onstop = () => {
+      const blob = new Blob(chunks, {type: 'audio/webm'});
+      const url  = URL.createObjectURL(blob);
+      // Спочатку відтворюємо TTS для порівняння, потім запис
+      speakTTS(phrase);
+      setTimeout(() => {
+        const audio = new Audio(url);
+        audio.play();
+      }, 2500);
+    };
+    recorder.start();
+
+    // Автоматично зупиняємо через 8 секунд
+    setTimeout(() => {
+      if (recorder.state === 'recording') {
+        recorder.stop();
+        isRecording = false;
+        btn.classList.remove('recording');
+        btn.textContent = '🎤';
+        if (mediaStream) {
+          mediaStream.getTracks().forEach(t => t.stop());
+          mediaStream = null;
+        }
+      }
+    }, 8000);
+
+  } catch(e) {
+    isRecording = false;
+    btn.classList.remove('recording');
+    btn.textContent = '🎤';
+  }
+}
+
+// ── YouTube ──
+function extractYTId(url) {
+  if (!url) return null;
+  const m = url.match(/(?:v=|youtu\.be\/)([A-Za-z0-9_-]{11})/);
+  return m ? m[1] : null;
+}
+
+function openYT(ytId) {
+  const url = `https://www.youtube.com/watch?v=${ytId}`;
+  if (tg) tg.openLink(url);
+  else window.open(url, '_blank');
+}
+
+// ── Add phrase ──
+function openAddModal() {
+  document.getElementById('add-modal').classList.add('show');
+  setTimeout(() => document.getElementById('new-phrase').focus(), 300);
+}
+
+function closeAddModal(e) {
+  if (e && e.target !== document.getElementById('add-modal')) return;
+  document.getElementById('add-modal').classList.remove('show');
+  document.getElementById('new-phrase').value = '';
+}
+
+async function saveNewPhrase() {
+  const phrase = document.getElementById('new-phrase').value.trim();
+  if (!phrase) return;
+  document.getElementById('add-modal').classList.remove('show');
+  document.getElementById('new-phrase').value = '';
+
+  try {
+    await fetch(`${API}/vocab_update`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        uid: UID, init_data: INIT_DATA,
+        action: 'add',
+        phrase: phrase,
+      })
+    });
+    await loadData();
+  } catch(e) {}
+}
+
+// ── Delete ──
+async function deletePhrase(phrase) {
+  try {
+    await fetch(`${API}/vocab_update`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        uid: UID, init_data: INIT_DATA,
+        action: 'delete',
+        phrase: phrase,
+      })
+    });
+    allPhrases  = allPhrases.filter(p => p.phrase !== phrase);
+    duePhrases  = duePhrases.filter(p => p.phrase !== phrase);
+    filterPhrases();
+    updateDueBadge();
+  } catch(e) {}
+}
+
+// ── SRS Session ──
+function openSRS() {
+  srsQueue = [...duePhrases];
+  srsIdx   = 0;
+  srsKnown = 0;
+  document.getElementById('srs-overlay').classList.add('show');
+  renderSRSCard();
+}
+
+function closeSRS() {
+  document.getElementById('srs-overlay').classList.remove('show');
+  if (mediaStream) {
+    mediaStream.getTracks().forEach(t => t.stop());
+    mediaStream = null;
+  }
+  isRecording = false;
+}
+
+function renderSRSCard() {
+  const total = srsQueue.length;
+  const body  = document.getElementById('srs-body');
+  const pct   = Math.round((srsIdx / total) * 100);
+
+  document.getElementById('srs-progress-txt').textContent = `${srsIdx}/${total}`;
+  document.getElementById('srs-progress-fill').style.width = pct + '%';
+
+  if (srsIdx >= total) {
+    // Done
+    body.innerHTML = `<div class="srs-done">
+      <div class="srs-done-icon">🎉</div>
+      <div class="srs-done-title">Повторення завершено!</div>
+      <div class="srs-done-sub">Знаєш: ${srsKnown} з ${total} фраз</div>
+      <button class="srs-done-btn" onclick="closeSRS()">Чудово 💪</button>
+    </div>`;
+    return;
+  }
+
+  const p = srsQueue[srsIdx];
+  body.innerHTML = `
+    <div class="srs-card">
+      <div class="srs-phrase">${escHtml(p.phrase)}</div>
+    </div>
+    <div class="srs-actions-top">
+      <button class="srs-icon-btn" onclick="srsTTS('${escAttr(p.phrase)}')">
+        🔊 Послухати
+      </button>
+      <button class="srs-icon-btn" id="srs-mic" onclick="srsRecord('${escAttr(p.phrase)}')">
+        🎤 Проговорити
+      </button>
+    </div>
+    <div class="srs-actions-bottom">
+      <button class="srs-dontknow" onclick="srsAnswer('learn', '${escAttr(p.phrase)}')">
+        😔 Не знаю
+      </button>
+      <button class="srs-know" onclick="srsAnswer('know', '${escAttr(p.phrase)}')">
+        😊 Знаю
+      </button>
+    </div>`;
+}
+
+function srsTTS(phrase) { speakTTS(phrase); }
+
+async function srsRecord(phrase) {
+  const btn = document.getElementById('srs-mic');
+  if (!btn) return;
+
+  if (isRecording) {
+    if (mediaStream) {
+      mediaStream.getTracks().forEach(t => t.stop());
+      mediaStream = null;
+    }
+    isRecording = false;
+    btn.classList.remove('recording');
+    btn.innerHTML = '🎤 Проговорити';
+    return;
+  }
+
+  try {
+    mediaStream = await navigator.mediaDevices.getUserMedia({audio: true});
+    isRecording = true;
+    btn.classList.add('recording');
+    btn.innerHTML = '⏹ Зупинити';
+
+    const chunks = [];
+    const recorder = new MediaRecorder(mediaStream);
+    recorder.ondataavailable = e => chunks.push(e.data);
+    recorder.onstop = () => {
+      const blob = new Blob(chunks, {type: 'audio/webm'});
+      const url  = URL.createObjectURL(blob);
+      speakTTS(phrase);
+      setTimeout(() => { new Audio(url).play(); }, 2500);
+    };
+    recorder.start();
+
+    setTimeout(() => {
+      if (recorder.state === 'recording') recorder.stop();
+      isRecording = false;
+      if (btn) { btn.classList.remove('recording'); btn.innerHTML = '🎤 Проговорити'; }
+      if (mediaStream) { mediaStream.getTracks().forEach(t => t.stop()); mediaStream = null; }
+    }, 8000);
+  } catch(e) {
+    isRecording = false;
+    btn.classList.remove('recording');
+    btn.innerHTML = '🎤 Проговорити';
+  }
+}
+
+async function srsAnswer(action, phrase) {
+  if (action === 'know') srsKnown++;
+  srsIdx++;
+
+  // Відправляємо на backend
+  try {
+    await fetch(`${API}/vocab_update`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        uid: UID, init_data: INIT_DATA,
+        action: 'srs_update',
+        phrase: phrase,
+        result: action,  // 'know' або 'learn'
+      })
+    });
+  } catch(e) {}
+
+  // Оновлюємо due список
+  if (action === 'know') {
+    duePhrases = duePhrases.filter(p => p.phrase !== phrase);
+  }
+
+  renderSRSCard();
+}
+
+// ── Helpers ──
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function escAttr(s) {
+  return String(s).replace(/'/g,"\\'").replace(/"/g,'&quot;');
+}
+
+// Ініціалізація голосів
+if (speechSynthesis.onvoiceschanged !== undefined) {
+  speechSynthesis.onvoiceschanged = () => speechSynthesis.getVoices();
+}
+
+loadData();
+</script>
+</body>
+</html>
