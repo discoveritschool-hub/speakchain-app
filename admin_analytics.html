@@ -103,7 +103,37 @@ tr:hover td{background:var(--surface2)}
     <div class="header-title">📈 Analytics</div>
     <div class="header-sub" id="last-updated">Завантаження...</div>
   </div>
-  <div class="refresh-btn" onclick="loadData()">↻</div>
+  <div style="display:flex;gap:8px">
+    <div class="refresh-btn" id="tz-btn" onclick="loadTZ()" title="ТЗ для Claude">📋</div>
+    <div class="refresh-btn" id="ai-btn" onclick="loadAIInsights()" title="AI Аналіз">🤖</div>
+    <div class="refresh-btn" onclick="loadData()">↻</div>
+  </div>
+</div>
+
+<!-- TZ Modal -->
+<div id="tz-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:999;align-items:flex-end">
+  <div style="background:#0f0f0f;border-top:1px solid rgba(255,255,255,.1);width:100%;max-height:90vh;
+    display:flex;flex-direction:column;border-radius:16px 16px 0 0">
+    <div style="padding:14px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(255,255,255,.08);flex-shrink:0">
+      <div style="flex:1;font-size:15px;font-weight:700">📋 ТЗ для Claude</div>
+      <button onclick="copyTZ()" style="padding:7px 14px;border-radius:20px;background:#4f8ef7;border:none;
+        color:#fff;font-size:12px;font-weight:600;cursor:pointer" id="copy-btn">
+        Копіювати
+      </button>
+      <div onclick="closeTZ()" style="cursor:pointer;font-size:20px;color:#888;padding:0 4px">✕</div>
+    </div>
+    <div id="tz-content" style="flex:1;overflow-y:auto;padding:16px;font-size:12px;color:#e0e0e0;
+      line-height:1.7;white-space:pre-wrap;font-family:monospace;scrollbar-width:none"></div>
+  </div>
+</div>
+
+<!-- AI Insights Panel -->
+<div id="ai-panel" style="display:none;margin:0 16px 0;background:#12102a;border:1px solid rgba(124,110,247,.3);border-radius:12px;padding:16px">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+    <div style="font-size:14px;font-weight:700;color:#a78bfa">🤖 AI Аналіз системи</div>
+    <div style="font-size:11px;color:var(--text3)" id="ai-generated-at"></div>
+  </div>
+  <div id="ai-content" style="font-size:13px;color:var(--text);line-height:1.7;white-space:pre-wrap"></div>
 </div>
 
 <div class="tabs">
@@ -113,6 +143,7 @@ tr:hover td{background:var(--surface2)}
   <div class="tab" onclick="switchTab('revenue')">Revenue</div>
   <div class="tab" onclick="switchTab('buddy')">Buddy</div>
   <div class="tab" onclick="switchTab('bloggers')">Блогери</div>
+  <div class="tab" onclick="switchTab('actions')">Дії</div>
 </div>
 
 <div class="content">
@@ -159,6 +190,13 @@ tr:hover td{background:var(--surface2)}
     </div>
   </div>
 
+  <!-- ACTIONS -->
+  <div class="section" id="tab-actions">
+    <div id="actions-content">
+      <div class="loading"><div class="spinner"></div>Завантаження...</div>
+    </div>
+  </div>
+
 </div>
 
 <script>
@@ -172,11 +210,113 @@ let activeTab = 'overview';
 function switchTab(tab) {
   activeTab = tab;
   document.querySelectorAll('.tab').forEach((t, i) => {
-    t.classList.toggle('active', ['overview','retention','funnel','revenue','buddy','bloggers'][i] === tab);
+    t.classList.toggle('active', ['overview','retention','funnel','revenue','buddy','bloggers','actions'][i] === tab);
   });
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   document.getElementById(`tab-${tab}`).classList.add('active');
   if (data) renderTab(tab);
+}
+
+let lastAIAnalysis = '';
+let lastTZText = '';
+
+async function loadTZ() {
+  const btn   = document.getElementById('tz-btn');
+  const modal = document.getElementById('tz-modal');
+  const content = document.getElementById('tz-content');
+
+  btn.textContent = '⏳';
+  btn.style.pointerEvents = 'none';
+  modal.style.display = 'flex';
+  content.textContent = 'Генерую технічне завдання... ~20 секунд ⏳';
+
+  try {
+    const res = await fetch('https://speakchain-bot-production.up.railway.app/admin_tz', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        uid:       tg?.initDataUnsafe?.user?.id || 0,
+        init_data: tg?.initData || '',
+        analysis:  lastAIAnalysis,  // передаємо попередній AI аналіз якщо є
+      })
+    });
+    const d = await res.json();
+    if (d.error) {
+      content.textContent = '❌ ' + d.error;
+    } else {
+      lastTZText = d.tz;
+      content.textContent = d.tz;
+    }
+  } catch(e) {
+    content.textContent = '❌ Помилка: ' + e.message;
+  }
+
+  btn.textContent = '📋';
+  btn.style.pointerEvents = 'auto';
+}
+
+function closeTZ() {
+  document.getElementById('tz-modal').style.display = 'none';
+}
+
+async function copyTZ() {
+  if (!lastTZText) return;
+  try {
+    await navigator.clipboard.writeText(lastTZText);
+    const btn = document.getElementById('copy-btn');
+    btn.textContent = '✅ Скопійовано!';
+    btn.style.background = '#3ecf8e';
+    setTimeout(() => {
+      btn.textContent = 'Копіювати';
+      btn.style.background = '#4f8ef7';
+    }, 2000);
+  } catch(e) {
+    // Fallback для старих браузерів
+    const ta = document.createElement('textarea');
+    ta.value = lastTZText;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    const btn = document.getElementById('copy-btn');
+    btn.textContent = '✅ Скопійовано!';
+    setTimeout(() => btn.textContent = 'Копіювати', 2000);
+  }
+}
+
+async function loadAIInsights() {
+  const btn    = document.getElementById('ai-btn');
+  const panel  = document.getElementById('ai-panel');
+  const content= document.getElementById('ai-content');
+
+  btn.textContent = '⏳';
+  btn.style.pointerEvents = 'none';
+  panel.style.display = 'block';
+  content.textContent = 'Аналізую дані... Це займе ~15 секунд ⏳';
+
+  try {
+    const res = await fetch('https://speakchain-bot-production.up.railway.app/admin_ai_insights', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        uid:       tg?.initDataUnsafe?.user?.id || 0,
+        init_data: tg?.initData || '',
+      })
+    });
+    const d = await res.json();
+    if (d.error) {
+      content.textContent = '❌ ' + d.error;
+    } else {
+      lastAIAnalysis = d.analysis;  // зберігаємо для передачі в ТЗ
+      content.textContent = d.analysis;
+      document.getElementById('ai-generated-at').textContent = d.generated_at || '';
+    }
+  } catch(e) {
+    content.textContent = '❌ Помилка: ' + e.message;
+  }
+
+  btn.textContent = '🤖';
+  btn.style.pointerEvents = 'auto';
 }
 
 async function loadData() {
@@ -193,11 +333,19 @@ async function loadData() {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     data = await res.json();
     if (data.error) throw new Error(data.error);
+
+    // Ховаємо фінансові вкладки для розробника
+    if (data.is_dev) {
+      document.querySelectorAll('.tab').forEach(t => {
+        if (t.textContent === 'Revenue' || t.textContent === 'Блогери') {
+          t.style.display = 'none';
+        }
+      });
+    }
     const now = new Date().toLocaleTimeString('uk-UA', {hour:'2-digit', minute:'2-digit'});
     document.getElementById('last-updated').textContent = `Оновлено ${now}`;
     renderTab(activeTab);
-    // Пре-рендеримо всі вкладки у фоні
-    ['overview','retention','funnel','revenue','buddy','bloggers'].forEach(t => {
+    ['overview','retention','funnel','revenue','buddy','bloggers','actions'].forEach(t => {
       if (t !== activeTab) renderTab(t);
     });
   } catch(e) {
@@ -219,6 +367,7 @@ function renderTab(tab) {
     case 'revenue':    el.innerHTML = renderRevenue(); break;
     case 'buddy':      el.innerHTML = renderBuddy(); break;
     case 'bloggers':   el.innerHTML = renderBloggers(); break;
+    case 'actions':    el.innerHTML = renderActions(); break;
   }
   setTimeout(() => drawCharts(tab), 50);
 }
@@ -573,12 +722,20 @@ function drawCharts(tab) {
          fill: true, tension: .4, pointRadius: 2 }]);
   }
 
-  if (tab === 'bloggers') {
-    const b = data.bloggers;
-    makeChart('chart-blogger-revenue', 'bar',
-      (b.months || []).map(m => m.label),
-      [{ data: (b.months || []).map(m => m.total_commission),
-         backgroundColor: 'rgba(62,207,142,.7)', borderRadius: 4 }]);
+  if (tab === 'actions') {
+    const a = data.actions;
+    if (!a) return;
+    makeChart('chart-hours', 'bar', a.hour_labels,
+      [{ data: a.hour_data, backgroundColor: 'rgba(124,110,247,.7)', borderRadius: 3 }]);
+    makeChart('chart-actions-days', 'line', a.days_labels,
+      [{ data: a.days_data, borderColor: '#f59e0b', backgroundColor: 'rgba(245,158,11,.1)',
+         fill: true, tension: .4, pointRadius: 2 }]);
+    if (document.getElementById('chart-depth'))
+      makeChart('chart-depth', 'bar',
+        (a.session_depth||[]).map(s => s.bucket),
+        [{ data: (a.session_depth||[]).map(s => s.count),
+           backgroundColor: ['rgba(239,68,68,.7)','rgba(245,158,11,.7)','rgba(62,207,142,.7)','rgba(79,142,247,.7)'],
+           borderRadius: 4 }]);
   }
 }
 
@@ -706,7 +863,107 @@ function filterPayouts(monthIdx) {
     renderPayoutsRows(parseInt(monthIdx), months);
 }
 
-// ── HELPERS ──────────────────────────────────────────────
+// ── ACTIONS ──────────────────────────────────────────────
+function renderActions() {
+  const d = data.actions;
+  if (!d) return '<div class="error-box">Немає даних</div>';
+  return `
+  <div class="chart-block">
+    <div class="chart-title">1. Drop-off — де юзери виходять з флоу</div>
+    <div class="funnel" style="margin-top:8px">
+      ${(d.dropoff||[]).map(s => `
+        <div class="funnel-row">
+          <div class="funnel-label" style="width:150px;text-align:left;font-size:11px">${s.step}</div>
+          <div class="funnel-bar-wrap">
+            <div class="funnel-bar" style="width:${s.pct}%;background:${s.pct>60?'var(--green)':s.pct>30?'var(--amber)':'var(--red)'}">
+              ${fmt(s.users)}
+            </div>
+          </div>
+          <div class="funnel-pct">${s.pct}%</div>
+        </div>`).join('')}
+    </div>
+  </div>
+  <div class="chart-block">
+    <div class="chart-title">2. Session Depth — дій за сесію</div>
+    <div class="chart-sub">7+ = зона потоку</div>
+    <div class="chart-wrap"><canvas id="chart-depth"></canvas></div>
+  </div>
+  <div class="cards">
+    <div class="card green">
+      <div class="card-label">Avg годин до першого уроку</div>
+      <div class="card-value" style="color:var(--green)">${d.avg_hours_to_first ?? '—'}</div>
+    </div>
+    <div class="card accent">
+      <div class="card-label">Активація < 1 год</div>
+      <div class="card-value" style="color:var(--accent)">${fmt(d.fast_activations)}</div>
+    </div>
+    <div class="card" style="grid-column:span 2">
+      <div class="card-label">Активація > 24 год (ризик відтоку)</div>
+      <div class="card-value" style="color:var(--red)">${fmt(d.slow_activations)}</div>
+    </div>
+  </div>
+  <div class="table-block">
+    <div class="table-title">4. Feature Discovery — днів до першого використання</div>
+    <table>
+      <tr><th>Фіча</th><th>Медіана днів</th><th>Юзерів</th></tr>
+      ${(d.feature_discovery||[]).map(f => `
+        <tr>
+          <td style="font-weight:600">${f.feature}</td>
+          <td style="color:${(f.median_days||99)<=3?'var(--green)':(f.median_days||99)<=7?'var(--amber)':'var(--red)'}">${f.median_days ?? '—'} дн.</td>
+          <td>${fmt(f.users)}</td>
+        </tr>`).join('')}
+    </table>
+    <div style="font-size:11px;color:var(--text2);margin-top:6px">💡 > 7 днів = фіча прихована</div>
+  </div>
+  <div class="cards">
+    <div class="card accent">
+      <div class="card-label">Avg повідомлень Chainy</div>
+      <div class="card-value" style="color:var(--accent)">${d.avg_buddy_msgs}</div>
+    </div>
+    <div class="card green">
+      <div class="card-label">Deep (10+ повід.)</div>
+      <div class="card-value" style="color:var(--green)">${fmt(d.deep_chainy_users)}</div>
+    </div>
+    <div class="card" style="grid-column:span 2">
+      <div class="card-label">Shallow (< 3 повід.)</div>
+      <div class="card-value" style="color:var(--amber)">${fmt(d.shallow_chainy_users)}</div>
+    </div>
+  </div>
+  <div class="table-block">
+    <div class="table-title">6. Корреляція: активність → конверсія</div>
+    <table>
+      <tr><th>Сегмент</th><th>Юзерів</th><th>Платних</th><th>Conv%</th></tr>
+      ${(d.correlations||[]).map(c => `
+        <tr>
+          <td style="font-weight:600">${c.segment}</td>
+          <td>${fmt(c.users)}</td>
+          <td>${fmt(c.paid)}</td>
+          <td style="color:${c.pct>=40?'var(--green)':c.pct>=20?'var(--amber)':'var(--red)'};font-weight:700">${c.pct}%</td>
+        </tr>`).join('')}
+    </table>
+    <div style="font-size:11px;color:var(--text2);margin-top:6px">💡 > 40% = "магічне число" для онбордингу</div>
+  </div>
+  <div class="chart-block">
+    <div class="chart-title">8. Активність по годинах</div>
+    <div class="chart-wrap"><canvas id="chart-hours"></canvas></div>
+  </div>
+  <div class="chart-block">
+    <div class="chart-title">9. Дії по днях (30 днів)</div>
+    <div class="chart-wrap"><canvas id="chart-actions-days"></canvas></div>
+  </div>
+  <div class="table-block">
+    <div class="table-title">10. Топ кнопок</div>
+    <table>
+      <tr><th>#</th><th>Дія</th><th>Натискань</th></tr>
+      ${(d.top_buttons||[]).map((b,i) => `
+        <tr>
+          <td style="color:var(--text3)">${i+1}</td>
+          <td style="font-weight:600">${b.name}</td>
+          <td style="color:var(--accent)">${fmt(b.count)}</td>
+        </tr>`).join('')}
+    </table>
+  </div>`;
+}
 function fmt(n) {
   if (n == null) return '—';
   if (n >= 1000) return (n/1000).toFixed(1) + 'K';
