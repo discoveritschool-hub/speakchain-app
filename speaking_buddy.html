@@ -121,6 +121,27 @@
   .send-btn:disabled { opacity: 0.4; }
   .send-btn svg { width: 18px; height: 18px; fill: #fff; }
   .limit-banner { margin: 0 16px 8px; padding: 10px 14px; border-radius: var(--radius-sm); background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.2); font-size: 12px; color: var(--amber); text-align: center; display: none; }
+
+  /* ── Voice mode ── */
+  .mic-btn { width: 40px; height: 40px; border-radius: 50%; background: var(--surface2); border: 1px solid var(--border); cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 18px; transition: all .15s; }
+  .mic-btn.listening { background: rgba(239,68,68,.15); border-color: #ef4444; animation: micPulse 1s infinite; }
+  @keyframes micPulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.1)} }
+  .voice-toggle { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 16px; transition: all .15s; }
+  .voice-toggle.active { background: rgba(62,207,142,.15); }
+
+  /* ── Grammar card ── */
+  .grammar-card { position: fixed; top: -100px; left: 16px; right: 16px; z-index: 500;
+    background: linear-gradient(135deg, #1e2a47, #2a1a3a); border: 1px solid rgba(167,139,250,.4);
+    border-radius: 12px; padding: 12px 16px; box-shadow: 0 8px 24px rgba(0,0,0,.4);
+    transition: top .35s cubic-bezier(.34,1.56,.64,1); }
+  .grammar-card.show { top: 12px; }
+  .grammar-card-inner { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+  .grammar-topic { font-size: 11px; font-weight: 700; color: #a78bfa; text-transform: uppercase;
+    letter-spacing: .07em; width: 100%; margin-bottom: 2px; }
+  .grammar-error { font-size: 14px; color: #ef4444; text-decoration: line-through; font-weight: 500; }
+  .grammar-arrow { font-size: 14px; color: var(--text3); }
+  .grammar-correct { font-size: 14px; color: #3ecf8e; font-weight: 600; }
+  .grammar-rule { font-size: 12px; color: var(--text2); width: 100%; margin-top: 3px; line-height: 1.4; }
 </style>
 </head>
 <body>
@@ -186,6 +207,17 @@
 </div>
 
 <!-- ══ SCREEN 3: CHAT ══ -->
+<!-- ══ GRAMMAR CARD ══ -->
+<div class="grammar-card" id="grammar-card">
+  <div class="grammar-card-inner">
+    <span class="grammar-topic" id="grammar-topic"></span>
+    <span class="grammar-error" id="grammar-error"></span>
+    <span class="grammar-arrow"> → </span>
+    <span class="grammar-correct" id="grammar-correct"></span>
+    <div class="grammar-rule" id="grammar-rule"></div>
+  </div>
+</div>
+
 <div class="screen" id="s-chat">
   <div class="chat-header">
     <div class="chat-back" onclick="showScreen('s-detail')">
@@ -196,12 +228,14 @@
       <div class="chat-info-name" id="chat-name"></div>
       <div class="chat-info-status">online</div>
     </div>
+    <div class="voice-toggle" id="voice-toggle" onclick="toggleVoiceMode()" title="Голосовий режим">🔊</div>
     <div class="chat-counter" id="chat-counter"></div>
   </div>
   <div class="chat-messages" id="chat-messages"></div>
   <div class="limit-banner" id="limit-banner">Досягнуто денний ліміт 20 повідомлень. Повертайся завтра!</div>
   <div class="chat-input-area">
-    <textarea id="chat-input" placeholder="Пиши англійською..." rows="1" onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+    <button class="mic-btn" id="mic-btn" onclick="toggleSpeechInput()" title="Говорити">🎤</button>
+    <textarea id="chat-input" placeholder="Пиши або говори англійською..." rows="1" onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
     <button class="send-btn" id="send-btn" onclick="sendMessage()">
       <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
     </button>
@@ -587,6 +621,12 @@ async function sendMessage() {
       updateCounter();
       history.push({ role: 'assistant', content: data.reply });
       addMessage('ai', data.reply, data.feedback || []);
+
+      // TTS — озвучуємо відповідь Buddy якщо voice mode увімкнено
+      if (voiceMode) speakTTS(data.reply);
+
+      // Граматична картка при помилці
+      if (data.grammar_card) showGrammarCard(data.grammar_card);
     }
   } catch (e) {
     removeTyping();
@@ -595,6 +635,140 @@ async function sendMessage() {
 
   isLoading = false;
   document.getElementById('send-btn').disabled = false;
+}
+
+// ══════════════════════════════════════════════════════════════
+// VOICE MODE
+// ══════════════════════════════════════════════════════════════
+
+let voiceMode = false;
+let recognition = null;
+let isListening = false;
+let ttsEnabled = true;
+
+// ── TTS ──
+function speakTTS(text) {
+  if (!ttsEnabled) return;
+  window.speechSynthesis.cancel();
+  const utt = new SpeechSynthesisUtterance(text);
+  utt.lang = 'en-US';
+  utt.rate = 0.9;
+  utt.pitch = 1.0;
+  const voices = speechSynthesis.getVoices();
+  const enVoice = voices.find(v => v.lang === 'en-US' && v.localService === false)
+               || voices.find(v => v.lang.startsWith('en-') && v.localService === false)
+               || voices.find(v => v.lang.startsWith('en'));
+  if (enVoice) utt.voice = enVoice;
+  speechSynthesis.speak(utt);
+}
+
+// Ініціалізація голосів
+if (typeof speechSynthesis !== 'undefined') {
+  speechSynthesis.onvoiceschanged = () => speechSynthesis.getVoices();
+}
+
+// ── Toggle voice mode ──
+function toggleVoiceMode() {
+  voiceMode = !voiceMode;
+  const btn = document.getElementById('voice-toggle');
+  btn.textContent = voiceMode ? '🔇' : '🔊';
+  btn.classList.toggle('active', voiceMode);
+  if (!voiceMode) {
+    window.speechSynthesis.cancel();
+    stopListening();
+  }
+}
+
+// ── Speech Recognition (мікрофон) ──
+function initRecognition() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) return null;
+  const r = new SR();
+  r.lang = 'en-US';
+  r.interimResults = true;
+  r.maxAlternatives = 1;
+  r.continuous = false;
+
+  r.onresult = (e) => {
+    const transcript = Array.from(e.results)
+      .map(r => r[0].transcript).join('');
+    const input = document.getElementById('chat-input');
+    input.value = transcript;
+    autoResize(input);
+    // Якщо результат фінальний — відправляємо автоматично
+    if (e.results[e.results.length - 1].isFinal) {
+      stopListening();
+      if (transcript.trim()) sendMessage();
+    }
+  };
+
+  r.onerror = () => stopListening();
+  r.onend   = () => stopListening();
+  return r;
+}
+
+function toggleSpeechInput() {
+  if (isListening) {
+    stopListening();
+  } else {
+    startListening();
+  }
+}
+
+function startListening() {
+  // Зупиняємо TTS поки говорить юзер
+  window.speechSynthesis.cancel();
+
+  recognition = initRecognition();
+  if (!recognition) {
+    // Браузер не підтримує — показуємо підказку
+    const input = document.getElementById('chat-input');
+    input.placeholder = 'Speech not supported in this browser';
+    return;
+  }
+
+  try {
+    recognition.start();
+    isListening = true;
+    const btn = document.getElementById('mic-btn');
+    btn.textContent = '⏹';
+    btn.classList.add('listening');
+    document.getElementById('chat-input').placeholder = '🎤 Говори англійською...';
+  } catch(e) {
+    stopListening();
+  }
+}
+
+function stopListening() {
+  isListening = false;
+  if (recognition) {
+    try { recognition.stop(); } catch(e) {}
+    recognition = null;
+  }
+  const btn = document.getElementById('mic-btn');
+  if (btn) {
+    btn.textContent = '🎤';
+    btn.classList.remove('listening');
+  }
+  const input = document.getElementById('chat-input');
+  if (input) input.placeholder = 'Пиши або говори англійською...';
+}
+
+// ── Grammar card ──
+let grammarCardTimer = null;
+
+function showGrammarCard(card) {
+  if (!card) return;
+  const el = document.getElementById('grammar-card');
+  document.getElementById('grammar-topic').textContent  = card.topic   || '';
+  document.getElementById('grammar-error').textContent   = card.error   || '';
+  document.getElementById('grammar-correct').textContent = card.correct || '';
+  document.getElementById('grammar-rule').textContent    = card.rule    || '';
+
+  el.classList.add('show');
+
+  if (grammarCardTimer) clearTimeout(grammarCardTimer);
+  grammarCardTimer = setTimeout(() => el.classList.remove('show'), 5000);
 }
 
 renderScenarios();
