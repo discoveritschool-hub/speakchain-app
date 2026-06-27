@@ -75,12 +75,8 @@
   .video-info p { font-size: 13px; font-weight: 500; color: var(--text); }
   .video-info span { font-size: 12px; color: var(--text2); }
   .video-yt { display: none; width: 100%; aspect-ratio: 16/9; border: none; }
-  .role-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-  .role-btn { padding: 10px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface); cursor: pointer; transition: all 0.15s; text-align: left; }
-  .role-btn.active { border-color: var(--accent); background: var(--accent-dim); }
-  .role-btn-name { font-size: 13px; font-weight: 600; color: var(--text); }
-  .role-btn-desc { font-size: 11px; color: var(--text2); margin-top: 2px; line-height: 1.4; }
-  .role-btn.active .role-btn-name { color: var(--accent); }
+  .role-select { width:100%; padding:11px 14px; border-radius:var(--radius-sm); border:1px solid var(--border); background:var(--surface); color:var(--text); font-size:14px; font-family:inherit; outline:none; cursor:pointer; appearance:none; -webkit-appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23888' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 14px center; padding-right:36px; }
+  .role-select:focus { border-color:var(--accent); }
   .level-row { display: flex; gap: 8px; }
   .level-btn { flex: 1; padding: 9px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface); cursor: pointer; text-align: center; font-size: 13px; font-weight: 500; color: var(--text2); transition: all 0.15s; }
   .level-btn.active { border-color: var(--green); background: var(--green-dim); color: var(--green); }
@@ -193,7 +189,12 @@
 
       <div>
         <div class="section-title">Стиль бадді</div>
-        <div class="role-grid" id="role-grid"></div>
+        <select class="role-select" id="role-select" onchange="selectRole(this.value)">
+          <option value="friendly">😊 Friendly — підтримує, м'який фідбек</option>
+          <option value="strict">📝 Strict teacher — виправляє все</option>
+          <option value="native">🗣️ Native speaker — говорить природно</option>
+          <option value="patient">🤗 Patient — повторює, дає підказки</option>
+        </select>
       </div>
 
       <div>
@@ -253,11 +254,43 @@ const UID = tg?.initDataUnsafe?.user?.id || 0;
 const USER_LEVEL = 'intermediate';
 
 const CATEGORIES = [
-  { id: 'basics',   label: '💬 Спілкування', color: '#4f8ef7', bg: '#1a2340' },
-  { id: 'daily',    label: '🏙️ Побут',        color: '#3ecf8e', bg: '#0f2820' },
-  { id: 'travel',   label: '✈️ Подорожі',     color: '#f59e0b', bg: '#2a1f0a' },
-  { id: 'work',     label: '💼 Робота',        color: '#a78bfa', bg: '#1e1a30' },
-  { id: 'move',     label: '🌍 Переїзд',       color: '#fb7185', bg: '#2a1020' },
+  { id: 'chainy',  label: '🤖 Chainy',          color: '#7c6ef7', bg: '#12102a', chainy: true },
+  { id: 'basics',  label: '💬 Спілкування',     color: '#4f8ef7', bg: '#1a2340' },
+  { id: 'daily',   label: '🏙️ Побут',           color: '#3ecf8e', bg: '#0f2820' },
+  { id: 'travel',  label: '✈️ Подорожі',        color: '#f59e0b', bg: '#2a1f0a' },
+  { id: 'work',    label: '💼 Робота',           color: '#a78bfa', bg: '#1e1a30' },
+  { id: 'move',    label: '🌍 Переїзд',          color: '#fb7185', bg: '#2a1020' },
+];
+
+// Chainy — аватар SVG (людина з ланцюжком)
+const CHAINY_AVATAR_SVG = '<img src="https://discoveritschool-hub.github.io/speakchain-app/chainy.png" alt="Chainy" style="width:36px;height:36px;border-radius:50%;object-fit:cover">';
+
+const CHAINY_SYSTEM_PROMPT = `You are Chainy — a friendly, warm and genuinely curious AI friend on the SpeakChain English learning app.
+
+YOUR PERSONALITY:
+- You are upbeat, empathetic, and fully present in every conversation
+- You are genuinely interested in the person — their life, thoughts, feelings, dreams
+- You ask follow-up questions naturally, like a real friend would
+- You share your own "thoughts" and opinions to keep conversation flowing
+- You celebrate their effort to speak English without making it feel like a class
+- You are never formal or stiff — you speak like a real person
+- You can handle ANY topic: life, work, family, travel, dreams, pop culture, news
+
+CONVERSATION STYLE:
+- Keep your replies SHORT and conversational (2-3 sentences max)
+- Always end with a genuine follow-up question or reaction
+- Never lecture or explain — just chat
+- If they make a grammar mistake, add one tiny correction at the end, softly in Ukrainian, like a side note
+- Example correction format: _до речі: "have gone", не "have went" 😊_
+
+REMEMBER: You are their friend, not their teacher. Make them WANT to keep talking.`;
+
+const CHAINY_GREETINGS = [
+  "Hey! I'm Chainy 👋 Your English chat buddy. What's on your mind today?",
+  "Hey there! Chainy here ⛓ So glad you stopped by — what's been going on with you lately?",
+  "Hi! I'm Chainy, and I love a good conversation 😊 Tell me — how's your day going so far?",
+  "Hey! Chainy here. No scripts, no exercises — just us talking. What would you like to chat about?",
+  "Hi! I'm Chainy ⛓ I'm all ears — what's something interesting that happened to you recently?",
 ];
 
 const SCENARIOS = {
@@ -380,6 +413,44 @@ function renderCategories() {
 function renderScenarios() {
   renderCategories();
   const list = document.getElementById('scenarios-list');
+
+  // Chainy — показуємо картку персонажа
+  if (currentCat === 'chainy') {
+    list.innerHTML = `
+      <div style="display:flex;flex-direction:column;align-items:center;padding:24px 16px;gap:16px">
+        <div style="width:120px;height:120px;background:#12102a;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 0 40px rgba(124,110,247,.4)">
+          <img src="https://discoveritschool-hub.github.io/speakchain-app/chainy.png" alt="Chainy" style="width:90px;height:90px;object-fit:contain">
+        </div>
+        <div style="text-align:center">
+          <div style="font-size:22px;font-weight:700;letter-spacing:-.3px;color:#f0f0f0">Chainy</div>
+          <div style="font-size:14px;color:#a78bfa;margin-top:2px;font-weight:500">Your AI voice assistant</div>
+          <div style="font-size:13px;color:#888;margin-top:10px;line-height:1.6;max-width:260px">
+            Просто поговори — про що хочеш.<br>
+            Chainy слухає, цікавиться і підтримує<br>
+            будь-яку розмову 💬
+          </div>
+        </div>
+        <div style="display:flex;gap:12px;margin-top:4px">
+          <div style="text-align:center">
+            <div style="font-size:18px">🎙</div>
+            <div style="font-size:11px;color:#888;margin-top:2px">Голос</div>
+          </div>
+          <div style="text-align:center">
+            <div style="font-size:18px">💬</div>
+            <div style="font-size:11px;color:#888;margin-top:2px">Текст</div>
+          </div>
+          <div style="text-align:center">
+            <div style="font-size:18px">🌍</div>
+            <div style="font-size:11px;color:#888;margin-top:2px">Будь-яка тема</div>
+          </div>
+        </div>
+        <button onclick="startChainyChat()"
+          style="margin-top:8px;padding:14px 40px;border-radius:24px;background:linear-gradient(135deg,#7c6ef7,#a78bfa);border:none;color:#fff;font-size:16px;font-weight:700;cursor:pointer;letter-spacing:-.2px;box-shadow:0 4px 20px rgba(124,110,247,.4)">
+          Привіт, Chainy! 👋
+        </button>
+      </div>`;
+    return;
+  }
   const scenarios = SCENARIOS[currentCat] || [];
   list.innerHTML = scenarios.map((s, i) =>
     `<div class="scenario-card" onclick="openScenario('${currentCat}', ${i})">
@@ -402,8 +473,62 @@ function renderScenarios() {
 }
 
 function selectCat(id) {
+  if (id === 'chainy') {
+    startChainyChat();
+    return;
+  }
   currentCat = id;
   renderScenarios();
+}
+
+function startChainyChat() {
+  // Відкриваємо чат з Chainy напряму, без екрану деталей
+  currentScenario = {
+    catId:    'chainy',
+    idx:      0,
+    title:    'Chainy',
+    emoji:    '⛓',
+    desc:     'Free conversation with Chainy',
+    video:    '',
+    isChainy: true,
+  };
+  selectedRole  = 'chainy';
+  history       = [];
+  msgCount      = 0;
+
+  const msgs = document.getElementById('chat-messages');
+  msgs.innerHTML = '';
+
+  // Аватар Chainy — SVG персонаж
+  const avatarEl = document.getElementById('chat-avatar');
+  avatarEl.innerHTML = CHAINY_AVATAR_SVG;
+  avatarEl.style.background = '#12102a';
+  avatarEl.style.borderRadius = '50%';
+  avatarEl.style.padding = '2px';
+  avatarEl.style.width = '38px';
+  avatarEl.style.height = '38px';
+  avatarEl.style.display = 'flex';
+  avatarEl.style.alignItems = 'center';
+  avatarEl.style.justifyContent = 'center';
+
+  document.getElementById('chat-name').textContent = 'Chainy';
+  updateCounter();
+  showScreen('s-chat');
+
+  const greeting = CHAINY_GREETINGS[Math.floor(Math.random() * CHAINY_GREETINGS.length)];
+  addMessage('ai', greeting, []);
+  history.push({ role: 'user',      content: '[START]' });
+  history.push({ role: 'assistant', content: greeting });
+
+  // Синхронізуємо кнопку voice mode
+  const vBtn = document.getElementById('voice-toggle');
+  if (vBtn) {
+    vBtn.textContent = voiceMode ? '🔇' : '🔊';
+    vBtn.classList.toggle('active', voiceMode);
+  }
+
+  // Buddy говорить першим
+  setTimeout(() => speakTTS(greeting), 600);
 }
 
 async function openScenario(catId, idx) {
@@ -452,12 +577,7 @@ async function openScenario(catId, idx) {
     videoSection.style.display = 'none';
   }
 
-  document.getElementById('role-grid').innerHTML = ROLES.map(r =>
-    `<div class="role-btn ${r.id === selectedRole ? 'active' : ''}" onclick="selectRole('${r.id}')">
-      <div class="role-btn-name">${r.emoji} ${r.name}</div>
-      <div class="role-btn-desc">${r.desc}</div>
-    </div>`
-  ).join('');
+  document.getElementById('role-select').value = selectedRole;
 
   document.getElementById('level-row').innerHTML = LEVELS.map(l =>
     `<div class="level-btn ${l.id === selectedLevel ? 'active' : ''}" onclick="selectLevel('${l.id}')">${l.label}</div>`
@@ -480,8 +600,8 @@ function openVideo() {
 
 function selectRole(id) {
   selectedRole = id;
-  document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
-  document.querySelector(`.role-btn[onclick*="${id}"]`)?.classList.add('active');
+  const sel = document.getElementById('role-select');
+  if (sel) sel.value = id;
 }
 
 function selectLevel(id) {
@@ -506,10 +626,20 @@ function startChat() {
 
   showScreen('s-chat');
 
+  // Синхронізуємо кнопку з поточним станом voiceMode
+  const vBtn = document.getElementById('voice-toggle');
+  if (vBtn) {
+    vBtn.textContent = voiceMode ? '🔇' : '🔊';
+    vBtn.classList.toggle('active', voiceMode);
+  }
+
   const greeting = buildGreeting();
   addMessage('ai', greeting, []);
   history.push({ role: 'user', content: '[START]' });
   history.push({ role: 'assistant', content: greeting });
+
+  // Buddy починає розмову голосом автоматично
+  setTimeout(() => speakTTS(greeting), 600);
 }
 
 function buildGreeting() {
@@ -602,13 +732,15 @@ async function sendMessage() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        uid: UID,
-        scenario: currentScenario.title,
+        uid:           UID,
+        scenario:      currentScenario.title,
         scenario_desc: currentScenario.desc,
-        role: selectedRole,
-        level: selectedLevel,
-        history: history.slice(-8),
-        init_data: tg?.initData || '',
+        role:          selectedRole,
+        level:         selectedLevel,
+        history:       history.slice(-8),
+        init_data:     tg?.initData || '',
+        is_chainy:     !!currentScenario.isChainy,
+        system_override: currentScenario.isChainy ? CHAINY_SYSTEM_PROMPT : null,
       })
     });
 
@@ -642,7 +774,7 @@ async function sendMessage() {
 // VOICE MODE
 // ══════════════════════════════════════════════════════════════
 
-let voiceMode = false;
+let voiceMode = true;  // вмикаємо голос одразу
 let recognition = null;
 let isListening = false;
 let ttsEnabled = true;
