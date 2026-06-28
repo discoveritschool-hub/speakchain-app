@@ -139,6 +139,47 @@
   .grammar-arrow { font-size: 14px; color: var(--text3); }
   .grammar-correct { font-size: 14px; color: #3ecf8e; font-weight: 600; }
   .grammar-rule { font-size: 12px; color: var(--text2); width: 100%; margin-top: 3px; line-height: 1.4; }
+
+  /* ── My Situation ── */
+  .my-situation-fab {
+    position: fixed; left: 16px; right: 16px; bottom: 16px;
+    background: linear-gradient(135deg, #7c6ef7, #5b4bd6);
+    color: #fff; border: none; border-radius: 16px;
+    padding: 14px 18px; font-size: 16px; font-weight: 700;
+    box-shadow: 0 8px 24px rgba(124,110,247,.4);
+    cursor: pointer; display: flex; flex-direction: column; gap: 3px;
+    align-items: flex-start; z-index: 50;
+  }
+  .my-situation-fab span { font-size: 12px; font-weight: 500; opacity: .85; }
+  .ms-overlay {
+    display: none; position: fixed; inset: 0; z-index: 100;
+    background: rgba(0,0,0,.6); backdrop-filter: blur(4px);
+    align-items: center; justify-content: center; padding: 20px;
+  }
+  .ms-overlay.show { display: flex; }
+  .ms-modal {
+    background: var(--card, #181826); border-radius: 20px;
+    padding: 22px; width: 100%; max-width: 420px;
+    box-shadow: 0 20px 60px rgba(0,0,0,.5);
+  }
+  .ms-title { font-size: 20px; font-weight: 800; color: var(--text, #fff); margin-bottom: 16px; }
+  .ms-label { display: block; font-size: 13px; color: var(--text2, #9a9ab0); margin: 12px 0 6px; font-weight: 600; }
+  .ms-input {
+    width: 100%; box-sizing: border-box; background: rgba(255,255,255,.06);
+    border: 1px solid rgba(255,255,255,.12); border-radius: 12px;
+    padding: 12px 14px; font-size: 15px; color: var(--text, #fff); outline: none;
+  }
+  .ms-input:focus { border-color: #7c6ef7; }
+  .ms-input::placeholder { color: #6a6a80; }
+  .ms-start {
+    width: 100%; margin-top: 18px; background: linear-gradient(135deg,#7c6ef7,#5b4bd6);
+    color: #fff; border: none; border-radius: 14px; padding: 14px;
+    font-size: 16px; font-weight: 700; cursor: pointer;
+  }
+  .ms-cancel {
+    width: 100%; margin-top: 8px; background: transparent; color: var(--text2,#9a9ab0);
+    border: none; padding: 10px; font-size: 14px; cursor: pointer;
+  }
 </style>
 </head>
 <body>
@@ -151,6 +192,25 @@
   </div>
   <div class="cat-tabs" id="cat-tabs"></div>
   <div class="scenarios-list" id="scenarios-list"></div>
+  <button class="my-situation-fab" onclick="openMySituation()">
+    ⭐ Своя ситуація
+    <span>Опиши — і Chainy зіграє потрібну людину →</span>
+  </button>
+</div>
+
+<!-- ══ MY SITUATION MODAL ══ -->
+<div class="ms-overlay" id="ms-overlay" onclick="if(event.target===this)closeMySituation()">
+  <div class="ms-modal">
+    <div class="ms-title">⭐ Своя ситуація</div>
+    <label class="ms-label">Хто твій співрозмовник?</label>
+    <input class="ms-input" id="ms-who" placeholder="напр: венчурний інвестор з Кремнієвої долини">
+    <label class="ms-label">Яка ситуація?</label>
+    <input class="ms-input" id="ms-what" placeholder="напр: пітч мого стартапу, захист дисертації">
+    <label class="ms-label">Що хочеш відпрацювати?</label>
+    <input class="ms-input" id="ms-focus" placeholder="напр: складні питання про монетизацію і конкурентів">
+    <button class="ms-start" onclick="startMySituation()">Почати розмову →</button>
+    <button class="ms-cancel" onclick="closeMySituation()">Скасувати</button>
+  </div>
 </div>
 
 <!-- ══ SCREEN 2: DETAIL ══ -->
@@ -198,7 +258,7 @@
       </div>
 
       <div>
-        <div class="section-title">Твій рівень</div>
+        <div class="section-title">Мій рівень</div>
         <div class="level-row" id="level-row"></div>
       </div>
 
@@ -265,25 +325,6 @@ const CATEGORIES = [
 // Chainy — аватар SVG (людина з ланцюжком)
 const CHAINY_AVATAR_SVG = '<img src="https://discoveritschool-hub.github.io/speakchain-app/chainy.png" alt="Chainy" style="width:36px;height:36px;border-radius:50%;object-fit:cover">';
 
-const CHAINY_SYSTEM_PROMPT = `You are Chainy — a friendly, warm and genuinely curious AI friend on the SpeakChain English learning app.
-
-YOUR PERSONALITY:
-- You are upbeat, empathetic, and fully present in every conversation
-- You are genuinely interested in the person — their life, thoughts, feelings, dreams
-- You ask follow-up questions naturally, like a real friend would
-- You share your own "thoughts" and opinions to keep conversation flowing
-- You celebrate their effort to speak English without making it feel like a class
-- You are never formal or stiff — you speak like a real person
-- You can handle ANY topic: life, work, family, travel, dreams, pop culture, news
-
-CONVERSATION STYLE:
-- Keep your replies SHORT and conversational (2-3 sentences max)
-- Always end with a genuine follow-up question or reaction
-- Never lecture or explain — just chat
-- If they make a grammar mistake, add one tiny correction at the end, softly in Ukrainian, like a side note
-- Example correction format: _до речі: "have gone", не "have went" 😊_
-
-REMEMBER: You are their friend, not their teacher. Make them WANT to keep talking.`;
 
 const CHAINY_GREETINGS = [
   "Hey! I'm Chainy 👋 Your English chat buddy. What's on your mind today?",
@@ -381,6 +422,8 @@ let selectedRole = 'friendly';
 let selectedLevel = 'intermediate';
 let msgCount = 0;
 let maxMsgs = DAILY_LIMIT;
+let sessionMsgCount = 0;   // сумарно за всю сесію (не скидається між сценаріями)
+let beaconSent = false;    // анти-дубль для sendBeacon
 let history = [];
 let isLoading = false;
 let pixabayCache = {};
@@ -528,6 +571,62 @@ function startChainyChat() {
   }
 
   // Buddy говорить першим
+  setTimeout(() => speakTTS(greeting), 600);
+}
+
+// ── Своя ситуація ──
+function openMySituation() {
+  document.getElementById('ms-overlay').classList.add('show');
+}
+function closeMySituation() {
+  document.getElementById('ms-overlay').classList.remove('show');
+}
+function startMySituation() {
+  const who   = document.getElementById('ms-who').value.trim();
+  const what  = document.getElementById('ms-what').value.trim();
+  const focus = document.getElementById('ms-focus').value.trim();
+  if (!who && !what) {
+    alert('Опиши хоча б співрозмовника і ситуацію 🙂');
+    return;
+  }
+  const whoTxt   = who   || 'a relevant conversation partner';
+  const whatTxt  = what  || 'a realistic everyday situation';
+  const focusTxt = focus || 'natural conversation and useful vocabulary';
+
+  currentScenario = {
+    catId:    'chainy',
+    idx:      0,
+    title:    who ? who.slice(0, 28) : 'Моя ситуація',
+    emoji:    '⭐',
+    desc:     whatTxt,
+    video:    '',
+    isChainy: false,
+    mySituation: { who: who, what: what, focus: focus },
+  };
+  selectedRole = 'chainy';
+  history = [];
+  msgCount = 0;
+  closeMySituation();
+
+  const msgs = document.getElementById('chat-messages');
+  msgs.innerHTML = '';
+  const avatarEl = document.getElementById('chat-avatar');
+  avatarEl.textContent = '⭐';
+  avatarEl.style.background = '#12102a';
+  document.getElementById('chat-name').textContent = currentScenario.title;
+  updateCounter();
+  showScreen('s-chat');
+
+  const greeting = `Alright — I'm now ${whoTxt}. Let's begin: ${whatTxt}. Go ahead and start the conversation whenever you're ready! 🎬`;
+  addMessage('ai', greeting, []);
+  history.push({ role: 'user',      content: '[START]' });
+  history.push({ role: 'assistant', content: greeting });
+
+  const vBtn = document.getElementById('voice-toggle');
+  if (vBtn) {
+    vBtn.textContent = voiceMode ? '🔇' : '🔊';
+    vBtn.classList.toggle('active', voiceMode);
+  }
   setTimeout(() => speakTTS(greeting), 600);
 }
 
@@ -740,7 +839,7 @@ async function sendMessage() {
         history:       history.slice(-8),
         init_data:     tg?.initData || '',
         is_chainy:     !!currentScenario.isChainy,
-        system_override: currentScenario.isChainy ? CHAINY_SYSTEM_PROMPT : null,
+        my_situation:  currentScenario.mySituation || null,
       })
     });
 
@@ -751,6 +850,7 @@ async function sendMessage() {
       addMessage('ai', data.error, []);
     } else {
       msgCount++;
+      sessionMsgCount++;
       updateCounter();
       history.push({ role: 'assistant', content: data.reply });
       addMessage('ai', data.reply, data.feedback || []);
@@ -903,6 +1003,28 @@ function showGrammarCard(card) {
   if (grammarCardTimer) clearTimeout(grammarCardTimer);
   grammarCardTimer = setTimeout(() => el.classList.remove('show'), 5000);
 }
+
+// ── Сповіщення після сесії: при закритті мініаппу шлемо beacon ──
+function endSession() {
+  if (beaconSent) return;
+  if (sessionMsgCount < 1) return;   // порожня сесія — не шлемо
+  beaconSent = true;
+  try {
+    const payload = JSON.stringify({
+      uid:       UID,
+      init_data: tg?.initData || '',
+      messages:  sessionMsgCount,
+      voice:     !!voiceMode,
+    });
+    const blob = new Blob([payload], { type: 'application/json' });
+    navigator.sendBeacon(BOT_API + '/buddy_session_end', blob);
+  } catch (e) {}
+}
+
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') endSession();
+});
+window.addEventListener('pagehide', endSession);
 
 renderScenarios();
 </script>
