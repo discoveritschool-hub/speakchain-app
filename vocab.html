@@ -184,6 +184,8 @@ let srsKnown    = 0;
 let activeRecorder = null;
 let isRecording = false;
 let mediaStream = null;
+let sessionCount = 0;   // опрацьовано слів за сесію
+let beaconSent  = false;
 
 // ── Load data ──
 async function loadData() {
@@ -495,6 +497,7 @@ async function srsRecord(phrase) {
 async function srsAnswer(action, phrase) {
   if (action === 'know') srsKnown++;
   srsIdx++;
+  sessionCount++;
 
   // Відправляємо на backend
   try {
@@ -532,6 +535,22 @@ if (speechSynthesis.onvoiceschanged !== undefined) {
 }
 
 loadData();
+
+// ── Картка після сесії ──
+function endSession() {
+  if (beaconSent || sessionCount < 1) return;
+  beaconSent = true;
+  try {
+    const blob = new Blob([JSON.stringify({
+      uid: UID, init_data: INIT_DATA, source: 'vocab', count: sessionCount,
+    })], { type: 'application/json' });
+    navigator.sendBeacon(`${API}/miniapp_session_end`, blob);
+  } catch(e) {}
+}
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') endSession();
+});
+window.addEventListener('pagehide', endSession);
 </script>
 </body>
 </html>

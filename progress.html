@@ -767,6 +767,23 @@ function exNext() {
 }
 
 init();
+
+// ── Картка після сесії ──
+let beaconSent = false;
+function endSession() {
+  if (beaconSent || exSpoken < 1) return;
+  beaconSent = true;
+  try {
+    const blob = new Blob([JSON.stringify({
+      uid: UID, init_data: INIT_DATA, source: 'progress', count: exSpoken,
+    })], { type: 'application/json' });
+    navigator.sendBeacon(`${API}/miniapp_session_end`, blob);
+  } catch(e) {}
+}
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') endSession();
+});
+window.addEventListener('pagehide', endSession);
 </script>
 </body>
 </html>
