@@ -962,6 +962,67 @@ function renderActions() {
           <td style="color:var(--accent)">${fmt(b.count)}</td>
         </tr>`).join('')}
     </table>
+  </div>
+  ${renderCheckin(d.checkin)}`;
+}
+
+// ── 11. Chainy Daily Check-in ────────────────────────────
+function renderCheckin(c) {
+  if (!c) return '';  // фіча вимкнена або ще немає даних — нічого не показуємо
+  const reply = c.reply_rate ?? 0;
+  const replyColor = reply >= 35 ? 'var(--green)' : reply >= 20 ? 'var(--amber)' : 'var(--red)';
+  return `
+  <div class="chart-block" style="border:1px solid var(--accent);border-radius:12px;padding:14px;margin-top:18px">
+    <div class="chart-title">11. 🤖 Chainy Daily Check-in</div>
+    <div class="chart-sub">Проактивні повідомлення Chainy → відповіді → практика</div>
+    <div class="cards" style="margin-top:10px">
+      <div class="card accent">
+        <div class="card-label">Надіслано сьогодні</div>
+        <div class="card-value" style="color:var(--accent)">${fmt(c.sent_today)}</div>
+      </div>
+      <div class="card green">
+        <div class="card-label">Відповіли (того ж дня)</div>
+        <div class="card-value" style="color:${replyColor}">${reply}%</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Надіслано за 7 днів</div>
+        <div class="card-value">${fmt(c.sent_7d)}</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Snooze rate</div>
+        <div class="card-value" style="color:var(--amber)">${c.snooze_rate ?? 0}%</div>
+      </div>
+    </div>
+    <div style="font-size:11px;color:var(--text2);margin-top:8px">
+      💡 Ціль reply rate ≥ 35%. Нижче 20% → переглянути час відправки або текст-гачок.
+    </div>
+    <div class="table-block" style="margin-top:12px">
+      <div class="table-title">Reply rate по днях (7 днів)</div>
+      <table>
+        <tr><th>Дата</th><th>Надіслано</th><th>Відповіли</th><th>Reply%</th></tr>
+        ${(c.daily||[]).map(r => `
+          <tr>
+            <td>${r.date}</td>
+            <td>${fmt(r.sent)}</td>
+            <td>${fmt(r.replied)}</td>
+            <td style="color:${r.pct>=35?'var(--green)':r.pct>=20?'var(--amber)':'var(--red)'};font-weight:700">${r.pct}%</td>
+          </tr>`).join('')}
+      </table>
+    </div>
+    <div class="table-block" style="margin-top:10px">
+      <div class="table-title">Вплив на retention (check-in vs контроль)</div>
+      <table>
+        <tr><th>Сегмент</th><th>Юзерів</th><th>D1</th><th>D7</th></tr>
+        ${(c.retention_lift||[]).map(s => `
+          <tr>
+            <td style="font-weight:600">${s.segment}</td>
+            <td>${fmt(s.users)}</td>
+            <td style="color:var(--accent)">${s.d1}%</td>
+            <td style="color:var(--green)">${s.d7}%</td>
+          </tr>`).join('')}
+      </table>
+      <div style="font-size:11px;color:var(--text2);margin-top:6px">💡 Якщо D7 у групи check-in вищий — фіча працює, розширюй rollout.</div>
+    </div>
   </div>`;
 }
 function fmt(n) {
