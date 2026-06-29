@@ -112,6 +112,8 @@
   .dot:nth-child(3) { animation-delay: 0.3s; }
   @keyframes bounce { 0%,80%,100%{transform:translateY(0)} 40%{transform:translateY(-5px)} }
   .chat-input-area { padding: 10px 12px; border-top: 1px solid var(--border); display: flex; gap: 8px; align-items: flex-end; flex-shrink: 0; background: var(--surface); }
+  .finish-btn { margin-left: 6px; width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--green); background: var(--green-dim); color: var(--green); font-size: 16px; font-weight: 700; cursor: pointer; flex-shrink: 0; }
+  .finish-btn:active { transform: scale(0.92); }
   .chat-input-area textarea { flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 20px; padding: 10px 14px; font-size: 14px; color: var(--text); resize: none; max-height: 100px; min-height: 40px; font-family: inherit; line-height: 1.4; outline: none; }
   .chat-input-area textarea::placeholder { color: var(--text3); }
   .send-btn { width: 40px; height: 40px; border-radius: 50%; background: var(--accent); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: opacity 0.15s; }
@@ -180,6 +182,113 @@
     width: 100%; margin-top: 8px; background: transparent; color: var(--text2,#9a9ab0);
     border: none; padding: 10px; font-size: 14px; cursor: pointer;
   }
+
+  /* Victory overlay */
+  #victory {
+    position: fixed; inset: 0; z-index: 2000;
+    background: radial-gradient(circle at 50% 35%, rgba(79,142,247,0.12), var(--bg) 70%);
+    backdrop-filter: blur(8px);
+    display: none; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 24px; text-align: center;
+    opacity: 0; transition: opacity 0.35s ease;
+  }
+  #victory.show { display: flex; opacity: 1; }
+
+  .vc-eyebrow {
+    font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--text3); font-weight: 600;
+    opacity: 0; transform: translateY(8px);
+    animation: vcUp 0.5s ease 0.05s forwards;
+  }
+
+  /* XP — головний наростаючий лічильник */
+  .vc-xp {
+    font-size: 72px; font-weight: 800; line-height: 1;
+    color: var(--green); margin: 10px 0 2px;
+    font-variant-numeric: tabular-nums;
+    text-shadow: 0 0 40px rgba(62,207,142,0.4);
+    opacity: 0; transform: scale(0.7);
+    animation: vcPop 0.55s cubic-bezier(0.2,1.4,0.4,1) 0.15s forwards;
+  }
+  .vc-xp-label { font-size: 13px; color: var(--text2);
+    opacity: 0; animation: vcFade 0.4s ease 0.5s forwards; }
+  .vc-mult { color: #f7b84f; font-size: 0.5em; vertical-align: super; }
+
+  /* Chain — спалах */
+  .vc-chain {
+    margin-top: 22px; font-size: 17px; font-weight: 700; color: var(--text);
+    display: flex; align-items: center; gap: 8px;
+    opacity: 0; transform: translateY(10px);
+    animation: vcUp 0.5s ease 0.75s forwards;
+  }
+  .vc-chain .flame { font-size: 22px; filter: drop-shadow(0 0 8px rgba(247,140,40,0.6)); }
+  .vc-milestone {
+    margin-top: 6px; font-size: 12px; color: #f7b84f; font-weight: 600;
+    opacity: 0; animation: vcFade 0.4s ease 1.0s forwards;
+  }
+
+  /* Rank — сигнатурний елемент: золоте кільце з позицією */
+  .vc-rank {
+    margin-top: 26px; width: 100%; max-width: 340px;
+    border: 1px solid var(--border); border-radius: 16px;
+    background: var(--surface);
+    padding: 18px 20px;
+    opacity: 0; transform: translateY(14px);
+    animation: vcUp 0.55s ease 1.25s forwards;
+    position: relative; overflow: hidden;
+  }
+  .vc-rank::before {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(circle at 50% 0%, rgba(247,184,79,0.14), transparent 60%);
+    pointer-events: none;
+  }
+  .vc-rank-row { display: flex; align-items: center; justify-content: space-between; }
+  .vc-rank-pos { font-size: 30px; font-weight: 800; color: var(--text);
+    font-variant-numeric: tabular-nums; }
+  .vc-rank-pos .hash { color: #f7b84f; font-size: 0.7em; }
+  .vc-rank-meta { text-align: right; font-size: 12px; color: var(--text2); line-height: 1.5; }
+  .vc-delta { color: var(--green); font-weight: 700; }
+  .vc-gap {
+    margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border);
+    font-size: 13px; color: var(--text); text-align: left;
+  }
+  .vc-gap b { color: var(--accent); font-variant-numeric: tabular-nums; }
+  .vc-gap-bar {
+    margin-top: 8px; height: 6px; border-radius: 3px;
+    background: var(--surface2); overflow: hidden;
+  }
+  .vc-gap-fill {
+    height: 100%; border-radius: 3px;
+    background: linear-gradient(90deg, var(--accent), var(--green));
+    width: 0%; transition: width 0.9s ease 1.6s;
+  }
+  .vc-top { color: #f7b84f; font-weight: 700; font-size: 14px; }
+
+  .vc-btn {
+    margin-top: 28px; width: 100%; max-width: 340px;
+    padding: 15px; border: none; border-radius: 14px;
+    background: var(--accent); color: #fff;
+    font-size: 15px; font-weight: 700; cursor: pointer;
+    opacity: 0; animation: vcFade 0.4s ease 1.5s forwards;
+    transition: transform 0.1s, background 0.15s;
+  }
+  .vc-btn:active { transform: scale(0.97); }
+  .vc-skip {
+    margin-top: 12px; background: none; border: none; color: var(--text3);
+    font-size: 13px; cursor: pointer;
+    opacity: 0; animation: vcFade 0.4s ease 1.6s forwards;
+  }
+
+  @keyframes vcUp   { to { opacity: 1; transform: translateY(0); } }
+  @keyframes vcPop  { to { opacity: 1; transform: scale(1); } }
+  @keyframes vcFade { to { opacity: 1; } }
+
+  @media (prefers-reduced-motion: reduce) {
+    #victory *, .vc-gap-fill { animation: none !important; transition: none !important;
+      opacity: 1 !important; transform: none !important; }
+  }
+
 </style>
 </head>
 <body>
@@ -292,6 +401,7 @@
     </div>
     <div class="voice-toggle" id="voice-toggle" onclick="toggleVoiceMode()" title="Голосовий режим">🔊</div>
     <div class="chat-counter" id="chat-counter"></div>
+    <button class="finish-btn" id="finish-btn" onclick="finishSessionWithCard()" title="Завершити сесію">✓</button>
   </div>
   <div class="chat-messages" id="chat-messages"></div>
   <div class="limit-banner" id="limit-banner">Досягнуто денний ліміт 20 повідомлень. Повертайся завтра!</div>
@@ -840,6 +950,7 @@ async function sendMessage() {
         init_data:     tg?.initData || '',
         is_chainy:     !!currentScenario.isChainy,
         my_situation:  currentScenario.mySituation || null,
+        video_practice: currentScenario.videoPractice || null,
       })
     });
 
@@ -1026,7 +1137,189 @@ document.addEventListener('visibilitychange', () => {
 });
 window.addEventListener('pagehide', endSession);
 
+// ── Маршрут «відео → Chainy»: ?context=video&topic=... ──
+function startVideoChat(topic, mode) {
+  const topicTxt = (topic || 'the video you just watched').slice(0, 120);
+  currentScenario = {
+    catId: 'chainy', idx: 0,
+    title: '🎬 ' + topicTxt.slice(0, 24),
+    emoji: '🎬', desc: 'Video practice', video: '', isChainy: false,
+    videoPractice: { topic: topicTxt, mode: mode },
+  };
+  selectedRole = 'chainy';
+  history = []; msgCount = 0;
+
+  const msgs = document.getElementById('chat-messages');
+  msgs.innerHTML = '';
+  const avatarEl = document.getElementById('chat-avatar');
+  avatarEl.innerHTML = CHAINY_AVATAR_SVG;
+  avatarEl.style.background = '#12102a';
+  document.getElementById('chat-name').textContent = 'Chainy';
+  updateCounter();
+  showScreen('s-chat');
+
+  const greeting = (mode === 'retell')
+    ? `Great, you watched "${topicTxt}"! 🎬 Tell me in your own words what it was about — I'm listening. Take your time!`
+    : `Nice, you watched "${topicTxt}"! 🎬 What did you think? Let's talk about it — I'll ask you a few questions to get you speaking.`;
+  addMessage('ai', greeting, []);
+  history.push({ role: 'user',      content: '[START]' });
+  history.push({ role: 'assistant', content: greeting });
+
+  const vBtn = document.getElementById('voice-toggle');
+  if (vBtn) { vBtn.textContent = voiceMode ? '🔇' : '🔊'; vBtn.classList.toggle('active', voiceMode); }
+  setTimeout(() => speakTTS(greeting), 600);
+}
+
+function showVideoChoice(topic) {
+  const ov = document.createElement('div');
+  ov.id = 'video-choice';
+  ov.style.cssText = 'position:fixed;inset:0;z-index:1500;background:rgba(0,0,0,0.7);backdrop-filter:blur(6px);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;';
+  ov.innerHTML =
+    '<div style="font-size:15px;color:var(--text2);margin-bottom:4px">🎬 ' + (topic||'') + '</div>' +
+    '<div style="font-size:20px;font-weight:700;color:var(--text);margin-bottom:24px">Як хочеш потренувати?</div>' +
+    '<button id="vc-retell" style="width:100%;max-width:320px;padding:16px;margin-bottom:12px;border:none;border-radius:14px;background:var(--accent);color:#fff;font-size:15px;font-weight:700;cursor:pointer">🗣 Переказати відео</button>' +
+    '<button id="vc-discuss" style="width:100%;max-width:320px;padding:16px;border:1px solid var(--border);border-radius:14px;background:var(--surface);color:var(--text);font-size:15px;font-weight:600;cursor:pointer">💬 Обговорити тему</button>';
+  document.body.appendChild(ov);
+  document.getElementById('vc-retell').onclick = () => { ov.remove(); startVideoChat(topic, 'retell'); };
+  document.getElementById('vc-discuss').onclick = () => { ov.remove(); startVideoChat(topic, 'discuss'); };
+}
+
+(function handleVideoContext() {
+  try {
+    const p = new URLSearchParams(location.search);
+    if (p.get('context') === 'video') {
+      const topic = p.get('topic') || '';
+      setTimeout(() => showVideoChoice(decodeURIComponent(topic)), 300);
+    }
+  } catch (e) {}
+})();
+
 renderScenarios();
+</script>
+
+<div id="victory" role="dialog" aria-label="Підсумок сесії">
+  <div class="vc-eyebrow">Сесію завершено</div>
+  <div class="vc-xp" id="vc-xp">+0<span class="vc-mult" id="vc-mult"></span></div>
+  <div class="vc-xp-label" id="vc-xp-label">XP здобуто</div>
+
+  <div class="vc-chain" id="vc-chain">
+    <span class="flame">🔥</span><span id="vc-chain-txt">Стрік 0 днів</span>
+  </div>
+  <div class="vc-milestone" id="vc-milestone" style="display:none"></div>
+
+  <div class="vc-rank" id="vc-rank">
+    <div class="vc-rank-row">
+      <div class="vc-rank-pos"><span class="hash">#</span><span id="vc-rank-pos">—</span></div>
+      <div class="vc-rank-meta" id="vc-rank-meta"></div>
+    </div>
+    <div class="vc-gap" id="vc-gap"></div>
+  </div>
+
+  <button class="vc-btn" id="vc-btn" onclick="closeVictory(true)">🚀 Продовжити</button>
+  <button class="vc-skip" onclick="closeVictory(false)">Закрити</button>
+</div>
+<script>
+  // Завершення сесії з показом анімованої картки.
+  // Викликати з кнопки «Завершити сесію» в режимі чату.
+  async function finishSessionWithCard() {
+    if (sessionMsgCount < 1) { return; }      // порожня сесія
+    // шлемо session_end як fetch (щоб бек встиг порахувати), тоді тягнемо victory
+    try {
+      await fetch(BOT_API + '/buddy_session_end', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          uid: UID, init_data: tg?.initData || '',
+          messages: sessionMsgCount, voice: !!voiceMode,
+        }),
+      });
+      beaconSent = true;   // блокуємо дубль-beacon при закритті
+    } catch (e) {}
+
+    // бек рахує rank у фоні — даємо мить, тоді забираємо
+    let data = null;
+    for (let i = 0; i < 5 && !data; i++) {
+      await new Promise(r => setTimeout(r, 350));
+      try {
+        const res = await fetch(BOT_API + '/buddy_victory?uid=' + UID);
+        const j = await res.json();
+        if (j.ok) data = j;
+      } catch (e) {}
+    }
+    if (data) showVictory(data);
+    else { /* fallback: бек надішле Telegram-картку як завжди */ }
+  }
+
+  function showVictory(d) {
+    const ov = document.getElementById('victory');
+    // XP — накручуємо лічильник
+    const xpEl = document.getElementById('vc-xp');
+    const target = d.xp_gained || 0;
+    document.getElementById('vc-mult').textContent = (d.multiplier > 1) ? ('×' + d.multiplier) : '';
+    let cur = 0;
+    const step = Math.max(1, Math.round(target / 24));
+    const tick = setInterval(() => {
+      cur = Math.min(target, cur + step);
+      xpEl.firstChild.textContent = '+' + cur;
+      if (cur >= target) clearInterval(tick);
+    }, 22);
+
+    // Chain
+    document.getElementById('vc-chain-txt').textContent =
+      'Стрік ' + (d.streak || 0) + ' ' + plural(d.streak || 0);
+    if (d.milestone) {
+      const m = document.getElementById('vc-milestone');
+      m.style.display = 'block';
+      m.textContent = '🎖️ Майлстон ' + d.milestone.replace('streak_', '') + ' днів!';
+    }
+
+    // Rank + gap
+    document.getElementById('vc-rank-pos').textContent = d.rank || '—';
+    const meta = document.getElementById('vc-rank-meta');
+    let metaHtml = (d.percentile ? ('топ ' + (100 - d.percentile + 1) + '%<br>') : '');
+    if (d.rank_delta > 0) metaHtml += '<span class="vc-delta">▲ +' + d.rank_delta + ' позицій</span>';
+    meta.innerHTML = metaHtml || 'з ' + (d.total || 0);
+
+    const gap = document.getElementById('vc-gap');
+    if (d.is_top) {
+      gap.innerHTML = '<span class="vc-top">👑 Ти на вершині рейтингу!</span>';
+    } else if (d.gap_to_next != null) {
+      const name = d.next_name ? (' — обігнати ' + escapeHtml(d.next_name)) : '';
+      gap.innerHTML = 'До наступного місця: <b>' + d.gap_to_next + ' XP</b>' + name +
+        '<div class="vc-gap-bar"><div class="vc-gap-fill" id="vc-gap-fill"></div></div>';
+      // ширина смужки = наскільки близько (чим менший gap, тим повніша)
+      requestAnimationFrame(() => {
+        const fill = document.getElementById('vc-gap-fill');
+        if (fill) {
+          const pct = Math.max(8, Math.min(95, 100 - Math.min(100, (d.gap_to_next / Math.max(1, d.xp_gained)) * 20)));
+          fill.style.width = pct + '%';
+        }
+      });
+    } else {
+      gap.innerHTML = '';
+    }
+
+    ov.classList.add('show');
+  }
+
+  function closeVictory(goNext) {
+    const ov = document.getElementById('victory');
+    ov.classList.remove('show');
+    sessionMsgCount = 0;             // скидаємо лічильник сесії
+    if (goNext && typeof showScreen === 'function') showScreen('s-home');
+  }
+
+  function plural(n) {
+    const a = Math.abs(n) % 100, b = a % 10;
+    if (a > 10 && a < 20) return 'днів';
+    if (b > 1 && b < 5) return 'дні';
+    if (b === 1) return 'день';
+    return 'днів';
+  }
+  function escapeHtml(s) {
+    return (s || '').replace(/[&<>"']/g, c => ({
+      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
 </script>
 </body>
 </html>
