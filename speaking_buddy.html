@@ -898,6 +898,7 @@ function addMessage(role, text, feedback) {
   }
   msgs.appendChild(div);
   msgs.scrollTop = msgs.scrollHeight;
+  return div;
 }
 
 function showTyping() {
@@ -934,6 +935,27 @@ async function sendMessage() {
   input.style.height = 'auto';
   isLoading = true;
   document.getElementById('send-btn').disabled = true;
+
+  // Відео-практика: якщо конспект доступний але ще тягнеться — чекаємо на нього,
+  // щоб відповісти вже по змісту (а не по назві). Якщо субтитрів немає
+  // (available=false) — не чекаємо, одразу йдемо по назві.
+  if (currentScenario && currentScenario.videoPractice &&
+      videoSummaryState.pending && videoSummaryState.available &&
+      videoSummaryState.promise) {
+    const waitMsg = addMessage('ai', 'Готую тобі питання — зачекай лише хвильку ⏳', []);
+    try {
+      await Promise.race([
+        videoSummaryState.promise,
+        new Promise(r => setTimeout(r, 15000)),   // стеля 15с (рятунок від зависання)
+      ]);
+    } catch (e) {}
+    if (waitMsg && waitMsg.remove) waitMsg.remove();
+    // конспект встиг прийти → підкладаємо в розмову
+    if (videoSummaryState.summary && currentScenario.videoPractice) {
+      currentScenario.videoPractice.summary = videoSummaryState.summary;
+    }
+  }
+
   showTyping();
 
   try {
@@ -1138,13 +1160,13 @@ document.addEventListener('visibilitychange', () => {
 window.addEventListener('pagehide', endSession);
 
 // ── Маршрут «відео → Chainy»: ?context=video&topic=... ──
-function startVideoChat(topic, mode) {
+function startVideoChat(topic, mode, summary) {
   const topicTxt = (topic || 'the video you just watched').slice(0, 120);
   currentScenario = {
     catId: 'chainy', idx: 0,
     title: '🎬 ' + topicTxt.slice(0, 24),
     emoji: '🎬', desc: 'Video practice', video: '', isChainy: false,
-    videoPractice: { topic: topicTxt, mode: mode },
+    videoPractice: { topic: topicTxt, mode: mode, summary: summary || '' },
   };
   selectedRole = 'chainy';
   history = []; msgCount = 0;
@@ -1170,7 +1192,34 @@ function startVideoChat(topic, mode) {
   setTimeout(() => speakTTS(greeting), 600);
 }
 
-function showVideoChoice(topic) {
+// Глобальний стан конспекту відео (спільний для choice і чату)
+let videoSummaryState = { pending: false, summary: '', vid: '', promise: null };
+
+function fetchVideoSummary(vid) {
+  // available: чи варто взагалі чекати конспект.
+  //   true  — тягнеться або вже є (чекати має сенс)
+  //   false — субтитрів немає, конспекту не буде (не чекати, йти по назві)
+  videoSummaryState = { pending: true, available: true, summary: '', vid: vid, promise: null };
+  if (!vid) { videoSummaryState.pending = false; videoSummaryState.available = false; return; }
+  videoSummaryState.promise = fetch(BOT_API + '/video_summary?vid=' + encodeURIComponent(vid))
+    .then(r => r.json())
+    .then(j => {
+      if (j && j.ok && j.summary) {
+        videoSummaryState.summary = j.summary;
+        if (currentScenario && currentScenario.videoPractice) {
+          currentScenario.videoPractice.summary = j.summary;
+        }
+      } else {
+        // бек відповів, але конспекту немає (відео без субтитрів)
+        videoSummaryState.available = false;
+      }
+    })
+    .catch(() => { videoSummaryState.available = false; })
+    .finally(() => { videoSummaryState.pending = false; });
+}
+
+function showVideoChoice(topic, vid) {
+  fetchVideoSummary(vid);   // тягнемо конспект у фоні, стан глобальний
   const ov = document.createElement('div');
   ov.id = 'video-choice';
   ov.style.cssText = 'position:fixed;inset:0;z-index:1500;background:rgba(0,0,0,0.7);backdrop-filter:blur(6px);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;';
@@ -1180,8 +1229,8 @@ function showVideoChoice(topic) {
     '<button id="vc-retell" style="width:100%;max-width:320px;padding:16px;margin-bottom:12px;border:none;border-radius:14px;background:var(--accent);color:#fff;font-size:15px;font-weight:700;cursor:pointer">🗣 Переказати відео</button>' +
     '<button id="vc-discuss" style="width:100%;max-width:320px;padding:16px;border:1px solid var(--border);border-radius:14px;background:var(--surface);color:var(--text);font-size:15px;font-weight:600;cursor:pointer">💬 Обговорити тему</button>';
   document.body.appendChild(ov);
-  document.getElementById('vc-retell').onclick = () => { ov.remove(); startVideoChat(topic, 'retell'); };
-  document.getElementById('vc-discuss').onclick = () => { ov.remove(); startVideoChat(topic, 'discuss'); };
+  document.getElementById('vc-retell').onclick = () => { ov.remove(); startVideoChat(topic, 'retell', videoSummaryState.summary); };
+  document.getElementById('vc-discuss').onclick = () => { ov.remove(); startVideoChat(topic, 'discuss', videoSummaryState.summary); };
 }
 
 (function handleVideoContext() {
@@ -1189,7 +1238,8 @@ function showVideoChoice(topic) {
     const p = new URLSearchParams(location.search);
     if (p.get('context') === 'video') {
       const topic = p.get('topic') || '';
-      setTimeout(() => showVideoChoice(decodeURIComponent(topic)), 300);
+      const vid = p.get('vid') || '';
+      setTimeout(() => showVideoChoice(decodeURIComponent(topic), vid), 300);
     }
   } catch (e) {}
 })();
