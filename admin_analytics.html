@@ -963,7 +963,8 @@ function renderActions() {
         </tr>`).join('')}
     </table>
   </div>
-  ${renderCheckin(d.checkin)}`;
+  ${renderCheckin(d.checkin)}
+  ${renderFeatures(d.features)}`;
 }
 
 // ── 11. Chainy Daily Check-in ────────────────────────────
@@ -1022,6 +1023,49 @@ function renderCheckin(c) {
           </tr>`).join('')}
       </table>
       <div style="font-size:11px;color:var(--text2);margin-top:6px">💡 Якщо D7 у групи check-in вищий — фіча працює, розширюй rollout.</div>
+    </div>
+  </div>`;
+}
+
+// ── 12. Нові фічі: Victory / Video→Buddy / Grammar Decay ──
+function renderFeatures(f) {
+  if (!f) return '';  // подій ще не було — нічого не показуємо
+  const v = f.victory || {}, vid = f.video || {}, dec = f.decay || {};
+  return `
+  <div class="chart-block" style="border:1px solid var(--accent);border-radius:12px;padding:14px;margin-top:18px">
+    <div class="chart-title">12. ⚡ Нові фічі залученості</div>
+    <div class="chart-sub">Victory Card · Відео→Chainy · Граматичний decay</div>
+
+    <div style="font-size:13px;font-weight:700;color:var(--text);margin:14px 0 6px">🏆 Victory Card</div>
+    <div class="cards">
+      <div class="card accent"><div class="card-label">Показано сьогодні</div><div class="card-value" style="color:var(--accent)">${fmt(v.shown_today)}</div></div>
+      <div class="card"><div class="card-label">Показано 7 днів</div><div class="card-value">${fmt(v.shown_7d)}</div></div>
+      <div class="card green"><div class="card-label">Підняли ранг</div><div class="card-value" style="color:var(--green)">${v.rank_up_rate ?? 0}%</div></div>
+    </div>
+
+    <div style="font-size:13px;font-weight:700;color:var(--text);margin:16px 0 6px">🎬 Відео → Chainy</div>
+    <div class="cards">
+      <div class="card accent"><div class="card-label">Старти сьогодні</div><div class="card-value" style="color:var(--accent)">${fmt(vid.start_today)}</div></div>
+      <div class="card"><div class="card-label">Старти 7 днів</div><div class="card-value">${fmt(vid.start_7d)}</div></div>
+      <div class="card"><div class="card-label">З конспектом</div><div class="card-value" style="color:var(--green)">${vid.summary_rate ?? 0}%</div></div>
+    </div>
+    <div style="font-size:11px;color:var(--text2);margin-top:6px">Переказ: ${fmt(vid.retell)} · Обговорення: ${fmt(vid.discuss)} · По назві (без субтитрів): ${fmt(vid.by_title)}</div>
+
+    <div style="font-size:13px;font-weight:700;color:var(--text);margin:16px 0 6px">📉 Граматичний decay (помилки в розмові)</div>
+    <div class="cards">
+      <div class="card"><div class="card-label">Помилок сьогодні</div><div class="card-value">${fmt(dec.errors_today)}</div></div>
+      <div class="card"><div class="card-label">Помилок 7 днів</div><div class="card-value">${fmt(dec.errors_7d)}</div></div>
+      <div class="card amber"><div class="card-label">Юзерів з просіданням</div><div class="card-value" style="color:var(--amber)">${fmt(dec.users_with_decay)}</div></div>
+    </div>
+    <div style="font-size:11px;color:var(--text2);margin-top:6px">💡 «З просіданням» = мають теми, що знизились від помилок. Практика лікує — стеж, чи показник падає.</div>
+
+    <div class="table-block" style="margin-top:14px">
+      <div class="table-title">Активність по днях (7 днів)</div>
+      <table>
+        <tr><th>Дата</th><th>🏆 Victory</th><th>🎬 Відео</th><th>📉 Decay</th></tr>
+        ${(f.daily||[]).map(r => `
+          <tr><td>${r.date}</td><td>${fmt(r.victory)}</td><td>${fmt(r.video)}</td><td>${fmt(r.decay)}</td></tr>`).join('')}
+      </table>
     </div>
   </div>`;
 }
