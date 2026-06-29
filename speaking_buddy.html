@@ -1013,18 +1013,50 @@ let isListening = false;
 let ttsEnabled = true;
 
 // ── TTS ──
+// Очищення тексту для озвучення: прибираємо емодзі, символи,
+// зайві маркери — щоб TTS не читав "smiling face" тощо.
+function cleanForSpeech(text) {
+  return (text || '')
+    // емодзі та піктограми (основні Unicode-діапазони)
+    .replace(/[\u{1F000}-\u{1FAFF}]/gu, '')
+    .replace(/[\u{2600}-\u{27BF}]/gu, '')      // різні символи/дингбати
+    .replace(/[\u{2190}-\u{21FF}]/gu, '')      // стрілки
+    .replace(/[\u{2B00}-\u{2BFF}]/gu, '')
+    .replace(/[\u{FE00}-\u{FE0F}]/gu, '')      // variation selectors
+    .replace(/[\u{200D}]/gu, '')               // zero-width joiner
+    .replace(/[*_~`#]/g, '')                   // markdown-символи
+    .replace(/\s{2,}/g, ' ')                   // подвійні пробіли
+    .trim();
+}
+
 function speakTTS(text) {
   if (!ttsEnabled) return;
+  const clean = cleanForSpeech(text);
+  if (!clean) return;                          // лишились самі емодзі — не озвучуємо
   window.speechSynthesis.cancel();
-  const utt = new SpeechSynthesisUtterance(text);
+  const utt = new SpeechSynthesisUtterance(clean);
   utt.lang = 'en-US';
-  utt.rate = 0.9;
-  utt.pitch = 1.0;
+  utt.rate = 0.95;                             // трохи природніший темп
+  utt.pitch = 1.05;                            // ледь вищий тон — менш "роботизовано"
+  utt.volume = 1.0;
+
   const voices = speechSynthesis.getVoices();
-  const enVoice = voices.find(v => v.lang === 'en-US' && v.localService === false)
-               || voices.find(v => v.lang.startsWith('en-') && v.localService === false)
-               || voices.find(v => v.lang.startsWith('en'));
-  if (enVoice) utt.voice = enVoice;
+  // Пріоритет: відомі якісні нейро-голоси → будь-який мережевий → локальний.
+  const PREFERRED = [
+    'Google US English', 'Microsoft Aria', 'Microsoft Jenny', 'Microsoft Guy',
+    'Samantha', 'Ava', 'Allison', 'Siri',
+  ];
+  let voice = null;
+  for (const name of PREFERRED) {
+    voice = voices.find(v => v.name && v.name.includes(name) && v.lang.startsWith('en'));
+    if (voice) break;
+  }
+  voice = voice
+    || voices.find(v => v.lang === 'en-US' && v.localService === false)
+    || voices.find(v => v.lang.startsWith('en-') && v.localService === false)
+    || voices.find(v => v.lang.startsWith('en'));
+  if (voice) utt.voice = voice;
+
   speechSynthesis.speak(utt);
 }
 
