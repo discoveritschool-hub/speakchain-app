@@ -388,14 +388,40 @@ async function loadLive(){
     if(ov.total_users && ov.paid_users != null){
       DATA.conv = Math.round(ov.paid_users / ov.total_users * 100) + '%';
     }
+    if(rev && rev.total_paid_out != null) DATA.payout = _fmtMoney(rev.total_paid_out);
+
+    // ── Жива воронка (registered → demo → trial → paid) ──
+    const fn = d.funnel || {};
+    const reg = fn.registered || ov.total_users || 0;
+    if(reg > 0){
+      const pc = n => Math.round((n||0) / reg * 100);
+      LIVE_FUNNEL = [
+        {name:"Зареєструвались", v:100, c:"#D85A30"},
+        {name:"Demo (проба Chainy)", v:pc(fn.demo), c:"#D85A30"},
+        {name:"Trial (7 днів)", v:pc(fn.trial), c:"#5B4B9E"},
+        {name:"Оплатили тариф", v:pc(fn.paid), c:"#3B6D11"},
+      ];
+    }
+
+    // ── Живі доходи блогерів (топ за доходом) ──
+    if(rev && Array.isArray(rev.bloggers) && rev.bloggers.length){
+      const top = rev.bloggers.slice().sort((a,b)=>(b.revenue||0)-(a.revenue||0)).slice(0,5);
+      const mx = Math.max(...top.map(b=>b.revenue||0), 1);
+      LIVE_BLOGGER = top.map(b=>({lab:(b.name||'?'), v:Math.round(b.revenue||0), max:mx}));
+    }
+
     fillData();
+    buildFunnel();
+    if(document.getElementById('money').classList.contains('on')) buildBlogger();
     _setDemoBadge(true);
   }catch(_){ /* лишаються демо-дані, нічого не ламаємо */ }
 }
+let LIVE_FUNNEL = null, LIVE_BLOGGER = null;
 
 function buildFunnel(){
   const box=document.getElementById('funnelbars'); if(!box) return; box.innerHTML='';
-  FUNNEL.forEach((f,i)=>{
+  const src = LIVE_FUNNEL || FUNNEL;
+  src.forEach((f,i)=>{
     const row=document.createElement('div'); row.className='frow';
     row.innerHTML=`<div class="fname">${f.name}</div>
       <div class="fbar-wrap"><div class="fbar" style="width:0;background:${f.c}">${f.v}%</div></div>
@@ -406,10 +432,13 @@ function buildFunnel(){
 }
 function buildBlogger(){
   const box=document.getElementById('bloggerbars'); if(!box) return; box.innerHTML='';
-  BLOGGER.forEach((b,i)=>{
+  const src = LIVE_BLOGGER || BLOGGER;
+  const isLive = !!LIVE_BLOGGER;
+  src.forEach((b,i)=>{
     const col=document.createElement('div'); col.className='barcol';
     const h=Math.round(b.v/b.max*170)+8;
-    col.innerHTML=`<div class="bar" style="height:0;background:linear-gradient(180deg,#7F77DD,#5B4B9E)"><span class="bv">$${b.v.toLocaleString('en-US')}</span></div><div class="barlab">${b.lab} студ.</div>`;
+    const sub = isLive ? b.lab : (b.lab + ' студ.');
+    col.innerHTML=`<div class="bar" style="height:0;background:linear-gradient(180deg,#7F77DD,#5B4B9E)"><span class="bv">$${b.v.toLocaleString('en-US')}</span></div><div class="barlab">${sub}</div>`;
     box.appendChild(col);
     setTimeout(()=>{ col.querySelector('.bar').style.height=h+'px'; }, 90*i+150);
   });
