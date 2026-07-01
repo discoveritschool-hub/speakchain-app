@@ -467,6 +467,8 @@ function renderStudents() {
 
   ${avgDaysRows}
 
+  ${renderCohortsSection()}
+
   ${problemTable('🟡 Застрягли', d.stuck,
     `Прогрес ≤${s.stuck_progress_max}% і не заходили ${s.stuck_inactive_days}+ дн. Тицьни на рядок → картка учня.`,
     'Ніхто не застряг 🎉', 'stuck')}
@@ -482,7 +484,143 @@ function renderStudents() {
   ${problemTable('🟢 Рухаються', d.progressing,
     'Мали хоча б один перехід рівня. Історія в картці.',
     'Ще ніхто не перейшов рівень', 'progressing')}
+
+  <div class="chart-block" style="margin-top:18px;border:1px solid var(--purple);border-radius:12px;padding:14px">
+    <div class="chart-title">📨 Нагадування проблемним учням</div>
+    <div style="font-size:11px;color:var(--text2);margin-bottom:10px">
+      Режим прев'ю: бот рахує кому варто нагадати й показує текст. Нічого не надсилається, поки ти не натиснеш «Надіслати». Ліміти: 1 нагадування / 72 год на людину, тихі години 22:00–08:00.
+    </div>
+    <div id="nudge-panel">
+      <button onclick="loadNudges()" style="background:var(--purple);border:none;border-radius:8px;
+        color:#fff;font-size:13px;font-weight:600;padding:9px 16px;cursor:pointer">
+        Порахувати сегменти
+      </button>
+    </div>
+  </div>
   `;
+}
+
+function renderCohortsSection() {
+  const c = data.cohorts;
+  if (!c) return '';
+  const sum = c.summary || {};
+
+  function heatColor(pct) {
+    if (pct == null) return 'transparent';
+    if (pct >= 60) return 'rgba(62,207,142,.22)';
+    if (pct >= 40) return 'rgba(62,207,142,.12)';
+    if (pct >= 20) return 'rgba(245,158,11,.15)';
+    return 'rgba(239,68,68,.15)';
+  }
+  function heatText(pct) {
+    if (pct == null) return 'var(--text3)';
+    if (pct >= 40) return 'var(--green)';
+    if (pct >= 20) return 'var(--amber)';
+    return 'var(--red)';
+  }
+  function cell(pct, tooEarly) {
+    if (pct == null) {
+      return `<td style="text-align:center;color:var(--text3);font-size:11px">${tooEarly ? 'ще рано' : '—'}</td>`;
+    }
+    return `<td style="text-align:center;font-weight:600;background:${heatColor(pct)};color:${heatText(pct)}">${pct}%</td>`;
+  }
+
+  const funnel = (c.funnel || []);
+  const funnelRows = funnel.map(f => `
+    <div style="display:flex;align-items:center;gap:8px;margin:5px 0">
+      <div style="width:28px;font-weight:700;color:var(--text)">${f.level}</div>
+      <div style="flex:1;background:var(--surface2);border-radius:6px;height:22px;overflow:hidden;position:relative">
+        <div style="height:100%;width:${f.pct}%;background:linear-gradient(90deg,#3ecf8e,#4f8ef7);border-radius:6px"></div>
+        <div style="position:absolute;inset:0;display:flex;align-items:center;padding-left:8px;font-size:11px;color:#fff">${f.pct}% · ${fmt(f.users)} учн.</div>
+      </div>
+    </div>`).join('');
+
+  const cohorts = (c.cohorts || []).filter(x => x.size > 0);
+  const cohortRows = cohorts.map(x => {
+    const tooEarlyB1 = x.months_elapsed < 2;
+    const tooEarlyB2 = x.months_elapsed < 4;
+    const trackNote = x.tracked_pct < 60
+      ? `<span style="color:var(--text3);font-size:10px" title="Частина учнів зареєструвалась до старту трекінгу історії рівнів">⚠️${x.tracked_pct}%</span>`
+      : '';
+    return `<tr>
+      <td style="font-weight:600;white-space:nowrap">${x.month} ${trackNote}</td>
+      <td style="text-align:center;color:var(--text2)">${fmt(x.size)}</td>
+      ${cell(x.leveled_up_pct)}
+      ${cell(x.reached_a2_pct)}
+      ${cell(x.reached_b1_pct, tooEarlyB1)}
+      ${cell(x.reached_b2plus_pct, tooEarlyB2)}
+    </tr>`;
+  }).join('');
+
+  const cohortTable = cohorts.length ? `
+    <div class="table-block" style="margin-top:14px">
+      <div class="table-title">Когорти результату (за місяцем реєстрації)</div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:6px">
+        Кожен рядок — група, що прийшла в цей місяць. Дивись, чи новіші когорти доходять до рівнів <b>частіше</b> — це означає що продукт покращується. «ще рано» = групі ще замало часу, щоб дійти. ⚠️ = частина когорти без трекінгу історії.
+      </div>
+      <table>
+        <tr>
+          <th>Місяць</th><th style="text-align:center">Розмір</th>
+          <th style="text-align:center">↑ рівень</th>
+          <th style="text-align:center">A2+</th>
+          <th style="text-align:center">B1+</th>
+          <th style="text-align:center">B2+</th>
+        </tr>
+        ${cohortRows}
+      </table>
+    </div>` : `
+    <div class="table-block" style="margin-top:14px">
+      <div class="table-title">Когорти результату</div>
+      <div style="font-size:12px;color:var(--text2);padding:8px 0">Ще недостатньо даних по когортах.</div>
+    </div>`;
+
+  const ttr = (c.time_to_result || []);
+  const ttrTable = ttr.length ? `
+    <div class="table-block" style="margin-top:14px">
+      <div class="table-title">Час до результату (заміряні переходи)</div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:6px">Скільки днів учні реально витрачають на кожен перехід рівня. Медіана надійніша за середнє — не спотворюється винятками.</div>
+      <table>
+        <tr><th>Перехід</th><th style="text-align:center">Медіана</th><th style="text-align:center">Середнє</th><th style="text-align:center">Учнів</th></tr>
+        ${ttr.map(t => `
+          <tr>
+            <td style="font-weight:600">${t.from_level} → ${t.to_level}</td>
+            <td style="text-align:center;color:var(--green);font-weight:600">${fmt(t.median_days)} дн.</td>
+            <td style="text-align:center;color:var(--text2)">${fmt(t.avg_days)} дн.</td>
+            <td style="text-align:center;color:var(--text2)">${fmt(t.n)}</td>
+          </tr>`).join('')}
+      </table>
+    </div>` : '';
+
+  const coverageNote = (sum.tracking_coverage_pct != null && sum.tracking_coverage_pct < 100) ? `
+    <div style="font-size:11px;color:var(--text3);margin-top:8px;line-height:1.6">
+      ℹ️ Трекінг історії рівнів покриває <b style="color:var(--text2)">${sum.tracking_coverage_pct}%</b> учнів.
+      Учні, що зареєструвались до запуску трекінгу, рахуються за досягнутим рівнем, але без дат переходів. З часом покриття зростатиме до 100%.
+    </div>` : '';
+
+  return `
+  <div class="chart-block" style="margin-top:18px;border:1px solid var(--accent);border-radius:12px;padding:14px">
+    <div class="chart-title">🎯 Результати навчання</div>
+    <div style="font-size:11px;color:var(--text2);margin-bottom:6px">Чи система доводить учнів до результату — і чи стає це краще з часом.</div>
+
+    <div class="cards" style="margin-top:10px">
+      <div class="card green">
+        <div class="card-label">Піднялись хоч на рівень</div>
+        <div class="card-value" style="color:var(--green)">${fmt(sum.ever_leveled_up)}</div>
+      </div>
+      <div class="card accent">
+        <div class="card-label">Дійшли до B1+</div>
+        <div class="card-value" style="color:var(--accent)">${sum.reached_b1_pct ?? 0}%</div>
+        <div class="card-delta delta-flat">${fmt(sum.reached_b1_total)} учнів</div>
+      </div>
+    </div>
+
+    <div style="font-size:13px;font-weight:700;color:var(--text);margin:16px 0 6px">Скільки досягли кожного рівня</div>
+    ${funnelRows}
+
+    ${cohortTable}
+    ${ttrTable}
+    ${coverageNote}
+  </div>`;
 }
 
 function esc(str) {
@@ -540,6 +678,170 @@ function openStudentCard(key, idx) {
 function closeStudentCard() {
   const modal = document.getElementById('student-modal');
   if (modal) modal.style.display = 'none';
+}
+
+// ── NUDGES (Phase 3) ─────────────────────────────────────
+const NUDGE_API = 'https://speakchain-bot-production.up.railway.app';
+let nudgeData = null;
+let nudgeChoice = {};   // segmentKey -> {variantIdx, text}
+
+async function loadNudges() {
+  const panel = document.getElementById('nudge-panel');
+  panel.innerHTML = '<div class="loading"><div class="spinner"></div>Рахуємо сегменти...</div>';
+  try {
+    const res = await fetch(NUDGE_API + '/admin_nudge_preview', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        init_data: tg?.initData || '',
+        uid: tg?.initDataUnsafe?.user?.id || 0,
+      })
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    nudgeData = await res.json();
+    if (nudgeData.error) throw new Error(nudgeData.error);
+    renderNudgePanel();
+  } catch(e) {
+    panel.innerHTML = `<div class="error-box">❌ ${e.message}</div>
+      <button onclick="loadNudges()" style="margin-top:8px;background:var(--purple);border:none;border-radius:8px;color:#fff;font-size:13px;font-weight:600;padding:8px 14px;cursor:pointer">Спробувати ще</button>`;
+  }
+}
+
+function renderNudgePanel() {
+  const panel = document.getElementById('nudge-panel');
+  const segs = nudgeData.segments || [];
+  const quiet = nudgeData.quiet_hours;
+
+  const quietBanner = quiet ? `
+    <div style="background:rgba(245,158,11,.12);border:1px solid var(--amber);border-radius:8px;
+      padding:8px 10px;font-size:12px;color:var(--amber);margin-bottom:10px">
+      🌙 Зараз тихі години (${nudgeData.quiet_window}). Відправку призупинено до ранку — щоб не турбувати вночі.
+    </div>` : '';
+
+  const cards = segs.map((seg, si) => {
+    const canSend = seg.eligible > 0 && !quiet;
+    // ініціалізуємо вибір: варіант 0
+    if (!nudgeChoice[seg.key]) nudgeChoice[seg.key] = { variantIdx: 0, text: seg.variants[0] };
+    const chosen = nudgeChoice[seg.key];
+
+    const variantBtns = seg.variants.map((v, vi) => `
+      <button onclick="pickVariant('${seg.key}', ${vi})"
+        style="background:${chosen.variantIdx===vi?'var(--purple)':'var(--surface2)'};
+        border:1px solid ${chosen.variantIdx===vi?'var(--purple)':'var(--border)'};border-radius:6px;
+        color:${chosen.variantIdx===vi?'#fff':'var(--text2)'};font-size:11px;padding:4px 10px;cursor:pointer;margin-right:6px">
+        Варіант ${String.fromCharCode(65+vi)}
+      </button>`).join('');
+
+    return `
+    <div class="table-block" style="margin-top:14px">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px">
+        <div class="table-title" style="margin:0">${seg.title}</div>
+        <div style="font-size:12px;color:var(--text2)">
+          <b style="color:var(--text)">${seg.eligible}</b> зараз можна
+          ${seg.total > seg.eligible ? `<span style="color:var(--text3)"> (з ${seg.total}, решта на паузі за лімітами)</span>` : ''}
+        </div>
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin:4px 0 8px">${seg.desc}</div>
+
+      <div style="margin-bottom:6px">${variantBtns}</div>
+      <textarea id="nudge-text-${seg.key}" oninput="onNudgeEdit('${seg.key}')"
+        style="width:100%;box-sizing:border-box;background:var(--surface2);border:1px solid var(--border);
+        border-radius:8px;color:var(--text);font-size:13px;padding:8px;min-height:60px;resize:vertical;
+        font-family:inherit;line-height:1.5">${esc(chosen.text)}</textarea>
+      <div style="font-size:10px;color:var(--text3);margin:4px 0 8px">
+        Плейсхолдери: {name} {topic} {level} {chain} {lessons} — підставляться для кожного учня.
+      </div>
+
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button onclick="showNudgeList('${seg.key}')"
+          style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;
+          color:var(--text);font-size:12px;padding:8px 12px;cursor:pointer">👁 Показати список</button>
+        <button onclick="sendNudge('${seg.key}')" ${canSend?'':'disabled'}
+          style="background:${canSend?'var(--purple)':'var(--surface2)'};border:none;border-radius:8px;
+          color:${canSend?'#fff':'var(--text3)'};font-size:12px;font-weight:600;padding:8px 16px;
+          cursor:${canSend?'pointer':'not-allowed'}">📨 Надіслати ${seg.eligible?`(${seg.eligible})`:''}</button>
+      </div>
+      <div id="nudge-list-${seg.key}" style="margin-top:8px"></div>
+      <div id="nudge-result-${seg.key}" style="margin-top:8px"></div>
+    </div>`;
+  }).join('');
+
+  panel.innerHTML = `
+    ${quietBanner}
+    <div style="font-size:11px;color:var(--text3);margin-bottom:4px">Оновлено ${nudgeData.generated_at}</div>
+    ${cards}
+    <button onclick="loadNudges()" style="margin-top:12px;background:var(--surface2);border:1px solid var(--border);
+      border-radius:8px;color:var(--text2);font-size:12px;padding:7px 14px;cursor:pointer">🔄 Перерахувати</button>
+  `;
+}
+
+function pickVariant(segKey, vi) {
+  const seg = (nudgeData.segments || []).find(s => s.key === segKey);
+  if (!seg) return;
+  nudgeChoice[segKey] = { variantIdx: vi, text: seg.variants[vi] };
+  renderNudgePanel();
+}
+
+function onNudgeEdit(segKey) {
+  const ta = document.getElementById('nudge-text-' + segKey);
+  if (ta && nudgeChoice[segKey]) nudgeChoice[segKey].text = ta.value;
+}
+
+function showNudgeList(segKey) {
+  const seg = (nudgeData.segments || []).find(s => s.key === segKey);
+  const box = document.getElementById('nudge-list-' + segKey);
+  if (!seg || !box) return;
+  if (box.innerHTML) { box.innerHTML = ''; return; }  // toggle
+  const sample = seg.sample || [];
+  if (!sample.length) { box.innerHTML = '<div style="font-size:12px;color:var(--text3)">Нікого немає у списку.</div>'; return; }
+  box.innerHTML = `
+    <div style="font-size:11px;color:var(--text3);margin-bottom:4px">Приклад (до 12 з ${seg.eligible}):</div>
+    <table>
+      <tr><th>Ім'я</th><th>Рівень</th><th>Не заходив</th><th>Текст (персонально)</th></tr>
+      ${sample.map(x => `
+        <tr>
+          <td>${esc(x.name)}</td><td>${x.level}</td>
+          <td>${x.inactive_days>=0?x.inactive_days+' дн.':'—'}</td>
+          <td style="font-size:11px;color:var(--text2)">${esc(x.preview)}</td>
+        </tr>`).join('')}
+    </table>`;
+}
+
+async function sendNudge(segKey) {
+  const seg = (nudgeData.segments || []).find(s => s.key === segKey);
+  const choice = nudgeChoice[segKey];
+  const resultBox = document.getElementById('nudge-result-' + segKey);
+  if (!seg || !choice) return;
+  const text = (choice.text || '').trim();
+  if (!text) { resultBox.innerHTML = '<div style="color:var(--red);font-size:12px">Порожній текст.</div>'; return; }
+
+  const okConfirm = confirm(`Надіслати «${seg.title}» ${seg.eligible} учням?\n\nТекст:\n${text}`);
+  if (!okConfirm) return;
+
+  resultBox.innerHTML = '<div class="loading"><div class="spinner"></div>Надсилаємо...</div>';
+  try {
+    const res = await fetch(NUDGE_API + '/admin_nudge_send', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        init_data: tg?.initData || '',
+        uid: tg?.initDataUnsafe?.user?.id || 0,
+        segment: segKey,
+        text: text,
+        confirm: true,
+      })
+    });
+    const r = await res.json();
+    if (!res.ok || r.error) throw new Error(r.error || `HTTP ${res.status}`);
+    resultBox.innerHTML = `<div style="background:rgba(62,207,142,.12);border:1px solid var(--green);
+      border-radius:8px;padding:8px 10px;font-size:12px;color:var(--green)">
+      ✅ Надіслано: ${r.sent}${r.errors?` · помилок: ${r.errors}`:''}${r.note?` · ${esc(r.note)}`:''}</div>`;
+    // Перерахувати за 1.5с, щоб оновити лічильники (ті що отримали — тепер на паузі 72 год)
+    setTimeout(loadNudges, 1500);
+  } catch(e) {
+    resultBox.innerHTML = `<div style="background:rgba(239,68,68,.12);border:1px solid var(--red);
+      border-radius:8px;padding:8px 10px;font-size:12px;color:var(--red)">❌ ${esc(e.message)}</div>`;
+  }
 }
 
 // ── OVERVIEW ─────────────────────────────────────────────
