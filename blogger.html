@@ -153,6 +153,46 @@
     /* ── Divider ── */
     .divider { height:0.5px; background:var(--border); margin:0; }
     .spacer  { height:12px; }
+
+    /* ── Tabs ── */
+    .tabs {
+      display:flex; gap:4px; padding:10px 16px 0;
+      position:sticky; top:0; z-index:10;
+      background:var(--bg); border-bottom:0.5px solid var(--border);
+    }
+    .tab {
+      flex:1; padding:10px 6px; text-align:center; cursor:pointer;
+      font-size:12px; font-weight:700; color:var(--text2);
+      border-bottom:2px solid transparent; transition:all .15s;
+      white-space:nowrap;
+    }
+    .tab.active { color:var(--purple); border-bottom-color:var(--purple); }
+    .tab-panel { display:none; }
+    .tab-panel.active { display:block; animation:fadeIn .2s; }
+    @keyframes fadeIn { from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:none} }
+
+    /* ── Forms ── */
+    .form-card {
+      background:var(--bg3); border-radius:14px; padding:16px;
+      border:0.5px solid var(--border); margin-bottom:12px;
+    }
+    .form-title { font-size:14px; font-weight:700; margin-bottom:4px; }
+    .form-hint  { font-size:11px; color:var(--text2); margin-bottom:12px; line-height:1.4; }
+    .form-input, .form-textarea {
+      width:100%; background:var(--bg); border:1px solid var(--border);
+      border-radius:10px; padding:12px; color:var(--text); font-size:14px;
+      font-family:inherit; resize:none; margin-bottom:12px;
+    }
+    .form-input:focus, .form-textarea:focus { outline:none; border-color:var(--purple); }
+    .form-textarea { min-height:80px; }
+    .form-btn {
+      width:100%; padding:13px; border:none; border-radius:10px;
+      font-size:14px; font-weight:700; color:#fff; cursor:pointer;
+      background:linear-gradient(135deg,var(--purple),#9b8dfb);
+    }
+    .form-btn:active { opacity:.85; }
+    .form-btn.green { background:linear-gradient(135deg,var(--green),#7ee8bf); color:#0a2a1e; }
+    .form-btn:disabled { opacity:.4; }
   </style>
 </head>
 <body>
@@ -187,6 +227,16 @@
       </div>
     </div>
   </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <div class="tab active" onclick="showTab('overview',this)">📊 Огляд</div>
+    <div class="tab" onclick="showTab('content',this)">🎯 Контент</div>
+    <div class="tab" onclick="showTab('tools',this)">🔧 Інструменти</div>
+  </div>
+
+  <!-- ===== TAB: OVERVIEW ===== -->
+  <div class="tab-panel active" id="tab-overview">
 
   <!-- Revenue -->
   <div class="section">
@@ -239,12 +289,39 @@
       <div style="text-align:center;color:var(--text2);font-size:13px;padding:20px">Завантаження…</div>
     </div>
   </div>
+  </div><!-- /tab-overview -->
 
-  <div class="divider"></div>
+  <!-- ===== TAB: CONTENT ===== -->
+  <div class="tab-panel" id="tab-content">
+    <div class="section">
+      <!-- Челендж тижня -->
+      <div class="form-card">
+        <div class="form-title">🏆 Челендж тижня</div>
+        <div class="form-hint">Тема speaking-челенджу, яку отримають усі твої студенти. Напиши коротко й зрозуміло.</div>
+        <input class="form-input" id="challenge-input" placeholder="Напр.: Опиши свій ідеальний вихідний" maxlength="200">
+        <button class="form-btn" onclick="submitForm('blogger_new_challenge','challenge-input')">Запустити челендж</button>
+      </div>
 
-  <!-- Actions -->
-  <div class="section">
-    <div class="section-title">Дії</div>
+      <!-- Питання тижня (відео) -->
+      <div class="form-card">
+        <div class="form-title">🎯 Питання тижня</div>
+        <div class="form-hint">Відео-питання, яке студенти отримають у неділю з AI-фідбеком. Записується коротким відео.</div>
+        <button class="form-btn" onclick="sendAction('blogger_weekly_q')">Записати відео-питання</button>
+      </div>
+
+      <!-- Розсилка -->
+      <div class="form-card">
+        <div class="form-title">📢 Розсилка студентам</div>
+        <div class="form-hint">Повідомлення надійде всім твоїм студентам. Використовуй для новин, мотивації, анонсів.</div>
+        <textarea class="form-textarea" id="broadcast-input" placeholder="Текст повідомлення для студентів…" maxlength="1000"></textarea>
+        <button class="form-btn green" onclick="submitForm('blogger_broadcast','broadcast-input')">Розіслати</button>
+      </div>
+    </div>
+  </div><!-- /tab-content -->
+
+  <!-- ===== TAB: TOOLS ===== -->
+  <div class="tab-panel" id="tab-tools">
+    <div class="section">
     <div class="actions">
       <button class="action-btn purple" onclick="sendAction('blogger_my_link')">
         <span class="icon">🔗</span>
@@ -259,21 +336,6 @@
       <button class="action-btn red" onclick="sendAction('blogger_live_menu')">
         <span class="icon">🔴</span>
         <span class="label">Live заняття</span>
-        <span class="arr">›</span>
-      </button>
-      <button class="action-btn orange" onclick="sendAction('blogger_weekly_q')">
-        <span class="icon">🎯</span>
-        <span class="label">Питання тижня</span>
-        <span class="arr">›</span>
-      </button>
-      <button class="action-btn purple" onclick="sendAction('blogger_new_challenge')">
-        <span class="icon">🏆</span>
-        <span class="label">Челендж тижня</span>
-        <span class="arr">›</span>
-      </button>
-      <button class="action-btn green" onclick="sendAction('blogger_broadcast')">
-        <span class="icon">📢</span>
-        <span class="label">Розсилка студентам</span>
         <span class="arr">›</span>
       </button>
       <button class="action-btn neutral" onclick="sendAction('blogger_feedback_q')">
@@ -292,7 +354,8 @@
         <span class="arr">›</span>
       </button>
     </div>
-  </div>
+    </div>
+  </div><!-- /tab-tools -->
 </div>
 
 <script>
@@ -309,6 +372,26 @@ if (dataRaw) {
 function sendAction(cbData) {
   if (TG) {
     TG.sendData(JSON.stringify({action: cbData}));
+  }
+}
+
+function showTab(name, el) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  el.classList.add('active');
+}
+
+function submitForm(action, inputId) {
+  const input = document.getElementById(inputId);
+  const val = (input.value || '').trim();
+  if (!val) {
+    input.focus();
+    if (TG && TG.HapticFeedback) { try { TG.HapticFeedback.notificationOccurred('error'); } catch(e){} }
+    return;
+  }
+  if (TG) {
+    TG.sendData(JSON.stringify({action: action, text: val}));
   }
 }
 
