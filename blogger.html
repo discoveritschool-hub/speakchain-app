@@ -195,6 +195,32 @@
     .form-btn:disabled { opacity:.4; }
 
     /* ── Financial journal ── */
+    .fin-hero {
+      background:linear-gradient(135deg,rgba(90,216,166,.15),rgba(124,110,247,.08));
+      border:1px solid rgba(90,216,166,.25);
+      border-radius:16px; padding:20px 18px; margin-bottom:12px; text-align:center;
+    }
+    .fin-hero-label { font-size:12px; color:var(--text2); font-weight:600; margin-bottom:6px; }
+    .fin-hero-val { font-size:38px; font-weight:800; color:var(--green); line-height:1; letter-spacing:-.02em; }
+    .fin-hero-next { font-size:12px; color:var(--text2); margin-top:8px; }
+    .fin-hero-next span { color:var(--text); font-weight:600; }
+
+    .fin-secondary {
+      display:flex; gap:10px; margin-bottom:14px;
+      background:var(--bg3); border-radius:12px; padding:12px 14px;
+      border:0.5px solid var(--border);
+    }
+    .fin-sec-item { flex:1; display:flex; flex-direction:column; gap:3px; }
+    .fin-sec-item + .fin-sec-item { border-left:1px solid var(--border); padding-left:12px; }
+    .fin-sec-label { font-size:11px; color:var(--text2); }
+    .fin-sec-val { font-size:17px; font-weight:700; }
+    .fin-sec-val.green { color:var(--green); }
+
+    .fin-rate-note {
+      font-size:11px; color:var(--text2); text-align:center;
+      padding:8px; margin-bottom:14px;
+      background:var(--bg3); border-radius:8px; border:0.5px solid var(--border);
+    }
     .fin-split { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px; }
     .fin-split-card {
       background:var(--bg3); border-radius:14px; padding:14px;
@@ -204,6 +230,10 @@
     .fin-split-icon { font-size:15px; }
     .fin-split-name { font-size:12px; font-weight:600; color:var(--text2); }
     .fin-split-comm { font-size:22px; font-weight:700; color:var(--green); line-height:1; }
+    .fin-split-breakdown {
+      display:flex; gap:12px; margin-top:8px; font-size:11px; color:var(--text2);
+    }
+    .fin-split-breakdown b { color:var(--text); font-weight:700; }
     .fin-split-sub  { font-size:11px; color:var(--text2); margin-top:4px; }
 
     .fin-status {
@@ -328,39 +358,54 @@
 
   <!-- Financial journal -->
   <div class="section">
-    <div class="section-title">Фінансовий журнал</div>
 
-    <!-- Розбивка помісячні / піврічні -->
+    <!-- ГОЛОВНЕ: доступно до виплати -->
+    <div class="fin-hero">
+      <div class="fin-hero-label">💰 Доступно до виплати</div>
+      <div class="fin-hero-val" id="fin-pending">$0</div>
+      <div class="fin-hero-next">Наступна виплата: <span id="fin-next-payout">до 10</span></div>
+    </div>
+
+    <!-- Другорядне: зароблено / виплачено -->
+    <div class="fin-secondary">
+      <div class="fin-sec-item">
+        <span class="fin-sec-label">Зароблено всього</span>
+        <span class="fin-sec-val" id="fin-total">$0</span>
+      </div>
+      <div class="fin-sec-item">
+        <span class="fin-sec-label">Уже виплачено</span>
+        <span class="fin-sec-val green" id="fin-paid">$0</span>
+      </div>
+    </div>
+
+    <!-- Розбивка за тарифом Basic / Premium -->
     <div class="fin-split">
       <div class="fin-split-card">
         <div class="fin-split-top">
-          <span class="fin-split-icon">🗓</span>
-          <span class="fin-split-name">Помісячні</span>
+          <span class="fin-split-icon">⚡️</span>
+          <span class="fin-split-name">Basic</span>
         </div>
-        <div class="fin-split-comm" id="fin-monthly-comm">$0</div>
-        <div class="fin-split-sub" id="fin-monthly-count">0 оплат</div>
+        <div class="fin-split-comm" id="fin-basic-comm">$0</div>
+        <div class="fin-split-breakdown">
+          <span>🗓 <b id="fin-basic-m">0</b></span>
+          <span>📆 <b id="fin-basic-6">0</b></span>
+        </div>
       </div>
       <div class="fin-split-card">
         <div class="fin-split-top">
-          <span class="fin-split-icon">📆</span>
-          <span class="fin-split-name">Піврічні</span>
+          <span class="fin-split-icon">⭐️</span>
+          <span class="fin-split-name">Premium</span>
         </div>
-        <div class="fin-split-comm" id="fin-sixmonth-comm">$0</div>
-        <div class="fin-split-sub" id="fin-sixmonth-count">0 оплат</div>
+        <div class="fin-split-comm" id="fin-prem-comm">$0</div>
+        <div class="fin-split-breakdown">
+          <span>🗓 <b id="fin-prem-m">0</b></span>
+          <span>📆 <b id="fin-prem-6">0</b></span>
+        </div>
       </div>
     </div>
 
-    <!-- Виплачено / очікує -->
-    <div class="fin-status">
-      <div class="fin-status-item">
-        <span class="fin-status-label">✅ Виплачено</span>
-        <span class="fin-status-val green" id="fin-paid">$0</span>
-      </div>
-      <div class="fin-status-item">
-        <span class="fin-status-label">⏳ Очікує виплати</span>
-        <span class="fin-status-val gold" id="fin-pending">$0</span>
-      </div>
-    </div>
+    <!-- Прозорість комісії -->
+    <div class="fin-rate-note" id="fin-rate-note">Комісія 25% з кожної оплати студента</div>
 
     <!-- Журнал оплат -->
     <div class="fin-journal-title">Останні оплати</div>
@@ -430,6 +475,16 @@
       <button class="action-btn neutral" onclick="sendAction('blogger_full_stats')">
         <span class="icon">📈</span>
         <span class="label">Повна статистика</span>
+        <span class="arr">›</span>
+      </button>
+      <button class="action-btn orange" onclick="sendAction('blogger_leaderboard')">
+        <span class="icon">🏆</span>
+        <span class="label">Таблиця лідерів</span>
+        <span class="arr">›</span>
+      </button>
+      <button class="action-btn neutral" onclick="sendAction('blogger_ask_admin')">
+        <span class="icon">✉️</span>
+        <span class="label">Написати адміну</span>
         <span class="arr">›</span>
       </button>
     </div>
@@ -503,12 +558,22 @@ function fill() {
 
   // ── Financial journal ──
   const fin = D.fin || {};
-  document.getElementById('fin-monthly-comm').textContent  = '$' + (fin.monthly_comm || 0);
-  document.getElementById('fin-monthly-count').textContent = (fin.monthly_count || 0) + ' оплат';
-  document.getElementById('fin-sixmonth-comm').textContent = '$' + (fin.sixmonth_comm || 0);
-  document.getElementById('fin-sixmonth-count').textContent= (fin.sixmonth_count || 0) + ' оплат';
-  document.getElementById('fin-paid').textContent    = '$' + (fin.paid_out || 0);
   document.getElementById('fin-pending').textContent = '$' + (fin.pending || 0);
+  document.getElementById('fin-total').textContent   = '$' + (fin.total_comm || 0);
+  document.getElementById('fin-paid').textContent    = '$' + (fin.paid_out || 0);
+  document.getElementById('fin-next-payout').textContent = fin.next_payout || 'до 10';
+  document.getElementById('fin-basic-comm').textContent = '$' + (fin.basic_comm || 0);
+  document.getElementById('fin-basic-m').textContent    = (fin.basic_m_count || 0);
+  document.getElementById('fin-basic-6').textContent    = (fin.basic_6_count || 0);
+  document.getElementById('fin-prem-comm').textContent  = '$' + (fin.prem_comm || 0);
+  document.getElementById('fin-prem-m').textContent     = (fin.prem_m_count || 0);
+  document.getElementById('fin-prem-6').textContent     = (fin.prem_6_count || 0);
+  if (fin.rate_basic) {
+    const rb = fin.rate_basic, rp = fin.rate_premium || rb;
+    document.getElementById('fin-rate-note').textContent =
+      (rb === rp) ? `Комісія ${rb}% з кожної оплати студента`
+                  : `Комісія: Basic ${rb}% · Premium ${rp}%`;
+  }
 
   const jlist = document.getElementById('journal-list');
   const journal = fin.journal || [];
