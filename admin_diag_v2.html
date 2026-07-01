@@ -1,0 +1,1125 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>SpeakChain Analytics</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="https://discoveritschool-hub.github.io/speakchain-app/toast_rewards.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg:#0f0f0f;--surface:#1a1a1a;--surface2:#242424;
+  --border:rgba(255,255,255,0.08);--text:#f0f0f0;--text2:#888;--text3:#444;
+  --accent:#4f8ef7;--green:#3ecf8e;--amber:#f59e0b;--red:#ef4444;--purple:#a78bfa;
+  --r:12px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif;font-size:14px;overflow-x:hidden}
+
+/* ── Header ── */
+.header{padding:14px 16px 0;display:flex;align-items:center;justify-content:space-between}
+.header-title{font-size:18px;font-weight:700;letter-spacing:-.4px}
+.header-sub{font-size:12px;color:var(--text2);margin-top:2px}
+.refresh-btn{width:34px;height:34px;border-radius:50%;background:var(--surface);
+  border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px}
+
+/* ── Tabs ── */
+.tabs{display:flex;gap:0;padding:12px 16px 0;overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{flex-shrink:0;padding:7px 14px;border-radius:20px;font-size:12px;font-weight:600;
+  cursor:pointer;color:var(--text2);border:1px solid transparent;transition:all .15s}
+.tab.active{background:var(--accent);color:#fff}
+
+/* ── Content ── */
+.content{padding:14px 16px 80px;overflow-y:auto;height:calc(100vh - 100px);scrollbar-width:none}
+.content::-webkit-scrollbar{display:none}
+.section{display:none}
+.section.active{display:block}
+
+/* ── Stat cards ── */
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px}
+.card-label{font-size:11px;color:var(--text2);font-weight:500;text-transform:uppercase;letter-spacing:.05em}
+.card-value{font-size:24px;font-weight:700;letter-spacing:-.5px;margin-top:4px}
+.card-delta{font-size:11px;margin-top:3px}
+.card.accent{border-color:rgba(79,142,247,.3);background:rgba(79,142,247,.08)}
+.card.green{border-color:rgba(62,207,142,.3);background:rgba(62,207,142,.08)}
+.card.amber{border-color:rgba(245,158,11,.3);background:rgba(245,158,11,.08)}
+.card.purple{border-color:rgba(167,139,250,.3);background:rgba(167,139,250,.08)}
+.delta-up{color:var(--green)}
+.delta-down{color:var(--red)}
+.delta-flat{color:var(--text3)}
+
+/* ── Chart blocks ── */
+.chart-block{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);
+  padding:14px;margin-bottom:12px}
+.chart-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:12px}
+.chart-sub{font-size:11px;color:var(--text2);margin-top:-8px;margin-bottom:10px}
+.chart-wrap{position:relative;height:180px}
+
+/* ── Funnel ── */
+.funnel{display:flex;flex-direction:column;gap:6px}
+.funnel-row{display:flex;align-items:center;gap:10px}
+.funnel-label{font-size:12px;color:var(--text2);width:60px;flex-shrink:0;text-align:right}
+.funnel-bar-wrap{flex:1;background:var(--surface2);border-radius:4px;height:28px;overflow:hidden;position:relative}
+.funnel-bar{height:100%;border-radius:4px;display:flex;align-items:center;padding:0 10px;
+  font-size:12px;font-weight:600;color:#fff;white-space:nowrap;transition:width .6s ease}
+.funnel-pct{font-size:11px;color:var(--text2);width:40px;flex-shrink:0;text-align:right}
+
+/* ── Table ── */
+.table-block{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);
+  padding:14px;margin-bottom:12px;overflow-x:auto}
+.table-title{font-size:13px;font-weight:600;margin-bottom:10px}
+table{width:100%;border-collapse:collapse}
+th{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;
+  letter-spacing:.05em;padding:0 8px 8px;text-align:left;white-space:nowrap}
+td{font-size:12px;color:var(--text);padding:7px 8px;border-top:1px solid var(--border);white-space:nowrap}
+tr:hover td{background:var(--surface2)}
+
+/* ── Retention heatmap ── */
+.retention-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:3px;margin-top:8px}
+.ret-header{font-size:10px;color:var(--text3);text-align:center;padding:4px 0;font-weight:600}
+.ret-cell{aspect-ratio:1;border-radius:3px;display:flex;align-items:center;justify-content:center;
+  font-size:9px;font-weight:600;color:#fff}
+
+/* ── Loading ── */
+.loading{display:flex;align-items:center;justify-content:center;height:200px;
+  flex-direction:column;gap:12px;color:var(--text2);font-size:13px}
+.spinner{width:32px;height:32px;border:2px solid var(--border);border-top-color:var(--accent);
+  border-radius:50%;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── Error ── */
+.error-box{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);
+  border-radius:var(--r);padding:14px;color:var(--red);font-size:13px;text-align:center}
+</style>
+</head>
+<body>
+
+<div id="sc-diag" style="position:fixed;top:0;left:0;right:0;z-index:99999;background:#0a0a12;color:#5ad8a6;font:12px/1.5 monospace;padding:10px 12px;border-bottom:2px solid #7c6ef7;white-space:pre-wrap;word-break:break-all;max-height:60vh;overflow:auto;">DIAG: ініціалізація…</div>
+
+<div class="header">
+  <div>
+    <div class="header-title">📈 Analytics</div>
+    <div class="header-sub" id="last-updated">Завантаження...</div>
+  </div>
+  <div style="display:flex;gap:8px">
+    <div class="refresh-btn" id="tz-btn" onclick="loadTZ()" title="ТЗ для Claude">📋</div>
+    <div class="refresh-btn" id="ai-btn" onclick="loadAIInsights()" title="AI Аналіз">🤖</div>
+    <div class="refresh-btn" onclick="loadData()">↻</div>
+  </div>
+</div>
+
+<!-- TZ Modal -->
+<div id="tz-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:999;align-items:flex-end">
+  <div style="background:#0f0f0f;border-top:1px solid rgba(255,255,255,.1);width:100%;max-height:90vh;
+    display:flex;flex-direction:column;border-radius:16px 16px 0 0">
+    <div style="padding:14px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(255,255,255,.08);flex-shrink:0">
+      <div style="flex:1;font-size:15px;font-weight:700">📋 ТЗ для Claude</div>
+      <button onclick="copyTZ()" style="padding:7px 14px;border-radius:20px;background:#4f8ef7;border:none;
+        color:#fff;font-size:12px;font-weight:600;cursor:pointer" id="copy-btn">
+        Копіювати
+      </button>
+      <div onclick="closeTZ()" style="cursor:pointer;font-size:20px;color:#888;padding:0 4px">✕</div>
+    </div>
+    <div id="tz-content" style="flex:1;overflow-y:auto;padding:16px;font-size:12px;color:#e0e0e0;
+      line-height:1.7;white-space:pre-wrap;font-family:monospace;scrollbar-width:none"></div>
+  </div>
+</div>
+
+<!-- AI Insights Panel -->
+<div id="ai-panel" style="display:none;margin:0 16px 0;background:#12102a;border:1px solid rgba(124,110,247,.3);border-radius:12px;padding:16px">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+    <div style="font-size:14px;font-weight:700;color:#a78bfa">🤖 AI Аналіз системи</div>
+    <div style="font-size:11px;color:var(--text3)" id="ai-generated-at"></div>
+  </div>
+  <div id="ai-content" style="font-size:13px;color:var(--text);line-height:1.7;white-space:pre-wrap"></div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('overview')">Огляд</div>
+  <div class="tab" onclick="switchTab('retention')">Retention</div>
+  <div class="tab" onclick="switchTab('funnel')">Funnel</div>
+  <div class="tab" onclick="switchTab('revenue')">Revenue</div>
+  <div class="tab" onclick="switchTab('buddy')">Buddy</div>
+  <div class="tab" onclick="switchTab('bloggers')">Блогери</div>
+  <div class="tab" onclick="switchTab('actions')">Дії</div>
+</div>
+
+<div class="content">
+
+  <!-- OVERVIEW -->
+  <div class="section active" id="tab-overview">
+    <div id="overview-content">
+      <div class="loading"><div class="spinner"></div>Завантаження...</div>
+    </div>
+  </div>
+
+  <!-- RETENTION -->
+  <div class="section" id="tab-retention">
+    <div id="retention-content">
+      <div class="loading"><div class="spinner"></div>Завантаження...</div>
+    </div>
+  </div>
+
+  <!-- FUNNEL -->
+  <div class="section" id="tab-funnel">
+    <div id="funnel-content">
+      <div class="loading"><div class="spinner"></div>Завантаження...</div>
+    </div>
+  </div>
+
+  <!-- REVENUE -->
+  <div class="section" id="tab-revenue">
+    <div id="revenue-content">
+      <div class="loading"><div class="spinner"></div>Завантаження...</div>
+    </div>
+  </div>
+
+  <!-- BUDDY -->
+  <div class="section" id="tab-buddy">
+    <div id="buddy-content">
+      <div class="loading"><div class="spinner"></div>Завантаження...</div>
+    </div>
+  </div>
+
+  <!-- BLOGGERS -->
+  <div class="section" id="tab-bloggers">
+    <div id="bloggers-content">
+      <div class="loading"><div class="spinner"></div>Завантаження...</div>
+    </div>
+  </div>
+
+  <!-- ACTIONS -->
+  <div class="section" id="tab-actions">
+    <div id="actions-content">
+      <div class="loading"><div class="spinner"></div>Завантаження...</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const tg = window.Telegram?.WebApp;
+if (tg) { tg.ready(); tg.expand(); }
+
+// ─── ДІАГНОСТИКА (тимчасова) ───
+(function(){
+  const box = document.getElementById('sc-diag');
+  if (!box) return;
+  const uid  = tg?.initDataUnsafe?.user?.id;
+  const idLen = (tg?.initData || '').length;
+  const lines = [
+    'DIAG admin_analytics',
+    'tg існує:      ' + (tg ? 'ТАК' : 'НІ — Telegram.WebApp не завантажений'),
+    'platform:      ' + (tg?.platform || '—'),
+    'version:       ' + (tg?.version || '—'),
+    'uid:           ' + (uid === undefined ? 'undefined ❌' : uid + ' ✅'),
+    'initData len:  ' + idLen + (idLen > 0 ? ' ✅' : ' ❌'),
+    'user obj:      ' + JSON.stringify(tg?.initDataUnsafe?.user || null),
+    '─── тест запиту до сервера ───',
+    'статус:        (виконую…)',
+  ];
+  box.textContent = lines.join('\n');
+
+  // реальний тестовий POST — точно як робить апп
+  fetch('https://speakchain-bot-production.up.railway.app/admin_analytics', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ uid: uid || 0, init_data: tg?.initData || '' })
+  })
+  .then(async r => {
+    const t = await r.text();
+    box.textContent = lines.slice(0, -1).join('\n')
+      + '\nстатус:        HTTP ' + r.status
+      + '\nвідповідь:     ' + t.slice(0, 200);
+  })
+  .catch(e => {
+    box.textContent = lines.slice(0, -1).join('\n')
+      + '\nстатус:        ERR ' + e.message;
+  });
+})();
+// ─── кінець діагностики ───
+
+let charts = {};
+let data = null;
+let activeTab = 'overview';
+
+function switchTab(tab) {
+  activeTab = tab;
+  document.querySelectorAll('.tab').forEach((t, i) => {
+    t.classList.toggle('active', ['overview','retention','funnel','revenue','buddy','bloggers','actions'][i] === tab);
+  });
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById(`tab-${tab}`).classList.add('active');
+  if (data) renderTab(tab);
+}
+
+let lastAIAnalysis = '';
+let lastTZText = '';
+
+async function loadTZ() {
+  const btn   = document.getElementById('tz-btn');
+  const modal = document.getElementById('tz-modal');
+  const content = document.getElementById('tz-content');
+
+  btn.textContent = '⏳';
+  btn.style.pointerEvents = 'none';
+  modal.style.display = 'flex';
+  content.textContent = 'Генерую технічне завдання... ~20 секунд ⏳';
+
+  try {
+    const res = await fetch('https://speakchain-bot-production.up.railway.app/admin_tz', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        uid:       tg?.initDataUnsafe?.user?.id || 0,
+        init_data: tg?.initData || '',
+        analysis:  lastAIAnalysis,  // передаємо попередній AI аналіз якщо є
+      })
+    });
+    const d = await res.json();
+    if (d.error) {
+      content.textContent = '❌ ' + d.error;
+    } else {
+      lastTZText = d.tz;
+      content.textContent = d.tz;
+    }
+  } catch(e) {
+    content.textContent = '❌ Помилка: ' + e.message;
+  }
+
+  btn.textContent = '📋';
+  btn.style.pointerEvents = 'auto';
+}
+
+function closeTZ() {
+  document.getElementById('tz-modal').style.display = 'none';
+}
+
+async function copyTZ() {
+  if (!lastTZText) return;
+  try {
+    await navigator.clipboard.writeText(lastTZText);
+    const btn = document.getElementById('copy-btn');
+    btn.textContent = '✅ Скопійовано!';
+    btn.style.background = '#3ecf8e';
+    setTimeout(() => {
+      btn.textContent = 'Копіювати';
+      btn.style.background = '#4f8ef7';
+    }, 2000);
+  } catch(e) {
+    // Fallback для старих браузерів
+    const ta = document.createElement('textarea');
+    ta.value = lastTZText;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    const btn = document.getElementById('copy-btn');
+    btn.textContent = '✅ Скопійовано!';
+    setTimeout(() => btn.textContent = 'Копіювати', 2000);
+  }
+}
+
+async function loadAIInsights() {
+  const btn    = document.getElementById('ai-btn');
+  const panel  = document.getElementById('ai-panel');
+  const content= document.getElementById('ai-content');
+
+  btn.textContent = '⏳';
+  btn.style.pointerEvents = 'none';
+  panel.style.display = 'block';
+  content.textContent = 'Аналізую дані... Це займе ~15 секунд ⏳';
+
+  try {
+    const res = await fetch('https://speakchain-bot-production.up.railway.app/admin_ai_insights', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        uid:       tg?.initDataUnsafe?.user?.id || 0,
+        init_data: tg?.initData || '',
+      })
+    });
+    const d = await res.json();
+    if (d.error) {
+      content.textContent = '❌ ' + d.error;
+    } else {
+      lastAIAnalysis = d.analysis;  // зберігаємо для передачі в ТЗ
+      content.textContent = d.analysis;
+      document.getElementById('ai-generated-at').textContent = d.generated_at || '';
+    }
+  } catch(e) {
+    content.textContent = '❌ Помилка: ' + e.message;
+  }
+
+  btn.textContent = '🤖';
+  btn.style.pointerEvents = 'auto';
+}
+
+async function loadData() {
+  document.getElementById('last-updated').textContent = 'Завантаження...';
+  try {
+    const res = await fetch('https://speakchain-bot-production.up.railway.app/admin_analytics', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        init_data: tg?.initData || '',
+        uid: tg?.initDataUnsafe?.user?.id || 0,
+      })
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    data = await res.json();
+    if (data.error) throw new Error(data.error);
+
+    // Ховаємо фінансові вкладки для розробника
+    if (data.is_dev) {
+      document.querySelectorAll('.tab').forEach(t => {
+        if (t.textContent === 'Revenue' || t.textContent === 'Блогери') {
+          t.style.display = 'none';
+        }
+      });
+    }
+    const now = new Date().toLocaleTimeString('uk-UA', {hour:'2-digit', minute:'2-digit'});
+    document.getElementById('last-updated').textContent = `Оновлено ${now}`;
+    renderTab(activeTab);
+    ['overview','retention','funnel','revenue','buddy','bloggers','actions'].forEach(t => {
+      if (t !== activeTab) renderTab(t);
+    });
+  } catch(e) {
+    ['overview','retention','funnel','revenue','buddy'].forEach(t => {
+      document.getElementById(`${t}-content`).innerHTML =
+        `<div class="error-box">❌ ${e.message}</div>`;
+    });
+    document.getElementById('last-updated').textContent = 'Помилка завантаження';
+  }
+}
+
+function renderTab(tab) {
+  const el = document.getElementById(`${tab}-content`);
+  if (!data) return;
+  switch(tab) {
+    case 'overview':   el.innerHTML = renderOverview(); break;
+    case 'retention':  el.innerHTML = renderRetention(); break;
+    case 'funnel':     el.innerHTML = renderFunnel(); break;
+    case 'revenue':    el.innerHTML = renderRevenue(); break;
+    case 'buddy':      el.innerHTML = renderBuddy(); break;
+    case 'bloggers':   el.innerHTML = renderBloggers(); break;
+    case 'actions':    el.innerHTML = renderActions(); break;
+  }
+  setTimeout(() => drawCharts(tab), 50);
+}
+
+// ── OVERVIEW ─────────────────────────────────────────────
+function renderOverview() {
+  const d = data.overview;
+  return `
+  <div class="cards">
+    <div class="card accent">
+      <div class="card-label">Всього юзерів</div>
+      <div class="card-value" style="color:var(--accent)">${fmt(d.total_users)}</div>
+      <div class="card-delta delta-up">+${fmt(d.new_today)} сьогодні</div>
+    </div>
+    <div class="card green">
+      <div class="card-label">Активні сьогодні</div>
+      <div class="card-value" style="color:var(--green)">${fmt(d.active_today)}</div>
+      <div class="card-delta delta-flat">${pct(d.active_today, d.total_users)} від бази</div>
+    </div>
+    <div class="card amber">
+      <div class="card-label">Платних</div>
+      <div class="card-value" style="color:var(--amber)">${fmt(d.paid_users)}</div>
+      <div class="card-delta delta-flat">${pct(d.paid_users, d.total_users)} конверсія</div>
+    </div>
+    <div class="card purple">
+      <div class="card-label">В тріалі</div>
+      <div class="card-value" style="color:var(--purple)">${fmt(d.trial_users)}</div>
+      <div class="card-delta delta-flat">${pct(d.trial_users, d.total_users)} від бази</div>
+    </div>
+  </div>
+
+  <div class="cards">
+    <div class="card">
+      <div class="card-label">Нових за 7 днів</div>
+      <div class="card-value">${fmt(d.new_7d)}</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Нових за 30 днів</div>
+      <div class="card-value">${fmt(d.new_30d)}</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Chain breaks сьогодні</div>
+      <div class="card-value" style="color:var(--red)">${fmt(d.chain_breaks_today)}</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Середній chain</div>
+      <div class="card-value">${d.avg_chain} дн.</div>
+    </div>
+  </div>
+
+  <div class="chart-block">
+    <div class="chart-title">Нові реєстрації (30 днів)</div>
+    <div class="chart-wrap"><canvas id="chart-registrations"></canvas></div>
+  </div>
+
+  <div class="chart-block">
+    <div class="chart-title">Активні юзери (30 днів)</div>
+    <div class="chart-wrap"><canvas id="chart-active"></canvas></div>
+  </div>`;
+}
+
+// ── RETENTION ───────────────────────────────────────────
+function renderRetention() {
+  const d = data.retention;
+  const cohorts = d.cohorts || [];
+
+  let heatmapHTML = `
+  <div class="retention-grid">
+    <div class="ret-header">Тиждень</div>
+    ${['D1','D3','D7','D14','D30','D60','D90'].map(l=>`<div class="ret-header">${l}</div>`).join('')}
+  `;
+
+  cohorts.forEach(c => {
+    heatmapHTML += `<div class="ret-header" style="text-align:left;font-size:10px">${c.week}</div>`;
+    ['d1','d3','d7','d14','d30','d60','d90'].forEach(key => {
+      const val = c[key];
+      const color = val == null ? '#1a1a1a' :
+        val >= 50 ? '#065f46' : val >= 30 ? '#0f766e' : val >= 15 ? '#b45309' : val >= 5 ? '#7c2d12' : '#1a1a1a';
+      heatmapHTML += `<div class="ret-cell" style="background:${color}">${val != null ? val + '%' : ''}</div>`;
+    });
+  });
+  heatmapHTML += '</div>';
+
+  return `
+  <div class="cards">
+    <div class="card green">
+      <div class="card-label">D1 Retention</div>
+      <div class="card-value" style="color:var(--green)">${d.d1}%</div>
+      <div class="card-delta delta-flat">повернулись на 2-й день</div>
+    </div>
+    <div class="card accent">
+      <div class="card-label">D7 Retention</div>
+      <div class="card-value" style="color:var(--accent)">${d.d7}%</div>
+      <div class="card-delta delta-flat">активні через тиждень</div>
+    </div>
+    <div class="card amber">
+      <div class="card-label">D30 Retention</div>
+      <div class="card-value" style="color:var(--amber)">${d.d30}%</div>
+      <div class="card-delta delta-flat">активні через місяць</div>
+    </div>
+    <div class="card purple">
+      <div class="card-label">Avg Session / Day</div>
+      <div class="card-value" style="color:var(--purple)">${d.avg_sessions}</div>
+      <div class="card-delta delta-flat">на активного юзера</div>
+    </div>
+  </div>
+
+  <div class="chart-block">
+    <div class="chart-title">Retention Heatmap (когорти по тижнях)</div>
+    <div class="chart-sub">% юзерів що повернулись</div>
+    ${heatmapHTML}
+  </div>
+
+  <div class="chart-block">
+    <div class="chart-title">Chain breaks (30 днів)</div>
+    <div class="chart-wrap"><canvas id="chart-breaks"></canvas></div>
+  </div>`;
+}
+
+// ── FUNNEL ──────────────────────────────────────────────
+function renderFunnel() {
+  const d = data.funnel;
+  const steps = [
+    { label: 'Registered', value: d.registered, color: '#4f8ef7' },
+    { label: 'Demo',       value: d.demo,       color: '#a78bfa' },
+    { label: 'Trial',      value: d.trial,      color: '#f59e0b' },
+    { label: 'Paid',       value: d.paid,       color: '#3ecf8e' },
+  ];
+  const max = steps[0].value || 1;
+
+  return `
+  <div class="chart-block">
+    <div class="chart-title">Funnel: Demo → Trial → Paid</div>
+    <div class="funnel">
+      ${steps.map((s, i) => {
+        const w = Math.round((s.value / max) * 100);
+        const convFromPrev = i > 0 ? pct(s.value, steps[i-1].value) : '100%';
+        return `
+        <div class="funnel-row">
+          <div class="funnel-label">${s.label}</div>
+          <div class="funnel-bar-wrap">
+            <div class="funnel-bar" style="width:${w}%;background:${s.color}">
+              ${fmt(s.value)}
+            </div>
+          </div>
+          <div class="funnel-pct">${convFromPrev}</div>
+        </div>`;
+      }).join('')}
+    </div>
+  </div>
+
+  <div class="cards">
+    <div class="card green">
+      <div class="card-label">Demo → Trial</div>
+      <div class="card-value" style="color:var(--green)">${pct(d.trial, d.demo)}</div>
+    </div>
+    <div class="card amber">
+      <div class="card-label">Trial → Paid</div>
+      <div class="card-value" style="color:var(--amber)">${pct(d.paid, d.trial)}</div>
+    </div>
+    <div class="card accent">
+      <div class="card-label">Overall</div>
+      <div class="card-value" style="color:var(--accent)">${pct(d.paid, d.registered)}</div>
+    </div>
+    <div class="card purple">
+      <div class="card-label">Avg Trial Ланок</div>
+      <div class="card-value" style="color:var(--purple)">${d.avg_trial_chains}</div>
+    </div>
+  </div>
+
+  <div class="table-block">
+    <div class="table-title">Конверсія по джерелах</div>
+    <table>
+      <tr><th>Джерело</th><th>Юзерів</th><th>Платних</th><th>Conv%</th></tr>
+      ${(d.sources || []).map(s => `
+        <tr>
+          <td>${s.name}</td>
+          <td>${fmt(s.users)}</td>
+          <td>${fmt(s.paid)}</td>
+          <td style="color:var(--green)">${pct(s.paid, s.users)}</td>
+        </tr>`).join('')}
+    </table>
+  </div>`;
+}
+
+// ── REVENUE ─────────────────────────────────────────────
+function renderRevenue() {
+  const d = data.revenue;
+  return `
+  <div class="cards">
+    <div class="card green">
+      <div class="card-label">MRR (поточний)</div>
+      <div class="card-value" style="color:var(--green)">$${fmt(d.mrr)}</div>
+      <div class="card-delta ${d.mrr_delta >= 0 ? 'delta-up' : 'delta-down'}">
+        ${d.mrr_delta >= 0 ? '+' : ''}$${fmt(Math.abs(d.mrr_delta))} vs минулий міс
+      </div>
+    </div>
+    <div class="card accent">
+      <div class="card-label">Revenue цього місяця</div>
+      <div class="card-value" style="color:var(--accent)">$${fmt(d.revenue_month)}</div>
+    </div>
+    <div class="card amber">
+      <div class="card-label">Basic підписок</div>
+      <div class="card-value" style="color:var(--amber)">${fmt(d.basic_count)}</div>
+      <div class="card-delta delta-flat">по $${d.basic_price}/міс</div>
+    </div>
+    <div class="card purple">
+      <div class="card-label">Premium підписок</div>
+      <div class="card-value" style="color:var(--purple)">${fmt(d.premium_count)}</div>
+      <div class="card-delta delta-flat">по $${d.premium_price}/міс</div>
+    </div>
+  </div>
+
+  <div class="chart-block">
+    <div class="chart-title">Revenue по місяцях</div>
+    <div class="chart-wrap"><canvas id="chart-revenue"></canvas></div>
+  </div>
+
+  <div class="table-block">
+    <div class="table-title">Revenue по джерелах (блогерах)</div>
+    <table>
+      <tr><th>Блогер</th><th>Юзерів</th><th>Платних</th><th>Revenue</th></tr>
+      ${(d.bloggers || []).map(b => `
+        <tr>
+          <td>${b.name}</td>
+          <td>${fmt(b.users)}</td>
+          <td>${fmt(b.paid)}</td>
+          <td style="color:var(--green)">$${fmt(b.revenue)}</td>
+        </tr>`).join('')}
+    </table>
+  </div>
+
+  <div class="chart-block">
+    <div class="chart-title">Basic vs Premium (динаміка)</div>
+    <div class="chart-wrap"><canvas id="chart-plans"></canvas></div>
+  </div>`;
+}
+
+// ── BUDDY ────────────────────────────────────────────────
+function renderBuddy() {
+  const d = data.buddy;
+  return `
+  <div class="cards">
+    <div class="card accent">
+      <div class="card-label">Всього сесій</div>
+      <div class="card-value" style="color:var(--accent)">${fmt(d.total_sessions)}</div>
+      <div class="card-delta delta-up">+${fmt(d.sessions_today)} сьогодні</div>
+    </div>
+    <div class="card green">
+      <div class="card-label">Активних юзерів</div>
+      <div class="card-value" style="color:var(--green)">${fmt(d.active_users)}</div>
+      <div class="card-delta delta-flat">використовували Buddy</div>
+    </div>
+    <div class="card amber">
+      <div class="card-label">Avg повідомлень/сесія</div>
+      <div class="card-value" style="color:var(--amber)">${d.avg_msgs_per_session}</div>
+    </div>
+    <div class="card purple">
+      <div class="card-label">Топ сценарій</div>
+      <div class="card-value" style="color:var(--purple);font-size:13px">${d.top_scenario || '—'}</div>
+    </div>
+  </div>
+
+  <div class="chart-block">
+    <div class="chart-title">Buddy сесії (30 днів)</div>
+    <div class="chart-wrap"><canvas id="chart-buddy-sessions"></canvas></div>
+  </div>
+
+  <div class="table-block">
+    <div class="table-title">Топ сценарії</div>
+    <table>
+      <tr><th>Сценарій</th><th>Сесій</th><th>Avg msg</th></tr>
+      ${(d.top_scenarios || []).map(s => `
+        <tr>
+          <td>${s.name}</td>
+          <td>${fmt(s.sessions)}</td>
+          <td>${s.avg_msgs}</td>
+        </tr>`).join('')}
+    </table>
+  </div>
+
+  <div class="cards">
+    <div class="card green">
+      <div class="card-label">✓ Правильних</div>
+      <div class="card-value" style="color:var(--green)">${fmt(d.feedback_good)}</div>
+    </div>
+    <div class="card amber">
+      <div class="card-label">💡 Виправлень</div>
+      <div class="card-value" style="color:var(--amber)">${fmt(d.feedback_tips)}</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Accuracy</div>
+      <div class="card-value">${pct(d.feedback_good, d.feedback_good + d.feedback_tips)}</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Demo → Trial via Buddy</div>
+      <div class="card-value">${pct(d.demo_converted, d.demo_users)}</div>
+    </div>
+  </div>`;
+}
+
+// ── CHARTS ───────────────────────────────────────────────
+function drawCharts(tab) {
+  const chartCfg = {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#555', font: { size: 10 }, maxTicksLimit: 8 } },
+      y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#555', font: { size: 10 } } }
+    }
+  };
+
+  function makeChart(id, type, labels, datasets, extraCfg = {}) {
+    const canvas = document.getElementById(id);
+    if (!canvas) return;
+    if (charts[id]) charts[id].destroy();
+    charts[id] = new Chart(canvas.getContext('2d'), {
+      type, data: { labels, datasets },
+      options: { ...chartCfg, ...extraCfg }
+    });
+  }
+
+  if (tab === 'overview') {
+    const r = data.overview;
+    makeChart('chart-registrations', 'bar', r.days_labels,
+      [{ data: r.registrations_daily, backgroundColor: 'rgba(79,142,247,.6)', borderRadius: 4 }]);
+    makeChart('chart-active', 'line', r.days_labels,
+      [{ data: r.active_daily, borderColor: '#3ecf8e', backgroundColor: 'rgba(62,207,142,.1)',
+         fill: true, tension: .4, pointRadius: 2 }]);
+  }
+
+  if (tab === 'retention') {
+    const r = data.retention;
+    makeChart('chart-breaks', 'bar', r.break_labels,
+      [{ data: r.break_data, backgroundColor: 'rgba(239,68,68,.6)', borderRadius: 4 }]);
+  }
+
+  if (tab === 'revenue') {
+    const r = data.revenue;
+    makeChart('chart-revenue', 'bar', r.months_labels,
+      [{ data: r.revenue_monthly, backgroundColor: 'rgba(62,207,142,.7)', borderRadius: 4 }]);
+    makeChart('chart-plans', 'line', r.months_labels, [
+      { label: 'Basic', data: r.basic_monthly, borderColor: '#f59e0b', tension: .4, pointRadius: 2 },
+      { label: 'Premium', data: r.premium_monthly, borderColor: '#a78bfa', tension: .4, pointRadius: 2 }
+    ], { plugins: { legend: { display: true, labels: { color: '#888', font: { size: 11 } } } } });
+  }
+
+  if (tab === 'buddy') {
+    const b = data.buddy;
+    makeChart('chart-buddy-sessions', 'line', b.days_labels,
+      [{ data: b.sessions_daily, borderColor: '#4f8ef7', backgroundColor: 'rgba(79,142,247,.1)',
+         fill: true, tension: .4, pointRadius: 2 }]);
+  }
+
+  if (tab === 'actions') {
+    const a = data.actions;
+    if (!a) return;
+    makeChart('chart-hours', 'bar', a.hour_labels,
+      [{ data: a.hour_data, backgroundColor: 'rgba(124,110,247,.7)', borderRadius: 3 }]);
+    makeChart('chart-actions-days', 'line', a.days_labels,
+      [{ data: a.days_data, borderColor: '#f59e0b', backgroundColor: 'rgba(245,158,11,.1)',
+         fill: true, tension: .4, pointRadius: 2 }]);
+    if (document.getElementById('chart-depth'))
+      makeChart('chart-depth', 'bar',
+        (a.session_depth||[]).map(s => s.bucket),
+        [{ data: (a.session_depth||[]).map(s => s.count),
+           backgroundColor: ['rgba(239,68,68,.7)','rgba(245,158,11,.7)','rgba(62,207,142,.7)','rgba(79,142,247,.7)'],
+           borderRadius: 4 }]);
+  }
+}
+
+// ── BLOGGERS ─────────────────────────────────────────────
+function renderBloggers() {
+  const d = data.bloggers;
+  const months = d.months || [];
+
+  // Місяць-селектор
+  const monthOpts = months.map((m, i) =>
+    `<option value="${i}" ${i === months.length-1 ? 'selected' : ''}>${m.label}</option>`
+  ).join('');
+
+  return `
+  <div class="cards">
+    <div class="card accent">
+      <div class="card-label">Активних блогерів</div>
+      <div class="card-value" style="color:var(--accent)">${fmt(d.total_bloggers)}</div>
+    </div>
+    <div class="card green">
+      <div class="card-label">Всього виплат</div>
+      <div class="card-value" style="color:var(--green)">$${fmt(d.total_paid_out)}</div>
+    </div>
+    <div class="card amber">
+      <div class="card-label">Нараховано цього міс.</div>
+      <div class="card-value" style="color:var(--amber)">$${fmt(d.pending_this_month)}</div>
+      <div class="card-delta delta-flat">ще не виплачено</div>
+    </div>
+    <div class="card purple">
+      <div class="card-label">Всього студентів від блогерів</div>
+      <div class="card-value" style="color:var(--purple)">${fmt(d.total_referred)}</div>
+    </div>
+  </div>
+
+  <div class="chart-block">
+    <div class="chart-title">Нарахування блогерам по місяцях ($)</div>
+    <div class="chart-wrap"><canvas id="chart-blogger-revenue"></canvas></div>
+  </div>
+
+  <div class="table-block">
+    <div class="table-title">Звіт по блогерах (поточний місяць)</div>
+    <table>
+      <tr>
+        <th>Блогер</th><th>Студентів</th><th>Basic</th><th>Premium</th>
+        <th>В тріалі</th><th>Активних</th><th>Нараховано</th>
+      </tr>
+      ${(d.blogger_stats || []).map(b => `
+        <tr>
+          <td style="font-weight:600">${b.name}</td>
+          <td>${fmt(b.total)}</td>
+          <td>${fmt(b.basic)}</td>
+          <td>${fmt(b.premium)}</td>
+          <td style="color:var(--amber)">${fmt(b.trial)}</td>
+          <td style="color:var(--green)">${fmt(b.active)}</td>
+          <td style="color:var(--green);font-weight:600">$${b.commission}</td>
+        </tr>`).join('')}
+    </table>
+  </div>
+
+  <div class="table-block">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <div class="table-title" style="margin:0">Оплати від студентів блогерів</div>
+      <select id="month-select" style="background:var(--surface2);border:1px solid var(--border);
+        border-radius:6px;color:var(--text);font-size:12px;padding:4px 8px"
+        onchange="filterPayouts(this.value)">
+        ${monthOpts}
+      </select>
+    </div>
+    <table id="payouts-table">
+      <tr><th>Дата</th><th>Блогер</th><th>Студент</th><th>Тариф</th><th>Сума</th><th>Комісія</th><th>Статус</th></tr>
+      ${renderPayoutsRows(months.length - 1, months)}
+    </table>
+  </div>
+
+  <div class="table-block">
+    <div class="table-title">Виплати блогерам (статус)</div>
+    <table>
+      <tr><th>Блогер</th><th>Місяць</th><th>Сума</th><th>Статус</th><th>Дата виплати</th></tr>
+      ${(d.payouts_summary || []).map(p => `
+        <tr>
+          <td style="font-weight:600">${p.blogger}</td>
+          <td>${p.month}</td>
+          <td style="color:var(--green)">$${p.total_commission}</td>
+          <td>
+            <span style="padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;
+              background:${p.paid ? 'rgba(62,207,142,.15)' : 'rgba(245,158,11,.15)'};
+              color:${p.paid ? 'var(--green)' : 'var(--amber)'}">
+              ${p.paid ? '✅ Виплачено' : '⏳ Очікує'}
+            </span>
+          </td>
+          <td style="color:var(--text2)">${p.paid_date || '—'}</td>
+        </tr>`).join('')}
+    </table>
+  </div>`;
+}
+
+function renderPayoutsRows(monthIdx, months) {
+  if (!months || !months[monthIdx]) return '<tr><td colspan="7" style="color:var(--text3);text-align:center">Немає даних</td></tr>';
+  const rows = months[monthIdx].payouts || [];
+  if (!rows.length) return '<tr><td colspan="7" style="color:var(--text3);text-align:center">Немає оплат за цей місяць</td></tr>';
+  return rows.map(p => `
+    <tr>
+      <td style="color:var(--text2)">${p.date || '—'}</td>
+      <td style="font-weight:600">${p.blogger}</td>
+      <td>${p.student_name}</td>
+      <td><span style="padding:2px 7px;border-radius:10px;font-size:11px;
+        background:${p.plan==='premium' ? 'rgba(167,139,250,.15)' : 'rgba(79,142,247,.15)'};
+        color:${p.plan==='premium' ? 'var(--purple)' : 'var(--accent)'}">
+        ${p.plan}
+      </span></td>
+      <td>$${p.amount}</td>
+      <td style="color:var(--green)">$${p.commission}</td>
+      <td><span style="padding:2px 7px;border-radius:10px;font-size:11px;
+        background:${p.paid ? 'rgba(62,207,142,.15)' : 'rgba(245,158,11,.15)'};
+        color:${p.paid ? 'var(--green)' : 'var(--amber)'}">
+        ${p.paid ? '✅' : '⏳'}
+      </span></td>
+    </tr>`).join('');
+}
+
+function filterPayouts(monthIdx) {
+  const months = data.bloggers.months || [];
+  document.getElementById('payouts-table').innerHTML =
+    '<tr><th>Дата</th><th>Блогер</th><th>Студент</th><th>Тариф</th><th>Сума</th><th>Комісія</th><th>Статус</th></tr>' +
+    renderPayoutsRows(parseInt(monthIdx), months);
+}
+
+// ── ACTIONS ──────────────────────────────────────────────
+function renderActions() {
+  const d = data.actions;
+  if (!d) return '<div class="error-box">Немає даних</div>';
+  return `
+  <div class="chart-block">
+    <div class="chart-title">1. Drop-off — де юзери виходять з флоу</div>
+    <div class="funnel" style="margin-top:8px">
+      ${(d.dropoff||[]).map(s => `
+        <div class="funnel-row">
+          <div class="funnel-label" style="width:150px;text-align:left;font-size:11px">${s.step}</div>
+          <div class="funnel-bar-wrap">
+            <div class="funnel-bar" style="width:${s.pct}%;background:${s.pct>60?'var(--green)':s.pct>30?'var(--amber)':'var(--red)'}">
+              ${fmt(s.users)}
+            </div>
+          </div>
+          <div class="funnel-pct">${s.pct}%</div>
+        </div>`).join('')}
+    </div>
+  </div>
+  <div class="chart-block">
+    <div class="chart-title">2. Session Depth — дій за сесію</div>
+    <div class="chart-sub">7+ = зона потоку</div>
+    <div class="chart-wrap"><canvas id="chart-depth"></canvas></div>
+  </div>
+  <div class="cards">
+    <div class="card green">
+      <div class="card-label">Avg годин до першого уроку</div>
+      <div class="card-value" style="color:var(--green)">${d.avg_hours_to_first ?? '—'}</div>
+    </div>
+    <div class="card accent">
+      <div class="card-label">Активація < 1 год</div>
+      <div class="card-value" style="color:var(--accent)">${fmt(d.fast_activations)}</div>
+    </div>
+    <div class="card" style="grid-column:span 2">
+      <div class="card-label">Активація > 24 год (ризик відтоку)</div>
+      <div class="card-value" style="color:var(--red)">${fmt(d.slow_activations)}</div>
+    </div>
+  </div>
+  <div class="table-block">
+    <div class="table-title">4. Feature Discovery — днів до першого використання</div>
+    <table>
+      <tr><th>Фіча</th><th>Медіана днів</th><th>Юзерів</th></tr>
+      ${(d.feature_discovery||[]).map(f => `
+        <tr>
+          <td style="font-weight:600">${f.feature}</td>
+          <td style="color:${(f.median_days||99)<=3?'var(--green)':(f.median_days||99)<=7?'var(--amber)':'var(--red)'}">${f.median_days ?? '—'} дн.</td>
+          <td>${fmt(f.users)}</td>
+        </tr>`).join('')}
+    </table>
+    <div style="font-size:11px;color:var(--text2);margin-top:6px">💡 > 7 днів = фіча прихована</div>
+  </div>
+  <div class="cards">
+    <div class="card accent">
+      <div class="card-label">Avg повідомлень Chainy</div>
+      <div class="card-value" style="color:var(--accent)">${d.avg_buddy_msgs}</div>
+    </div>
+    <div class="card green">
+      <div class="card-label">Deep (10+ повід.)</div>
+      <div class="card-value" style="color:var(--green)">${fmt(d.deep_chainy_users)}</div>
+    </div>
+    <div class="card" style="grid-column:span 2">
+      <div class="card-label">Shallow (< 3 повід.)</div>
+      <div class="card-value" style="color:var(--amber)">${fmt(d.shallow_chainy_users)}</div>
+    </div>
+  </div>
+  <div class="table-block">
+    <div class="table-title">6. Корреляція: активність → конверсія</div>
+    <table>
+      <tr><th>Сегмент</th><th>Юзерів</th><th>Платних</th><th>Conv%</th></tr>
+      ${(d.correlations||[]).map(c => `
+        <tr>
+          <td style="font-weight:600">${c.segment}</td>
+          <td>${fmt(c.users)}</td>
+          <td>${fmt(c.paid)}</td>
+          <td style="color:${c.pct>=40?'var(--green)':c.pct>=20?'var(--amber)':'var(--red)'};font-weight:700">${c.pct}%</td>
+        </tr>`).join('')}
+    </table>
+    <div style="font-size:11px;color:var(--text2);margin-top:6px">💡 > 40% = "магічне число" для онбордингу</div>
+  </div>
+  <div class="chart-block">
+    <div class="chart-title">8. Активність по годинах</div>
+    <div class="chart-wrap"><canvas id="chart-hours"></canvas></div>
+  </div>
+  <div class="chart-block">
+    <div class="chart-title">9. Дії по днях (30 днів)</div>
+    <div class="chart-wrap"><canvas id="chart-actions-days"></canvas></div>
+  </div>
+  <div class="table-block">
+    <div class="table-title">10. Топ кнопок</div>
+    <table>
+      <tr><th>#</th><th>Дія</th><th>Натискань</th></tr>
+      ${(d.top_buttons||[]).map((b,i) => `
+        <tr>
+          <td style="color:var(--text3)">${i+1}</td>
+          <td style="font-weight:600">${b.name}</td>
+          <td style="color:var(--accent)">${fmt(b.count)}</td>
+        </tr>`).join('')}
+    </table>
+  </div>
+  ${renderCheckin(d.checkin)}
+  ${renderFeatures(d.features)}`;
+}
+
+// ── 11. Chainy Daily Check-in ────────────────────────────
+function renderCheckin(c) {
+  if (!c) return '';  // фіча вимкнена або ще немає даних — нічого не показуємо
+  const reply = c.reply_rate ?? 0;
+  const replyColor = reply >= 35 ? 'var(--green)' : reply >= 20 ? 'var(--amber)' : 'var(--red)';
+  return `
+  <div class="chart-block" style="border:1px solid var(--accent);border-radius:12px;padding:14px;margin-top:18px">
+    <div class="chart-title">11. 🤖 Chainy Daily Check-in</div>
+    <div class="chart-sub">Проактивні повідомлення Chainy → відповіді → практика</div>
+    <div class="cards" style="margin-top:10px">
+      <div class="card accent">
+        <div class="card-label">Надіслано сьогодні</div>
+        <div class="card-value" style="color:var(--accent)">${fmt(c.sent_today)}</div>
+      </div>
+      <div class="card green">
+        <div class="card-label">Відповіли (того ж дня)</div>
+        <div class="card-value" style="color:${replyColor}">${reply}%</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Надіслано за 7 днів</div>
+        <div class="card-value">${fmt(c.sent_7d)}</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Snooze rate</div>
+        <div class="card-value" style="color:var(--amber)">${c.snooze_rate ?? 0}%</div>
+      </div>
+    </div>
+    <div style="font-size:11px;color:var(--text2);margin-top:8px">
+      💡 Ціль reply rate ≥ 35%. Нижче 20% → переглянути час відправки або текст-гачок.
+    </div>
+    <div class="table-block" style="margin-top:12px">
+      <div class="table-title">Reply rate по днях (7 днів)</div>
+      <table>
+        <tr><th>Дата</th><th>Надіслано</th><th>Відповіли</th><th>Reply%</th></tr>
+        ${(c.daily||[]).map(r => `
+          <tr>
+            <td>${r.date}</td>
+            <td>${fmt(r.sent)}</td>
+            <td>${fmt(r.replied)}</td>
+            <td style="color:${r.pct>=35?'var(--green)':r.pct>=20?'var(--amber)':'var(--red)'};font-weight:700">${r.pct}%</td>
+          </tr>`).join('')}
+      </table>
+    </div>
+    <div class="table-block" style="margin-top:10px">
+      <div class="table-title">Вплив на retention (check-in vs контроль)</div>
+      <table>
+        <tr><th>Сегмент</th><th>Юзерів</th><th>D1</th><th>D7</th></tr>
+        ${(c.retention_lift||[]).map(s => `
+          <tr>
+            <td style="font-weight:600">${s.segment}</td>
+            <td>${fmt(s.users)}</td>
+            <td style="color:var(--accent)">${s.d1}%</td>
+            <td style="color:var(--green)">${s.d7}%</td>
+          </tr>`).join('')}
+      </table>
+      <div style="font-size:11px;color:var(--text2);margin-top:6px">💡 Якщо D7 у групи check-in вищий — фіча працює, розширюй rollout.</div>
+    </div>
+  </div>`;
+}
+
+// ── 12. Нові фічі: Victory / Video→Buddy / Grammar Decay ──
+function renderFeatures(f) {
+  if (!f) return '';  // подій ще не було — нічого не показуємо
+  const v = f.victory || {}, vid = f.video || {}, dec = f.decay || {};
+  return `
+  <div class="chart-block" style="border:1px solid var(--accent);border-radius:12px;padding:14px;margin-top:18px">
+    <div class="chart-title">12. ⚡ Нові фічі залученості</div>
+    <div class="chart-sub">Victory Card · Відео→Chainy · Граматичний decay</div>
+
+    <div style="font-size:13px;font-weight:700;color:var(--text);margin:14px 0 6px">🏆 Victory Card</div>
+    <div class="cards">
+      <div class="card accent"><div class="card-label">Показано сьогодні</div><div class="card-value" style="color:var(--accent)">${fmt(v.shown_today)}</div></div>
+      <div class="card"><div class="card-label">Показано 7 днів</div><div class="card-value">${fmt(v.shown_7d)}</div></div>
+      <div class="card green"><div class="card-label">Підняли ранг</div><div class="card-value" style="color:var(--green)">${v.rank_up_rate ?? 0}%</div></div>
+    </div>
+
+    <div style="font-size:13px;font-weight:700;color:var(--text);margin:16px 0 6px">🎬 Відео → Chainy</div>
+    <div class="cards">
+      <div class="card accent"><div class="card-label">Старти сьогодні</div><div class="card-value" style="color:var(--accent)">${fmt(vid.start_today)}</div></div>
+      <div class="card"><div class="card-label">Старти 7 днів</div><div class="card-value">${fmt(vid.start_7d)}</div></div>
+      <div class="card"><div class="card-label">З конспектом</div><div class="card-value" style="color:var(--green)">${vid.summary_rate ?? 0}%</div></div>
+    </div>
+    <div style="font-size:11px;color:var(--text2);margin-top:6px">Переказ: ${fmt(vid.retell)} · Обговорення: ${fmt(vid.discuss)} · По назві (без субтитрів): ${fmt(vid.by_title)}</div>
+
+    <div style="font-size:13px;font-weight:700;color:var(--text);margin:16px 0 6px">📉 Граматичний decay (помилки в розмові)</div>
+    <div class="cards">
+      <div class="card"><div class="card-label">Помилок сьогодні</div><div class="card-value">${fmt(dec.errors_today)}</div></div>
+      <div class="card"><div class="card-label">Помилок 7 днів</div><div class="card-value">${fmt(dec.errors_7d)}</div></div>
+      <div class="card amber"><div class="card-label">Юзерів з просіданням</div><div class="card-value" style="color:var(--amber)">${fmt(dec.users_with_decay)}</div></div>
+    </div>
+    <div style="font-size:11px;color:var(--text2);margin-top:6px">💡 «З просіданням» = мають теми, що знизились від помилок. Практика лікує — стеж, чи показник падає.</div>
+
+    <div class="table-block" style="margin-top:14px">
+      <div class="table-title">Активність по днях (7 днів)</div>
+      <table>
+        <tr><th>Дата</th><th>🏆 Victory</th><th>🎬 Відео</th><th>📉 Decay</th></tr>
+        ${(f.daily||[]).map(r => `
+          <tr><td>${r.date}</td><td>${fmt(r.victory)}</td><td>${fmt(r.video)}</td><td>${fmt(r.decay)}</td></tr>`).join('')}
+      </table>
+    </div>
+  </div>`;
+}
+function fmt(n) {
+  if (n == null) return '—';
+  if (n >= 1000) return (n/1000).toFixed(1) + 'K';
+  return String(n);
+}
+function pct(a, b) {
+  if (!b) return '0%';
+  return Math.round((a / b) * 100) + '%';
+}
+
+loadData();
+</script>
+</body>
+</html>
