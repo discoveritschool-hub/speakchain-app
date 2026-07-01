@@ -777,8 +777,26 @@ function showToast(msg){
   setTimeout(()=>t.classList.remove('show'),2200);
 }
 
+const BOT_API = 'https://speakchain-bot-production.up.railway.app';
+async function maAction(action, extra){
+  const body = Object.assign({
+    action: action,
+    uid: TG?.initDataUnsafe?.user?.id || (typeof D!=='undefined' && (D.uid||D.my_uid)) || 0,
+    init_data: TG?.initData || '',
+  }, extra || {});
+  let ok=false;
+  try {
+    const res = await fetch(BOT_API + '/miniapp_action', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(body),
+    });
+    ok = res.ok;
+  } catch(e){ ok=false; }
+  if(!ok && TG && typeof TG.sendData==='function'){ try{ TG.sendData(JSON.stringify(body)); }catch(e){} }
+  return ok;
+}
 function act(action,payload={}){
-  if(TG) TG.sendData(JSON.stringify({action,...payload}));
+  maAction(action, payload);
 }
 
 function switchTab(name,el){
