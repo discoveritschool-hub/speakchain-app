@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Speaking Buddy</title>
+<title>Chainy</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="https://discoveritschool-hub.github.io/speakchain-app/toast_rewards.js"></script>
 <style>
@@ -296,7 +296,7 @@
 <!-- ══ SCREEN 1: HOME ══ -->
 <div class="screen active" id="s-home">
   <div class="home-header">
-    <div class="home-title">Speaking Buddy</div>
+    <div class="home-title">Chainy</div>
     <div class="home-sub">Обери сценарій і починай говорити</div>
   </div>
   <div class="cat-tabs" id="cat-tabs"></div>
@@ -425,9 +425,9 @@ const USER_LEVEL = 'intermediate';
 
 const CATEGORIES = [
   { id: 'chainy',  label: '🤖 Chainy',          color: '#7c6ef7', bg: '#12102a', chainy: true },
-  { id: 'basics',  label: '💬 Спілкування',     color: '#4f8ef7', bg: '#1a2340' },
-  { id: 'daily',   label: '🏙️ Побут',           color: '#3ecf8e', bg: '#0f2820' },
+  { id: 'daily',   label: '🏙️ Щоденне життя',   color: '#3ecf8e', bg: '#0f2820' },
   { id: 'travel',  label: '✈️ Подорожі',        color: '#f59e0b', bg: '#2a1f0a' },
+  { id: 'basics',  label: '💬 Спілкування',     color: '#4f8ef7', bg: '#1a2340' },
   { id: 'work',    label: '💼 Робота',           color: '#a78bfa', bg: '#1e1a30' },
   { id: 'move',    label: '🌍 Переїзд',          color: '#fb7185', bg: '#2a1020' },
 ];
@@ -526,7 +526,7 @@ const LEVELS = [
 
 const DAILY_LIMIT = 20;
 
-let currentCat = 'basics';
+let currentCat = 'daily';
 let currentScenario = null;
 let selectedRole = 'friendly';
 let selectedLevel = 'intermediate';
@@ -1029,40 +1029,63 @@ function cleanForSpeech(text) {
     .trim();
 }
 
+// Кешуємо обраний голос, щоб не шукати щоразу
+let _pickedVoice = null;
+function pickBestVoice() {
+  const voices = speechSynthesis.getVoices() || [];
+  if (!voices.length) return null;
+  // Пріоритет: якісні нейро/мережеві голоси. Жіночі нейро-голоси зазвичай
+  // звучать найтепліше. Розширений список під різні платформи.
+  const PREFERRED = [
+    'Google US English', 'Google UK English Female',
+    'Microsoft Aria', 'Microsoft Jenny', 'Microsoft Ava', 'Microsoft Emma',
+    'Microsoft Michelle', 'Microsoft Guy', 'Microsoft Andrew',
+    'Samantha', 'Ava', 'Allison', 'Serena', 'Zoe', 'Siri',
+  ];
+  for (const name of PREFERRED) {
+    const v = voices.find(v => v.name && v.name.includes(name) && v.lang && v.lang.startsWith('en'));
+    if (v) return v;
+  }
+  // Далі: будь-який МЕРЕЖЕВИЙ (не локальний) англійський — вони кращі за роботизовані локальні
+  return voices.find(v => v.lang === 'en-US' && v.localService === false)
+      || voices.find(v => v.lang && v.lang.startsWith('en-') && v.localService === false)
+      || voices.find(v => v.lang === 'en-US')
+      || voices.find(v => v.lang && v.lang.startsWith('en'));
+}
+
+// Розбиваємо на речення — інтонація «скидається» на кожному реченні,
+// що звучить живіше за суцільний монотонний потік.
+function splitSentences(text) {
+  return text
+    .split(/(?<=[.!?…])\s+/)
+    .map(s => s.trim())
+    .filter(Boolean);
+}
+
 function speakTTS(text) {
   if (!ttsEnabled) return;
   const clean = cleanForSpeech(text);
   if (!clean) return;                          // лишились самі емодзі — не озвучуємо
   window.speechSynthesis.cancel();
-  const utt = new SpeechSynthesisUtterance(clean);
-  utt.lang = 'en-US';
-  utt.rate = 0.95;                             // трохи природніший темп
-  utt.pitch = 1.05;                            // ледь вищий тон — менш "роботизовано"
-  utt.volume = 1.0;
 
-  const voices = speechSynthesis.getVoices();
-  // Пріоритет: відомі якісні нейро-голоси → будь-який мережевий → локальний.
-  const PREFERRED = [
-    'Google US English', 'Microsoft Aria', 'Microsoft Jenny', 'Microsoft Guy',
-    'Samantha', 'Ava', 'Allison', 'Siri',
-  ];
-  let voice = null;
-  for (const name of PREFERRED) {
-    voice = voices.find(v => v.name && v.name.includes(name) && v.lang.startsWith('en'));
-    if (voice) break;
-  }
-  voice = voice
-    || voices.find(v => v.lang === 'en-US' && v.localService === false)
-    || voices.find(v => v.lang.startsWith('en-') && v.localService === false)
-    || voices.find(v => v.lang.startsWith('en'));
-  if (voice) utt.voice = voice;
+  if (!_pickedVoice) _pickedVoice = pickBestVoice();
+  const voice = _pickedVoice;
 
-  speechSynthesis.speak(utt);
+  const parts = splitSentences(clean);
+  parts.forEach((sentence) => {
+    const utt = new SpeechSynthesisUtterance(sentence);
+    utt.lang = 'en-US';
+    utt.rate = 1.0;                            // природний темп розмови
+    utt.pitch = 1.0;                           // нейтральний тон — нейро-голоси й так теплі
+    utt.volume = 1.0;
+    if (voice) utt.voice = voice;
+    speechSynthesis.speak(utt);
+  });
 }
 
 // Ініціалізація голосів
 if (typeof speechSynthesis !== 'undefined') {
-  speechSynthesis.onvoiceschanged = () => speechSynthesis.getVoices();
+  speechSynthesis.onvoiceschanged = () => { _pickedVoice = pickBestVoice(); };
 }
 
 // ── Toggle voice mode ──
@@ -1078,6 +1101,35 @@ function toggleVoiceMode() {
 }
 
 // ── Speech Recognition (мікрофон) ──
+// Проблема Web Speech API: за замовчуванням він завершує розпізнавання
+// на першій же паузі. Рішення — власний таймер тиші: ми самі вирішуємо,
+// коли репліка завершена, а не браузер. continuous=true + авто-перезапуск,
+// якщо движок обірвався, поки юзер ще не домовив.
+let silenceTimer = null;
+let finalTranscript = '';          // накопичений фінальний текст поточної репліки
+let userStoppedManually = false;   // юзер сам натиснув стоп
+const SILENCE_MS = 2500;           // скільки чекати тиші перед завершенням репліки
+
+function clearSilenceTimer() {
+  if (silenceTimer) { clearTimeout(silenceTimer); silenceTimer = null; }
+}
+
+function armSilenceTimer() {
+  clearSilenceTimer();
+  silenceTimer = setTimeout(() => {
+    // Пауза досить довга — вважаємо репліку завершеною
+    finalizeSpeech();
+  }, SILENCE_MS);
+}
+
+function finalizeSpeech() {
+  clearSilenceTimer();
+  const text = (finalTranscript || document.getElementById('chat-input').value || '').trim();
+  userStoppedManually = true;   // щоб onend не перезапускав
+  stopListening();
+  if (text) sendMessage();
+}
+
 function initRecognition() {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SR) return null;
@@ -1085,29 +1137,48 @@ function initRecognition() {
   r.lang = 'en-US';
   r.interimResults = true;
   r.maxAlternatives = 1;
-  r.continuous = false;
+  r.continuous = true;             // не завершувати на першій паузі
 
   r.onresult = (e) => {
-    const transcript = Array.from(e.results)
-      .map(r => r[0].transcript).join('');
-    const input = document.getElementById('chat-input');
-    input.value = transcript;
-    autoResize(input);
-    // Якщо результат фінальний — відправляємо автоматично
-    if (e.results[e.results.length - 1].isFinal) {
-      stopListening();
-      if (transcript.trim()) sendMessage();
+    // Збираємо фінальні + проміжні шматки окремо
+    let interim = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      const chunk = e.results[i][0].transcript;
+      if (e.results[i].isFinal) {
+        finalTranscript += (finalTranscript ? ' ' : '') + chunk.trim();
+      } else {
+        interim += chunk;
+      }
     }
+    const input = document.getElementById('chat-input');
+    input.value = (finalTranscript + ' ' + interim).trim();
+    autoResize(input);
+    // Почули мовлення — скидаємо таймер тиші (юзер ще говорить)
+    armSilenceTimer();
   };
 
-  r.onerror = () => stopListening();
-  r.onend   = () => stopListening();
+  r.onspeechstart = () => { clearSilenceTimer(); };   // почав говорити — не рахуємо тишу
+  r.onerror = (ev) => {
+    // no-speech / aborted — не критично; даємо таймеру тиші вирішити
+    if (ev && (ev.error === 'no-speech' || ev.error === 'audio-capture')) return;
+    stopListening();
+  };
+  r.onend = () => {
+    // Браузер сам завершив (напр. коротка тиша). Якщо юзер не тиснув стоп
+    // і таймер тиші ще не спрацював — перезапускаємо, щоб дати домовити.
+    if (isListening && !userStoppedManually) {
+      try { recognition && recognition.start(); return; }
+      catch(e) { /* впаде — просто зупинимось нижче */ }
+    }
+    stopListening();
+  };
   return r;
 }
 
 function toggleSpeechInput() {
   if (isListening) {
-    stopListening();
+    // Ручна зупинка = юзер закінчив, відправляємо що є
+    finalizeSpeech();
   } else {
     startListening();
   }
@@ -1116,6 +1187,10 @@ function toggleSpeechInput() {
 function startListening() {
   // Зупиняємо TTS поки говорить юзер
   window.speechSynthesis.cancel();
+
+  finalTranscript = '';
+  userStoppedManually = false;
+  clearSilenceTimer();
 
   recognition = initRecognition();
   if (!recognition) {
@@ -1131,7 +1206,7 @@ function startListening() {
     const btn = document.getElementById('mic-btn');
     btn.textContent = '⏹';
     btn.classList.add('listening');
-    document.getElementById('chat-input').placeholder = '🎤 Говори англійською...';
+    document.getElementById('chat-input').placeholder = '🎤 Говори англійською... (пауза ок)';
   } catch(e) {
     stopListening();
   }
@@ -1139,7 +1214,9 @@ function startListening() {
 
 function stopListening() {
   isListening = false;
+  clearSilenceTimer();
   if (recognition) {
+    try { recognition.onend = null; } catch(e) {}   // щоб onend не перезапускав
     try { recognition.stop(); } catch(e) {}
     recognition = null;
   }
