@@ -138,6 +138,7 @@ tr:hover td{background:var(--surface2)}
 
 <div class="tabs">
   <div class="tab active" onclick="switchTab('overview')">Огляд</div>
+  <div class="tab" onclick="switchTab('students')">Учні</div>
   <div class="tab" onclick="switchTab('retention')">Retention</div>
   <div class="tab" onclick="switchTab('funnel')">Funnel</div>
   <div class="tab" onclick="switchTab('revenue')">Revenue</div>
@@ -151,6 +152,13 @@ tr:hover td{background:var(--surface2)}
   <!-- OVERVIEW -->
   <div class="section active" id="tab-overview">
     <div id="overview-content">
+      <div class="loading"><div class="spinner"></div>Завантаження...</div>
+    </div>
+  </div>
+
+  <!-- STUDENTS -->
+  <div class="section" id="tab-students">
+    <div id="students-content">
       <div class="loading"><div class="spinner"></div>Завантаження...</div>
     </div>
   </div>
@@ -210,7 +218,7 @@ let activeTab = 'overview';
 function switchTab(tab) {
   activeTab = tab;
   document.querySelectorAll('.tab').forEach((t, i) => {
-    t.classList.toggle('active', ['overview','retention','funnel','revenue','buddy','bloggers','actions'][i] === tab);
+    t.classList.toggle('active', ['overview','students','retention','funnel','revenue','buddy','bloggers','actions'][i] === tab);
   });
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   document.getElementById(`tab-${tab}`).classList.add('active');
@@ -345,11 +353,11 @@ async function loadData() {
     const now = new Date().toLocaleTimeString('uk-UA', {hour:'2-digit', minute:'2-digit'});
     document.getElementById('last-updated').textContent = `Оновлено ${now}`;
     renderTab(activeTab);
-    ['overview','retention','funnel','revenue','buddy','bloggers','actions'].forEach(t => {
+    ['overview','students','retention','funnel','revenue','buddy','bloggers','actions'].forEach(t => {
       if (t !== activeTab) renderTab(t);
     });
   } catch(e) {
-    ['overview','retention','funnel','revenue','buddy'].forEach(t => {
+    ['overview','students','retention','funnel','revenue','buddy'].forEach(t => {
       document.getElementById(`${t}-content`).innerHTML =
         `<div class="error-box">❌ ${e.message}</div>`;
     });
@@ -362,6 +370,7 @@ function renderTab(tab) {
   if (!data) return;
   switch(tab) {
     case 'overview':   el.innerHTML = renderOverview(); break;
+    case 'students':   el.innerHTML = renderStudents(); break;
     case 'retention':  el.innerHTML = renderRetention(); break;
     case 'funnel':     el.innerHTML = renderFunnel(); break;
     case 'revenue':    el.innerHTML = renderRevenue(); break;
@@ -370,6 +379,167 @@ function renderTab(tab) {
     case 'actions':    el.innerHTML = renderActions(); break;
   }
   setTimeout(() => drawCharts(tab), 50);
+}
+
+// ── STUDENTS (Phase 1: трекшн учнів) ────────────────────
+function renderStudents() {
+  const d = data.students;
+  if (!d) return '<div class="loading">Немає даних по учнях</div>';
+  const s = d.summary || {};
+
+  const levelRows = (d.level_distribution || []).map(l => `
+    <div style="display:flex;align-items:center;gap:8px;margin:6px 0">
+      <div style="width:28px;font-weight:700;color:var(--text)">${l.level}</div>
+      <div style="flex:1;background:var(--surface2);border-radius:6px;height:20px;overflow:hidden;position:relative">
+        <div style="height:100%;width:${l.avg_pct}%;background:linear-gradient(90deg,#4f8ef7,#7c6ef7);border-radius:6px"></div>
+        <div style="position:absolute;inset:0;display:flex;align-items:center;padding-left:8px;font-size:11px;color:#fff">${l.avg_pct}% прогрес</div>
+      </div>
+      <div style="width:64px;text-align:right;font-size:12px;color:var(--text2)">${fmt(l.count)} учн.</div>
+    </div>`).join('');
+
+  const avgDaysRows = (d.avg_days_per_level || []).length ? `
+    <div class="table-block" style="margin-top:14px">
+      <div class="table-title">Середній час на рівні (з історії переходів)</div>
+      <table>
+        <tr><th>Рівень</th><th>Сер. днів</th><th>Учнів</th></tr>
+        ${(d.avg_days_per_level||[]).map(r => `
+          <tr><td>${r.level}</td><td>${fmt(r.avg_days)} дн.</td><td>${fmt(r.n)}</td></tr>`).join('')}
+      </table>
+    </div>` : '';
+
+  function problemTable(title, list, hint, emptyMsg, key) {
+    if (!list || !list.length) {
+      return `<div class="table-block" style="margin-top:14px">
+        <div class="table-title">${title}</div>
+        <div style="font-size:12px;color:var(--text2);padding:8px 0">${emptyMsg||'Порожньо 🎉'}</div>
+      </div>`;
+    }
+    const rows = list.map((c, i) => `
+      <tr onclick="openStudentCard('${key}', ${i})" style="cursor:pointer">
+        <td>${esc(c.name)}</td>
+        <td>${c.level}</td>
+        <td>${c.progress}%</td>
+        <td>${c.inactive_days >= 0 ? c.inactive_days + ' дн.' : '—'}</td>
+        <td>${c.plan}</td>
+      </tr>`).join('');
+    return `<div class="table-block" style="margin-top:14px">
+      <div class="table-title">${title} <span style="color:var(--text3);font-weight:400">(${list.length})</span></div>
+      ${hint ? `<div style="font-size:11px;color:var(--text3);margin-bottom:6px">${hint}</div>` : ''}
+      <table>
+        <tr><th>Ім'я</th><th>Рівень</th><th>Прогрес</th><th>Не заходив</th><th>План</th></tr>
+        ${rows}
+      </table>
+    </div>`;
+  }
+
+  return `
+  <div class="cards">
+    <div class="card accent">
+      <div class="card-label">Всього учнів</div>
+      <div class="card-value" style="color:var(--accent)">${fmt(s.total)}</div>
+    </div>
+    <div class="card amber">
+      <div class="card-label">Застрягли</div>
+      <div class="card-value" style="color:var(--amber)">${fmt(s.stuck)}</div>
+      <div class="card-delta delta-flat">низький прогрес + пасивні</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Кинули</div>
+      <div class="card-value" style="color:var(--red)">${fmt(s.churned)}</div>
+      <div class="card-delta delta-flat">${s.churn_days}+ дн. без входу</div>
+    </div>
+    <div class="card green">
+      <div class="card-label">Рухаються</div>
+      <div class="card-value" style="color:var(--green)">${fmt(s.progressing)}</div>
+      <div class="card-delta delta-flat">${fmt(s.ever_progressed)} з переходом рівня</div>
+    </div>
+  </div>
+
+  <div class="chart-block">
+    <div class="chart-title">Розподіл учнів по рівнях</div>
+    <div class="chart-wrap"><canvas id="chart-levels"></canvas></div>
+  </div>
+
+  <div class="chart-block">
+    <div class="chart-title">Середній прогрес всередині рівня</div>
+    ${levelRows}
+  </div>
+
+  ${avgDaysRows}
+
+  ${problemTable('🟡 Застрягли', d.stuck,
+    `Прогрес ≤${s.stuck_progress_max}% і не заходили ${s.stuck_inactive_days}+ дн. Тицьни на рядок → картка учня.`,
+    'Ніхто не застряг 🎉', 'stuck')}
+
+  ${problemTable('🔴 Кинули', d.churned,
+    `Не заходили ${s.churn_days}+ днів. Кандидати на win-back.`,
+    'Ніхто не кинув 🎉', 'churned')}
+
+  ${problemTable('💸 Не платять', d.unpaid,
+    'Тріал завершився, активність була, але немає оплати.',
+    'Всі активні оплатили 🎉', 'unpaid')}
+
+  ${problemTable('🟢 Рухаються', d.progressing,
+    'Мали хоча б один перехід рівня. Історія в картці.',
+    'Ще ніхто не перейшов рівень', 'progressing')}
+  `;
+}
+
+function esc(str) {
+  return String(str == null ? '' : str)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+function openStudentCard(key, idx) {
+  const list = (data.students && data.students[key]) || [];
+  const c = list[idx];
+  if (!c) return;
+  const histRows = (c.history || []).map(h =>
+    `<tr><td>${h.date||'—'}</td><td>${h.level}</td><td>${h.source||''}</td><td>${h.days_on_prev||0} дн.</td></tr>`
+  ).join('');
+  const histBlock = (c.history && c.history.length) ? `
+    <div style="font-size:12px;font-weight:600;color:var(--text);margin:12px 0 4px">Історія рівнів</div>
+    <table style="width:100%;font-size:12px">
+      <tr><th style="text-align:left">Дата</th><th style="text-align:left">Рівень</th><th style="text-align:left">Тип</th><th style="text-align:left">Днів</th></tr>
+      ${histRows}
+    </table>` : '';
+
+  const html = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <div style="font-size:16px;font-weight:700;color:var(--text)">${esc(c.name)}</div>
+      <div onclick="closeStudentCard()" style="cursor:pointer;color:var(--text2);font-size:20px;padding:0 6px">✕</div>
+    </div>
+    <div class="cards">
+      <div class="card"><div class="card-label">Рівень</div><div class="card-value" style="font-size:18px">${c.level}</div></div>
+      <div class="card"><div class="card-label">Прогрес</div><div class="card-value" style="font-size:18px">${c.progress}%</div></div>
+      <div class="card"><div class="card-label">Уроків</div><div class="card-value" style="font-size:18px">${fmt(c.lessons)}</div></div>
+      <div class="card"><div class="card-label">Chain</div><div class="card-value" style="font-size:18px">${fmt(c.chain)}</div></div>
+    </div>
+    <div style="font-size:12px;color:var(--text2);margin-top:10px;line-height:1.7">
+      План: <b style="color:var(--text)">${c.plan}</b><br>
+      Джерело: <b style="color:var(--text)">${esc(c.source)}</b><br>
+      Останній вхід: <b style="color:var(--text)">${c.last_active||'—'}</b>${c.inactive_days>=0?` (${c.inactive_days} дн. тому)`:''}<br>
+      Переходів рівня: <b style="color:var(--text)">${c.transitions||0}</b>${c.uid?`<br>ID: <b style="color:var(--text)">${c.uid}</b>`:''}
+    </div>
+    ${histBlock}
+  `;
+  let modal = document.getElementById('student-modal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'student-modal';
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:998;display:flex;align-items:flex-end';
+    modal.onclick = (e) => { if (e.target === modal) closeStudentCard(); };
+    document.body.appendChild(modal);
+  }
+  modal.innerHTML = `<div style="background:var(--surface,#12102a);border-top-left-radius:18px;border-top-right-radius:18px;
+    width:100%;max-height:82vh;overflow-y:auto;padding:18px 16px 28px">${html}</div>`;
+  modal.style.display = 'flex';
+}
+
+function closeStudentCard() {
+  const modal = document.getElementById('student-modal');
+  if (modal) modal.style.display = 'none';
 }
 
 // ── OVERVIEW ─────────────────────────────────────────────
@@ -737,6 +907,15 @@ function drawCharts(tab) {
            backgroundColor: ['rgba(239,68,68,.7)','rgba(245,158,11,.7)','rgba(62,207,142,.7)','rgba(79,142,247,.7)'],
            borderRadius: 4 }]);
   }
+
+  if (tab === 'students') {
+    const st = data.students;
+    if (st && document.getElementById('chart-levels')) {
+      const ld = st.level_distribution || [];
+      makeChart('chart-levels', 'bar', ld.map(l => l.level),
+        [{ data: ld.map(l => l.count), backgroundColor: 'rgba(79,142,247,.7)', borderRadius: 4 }]);
+    }
+  }
 }
 
 // ── BLOGGERS ─────────────────────────────────────────────
@@ -829,6 +1008,25 @@ function renderBloggers() {
           <td style="color:var(--text2)">${p.paid_date || '—'}</td>
         </tr>`).join('')}
     </table>
+  </div>
+
+  <div class="table-block" style="border:1px solid var(--amber);border-radius:12px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+      <div class="table-title" style="margin:0">🔴 Всі неоплачені (за всі місяці)</div>
+      <div style="font-size:14px;font-weight:700;color:var(--amber)">$${fmt(d.unpaid_all_total || 0)}</div>
+    </div>
+    <div style="font-size:11px;color:var(--text3);margin-bottom:8px">Борги блогерам за всі місяці, включно з пропущеними. Щоб нічого не губилось.</div>
+    ${(d.unpaid_all && d.unpaid_all.length) ? `
+    <table>
+      <tr><th>Місяць</th><th>Блогер</th><th>Оплат</th><th>До виплати</th></tr>
+      ${d.unpaid_all.map(u => `
+        <tr>
+          <td>${u.month}</td>
+          <td style="font-weight:600">${esc(u.blogger)}</td>
+          <td style="color:var(--text2)">${fmt(u.count)}</td>
+          <td style="color:var(--amber);font-weight:600">$${u.commission}</td>
+        </tr>`).join('')}
+    </table>` : '<div style="font-size:12px;color:var(--green);padding:8px 0">✅ Немає неоплачених боргів</div>'}
   </div>`;
 }
 
