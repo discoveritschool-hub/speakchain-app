@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>SpeakChain · Upgrade</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --purple:#7c6ef7;--green:#5ad8a6;--orange:#f7a35c;
+  --red:#f76e6e;--gold:#f5c842;--blue:#5ab4f7;
+  --bg:#0d0d14;--bg2:#16161f;--bg3:#1e1e2a;--bg4:#252535;
+  --text:#eaeaf5;--text2:#8888a8;--border:rgba(255,255,255,0.07);
+}
+body{
+  background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;
+  min-height:100vh;
+  padding-bottom:max(env(safe-area-inset-bottom),32px);
+}
+
+/* ── Hero ── */
+.hero{
+  padding:28px 16px 20px;text-align:center;
+  background:linear-gradient(180deg,rgba(124,110,247,.12) 0%,transparent 100%);
+  border-bottom:.5px solid var(--border);
+}
+.hero-trophy{font-size:52px;margin-bottom:10px;display:block;}
+.hero-title{font-size:22px;font-weight:700;letter-spacing:-.4px;margin-bottom:6px;}
+.hero-sub{font-size:14px;color:var(--text2);line-height:1.5;}
+
+/* ── Trial stats ── */
+.stats-row{
+  display:grid;grid-template-columns:repeat(3,1fr);
+  gap:8px;padding:14px 14px 0;
+}
+.stat{
+  background:var(--bg3);border-radius:14px;padding:12px 10px;
+  text-align:center;border:.5px solid var(--border);
+}
+.stat-val{font-size:24px;font-weight:700;color:var(--purple);line-height:1;}
+.stat-lbl{font-size:9px;color:var(--text2);font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-top:4px;}
+
+/* ── Chain replay ── */
+.chain-replay{
+  margin:14px 14px 0;padding:14px;
+  background:var(--bg3);border-radius:14px;border:.5px solid var(--border);
+}
+.chain-replay-title{font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;}
+.chain-dots{display:flex;gap:5px;justify-content:center;flex-wrap:wrap;}
+.chain-dot{
+  width:28px;height:28px;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:13px;
+}
+.chain-dot.done  {background:rgba(124,110,247,.25);}
+.chain-dot.final {background:var(--purple);box-shadow:0 0 12px rgba(124,110,247,.5);}
+.chain-verdict{
+  text-align:center;margin-top:10px;
+  font-size:13px;color:var(--text2);line-height:1.5;
+}
+.chain-verdict b{color:var(--text);}
+
+/* ── Plan cards ── */
+.plans-wrap{padding:14px 14px 0;}
+.plans-label{
+  font-size:10px;font-weight:700;color:var(--text2);
+  text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;
+}
+
+.plan-card{
+  border-radius:16px;padding:16px;margin-bottom:10px;
+  cursor:pointer;position:relative;overflow:hidden;
+  transition:transform .1s,opacity .15s;
+  border:1.5px solid transparent;
+}
+.plan-card:active{transform:scale(.99);opacity:.9;}
+
+.plan-card.premium{
+  background:linear-gradient(135deg,rgba(124,110,247,.15),rgba(245,200,66,.08));
+  border-color:rgba(124,110,247,.4);
+}
+.plan-card.basic{
+  background:var(--bg3);
+  border-color:var(--border);
+}
+
+.plan-top{display:flex;align-items:flex-start;gap:10px;margin-bottom:12px;}
+.plan-icon{font-size:28px;flex-shrink:0;}
+.plan-name{font-size:17px;font-weight:700;}
+.plan-tagline{font-size:11px;color:var(--text2);margin-top:2px;line-height:1.4;}
+.plan-price-wrap{margin-left:auto;text-align:right;flex-shrink:0;}
+.plan-price{font-size:24px;font-weight:700;color:var(--green);line-height:1;}
+.plan-period{font-size:10px;color:var(--text2);}
+.plan-note{font-size:10px;color:var(--purple);font-weight:600;margin-top:2px;}
+
+.plan-feats{display:flex;flex-direction:column;gap:5px;}
+.feat-row{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text);}
+.feat-icon{font-size:14px;width:18px;text-align:center;flex-shrink:0;}
+.feat-lock{
+  margin-left:auto;font-size:9px;font-weight:700;
+  padding:2px 6px;border-radius:6px;
+  background:rgba(124,110,247,.15);color:var(--purple);
+  flex-shrink:0;
+}
+
+.divider-or{
+  display:flex;align-items:center;gap:10px;margin:2px 0;
+}
+.divider-or::before,.divider-or::after{
+  content:'';flex:1;height:.5px;background:var(--border);
+}
+.divider-or span{font-size:10px;color:var(--text2);font-weight:600;}
+
+/* ── CTA buttons ── */
+.cta-wrap{padding:14px 14px 0;}
+.cta-btn{
+  width:100%;padding:16px;border-radius:16px;border:none;cursor:pointer;
+  font-size:15px;font-weight:700;
+  transition:transform .1s,opacity .15s;margin-bottom:8px;
+}
+.cta-btn:active{transform:scale(.98);opacity:.9;}
+.cta-btn.premium{background:var(--purple);color:#fff;}
+.cta-btn.basic  {background:var(--bg3);color:var(--text);border:.5px solid rgba(124,110,247,.3);}
+.cta-btn.ghost  {background:transparent;color:var(--text2);font-size:12px;padding:10px;}
+
+/* ── Discount banner ── */
+.discount-banner{
+  margin:14px 14px 0;padding:14px 16px;border-radius:16px;
+  background:linear-gradient(135deg,rgba(90,216,166,.12),rgba(245,200,66,.06));
+  border:1px solid rgba(90,216,166,.3);
+  position:relative;overflow:hidden;
+}
+.discount-banner::before{
+  content:'';position:absolute;top:-20px;right:-20px;
+  width:80px;height:80px;border-radius:50%;
+  background:radial-gradient(circle,rgba(90,216,166,.15) 0%,transparent 70%);
+}
+.discount-top{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+.discount-icon{font-size:22px;flex-shrink:0;}
+.discount-who{font-size:13px;font-weight:700;color:var(--text);}
+.discount-who-sub{font-size:11px;color:var(--text2);margin-top:1px;}
+.discount-prices{
+  display:flex;align-items:center;gap:10px;
+  background:rgba(0,0,0,.2);border-radius:10px;padding:10px 12px;
+}
+.discount-old{
+  font-size:13px;color:var(--text2);
+  text-decoration:line-through;text-decoration-color:var(--red);
+  text-decoration-thickness:1.5px;
+}
+.discount-arrow{font-size:16px;color:var(--green);}
+.discount-new{font-size:20px;font-weight:700;color:var(--green);}
+.discount-save{
+  margin-left:auto;
+  background:rgba(90,216,166,.2);color:var(--green);
+  padding:3px 10px;border-radius:20px;font-size:11px;font-weight:800;
+  white-space:nowrap;
+}
+.discount-reason{
+  margin-top:8px;font-size:11px;color:var(--text2);line-height:1.5;
+}
+.discount-reason b{color:var(--green);}
+/* friend source — простіший варіант */
+.source-note{
+  margin:14px 14px 0;padding:10px 14px;border-radius:12px;
+  background:rgba(90,216,166,.08);border:.5px solid rgba(90,216,166,.2);
+  font-size:11px;color:var(--green);font-weight:600;text-align:center;
+}
+
+/* ── Guarantee ── */
+.guarantee{
+  text-align:center;padding:12px 16px 0;
+  font-size:11px;color:var(--text2);line-height:1.5;
+}
+.guarantee b{color:var(--text);}
+
+/* ── Comparison table ── */
+.compare-wrap{padding:14px 14px 0;}
+.compare-title{font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;}
+.compare-table{width:100%;border-collapse:collapse;}
+.compare-table th{
+  padding:8px 6px;font-size:10px;font-weight:700;color:var(--text2);
+  text-transform:uppercase;letter-spacing:.05em;text-align:center;
+  border-bottom:.5px solid var(--border);
+}
+.compare-table th.feat-col{text-align:left;}
+.compare-table td{
+  padding:9px 6px;font-size:12px;text-align:center;
+  border-bottom:.5px solid var(--border);color:var(--text2);
+}
+.compare-table td.feat-col{text-align:left;color:var(--text);}
+.compare-table td.yes{color:var(--green);font-size:15px;}
+.compare-table td.partial{color:var(--orange);font-size:12px;font-weight:600;}
+.compare-table td.no {color:var(--bg4);font-size:15px;}
+.compare-table tr:last-child td{border-bottom:none;}
+</style>
+</head>
+<body>
+
+<!-- Hero -->
+<div class="hero">
+  <span class="hero-trophy" id="hero-icon">🏁</span>
+  <div class="hero-title" id="hero-title">Пробний період завершено!</div>
+  <div class="hero-sub" id="hero-sub">Ти пройшов далі ніж 80% тих хто починав.</div>
+</div>
+
+<!-- Trial stats -->
+<div class="stats-row" id="stats-row"></div>
+
+<!-- Chain replay -->
+<div class="chain-replay">
+  <div class="chain-replay-title">Твій ланцюжок</div>
+  <div class="chain-dots" id="chain-dots"></div>
+  <div class="chain-verdict" id="chain-verdict"></div>
+</div>
+
+<!-- Discount banner (blogger / friend) -->
+<div id="discount-banner" style="display:none">
+  <!-- Blogger variant -->
+  <div class="discount-banner" id="discount-blogger" style="display:none">
+    <div class="discount-top">
+      <span class="discount-icon">🎓</span>
+      <div>
+        <div class="discount-who" id="discount-who">Ціна від викладача</div>
+        <div class="discount-who-sub">Спеціальні умови для студентів викладача</div>
+      </div>
+    </div>
+    <!-- Basic only -->
+    <div class="discount-prices">
+      <span class="discount-old" id="discount-old-basic"></span>
+      <span class="discount-arrow">→</span>
+      <span class="discount-new" id="discount-new-basic"></span>
+      <span class="discount-save" id="discount-save-basic"></span>
+    </div>
+    <div class="discount-reason">
+      Ця ціна діє <b>тільки для студентів</b> цього викладача.
+      Після оплати знижка зберігається назавжди — навіть при поновленні.
+    </div>
+  </div>
+  <!-- Friend variant -->
+  <div class="source-note" id="discount-friend" style="display:none">
+    🤝 Ціна для друзів — знижка активована
+  </div>
+</div>
+
+<!-- Plans -->
+<div class="plans-wrap">
+  <div class="plans-label">Обери свій план</div>
+
+  <!-- Basic — ПЕРШИМ -->
+  <div class="plan-card basic" id="card-basic" onclick="selectPlan('basic')">
+    <div class="plan-top">
+      <span class="plan-icon">⚡️</span>
+      <div>
+        <div class="plan-name">Basic</div>
+        <div class="plan-tagline">Повна система опанування англійської<br>через мовлення та практику</div>
+      </div>
+      <div class="plan-price-wrap">
+        <div class="plan-price" id="basic-price">$22</div>
+        <div class="plan-period">/міс</div>
+        <div class="plan-note" id="basic-note" style="display:none"></div>
+      </div>
+    </div>
+    <div class="plan-feats">
+      <div class="feat-row"><span class="feat-icon">🎬</span>Shadowing-плеєр з loop і субтитрами</div>
+      <div class="feat-row"><span class="feat-icon">🤖</span>AI-фідбек після кожного монологу</div>
+      <div class="feat-row"><span class="feat-icon">🔍</span>Gap analysis — твої прогалини після уроку</div>
+      <div class="feat-row"><span class="feat-icon">📊</span>Прогрес A1→B2 · Roadmap і статистика</div>
+      <div class="feat-row"><span class="feat-icon">🎯</span>Speaking-челенджі та дуелі з друзями</div>
+      <div class="feat-row"><span class="feat-icon">💬</span>Картотека фраз · SRS-повторення</div>
+      <div class="feat-row"><span class="feat-icon">🏆</span>Leaderboard · Ланцюжок · XP</div>
+      <div class="feat-row"><span class="feat-icon">📈</span>Звіти прогресу — щомісячний аналіз</div>
+    </div>
+  </div>
+
+  <div class="divider-or"><span>або</span></div>
+
+  <!-- Premium — ДРУГИМ -->
+  <div class="plan-card premium" id="card-premium" onclick="selectPlan('premium')">
+    <div class="plan-top">
+      <span class="plan-icon">🌟</span>
+      <div>
+        <div class="plan-name">Premium</div>
+        <div class="plan-tagline">Все з Basic + зворотній зв'язок<br>живого викладача</div>
+      </div>
+      <div class="plan-price-wrap">
+        <div class="plan-price" id="prem-price">$93</div>
+        <div class="plan-period">/міс</div>
+        <div class="plan-note" id="prem-note" style="display:none"></div>
+      </div>
+    </div>
+    <div class="plan-feats">
+      <div class="feat-row"><span class="feat-icon">🎙</span>Speaking Buddy — жива розмова з партнером</div>
+      <div class="feat-row"><span class="feat-icon">✏️</span>Розбір помилок + щотижнева перевірка прогресу</div>
+      <div class="feat-row"><span class="feat-icon">❓</span>Q&A з автором — відповіді щотижня</div>
+      <div class="feat-row"><span class="feat-icon">🔒</span>Закрита спільнота</div>
+      <div class="feat-row"><span class="feat-icon">🏅</span>Сертифікат + Зала слави</div>
+    </div>
+  </div>
+</div>
+
+<!-- CTA -->
+<div class="cta-wrap">
+  <button class="cta-btn basic" id="cta-btn" onclick="pay()">⚡️ Отримати Basic</button>
+  <button class="cta-btn ghost" onclick="act('paywall_remind_later')">Нагадати пізніше</button>
+</div>
+
+<!-- Comparison table -->
+<div class="compare-wrap">
+  <div class="compare-title">Що включено</div>
+  <table class="compare-table">
+    <thead>
+      <tr>
+        <th class="feat-col">Функція</th>
+        <th>Trial</th>
+        <th>Basic</th>
+        <th>Premium</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td class="feat-col">Shadowing-плеєр</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+      <tr><td class="feat-col">AI-фідбек</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+      <tr><td class="feat-col">Gap analysis</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+      <tr><td class="feat-col">Roadmap A1→B2</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+      <tr><td class="feat-col">Speaking-челенджі</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+      <tr><td class="feat-col">Картотека фраз</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+      <tr><td class="feat-col">Leaderboard · XP</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+      <tr><td class="feat-col">Звіти прогресу</td><td class="no">—</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+      <tr><td class="feat-col">Speaking Buddy</td><td class="no">—</td><td class="no">—</td><td class="yes">✓</td></tr>
+      <tr><td class="feat-col">Q&A з викладачем</td><td class="no">—</td><td class="no">—</td><td class="yes">✓</td></tr>
+      <tr><td class="feat-col">Розбір помилок</td><td class="no">—</td><td class="no">—</td><td class="yes">✓</td></tr>
+      <tr><td class="feat-col">Закрита спільнота</td><td class="no">—</td><td class="no">—</td><td class="yes">✓</td></tr>
+      <tr><td class="feat-col">Сертифікат</td><td class="no">—</td><td class="no">—</td><td class="yes">✓</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- 6-Month plan -->
+<div class="plans-wrap" id="sixmonth-wrap" style="display:none">
+  <div class="plans-label" style="margin-top:8px">💡 Зекономити більше — оплата за півроку</div>
+  <div style="background:var(--bg3);border-radius:16px;border:.5px solid rgba(245,200,66,.25);overflow:hidden">
+    <!-- Toggle -->
+    <div style="display:flex;border-bottom:.5px solid var(--border)">
+      <div id="toggle-basic-6m" onclick="toggle6m('basic')"
+        style="flex:1;padding:10px;text-align:center;font-size:12px;font-weight:700;cursor:pointer;
+               color:var(--purple);background:rgba(124,110,247,.1);transition:background .15s">
+        ⚡️ Basic
+      </div>
+      <div id="toggle-prem-6m" onclick="toggle6m('premium')"
+        style="flex:1;padding:10px;text-align:center;font-size:12px;font-weight:700;cursor:pointer;
+               color:var(--text2);background:transparent;transition:background .15s">
+        🌟 Premium
+      </div>
+    </div>
+    <!-- Content -->
+    <div style="padding:14px 16px">
+      <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:4px">
+        <span style="font-size:28px;font-weight:700;color:var(--gold)" id="6m-price-big">—</span>
+        <span style="font-size:12px;color:var(--text2)">за 6 місяців</span>
+        <span style="margin-left:auto;background:rgba(245,200,66,.15);color:var(--gold);
+              padding:3px 10px;border-radius:20px;font-size:11px;font-weight:800"
+              id="6m-save-badge">—</span>
+      </div>
+      <div style="font-size:11px;color:var(--text2);margin-bottom:12px" id="6m-monthly">
+        Еквівалент — /міс
+      </div>
+      <button onclick="pay6m()" id="btn-6m"
+        style="width:100%;padding:14px;border-radius:14px;border:none;cursor:pointer;
+               background:linear-gradient(135deg,var(--gold),var(--orange));
+               color:#111;font-size:14px;font-weight:700;
+               transition:transform .1s,opacity .15s">
+        🔐 Оплатити за півроку
+      </button>
+      <div style="text-align:center;margin-top:8px;font-size:10px;color:var(--text2)">
+        Одноразовий платіж · Без авторенью · Поновлення вручну
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Guarantee -->
+<div class="guarantee">
+  <b>Скасуй в будь-який момент</b> — жодних прихованих умов.<br>
+  Твій прогрес і ланцюжок зберігаються назавжди.
+</div>
+
+<script>
+const TG=(typeof Telegram!=='undefined'&&Telegram.WebApp)?Telegram.WebApp:null;
+if(TG){try{TG.ready();TG.expand();}catch(e){}}
+
+const params=new URLSearchParams(window.location.search);
+let D={};
+try{D=JSON.parse(decodeURIComponent(params.get('d')||'{}'));}catch(e){}
+
+/* ── Mock data ── */
+if(!D.my_name){
+  D={
+    my_name:'Олексій', my_uid:42,
+    chain_length:7, done_lessons:14, xp_total:680, avg_score:76,
+    level:'A2', streak_days:7,
+    basic_price:'19.77', basic_link:'https://speakchain.com/basic',
+    prem_price:'79.00',  prem_link:'https://speakchain.com/premium',
+    basic_6m:'99.00',    basic_6m_link:'https://speakchain.com/basic-6m',
+    prem_6m:'397.00',    prem_6m_link:'https://speakchain.com/premium-6m',
+    source:'blogger', ref_note:'',
+    blogger_name:'ivan_english',
+  };
+}
+
+let selectedPlan = 'basic';
+let selectedLink = D.basic_link || '';
+
+/* ── Fill hero ── */
+function fillHero(){
+  const chain = D.chain_length || 7;
+  const name  = D.my_name || '';
+  if(chain >= 7){
+    document.getElementById('hero-title').textContent = `${name}, пробний завершено!`;
+    document.getElementById('hero-sub').textContent   =
+      `Ти пройшов ${D.done_lessons||0} уроків — і зрозумів як це працює.`;
+  } else {
+    document.getElementById('hero-icon').textContent  = '⚡️';
+    document.getElementById('hero-title').textContent = 'Розблокуй повний доступ';
+    document.getElementById('hero-sub').textContent   = 'Продовж навчання без обмежень';
+  }
+}
+
+/* ── Stats ── */
+function fillStats(){
+  const stats = [
+    {val: D.chain_length||0,  lbl:'Ланок'},
+    {val: D.done_lessons||0,  lbl:'Уроків'},
+    {val: (D.xp_total||0).toLocaleString(), lbl:'XP'},
+  ];
+  document.getElementById('stats-row').innerHTML = stats.map(s=>
+    `<div class="stat">
+      <div class="stat-val">${s.val}</div>
+      <div class="stat-lbl">${s.lbl}</div>
+    </div>`
+  ).join('');
+}
+
+/* ── Chain dots ── */
+function fillChainDots(){
+  const len   = Math.min(D.chain_length||0, 7);
+  const total = 7;
+  let html = '';
+  for(let i=1;i<=total;i++){
+    if(i<len)       html+=`<div class="chain-dot done">◆</div>`;
+    else if(i===len)html+=`<div class="chain-dot final">🔗</div>`;
+    else            html+=`<div class="chain-dot done" style="opacity:.15">◇</div>`;
+  }
+  document.getElementById('chain-dots').innerHTML = html;
+
+  const avg = D.avg_score || 0;
+  const lvl = D.level || '';
+  document.getElementById('chain-verdict').innerHTML =
+    `<b>${len} ланок пройдено</b> · Рівень ${lvl} · Середній score: <b>${avg}/100</b><br>
+     Твій прогрес збережеться — продовжуй звідси.`;
+}
+
+/* ── Prices + Discount banner ── */
+function fillPrices(){
+  const bp  = parseFloat(D.basic_price || '22');
+  const pp  = parseFloat(D.prem_price  || '93');
+  const src = D.source || 'landing';
+
+  document.getElementById('basic-price').textContent = '$'+bp.toFixed(2).replace('.00','');
+  document.getElementById('prem-price').textContent  = '$'+pp.toFixed(2).replace('.00','');
+
+  // Базові ціни (повні) — підставляємо як оригінальні для показу знижки
+  // Логіка: affiliate ціна завжди менша за full price
+  // Full prices (hardcoded defaults — бот передає affiliate ціну вже зниженою)
+  const FULL_BASIC = 22;
+  const FULL_PREM  = 93;
+
+  if(src === 'blogger' && D.blogger_name){
+    document.getElementById('discount-banner').style.display  = 'block';
+    document.getElementById('discount-blogger').style.display = 'block';
+
+    document.getElementById('discount-who').textContent =
+      `Ціна від викладача @${D.blogger_name}`;
+
+    const savedBasic = Math.round((1 - bp/FULL_BASIC)*100);
+    const savedPrem  = Math.round((1 - pp/FULL_PREM)*100);
+
+    // Basic row — основний продукт
+    document.getElementById('discount-old-basic').textContent =
+      `$${FULL_BASIC}/міс`;
+    document.getElementById('discount-new-basic').textContent =
+      `$${bp.toFixed(2).replace('.00','')}/міс`;
+    document.getElementById('discount-save-basic').textContent =
+      savedBasic > 0 ? `−${savedBasic}%` : '';
+
+    document.getElementById('basic-note').style.display  = 'block';
+    document.getElementById('basic-note').textContent    =
+      savedBasic > 0 ? `−${savedBasic}% від викладача` : 'Ціна викладача';
+    document.getElementById('prem-note').style.display   = 'block';
+    document.getElementById('prem-note').textContent     =
+      savedPrem > 0 ? `−${savedPrem}% від викладача` : 'Ціна викладача';
+
+  } else if(src === 'friend'){
+    document.getElementById('discount-banner').style.display = 'block';
+    document.getElementById('discount-friend').style.display = 'block';
+
+    document.getElementById('basic-note').style.display = 'block';
+    document.getElementById('basic-note').textContent   = 'Ціна для друзів';
+    document.getElementById('prem-note').style.display  = 'block';
+    document.getElementById('prem-note').textContent    = 'Ціна для друзів';
+  }
+}
+
+/* ── Plan selection ── */
+function selectPlan(plan){
+  selectedPlan = plan;
+  const isPrem = plan === 'premium';
+
+  // Basic card — виділяємо якщо вибраний
+  document.getElementById('card-basic').style.borderColor =
+    !isPrem ? 'var(--purple)' : 'var(--border)';
+  document.getElementById('card-basic').style.background =
+    !isPrem ? 'rgba(124,110,247,.08)' : 'var(--bg3)';
+
+  // Premium card
+  document.getElementById('card-premium').style.borderColor =
+    isPrem ? 'rgba(124,110,247,.6)' : 'rgba(124,110,247,.4)';
+  document.getElementById('card-premium').style.background =
+    isPrem
+      ? 'linear-gradient(135deg,rgba(124,110,247,.15),rgba(245,200,66,.08))'
+      : 'linear-gradient(135deg,rgba(124,110,247,.08),rgba(245,200,66,.04))';
+
+  const btn = document.getElementById('cta-btn');
+  if(isPrem){
+    btn.className='cta-btn premium';
+    btn.textContent=`🌟 Отримати Premium — $${D.prem_price||'93'}/міс`;
+    selectedLink = D.prem_link || '';
+  } else {
+    btn.className='cta-btn basic';
+    btn.textContent=`⚡️ Отримати Basic — $${D.basic_price||'22'}/міс`;
+    selectedLink = D.basic_link || '';
+  }
+}
+
+/* ── Pay ── */
+function pay(){
+  if(selectedLink){
+    // Якщо є посилання WayForPay — відкриваємо
+    if(TG){
+      TG.openLink(selectedLink);
+    } else {
+      window.open(selectedLink,'_blank');
+    }
+  }
+  // Завжди надсилаємо подію в бот для аналітики
+  act('paywall_buy',{plan:selectedPlan,source:D.source||'landing'});
+}
+
+function act(action,payload={}){
+  if(TG) TG.sendData(JSON.stringify({action,...payload}));
+}
+
+/* ── 6-Month plan ── */
+let current6mPlan = 'basic';
+let current6mLink = '';
+
+function fill6Month(){
+  const hasPrem6m  = D.prem_6m  && parseFloat(D.prem_6m)  > 0;
+  const hasBasic6m = D.basic_6m && parseFloat(D.basic_6m) > 0;
+  if(!hasPrem6m && !hasBasic6m) return;
+
+  document.getElementById('sixmonth-wrap').style.display = 'block';
+  update6mDisplay('basic');
+}
+
+function toggle6m(plan){
+  current6mPlan = plan;
+  const isBasic = plan === 'basic';
+  const tBasic = document.getElementById('toggle-basic-6m');
+  const tPrem  = document.getElementById('toggle-prem-6m');
+  tBasic.style.color      = isBasic ? 'var(--purple)' : 'var(--text2)';
+  tBasic.style.background = isBasic ? 'rgba(124,110,247,.1)' : 'transparent';
+  tPrem.style.color       = !isBasic ? 'var(--purple)' : 'var(--text2)';
+  tPrem.style.background  = !isBasic ? 'rgba(124,110,247,.1)' : 'transparent';
+  update6mDisplay(plan);
+}
+
+function update6mDisplay(plan){
+  const isPrem  = plan === 'premium';
+  const price6m = parseFloat(isPrem ? (D.prem_6m||'0') : (D.basic_6m||'0'));
+  const monthly = parseFloat(isPrem ? (D.prem_price||'93') : (D.basic_price||'22'));
+  current6mLink = isPrem ? (D.prem_6m_link||'') : (D.basic_6m_link||'');
+
+  const perMonth  = price6m / 6;
+  const fullCost  = monthly * 6;
+  const savedAmt  = fullCost - price6m;
+  const savedPct  = Math.round(savedAmt / fullCost * 100);
+
+  document.getElementById('6m-price-big').textContent =
+    `$${price6m.toFixed(0)}`;
+  document.getElementById('6m-monthly').textContent   =
+    `≈ $${perMonth.toFixed(2).replace('.00','')}/міс · Ощадливіше ніж помісячно`;
+  document.getElementById('6m-save-badge').textContent=
+    savedPct > 0 ? `Економія ${savedPct}%` : '6 місяців';
+  document.getElementById('btn-6m').textContent =
+    `🔐 ${isPrem?'Premium':'Basic'} на 6 місяців — $${price6m.toFixed(0)}`;
+}
+
+function pay6m(){
+  if(current6mLink){
+    if(TG) TG.openLink(current6mLink);
+    else window.open(current6mLink,'_blank');
+  }
+  act('paywall_buy_6m',{plan:current6mPlan,source:D.source||'landing'});
+}
+
+/* ── Init ── */
+fillHero();
+fillStats();
+fillChainDots();
+fillPrices();
+fill6Month();
+selectPlan('basic');  // Basic — за замовчуванням
+</script>
+</body>
+</html>
