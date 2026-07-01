@@ -193,6 +193,50 @@
     .form-btn:active { opacity:.85; }
     .form-btn.green { background:linear-gradient(135deg,var(--green),#7ee8bf); color:#0a2a1e; }
     .form-btn:disabled { opacity:.4; }
+
+    /* ── Financial journal ── */
+    .fin-split { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px; }
+    .fin-split-card {
+      background:var(--bg3); border-radius:14px; padding:14px;
+      border:0.5px solid var(--border);
+    }
+    .fin-split-top { display:flex; align-items:center; gap:6px; margin-bottom:8px; }
+    .fin-split-icon { font-size:15px; }
+    .fin-split-name { font-size:12px; font-weight:600; color:var(--text2); }
+    .fin-split-comm { font-size:22px; font-weight:700; color:var(--green); line-height:1; }
+    .fin-split-sub  { font-size:11px; color:var(--text2); margin-top:4px; }
+
+    .fin-status {
+      display:flex; gap:10px; margin-bottom:16px;
+      background:var(--bg3); border-radius:12px; padding:12px 14px;
+      border:0.5px solid var(--border);
+    }
+    .fin-status-item { flex:1; display:flex; flex-direction:column; gap:3px; }
+    .fin-status-item + .fin-status-item { border-left:1px solid var(--border); padding-left:12px; }
+    .fin-status-label { font-size:11px; color:var(--text2); }
+    .fin-status-val { font-size:16px; font-weight:700; }
+    .fin-status-val.green { color:var(--green); }
+    .fin-status-val.gold  { color:var(--gold); }
+
+    .fin-journal-title { font-size:12px; font-weight:600; color:var(--text2); margin-bottom:8px; }
+    .journal-row {
+      display:flex; align-items:center; gap:10px; padding:10px 0;
+      border-bottom:0.5px solid var(--border);
+    }
+    .journal-row:last-child { border-bottom:none; }
+    .journal-plan {
+      font-size:9px; font-weight:700; padding:3px 7px; border-radius:6px;
+      white-space:nowrap; text-transform:uppercase; letter-spacing:.03em;
+    }
+    .journal-plan.m { background:rgba(124,110,247,.15); color:var(--purple); }
+    .journal-plan.h { background:rgba(245,200,66,.15); color:var(--gold); }
+    .journal-info { flex:1; min-width:0; }
+    .journal-name { font-size:13px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .journal-month { font-size:11px; color:var(--text2); }
+    .journal-comm { font-size:14px; font-weight:700; color:var(--green); text-align:right; }
+    .journal-status { font-size:10px; text-align:right; margin-top:2px; }
+    .journal-status.paid { color:var(--green); }
+    .journal-status.wait { color:var(--gold); }
   </style>
 </head>
 <body>
@@ -282,10 +326,45 @@
 
   <div class="divider"></div>
 
-  <!-- Top students -->
+  <!-- Financial journal -->
   <div class="section">
-    <div class="section-title">Топ студентів</div>
-    <div id="students-list">
+    <div class="section-title">Фінансовий журнал</div>
+
+    <!-- Розбивка помісячні / піврічні -->
+    <div class="fin-split">
+      <div class="fin-split-card">
+        <div class="fin-split-top">
+          <span class="fin-split-icon">🗓</span>
+          <span class="fin-split-name">Помісячні</span>
+        </div>
+        <div class="fin-split-comm" id="fin-monthly-comm">$0</div>
+        <div class="fin-split-sub" id="fin-monthly-count">0 оплат</div>
+      </div>
+      <div class="fin-split-card">
+        <div class="fin-split-top">
+          <span class="fin-split-icon">📆</span>
+          <span class="fin-split-name">Піврічні</span>
+        </div>
+        <div class="fin-split-comm" id="fin-sixmonth-comm">$0</div>
+        <div class="fin-split-sub" id="fin-sixmonth-count">0 оплат</div>
+      </div>
+    </div>
+
+    <!-- Виплачено / очікує -->
+    <div class="fin-status">
+      <div class="fin-status-item">
+        <span class="fin-status-label">✅ Виплачено</span>
+        <span class="fin-status-val green" id="fin-paid">$0</span>
+      </div>
+      <div class="fin-status-item">
+        <span class="fin-status-label">⏳ Очікує виплати</span>
+        <span class="fin-status-val gold" id="fin-pending">$0</span>
+      </div>
+    </div>
+
+    <!-- Журнал оплат -->
+    <div class="fin-journal-title">Останні оплати</div>
+    <div id="journal-list">
       <div style="text-align:center;color:var(--text2);font-size:13px;padding:20px">Завантаження…</div>
     </div>
   </div>
@@ -422,26 +501,38 @@ function fill() {
   document.getElementById('prem-bar').style.width = premPct + '%';
   document.getElementById('prem-pct').textContent = premPct + '% Premium';
 
-  // Students list
-  const list = document.getElementById('students-list');
-  const students = D.top_students || [];
-  if (!students.length) {
-    list.innerHTML = '<div style="text-align:center;color:var(--text2);font-size:13px;padding:20px 0">Поки немає студентів</div>';
+  // ── Financial journal ──
+  const fin = D.fin || {};
+  document.getElementById('fin-monthly-comm').textContent  = '$' + (fin.monthly_comm || 0);
+  document.getElementById('fin-monthly-count').textContent = (fin.monthly_count || 0) + ' оплат';
+  document.getElementById('fin-sixmonth-comm').textContent = '$' + (fin.sixmonth_comm || 0);
+  document.getElementById('fin-sixmonth-count').textContent= (fin.sixmonth_count || 0) + ' оплат';
+  document.getElementById('fin-paid').textContent    = '$' + (fin.paid_out || 0);
+  document.getElementById('fin-pending').textContent = '$' + (fin.pending || 0);
+
+  const jlist = document.getElementById('journal-list');
+  const journal = fin.journal || [];
+  const PLAN_LABELS = {
+    basic: ['Basic', 'm'], premium: ['Premium', 'm'],
+    basic_6m: ['Basic 6міс', 'h'], premium_6m: ['Premium 6міс', 'h']
+  };
+  if (!journal.length) {
+    jlist.innerHTML = '<div style="text-align:center;color:var(--text2);font-size:13px;padding:20px 0">Оплат поки немає</div>';
     return;
   }
-  list.innerHTML = students.map((s,i) => {
-    const isPrem = s.plan === 'premium';
-    const ini    = initials(s.name);
+  jlist.innerHTML = journal.map(j => {
+    const lbl = PLAN_LABELS[j.plan] || ['—','m'];
+    const monthStr = (j.month || '').replace('-', '/');
     return `
-    <div class="student-card">
-      <div class="student-avatar ${isPrem?'premium':'basic'}">${ini}</div>
-      <div class="student-info">
-        <div class="student-name">${s.name}</div>
-        <div class="student-meta">${s.done} уроків · <span class="level-badge">${s.level}</span></div>
+    <div class="journal-row">
+      <span class="journal-plan ${lbl[1]}">${lbl[0]}</span>
+      <div class="journal-info">
+        <div class="journal-name">${j.student}</div>
+        <div class="journal-month">${monthStr} · оплата $${j.amount}</div>
       </div>
-      <div class="student-right">
-        <span class="student-streak">🔥 ${s.streak}</span>
-        <span class="student-lessons">${isPrem?'⭐️ Premium':'⚡️ Basic'}</span>
+      <div>
+        <div class="journal-comm">+$${j.comm}</div>
+        <div class="journal-status ${j.paid?'paid':'wait'}">${j.paid?'виплачено':'очікує'}</div>
       </div>
     </div>`;
   }).join('');
