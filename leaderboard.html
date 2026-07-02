@@ -55,6 +55,7 @@ body{
 .cat-tab.active.streak   {background:rgba(247,163,92,.15); color:var(--orange);border-color:rgba(247,163,92,.3);}
 .cat-tab.active.jump     {background:rgba(90,216,166,.12); color:var(--green); border-color:rgba(90,216,166,.3);}
 .cat-tab.active.consist  {background:rgba(90,180,247,.12); color:var(--blue);  border-color:rgba(90,180,247,.3);}
+.cat-tab.active.chains   {background:rgba(124,110,247,.18);color:var(--purple);border-color:rgba(124,110,247,.35);}
 
 /* ── My position card ── */
 .my-card{
@@ -166,6 +167,18 @@ body{
 .consist-day.done  {background:var(--blue);}
 .consist-day.empty {background:var(--bg4);}
 
+/* ── Chains (referrals) schematic ── */
+.chains-bar{
+  display:flex;gap:3px;margin-top:4px;flex-wrap:wrap;align-items:center;
+}
+.chain-friend{
+  width:10px;height:10px;border-radius:3px;background:var(--bg4);
+  position:relative;
+}
+.chain-friend.repeated{background:rgba(124,110,247,.55);}   /* повторив фразу */
+.chain-friend.chained{background:var(--purple);box-shadow:0 0 0 1.5px rgba(124,110,247,.35);} /* став ланкою */
+.chains-sub{font-size:10px;color:var(--text2);margin-left:4px;white-space:nowrap;}
+
 /* ── Empty state ── */
 .empty{
   text-align:center;padding:40px 20px;
@@ -209,6 +222,7 @@ body{
     <div class="cat-tab streak"       onclick="setCat('streak',this)">🔥 Стрік</div>
     <div class="cat-tab jump"         onclick="setCat('jump',this)">📈 Стрибок</div>
     <div class="cat-tab consist"      onclick="setCat('consist',this)">📅 Стабільність</div>
+    <div class="cat-tab chains"       onclick="setCat('chains',this)">👥 Chains</div>
   </div>
 </div>
 
@@ -251,14 +265,29 @@ try{D=JSON.parse(decodeURIComponent(params.get('d')||'{}'));}catch(e){}
 /* ── Mock data ── */
 if(!D.my_uid){
   const today=new Date();
-  const mkUser=(name,chain,xp,streak,consist,isMe,isFriend)=>({
-    name,chain,xp,streak,consist,
-    jump:Math.floor(Math.random()*15),
-    level:xp>14000?'🎯 Practitioner':xp>6000?'🗺️ Explorer':'🌱 Beginner',
-    done_this_week:Math.floor(Math.random()*7),
-    me:isMe||false, friend:isFriend||false,
-    badges:isMe?['speaking_partner']:[],
-  });
+  const mkFriends=(n)=>{
+    const arr=[];
+    for(let i=0;i<n;i++){
+      const r=Math.random();
+      arr.push({name:'Друг'+(i+1), repeated:r>0.35, chained:r>0.6});
+    }
+    return arr;
+  };
+  const mkUser=(name,chain,xp,streak,consist,isMe,isFriend)=>{
+    const friends=mkFriends(Math.floor(Math.random()*6));
+    return {
+      name,chain,xp,streak,consist,
+      jump:Math.floor(Math.random()*15),
+      level:xp>14000?'🎯 Practitioner':xp>6000?'🗺️ Explorer':'🌱 Beginner',
+      done_this_week:Math.floor(Math.random()*7),
+      me:isMe||false, friend:isFriend||false,
+      badges:isMe?['speaking_partner']:[],
+      ref_total:friends.length,
+      ref_repeated:friends.filter(f=>f.repeated).length,
+      ref_chained:friends.filter(f=>f.chained).length,
+      ref_friends:friends,
+    };
+  };
   D={
     my_uid:42, my_name:'Олексій',
     period:'week', category:'chain',
@@ -285,12 +314,16 @@ const CAT_META = {
   streak: {key:'streak', unit:'дн.',     color:'orange', label:'🔥 Стрік'},
   jump:   {key:'jump',   unit:'балів↑',  color:'green',  label:'📈 Стрибок'},
   consist:{key:'consist',unit:'%',       color:'blue',   label:'📅 Стабільність'},
+  chains: {key:'ref_chained',unit:'ланок',color:'purple', label:'👥 Chains'},
 };
 
 function getScore(u, cat){
   if(cat==='consist'){
     const days=u.consist||[];
     return days.length?Math.round(days.filter(Boolean).length/days.length*100):0;
+  }
+  if(cat==='chains'){
+    return u.ref_chained||0;   // друзі, що стали ланками
   }
   return u[CAT_META[cat].key]||0;
 }
@@ -387,6 +420,19 @@ function render(){
       const days=u.consist||[];
       const dots=days.map(d=>`<div class="consist-day ${d?'done':'empty'}"></div>`).join('');
       subHtml=`<div class="consist-bar">${dots}</div>`;
+    } else if(cat==='chains'){
+      const friends=u.ref_friends||[];
+      const total=u.ref_total||0, repeated=u.ref_repeated||0, chained=u.ref_chained||0;
+      if(total===0){
+        subHtml=`<div class="lb-sub">Ще немає запрошених друзів</div>`;
+      } else {
+        const dots=friends.map(f=>{
+          const cls=f.chained?'chained':(f.repeated?'repeated':'');
+          const title=f.name+(f.chained?' — став ланкою':(f.repeated?' — повторив фразу':' — приєднався'));
+          return `<div class="chain-friend ${cls}" title="${title}"></div>`;
+        }).join('');
+        subHtml=`<div class="chains-bar">${dots}<span class="chains-sub">🔁 ${repeated} · 🔗 ${chained} з ${total}</span></div>`;
+      }
     } else {
       const parts=[];
       if(u.level)    parts.push(u.level);
