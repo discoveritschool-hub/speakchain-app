@@ -406,8 +406,8 @@
   <div class="chat-messages" id="chat-messages"></div>
   <div class="limit-banner" id="limit-banner">Досягнуто денний ліміт 20 повідомлень. Повертайся завтра!</div>
   <div class="chat-input-area">
-    <button class="mic-btn" id="mic-btn" onclick="toggleSpeechInput()" title="Говорити">🎤</button>
     <textarea id="chat-input" placeholder="Пиши або говори англійською..." rows="1" onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+    <button class="mic-btn" id="mic-btn" onclick="toggleSpeechInput()" title="Говорити">🎤</button>
     <button class="send-btn" id="send-btn" onclick="sendMessage()">
       <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
     </button>
@@ -676,7 +676,7 @@ function startChainyChat() {
   // Синхронізуємо кнопку voice mode
   const vBtn = document.getElementById('voice-toggle');
   if (vBtn) {
-    vBtn.textContent = voiceMode ? '🔇' : '🔊';
+    vBtn.textContent = voiceMode ? '🔊' : '🔇';
     vBtn.classList.toggle('active', voiceMode);
   }
 
@@ -734,7 +734,7 @@ function startMySituation() {
 
   const vBtn = document.getElementById('voice-toggle');
   if (vBtn) {
-    vBtn.textContent = voiceMode ? '🔇' : '🔊';
+    vBtn.textContent = voiceMode ? '🔊' : '🔇';
     vBtn.classList.toggle('active', voiceMode);
   }
   setTimeout(() => speakTTS(greeting), 600);
@@ -838,7 +838,7 @@ function startChat() {
   // Синхронізуємо кнопку з поточним станом voiceMode
   const vBtn = document.getElementById('voice-toggle');
   if (vBtn) {
-    vBtn.textContent = voiceMode ? '🔇' : '🔊';
+    vBtn.textContent = voiceMode ? '🔊' : '🔇';
     vBtn.classList.toggle('active', voiceMode);
   }
 
@@ -1092,7 +1092,7 @@ if (typeof speechSynthesis !== 'undefined') {
 function toggleVoiceMode() {
   voiceMode = !voiceMode;
   const btn = document.getElementById('voice-toggle');
-  btn.textContent = voiceMode ? '🔇' : '🔊';
+  btn.textContent = voiceMode ? '🔊' : '🔇';
   btn.classList.toggle('active', voiceMode);
   if (!voiceMode) {
     window.speechSynthesis.cancel();
@@ -1297,7 +1297,7 @@ function startVideoChat(topic, mode, summary) {
   history.push({ role: 'assistant', content: greeting });
 
   const vBtn = document.getElementById('voice-toggle');
-  if (vBtn) { vBtn.textContent = voiceMode ? '🔇' : '🔊'; vBtn.classList.toggle('active', voiceMode); }
+  if (vBtn) { vBtn.textContent = voiceMode ? '🔊' : '🔇'; vBtn.classList.toggle('active', voiceMode); }
   setTimeout(() => speakTTS(greeting), 600);
 }
 
