@@ -200,6 +200,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 <div class="section">
   <div class="stats-row" id="stats-row"></div>
   <div id="lvl-progress"></div>
+  <div id="vocab-progress"></div>
   <div class="topics-title">Теми рівня</div>
   <div id="topics-list"></div>
 </div>
@@ -282,6 +283,7 @@ function init() {
   if (!D.levels)         D.levels         = DEFAULT_LEVELS;
   if (!D.level_names)    D.level_names    = DEFAULT_LEVEL_NAMES;
   if (!D.topics_data)    D.topics_data    = {};  // нові дані з grammar_engine
+  if (!D.vocab_coverage) D.vocab_coverage = {};  // покриття лексики за рівнями
   if (!D.level)          D.level          = "A1";
   activeLevel = D.level;
   render();
@@ -403,6 +405,26 @@ function renderLevel() {
       '</div>' +
       '<div class="lvl-track"><div class="lvl-fill" style="width:' + lvlPct + '%"></div></div>' +
     '</div>';
+
+  const vc = (D.vocab_coverage || {})[activeLevel];
+  const vcEl = document.getElementById("vocab-progress");
+  if (vc) {
+    const vpct = vc.pct || 0;
+    vcEl.innerHTML =
+      '<div class="lvl-progress" style="margin-top:10px">' +
+        '<div class="lvl-progress-top">' +
+          '<div class="lvl-progress-name">📖 Лексика ' + activeLevel +
+            ' <span style="color:var(--text3);font-weight:400">' +
+            vc.known + '/' + vc.target + ' слів</span></div>' +
+          '<div class="lvl-progress-pct">' + vpct + '%</div>' +
+        '</div>' +
+        '<div class="lvl-track"><div class="lvl-fill" style="width:' + vpct + '%"></div></div>' +
+        (vc.gap > 0 ? '<div style="font-size:12px;color:var(--text3);margin-top:6px">' +
+          'Заповнити ще ' + vc.gap + ' слів до цілі рівня</div>' : '') +
+      '</div>';
+  } else {
+    vcEl.innerHTML = "";
+  }
 
   document.getElementById("topics-list").innerHTML = lvlTopics.map((topic, i) => {
     const data = getMastery(topic);
