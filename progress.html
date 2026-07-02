@@ -15,6 +15,11 @@
   --text:#eaeaf5;--text2:#8888a8;--text3:#5a5a72;
   --border:rgba(255,255,255,0.07);
 }
+.fdb{background:linear-gradient(135deg,rgba(124,110,247,.18),rgba(90,216,166,.10));border:1px solid rgba(124,110,247,.35);border-radius:16px;padding:18px 16px;margin-bottom:14px}
+.fdb-title{font-size:16px;font-weight:700;color:var(--text);margin-bottom:6px}
+.fdb-text{font-size:13px;line-height:1.5;color:var(--text2);margin-bottom:14px}
+.fdb-btn{display:block;width:100%;background:var(--purple);color:#fff;border:none;border-radius:12px;padding:13px;font-size:15px;font-weight:600;cursor:pointer;text-align:center}
+.fdb-btn:active{opacity:.85}
 body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;min-height:100vh;padding-bottom:48px}
 
 .hdr{position:sticky;top:0;z-index:20;background:var(--bg);border-bottom:.5px solid var(--border);padding:18px 16px 14px}
@@ -198,6 +203,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 <div class="tabs" id="tabs"></div>
 
 <div class="section">
+  <div id="first-day-banner"></div>
   <div class="stats-row" id="stats-row"></div>
   <div id="lvl-progress"></div>
   <div id="vocab-progress"></div>
@@ -397,6 +403,24 @@ function renderLevel() {
     '<div class="stat"><div class="stat-v g">' + (avgScore || "—") + '</div><div class="stat-l">Середній бал</div></div>' +
     '<div class="stat"><div class="stat-v o">' + (D.done_lessons || 0) + '</div><div class="stat-l">Уроків</div></div>';
 
+  // ── Перший день: замість «стіни нулів» — тепле привітання і заклик до дії ──
+  const fdb = document.getElementById("first-day-banner");
+  if (fdb) {
+    const noLessons = !(D.done_lessons > 0);
+    const noScores  = !(scores.length > 0);
+    if (noLessons && noScores) {
+      const nm = (D.name || "").trim();
+      fdb.innerHTML =
+        '<div class="fdb">' +
+          '<div class="fdb-title">' + (nm ? ('Вітаю, ' + nm + '! ') : 'Вітаю! ') + '👋</div>' +
+          '<div class="fdb-text">Це твоя карта прогресу. Поки що вона чиста — але після першого уроку тут зʼявляться бали, рівень і твій ланцюжок. Почнемо з першого кроку?</div>' +
+          '<button class="fdb-btn" onclick="startFirstLesson()">▶️ Почати перший урок</button>' +
+        '</div>';
+    } else {
+      fdb.innerHTML = "";
+    }
+  }
+
   document.getElementById("lvl-progress").innerHTML =
     '<div class="lvl-progress">' +
       '<div class="lvl-progress-top">' +
@@ -508,6 +532,13 @@ function openTopic(topicName) {
 
 function closeModal() {
   document.getElementById("topic-modal").classList.remove("active");
+}
+
+function startFirstLesson() {
+  maAction("start_lesson", {});
+  if (typeof Telegram !== 'undefined' && Telegram.WebApp) {
+    try { Telegram.WebApp.close(); } catch(e){}
+  }
 }
 
 function goToStep(cmd, topic) {
