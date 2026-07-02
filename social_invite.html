@@ -420,8 +420,21 @@ body{
     </div>
   </div>
 
+  <!-- Вибір формату відповіді -->
+  <div style="display:flex;gap:8px;margin-bottom:8px">
+    <button class="rec-mode-btn active" id="mode-voice" onclick="setRecMode('voice')"
+      style="flex:1;padding:8px;border-radius:10px;border:1px solid var(--border);background:rgba(124,110,247,.15);color:var(--text);font-size:13px;cursor:pointer">🎙 Голосом</button>
+    <button class="rec-mode-btn" id="mode-video" onclick="setRecMode('video')"
+      style="flex:1;padding:8px;border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--text2);font-size:13px;cursor:pointer">📹 Відео</button>
+  </div>
+
   <!-- Кнопка запису -->
   <button class="rec-btn record" id="rec-btn" onclick="toggleRecord()">🎙 Записати відповідь</button>
+
+  <!-- Прев'ю відео (лише у відео-режимі) -->
+  <video id="rec-video-preview" muted playsinline
+    style="display:none;width:100%;max-height:220px;border-radius:12px;margin-top:8px;background:#000;object-fit:cover"></video>
+  <style>#rec-video-preview.show{display:block!important;}</style>
 
   <!-- Хвиля запису -->
   <div class="rec-wave" id="rec-wave">
@@ -648,6 +661,18 @@ function fillNetwork(){
 
 /* ══ RECORDING ══ */
 let mediaRecorder=null, audioChunks=[], recInterval=null, recSecs=0, recBlob=null;
+let recMode='voice';   // 'voice' | 'video'
+
+function setRecMode(mode){
+  if(document.getElementById('rec-btn').classList.contains('recording')) return; // не міняти під час запису
+  recMode=mode;
+  const v=document.getElementById('mode-voice'), vi=document.getElementById('mode-video');
+  const on='rgba(124,110,247,.15)', off='var(--surface)';
+  v.style.background = mode==='voice'?on:off;  v.style.color = mode==='voice'?'var(--text)':'var(--text2)';
+  vi.style.background= mode==='video'?on:off;  vi.style.color = mode==='video'?'var(--text)':'var(--text2)';
+  const btn=document.getElementById('rec-btn');
+  btn.textContent = mode==='video' ? '📹 Записати відео' : '🎙 Записати відповідь';
+}
 
 async function toggleRecord(){
   const btn=document.getElementById('rec-btn');
@@ -660,15 +685,25 @@ async function toggleRecord(){
 
 async function startRecord(){
   try{
-    const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+    const wantVideo = recMode==='video';
+    const stream=await navigator.mediaDevices.getUserMedia(
+      wantVideo ? {audio:true, video:{facingMode:'user'}} : {audio:true}
+    );
     mediaRecorder=new MediaRecorder(stream);
     audioChunks=[];
     mediaRecorder.ondataavailable=e=>{if(e.data.size>0)audioChunks.push(e.data);};
     mediaRecorder.onstop=()=>{
-      recBlob=new Blob(audioChunks,{type:'audio/ogg'});
+      recBlob=new Blob(audioChunks,{type: wantVideo ? 'video/mp4' : 'audio/ogg'});
       showSubmitBtn();
       stream.getTracks().forEach(t=>t.stop());
+      const prev=document.getElementById('rec-video-preview');
+      if(prev){ prev.classList.remove('show'); prev.srcObject=null; }
     };
+    // Показуємо прев'ю камери під час відео-запису
+    if(wantVideo){
+      const prev=document.getElementById('rec-video-preview');
+      if(prev){ prev.srcObject=stream; prev.classList.add('show'); try{ await prev.play(); }catch(e){} }
+    }
     mediaRecorder.start(100);
     recSecs=0;
     document.getElementById('rec-btn').className='rec-btn recording';
@@ -682,7 +717,8 @@ async function startRecord(){
       if(recSecs>=60) stopRecord();
     },1000);
   }catch(e){
-    alert('Мікрофон недоступний. Дозволь доступ в налаштуваннях.');
+    alert(recMode==='video' ? 'Камера недоступна. Дозволь доступ у налаштуваннях.'
+                            : 'Мікрофон недоступний. Дозволь доступ в налаштуваннях.');
   }
 }
 
@@ -708,15 +744,17 @@ async function submitRecord(){
   btn.className='rec-btn disabled';
   btn.textContent='⏳ AI оцінює...';
 
-  // Надсилаємо в бот через sendData
+  const isVideo = recMode==='video';
   const reader=new FileReader();
   reader.onload=()=>{
     const b64=reader.result.split(',')[1];
-    act('sc_voice_reply',{
-      audio_b64:b64,
+    const payload={
       phrase: D.challenge_phrase||'',
       referrer: D.sc_referrer||null,
-    });
+    };
+    if(isVideo) payload.video_b64=b64; else payload.audio_b64=b64;
+    maAction('sc_voice_reply', payload);
+    showToast(isVideo ? '📹 Відео надіслано на оцінку!' : '🎧 Відповідь надіслано на оцінку!');
   };
   reader.readAsDataURL(recBlob);
 }
