@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>SpeakChain · Мій шлях</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="/toast_rewards.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#0d0d14;--bg2:#16161f;--bg3:#1e1e2a;
+  --purple:#7c6ef7;--green:#5ad8a6;--yellow:#f7c95c;--red:#f76e6e;--gray:#3a3a48;
+  --orange:#f7a35c;
+  --text:#eaeaf5;--text2:#8888a8;--text3:#5a5a72;
+  --border:rgba(255,255,255,0.07);
+}
+.fdb{background:linear-gradient(135deg,rgba(124,110,247,.18),rgba(90,216,166,.10));border:1px solid rgba(124,110,247,.35);border-radius:16px;padding:18px 16px;margin-bottom:14px}
+.fdb-title{font-size:16px;font-weight:700;color:var(--text);margin-bottom:6px}
+.fdb-text{font-size:13px;line-height:1.5;color:var(--text2);margin-bottom:14px}
+.fdb-btn{display:block;width:100%;background:var(--purple);color:#fff;border:none;border-radius:12px;padding:13px;font-size:15px;font-weight:600;cursor:pointer;text-align:center}
+.fdb-btn:active{opacity:.85}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;min-height:100vh;padding-bottom:48px}
+
+.hdr{position:sticky;top:0;z-index:20;background:var(--bg);border-bottom:.5px solid var(--border);padding:18px 16px 14px}
+.hdr-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.hdr-name{font-size:18px;font-weight:700;letter-spacing:-.3px}
+.hdr-level{background:var(--purple);color:#fff;font-size:11px;font-weight:700;padding:3px 11px;border-radius:20px;letter-spacing:.5px}
+.overall-track{height:6px;background:var(--bg3);border-radius:10px;overflow:hidden}
+.overall-fill{height:100%;background:linear-gradient(90deg,var(--purple),#a78bfa);border-radius:10px;transition:width .5s}
+.overall-meta{display:flex;justify-content:space-between;font-size:12px;color:var(--text2);margin-top:6px}
+
+.journey{padding:14px 16px 4px;background:var(--bg)}
+.journey-label{display:flex;justify-content:space-between;margin-bottom:8px}
+.journey-title{font-size:12px;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.06em}
+.journey-pct{font-size:12px;color:var(--purple);font-weight:700}
+.journey-track{height:8px;background:var(--bg3);border-radius:10px;position:relative;overflow:hidden}
+.journey-fill{height:100%;background:linear-gradient(90deg,var(--purple),var(--green));border-radius:10px;position:relative;transition:width .5s}
+.journey-thumb{position:absolute;right:-8px;top:50%;transform:translateY(-50%);width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 2px 8px rgba(124,110,247,.5)}
+.journey-marks{display:flex;justify-content:space-between;margin-top:8px}
+.journey-mark{font-size:11px;color:var(--text3);font-weight:600}
+.journey-mark.done{color:var(--green)}
+.journey-mark.current{color:var(--purple)}
+.journey-mark.goal{color:var(--orange)}
+
+.streak-strip{margin:10px 16px;padding:8px 12px;background:rgba(247,163,92,.1);border:1px solid rgba(247,163,92,.2);border-radius:10px;font-size:13px;color:var(--orange);text-align:center}
+
+.tabs{display:flex;gap:6px;padding:14px 16px 0;overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{flex-shrink:0;padding:6px 12px;background:var(--bg2);color:var(--text2);font-size:12px;font-weight:600;border-radius:20px;border:1px solid var(--border);cursor:pointer;transition:all .15s}
+.tab.active{background:var(--purple);color:#fff;border-color:var(--purple)}
+.tab.done{color:var(--green)}
+.tab.locked{opacity:.4}
+
+.section{padding:14px 16px}
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.stat{background:var(--bg2);border-radius:10px;padding:10px;text-align:center;border:1px solid var(--border)}
+.stat-v{font-size:18px;font-weight:700;letter-spacing:-.3px}
+.stat-v.p{color:var(--purple)}
+.stat-v.g{color:var(--green)}
+.stat-v.o{color:var(--orange)}
+.stat-l{font-size:10px;color:var(--text2);margin-top:2px;text-transform:uppercase;letter-spacing:.05em}
+
+.lvl-progress{background:var(--bg2);border-radius:14px;padding:14px;margin-bottom:14px;border:1px solid var(--border)}
+.lvl-progress-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.lvl-progress-name{font-size:14px;font-weight:600}
+.lvl-progress-pct{font-size:14px;font-weight:700;color:var(--purple)}
+.lvl-track{height:6px;background:var(--bg3);border-radius:10px;overflow:hidden}
+.lvl-fill{height:100%;background:linear-gradient(90deg,var(--purple),#a78bfa);transition:width .5s}
+.lvl-hint{font-size:12px;color:var(--text2);margin-top:8px}
+
+.topics-title{font-size:12px;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin:14px 0 10px}
+
+/* ── Topic card with colored bar ── */
+.topic{display:flex;align-items:center;gap:10px;padding:12px;background:var(--bg2);border-radius:12px;margin-bottom:8px;border:1px solid var(--border);cursor:pointer;transition:all .15s}
+.topic:active{transform:scale(.98)}
+.topic-num{font-size:14px;color:var(--text3);font-weight:600;width:18px;flex-shrink:0;text-align:center}
+.topic-body{flex:1;min-width:0}
+.topic-name{font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:6px}
+.topic-bar-row{display:flex;align-items:center;gap:8px}
+.topic-bar-track{flex:1;height:5px;background:var(--bg3);border-radius:8px;overflow:hidden}
+.topic-bar-fill{height:100%;border-radius:8px;transition:width .4s}
+.topic-bar-fill.green{background:var(--green)}
+.topic-bar-fill.yellow{background:var(--yellow)}
+.topic-bar-fill.red{background:var(--red)}
+.topic-bar-fill.gray{background:var(--gray)}
+.topic-pct{font-size:11px;font-weight:700;width:34px;text-align:right;flex-shrink:0}
+.topic-pct.green{color:var(--green)}
+.topic-pct.yellow{color:var(--yellow)}
+.topic-pct.red{color:var(--red)}
+.topic-pct.gray{color:var(--text3)}
+.topic-arr{font-size:14px;color:var(--text3);flex-shrink:0}
+.topic-warn{font-size:11px;color:var(--red);margin-left:6px}
+
+/* ── Topic detail modal ── */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;display:none;align-items:flex-end}
+.modal.active{display:flex}
+.modal-content{background:var(--bg);width:100%;max-height:92vh;border-top-left-radius:20px;border-top-right-radius:20px;display:flex;flex-direction:column;overflow:hidden;animation:slideUp .3s}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal-hdr{padding:14px 16px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border);flex-shrink:0}
+.modal-close{width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:24px;color:var(--text2)}
+.modal-title{flex:1;font-size:16px;font-weight:600}
+.modal-body{flex:1;overflow-y:auto;padding:16px;scrollbar-width:none}
+.modal-body::-webkit-scrollbar{display:none}
+
+.detail-progress{background:var(--bg2);border-radius:12px;padding:14px;margin-bottom:16px;border:1px solid var(--border)}
+.detail-progress-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
+.detail-progress-label{font-size:12px;color:var(--text2);text-transform:uppercase;letter-spacing:.05em}
+.detail-progress-pct{font-size:22px;font-weight:700}
+.detail-progress-pct.green{color:var(--green)}
+.detail-progress-pct.yellow{color:var(--yellow)}
+.detail-progress-pct.red{color:var(--red)}
+.detail-progress-pct.gray{color:var(--text3)}
+.detail-bar-track{height:8px;background:var(--bg3);border-radius:10px;overflow:hidden}
+.detail-bar-fill{height:100%;border-radius:10px}
+
+.workflow{margin-bottom:20px}
+.workflow-title{font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px}
+.workflow-hint{font-size:12px;color:var(--text2);margin-bottom:12px;line-height:1.5}
+.step{display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg2);border-radius:10px;margin-bottom:8px;border:1px solid var(--border);transition:all .15s;cursor:pointer}
+.step:active{transform:scale(.98)}
+.step.done{border-color:rgba(90,216,166,.3)}
+.step.next{border-color:var(--purple);background:rgba(124,110,247,.08);box-shadow:0 0 0 1px var(--purple)}
+.step.locked{opacity:.5}
+.step-num{width:28px;height:28px;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--text2);flex-shrink:0}
+.step.done .step-num{background:var(--green);color:#0d0d14}
+.step.next .step-num{background:var(--purple);color:#fff}
+.step-content{flex:1;min-width:0}
+.step-title{font-size:13px;font-weight:600;color:var(--text)}
+.step-desc{font-size:11px;color:var(--text2);margin-top:2px}
+.step-arr{font-size:18px;color:var(--text3)}
+.step.done .step-arr{color:var(--green)}
+.step.next .step-arr{color:var(--purple)}
+
+.errors-section{background:var(--bg2);border:1px solid rgba(247,110,110,.2);border-radius:12px;padding:14px;margin-bottom:16px}
+
+/* ── Exercises panel (крок 3) ── */
+.exercises-panel{display:none;margin-top:12px}
+.exercises-panel.show{display:block}
+.ex-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.ex-title{font-size:14px;font-weight:700;color:var(--text)}
+.ex-counter{font-size:12px;color:var(--text2);background:var(--bg3);padding:3px 10px;border-radius:20px}
+.ex-progress{height:4px;background:var(--bg3);border-radius:4px;overflow:hidden;margin-bottom:14px}
+.ex-progress-fill{height:100%;background:linear-gradient(90deg,var(--purple),var(--green));border-radius:4px;transition:width .4s}
+.ex-sentence{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:14px;font-size:16px;font-weight:500;color:var(--text);line-height:1.5;text-align:center;min-height:72px;display:flex;align-items:center;justify-content:center}
+.ex-actions{display:flex;gap:10px;margin-bottom:14px;justify-content:center}
+.ex-btn{padding:10px 18px;border-radius:20px;border:1px solid var(--border);background:var(--bg2);
+  font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;color:var(--text);transition:all .15s}
+.ex-btn:active{transform:scale(.95)}
+.ex-btn.recording{background:rgba(247,110,110,.15);border-color:var(--red);color:var(--red);animation:micPulse 1s infinite}
+@keyframes micPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+.ex-btn.spoken{background:rgba(90,216,166,.1);border-color:var(--green);color:var(--green)}
+.ex-next{width:100%;padding:13px;border-radius:12px;background:var(--purple);border:none;
+  color:#fff;font-size:14px;font-weight:700;cursor:pointer;transition:opacity .15s}
+.ex-next:disabled{opacity:.4}
+.ex-done-banner{background:rgba(90,216,166,.1);border:1px solid rgba(90,216,166,.3);border-radius:12px;
+  padding:16px;text-align:center}
+.ex-done-title{font-size:16px;font-weight:700;color:var(--green);margin-bottom:4px}
+.ex-done-sub{font-size:13px;color:var(--text2)}
+.errors-title{font-size:13px;font-weight:700;color:var(--red);margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.error-item{padding:10px;background:var(--bg);border-radius:8px;margin-bottom:6px;border:1px solid var(--border)}
+.error-wrong{font-size:13px;color:var(--red);text-decoration:line-through;margin-bottom:4px}
+.error-right{font-size:13px;color:var(--green);font-weight:600;margin-bottom:6px}
+.error-expl{font-size:11px;color:var(--text2);line-height:1.5}
+.error-date{font-size:10px;color:var(--text3);margin-top:4px}
+
+.close-btn{display:block;margin:24px auto 0;background:transparent;border:1px solid var(--border);color:var(--text2);padding:10px 24px;border-radius:20px;font-size:13px;cursor:pointer}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hdr-top">
+    <div class="hdr-name" id="hdr-name">Студент</div>
+    <div class="hdr-level" id="hdr-level">—</div>
+  </div>
+  <div class="overall-track">
+    <div class="overall-fill" id="overall-fill" style="width:0%"></div>
+  </div>
+  <div class="overall-meta">
+    <span id="overall-left">Загальний прогрес</span>
+    <span id="overall-right">0%</span>
+  </div>
+</div>
+
+<div class="journey">
+  <div class="journey-label">
+    <span class="journey-title">Шлях A1 → C2</span>
+    <span class="journey-pct" id="journey-pct">0%</span>
+  </div>
+  <div class="journey-track">
+    <div class="journey-fill" id="journey-fill" style="width:0%">
+      <div class="journey-thumb"></div>
+    </div>
+  </div>
+  <div class="journey-marks" id="journey-marks"></div>
+</div>
+
+<div class="streak-strip" id="streak-strip" style="display:none">
+  🔥 Стрік: <span id="streak-val">0</span> днів поспіль &nbsp;·&nbsp; Рекорд: <span id="streak-best">0</span>
+</div>
+
+<div class="tabs" id="tabs"></div>
+
+<div class="section">
+  <div id="first-day-banner"></div>
+  <div class="stats-row" id="stats-row"></div>
+  <div id="lvl-progress"></div>
+  <div id="vocab-progress"></div>
+  <div class="topics-title">Теми рівня</div>
+  <div id="topics-list"></div>
+</div>
+
+<button class="close-btn" onclick="Telegram.WebApp.close()">Закрити</button>
+
+<!-- TOPIC DETAIL MODAL -->
+<div class="modal" id="topic-modal">
+  <div class="modal-content">
+    <div class="modal-hdr">
+      <div class="modal-close" onclick="closeModal()">×</div>
+      <div class="modal-title" id="modal-title">Тема</div>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
+</div>
+
+<script>
+const DEFAULT_GRAMMAR = {
+  A1: ["The ABC, spelling","The Numbers","a / an","Countable nouns with a/an and some","Present Simple","Present Continuous","Non-Continuous Verbs (stative)","Imperative Mood","Possessive Case ('s / s')","In, on, at — time","Comparative and Superlative Degrees","Zero Conditional","Modal Verbs: basic (can/must/should)","Going to (future plans)","Question Tags"],
+  A2: ["Past Simple","Future Simple (will)","The (definite article)","Uncountable nouns","Few, little, a few, a little, much, many","Adverbs","As … as / Than","Used to","First Conditional","Gerund + V (basic)","Infinitive + V (basic)","Modal Verbs: extended (might/may/have to/could)"],
+  B1: ["Present Perfect","Present Perfect Continuous","Past Continuous","Passive Voice (Present & Past)","Second Conditional","Enough and too","Because / Because of","Despite / In spite of","As soon as / As long as","Gerund + V (full system)","Infinitive + V (full system)","Would rather / sooner / better","Be used to / Get used to","Either … or / Neither … nor","Modal Verbs: advanced","Reported Speech"],
+  B2: ["Past Perfect","Past Perfect Continuous","Future Perfect","Future Continuous","Future Perfect Continuous","Third Conditional","Passive Voice (Continuous)","Participle 1","Participle 2","It is said that …","Complex Object","Everyone, everybody","Wish / If only","Mixed Conditionals"],
+  C1: ["He is said to","Complex Subject","The Prepositional Infinitive Complex","Inversion","Cleft Sentences"],
+  C2: ["Stylistic inversion","Nuanced modal meanings","Advanced ellipsis","Rhetoric devices","Discourse cohesion","Irony, understatement","Complex syntax","Idiomatic precision","Lexical density","Pragmatics"]
+};
+const DEFAULT_LEVEL_NAMES = {A1:"Beginner A1",A2:"Elementary A2",B1:"Intermediate B1",B2:"Upper-Intermediate B2",C1:"Advanced C1",C2:"Proficiency C2"};
+const DEFAULT_LEVELS = ["A1","A2","B1","B2","C1","C2"];
+
+let D = {};
+let activeLevel = "A1";
+
+const tg        = window.Telegram?.WebApp;
+const UID       = tg?.initDataUnsafe?.user?.id || 0;
+const INIT_DATA = tg?.initData || '';
+const API       = 'https://speakchain-bot-production.up.railway.app';
+
+// ── Уніфікована відправка дії в бот через HTTP (sendData як фолбек) ──
+async function maAction(action, extra){
+  const body = Object.assign({
+    action: action,
+    uid: UID || D.uid || 0,
+    init_data: INIT_DATA || '',
+  }, extra || {});
+  let ok=false;
+  try {
+    const res = await fetch(API + '/miniapp_action', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(body),
+    });
+    ok = res.ok;
+  } catch(e){ ok=false; }
+  if(!ok && tg && typeof tg.sendData==='function'){ try{ tg.sendData(JSON.stringify(body)); }catch(e){} }
+  return ok;
+}
+
+// ── Google Noto Emoji helper ──
+function emojiImg(emoji, size){
+  if(!emoji) return '';
+  size = size || 18;
+  const codepoints = [];
+  for(const ch of emoji){
+    const cp = ch.codePointAt(0);
+    if(cp === 0xFE0F) continue;
+    codepoints.push(cp.toString(16));
+  }
+  const code = codepoints.join('_');
+  const url = 'https://fonts.gstatic.com/s/e/notoemoji/latest/' + code + '/emoji.svg';
+  return '<img src="' + url + '" alt="' + emoji + '" style="width:' + size + 'px;height:' + size + 'px;vertical-align:middle;display:inline-block" onerror="this.outerHTML=\'<span>' + emoji + '</span>\'">';
+}
+
+function init() {
+  Telegram.WebApp.ready();
+  Telegram.WebApp.expand();
+  try {
+    const raw = new URLSearchParams(window.location.search).get("d");
+    if (raw) D = JSON.parse(decodeURIComponent(raw));
+  } catch(e) {}
+  if (!D.cefr_grammar)   D.cefr_grammar   = DEFAULT_GRAMMAR;
+  if (!D.levels)         D.levels         = DEFAULT_LEVELS;
+  if (!D.level_names)    D.level_names    = DEFAULT_LEVEL_NAMES;
+  if (!D.topics_data)    D.topics_data    = {};  // нові дані з grammar_engine
+  if (!D.vocab_coverage) D.vocab_coverage = {};  // покриття лексики за рівнями
+  if (!D.level)          D.level          = "A1";
+  activeLevel = D.level;
+  render();
+}
+
+function getMastery(topicName) {
+  // Пріоритет: дані з grammar_engine (topics_data)
+  const td = D.topics_data || {};
+  if (td[topicName]) return td[topicName];
+  // Fallback: старий список mastered (бінарно)
+  const mastered = D.mastered || [];
+  return {
+    mastery: mastered.includes(topicName) ? 100 : 0,
+    color: mastered.includes(topicName) ? "green" : "gray",
+    buddy_uses: 0,
+    buddy_errors: 0,
+    buddy_examples: [],
+    steps_done: { video: mastered.includes(topicName), table: false, exercises: false, buddy: false },
+    next_step: mastered.includes(topicName) ? null : "video"
+  };
+}
+
+function render() {
+  const levels     = D.levels;
+  const levelNames = D.level_names;
+  const grammar    = D.cefr_grammar;
+  const allTopics  = levels.flatMap(l => grammar[l] || []);
+
+  // Загальний прогрес = середня mastery всіх тем
+  let totalScore = 0;
+  let totalTopics = 0;
+  let fullyDone = 0;
+  allTopics.forEach(t => {
+    const m = getMastery(t).mastery;
+    totalScore += m;
+    totalTopics++;
+    if (m >= 80) fullyDone++;
+  });
+  const overallPct = totalTopics ? Math.round(totalScore / totalTopics) : 0;
+
+  document.getElementById("hdr-name").textContent  = D.name || "Студент";
+  document.getElementById("hdr-level").textContent = activeLevel;
+  document.getElementById("overall-fill").style.width = overallPct + "%";
+  document.getElementById("overall-left").textContent = fullyDone + " з " + totalTopics + " тем";
+  document.getElementById("overall-right").textContent = overallPct + "%";
+
+  // Journey A1→C2
+  const curIdx = levels.indexOf(D.level);
+  let topicsBeforeCurrent = 0;
+  for (let i = 0; i < curIdx; i++) topicsBeforeCurrent += (grammar[levels[i]] || []).length;
+  const curLvlTopics  = grammar[D.level] || [];
+  const curLvlDone    = curLvlTopics.filter(t => getMastery(t).mastery >= 80).length;
+  const journeyDone   = topicsBeforeCurrent + curLvlDone;
+  const journeyPct    = totalTopics ? Math.round(journeyDone / totalTopics * 100) : 0;
+  document.getElementById("journey-pct").textContent  = journeyPct + "%";
+  document.getElementById("journey-fill").style.width = journeyPct + "%";
+
+  const marksEl = document.getElementById("journey-marks");
+  marksEl.innerHTML = "";
+  levels.forEach(lvl => {
+    const lvlTopics = grammar[lvl] || [];
+    const lvlDone   = lvlTopics.filter(t => getMastery(t).mastery >= 80).length;
+    const isAll     = lvlDone === lvlTopics.length && lvlTopics.length > 0;
+    const isCur     = lvl === D.level;
+    const isGoal    = lvl === "C2";
+    const m = document.createElement("div");
+    m.className = "journey-mark" + (isAll ? " done" : "") + (isCur ? " current" : "") + (isGoal && !isAll ? " goal" : "");
+    m.textContent = lvl + (isAll ? "✓" : "");
+    if (isGoal && !isAll) m.textContent = "C2 👑";
+    marksEl.appendChild(m);
+  });
+
+  if ((D.streak || 0) > 0) {
+    document.getElementById("streak-strip").style.display = "flex";
+    document.getElementById("streak-val").textContent  = D.streak;
+    document.getElementById("streak-best").textContent = D.best_streak || 0;
+  }
+
+  const tabsEl = document.getElementById("tabs");
+  tabsEl.innerHTML = "";
+  levels.forEach((lvl, i) => {
+    const topics = grammar[lvl] || [];
+    const done = topics.filter(t => getMastery(t).mastery >= 80).length;
+    const isAll = done === topics.length && topics.length > 0;
+    const isLocked = i > curIdx;
+    const tab = document.createElement("div");
+    tab.className = "tab" + (lvl === activeLevel ? " active" : "") + (isAll ? " done" : "") + (isLocked ? " locked" : "");
+    tab.textContent = lvl + (isAll ? " ✓" : " " + done + "/" + topics.length);
+    tab.onclick = () => { activeLevel = lvl; renderLevel(); };
+    tabsEl.appendChild(tab);
+  });
+
+  renderLevel();
+}
+
+function renderLevel() {
+  const grammar    = D.cefr_grammar;
+  const levelNames = D.level_names;
+  const lvlTopics  = grammar[activeLevel] || [];
+  
+  let totalScore = 0;
+  lvlTopics.forEach(t => totalScore += getMastery(t).mastery);
+  const lvlPct = lvlTopics.length ? Math.round(totalScore / lvlTopics.length) : 0;
+  const lvlDoneFully = lvlTopics.filter(t => getMastery(t).mastery >= 80).length;
+  
+  const scores = D.scores || [];
+  const avgScore = scores.length ? Math.round(scores.reduce((a,b) => a + (typeof b === 'number' ? b : b.score || 0), 0) / scores.length) : 0;
+
+  document.getElementById("stats-row").innerHTML =
+    '<div class="stat"><div class="stat-v p">' + lvlDoneFully + '/' + lvlTopics.length + '</div><div class="stat-l">Тем готово</div></div>' +
+    '<div class="stat"><div class="stat-v g">' + (avgScore || "—") + '</div><div class="stat-l">Середній бал</div></div>' +
+    '<div class="stat"><div class="stat-v o">' + (D.done_lessons || 0) + '</div><div class="stat-l">Уроків</div></div>';
+
+  // ── Перший день: замість «стіни нулів» — тепле привітання і заклик до дії ──
+  const fdb = document.getElementById("first-day-banner");
+  if (fdb) {
+    const noLessons = !(D.done_lessons > 0);
+    const noScores  = !(scores.length > 0);
+    if (noLessons && noScores) {
+      const nm = (D.name || "").trim();
+      fdb.innerHTML =
+        '<div class="fdb">' +
+          '<div class="fdb-title">' + (nm ? ('Вітаю, ' + nm + '! ') : 'Вітаю! ') + '👋</div>' +
+          '<div class="fdb-text">Це твоя карта прогресу. Поки що вона чиста — але після першого уроку тут зʼявляться бали, рівень і твій ланцюжок. Почнемо з першого кроку?</div>' +
+          '<button class="fdb-btn" onclick="startFirstLesson()">▶️ Почати перший урок</button>' +
+        '</div>';
+    } else {
+      fdb.innerHTML = "";
+    }
+  }
+
+  document.getElementById("lvl-progress").innerHTML =
+    '<div class="lvl-progress">' +
+      '<div class="lvl-progress-top">' +
+        '<div class="lvl-progress-name">' + (levelNames[activeLevel] || activeLevel) + '</div>' +
+        '<div class="lvl-progress-pct">' + lvlPct + '%</div>' +
+      '</div>' +
+      '<div class="lvl-track"><div class="lvl-fill" style="width:' + lvlPct + '%"></div></div>' +
+    '</div>';
+
+  const vc = (D.vocab_coverage || {})[activeLevel];
+  const vol = (D.vocab_volume || {})[activeLevel];
+  const volDelta = (D.vocab_volume_delta || {})[activeLevel] || 0;
+  const vcEl = document.getElementById("vocab-progress");
+  const deltaBadge = (volDelta > 0)
+    ? '<div style="font-size:11px;color:var(--green);margin-top:3px">↑ +' + volDelta + ' за тиждень</div>'
+    : '';
+  const volLine = (typeof vol === 'number')
+    ? '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">' +
+        '<div><div style="font-size:13px;color:var(--text)">📚 Активний словник ' + activeLevel + '</div>' +
+        '<div style="font-size:11px;color:var(--text3);margin-top:1px">усі слова рівня, що ти знаєш</div></div>' +
+        '<div style="text-align:right"><div style="font-size:22px;font-weight:700;color:var(--text)">' + vol.toLocaleString('uk') + '</div>' + deltaBadge + '</div>' +
+      '</div>'
+    : '';
+  if (vc) {
+    const vpct = vc.pct || 0;
+    vcEl.innerHTML =
+      '<div class="lvl-progress" style="margin-top:10px">' +
+        '<div class="lvl-progress-top">' +
+          '<div class="lvl-progress-name">📖 Ключова лексика ' + activeLevel +
+            ' <span style="color:var(--text3);font-weight:400">' +
+            vc.known + '/' + vc.target + ' ключових слів</span></div>' +
+          '<div class="lvl-progress-pct">' + vpct + '%</div>' +
+        '</div>' +
+        '<div class="lvl-track"><div class="lvl-fill" style="width:' + vpct + '%"></div></div>' +
+        (vc.gap > 0 ? '<div style="font-size:12px;color:var(--text3);margin-top:6px">' +
+          'ще ' + vc.gap + ' до цілі рівня</div>' : '') +
+        volLine +
+      '</div>';
+  } else if (volLine) {
+    vcEl.innerHTML = '<div class="lvl-progress" style="margin-top:10px">' + volLine + '</div>';
+  } else {
+    vcEl.innerHTML = "";
+  }
+
+  document.getElementById("topics-list").innerHTML = lvlTopics.map((topic, i) => {
+    const data = getMastery(topic);
+    const warnIcon = data.buddy_errors > 0 ? ' <span class="topic-warn">⚠ ' + data.buddy_errors + ' помилок</span>' : '';
+    return '<div class="topic" onclick="openTopic(\'' + topic.replace(/'/g, "\\'") + '\')">' +
+      '<div class="topic-num">' + (i + 1) + '</div>' +
+      '<div class="topic-body">' +
+        '<div class="topic-name">' + topic + warnIcon + '</div>' +
+        '<div class="topic-bar-row">' +
+          '<div class="topic-bar-track"><div class="topic-bar-fill ' + data.color + '" style="width:' + data.mastery + '%"></div></div>' +
+          '<div class="topic-pct ' + data.color + '">' + data.mastery + '%</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="topic-arr">›</div>' +
+    '</div>';
+  }).join("");
+}
+
+function openTopic(topicName) {
+  const data = getMastery(topicName);
+  document.getElementById("modal-title").textContent = topicName;
+
+  const steps = [
+    { id: 'video',     icon: '📺', title: 'Подивись відео урок',  desc: 'Почни з реального прикладу мовлення',  cmd: 'lesson' },
+    { id: 'table',     icon: '📖', title: 'Прочитай таблицю правил вголос', desc: 'Структура і формула — щоб закріпити логіку', cmd: 'topic' },
+    { id: 'exercises', icon: '🗣', title: 'Проговори 30 речень для автоматизму', desc: 'Положення, заперечення, питання',     cmd: 'tutor_me' },
+    { id: 'buddy',     icon: '💬', title: 'Закріпи в Speaking Buddy', desc: 'Використай в живій розмові з AI',   cmd: 'buddy' },
+  ];
+
+  let nextFound = false;
+  const stepsHTML = steps.map(s => {
+    const done = data.steps_done[s.id];
+    let cls = "step";
+    if (done) cls += " done";
+    else if (!nextFound) { cls += " next"; nextFound = true; }
+    else cls += " locked";
+
+    const arr = done ? '✓' : '→';
+    return '<div class="' + cls + '" onclick="goToStep(\'' + s.cmd + '\', \'' + topicName.replace(/'/g, "\\'") + '\')">' +
+      '<div class="step-num">' + (done ? '✓' : steps.indexOf(s) + 1) + '</div>' +
+      '<div class="step-content">' +
+        '<div class="step-title">' + emojiImg(s.icon, 18) + ' ' + s.title + '</div>' +
+        '<div class="step-desc">' + s.desc + '</div>' +
+      '</div>' +
+      '<div class="step-arr">' + arr + '</div>' +
+    '</div>';
+  }).join("");
+
+  let errorsHTML = "";
+  if (data.buddy_examples && data.buddy_examples.length) {
+    errorsHTML = '<div class="errors-section">' +
+      '<div class="errors-title">⚠️ Твої помилки в Speaking Buddy</div>' +
+      data.buddy_examples.map(ex =>
+        '<div class="error-item">' +
+          '<div class="error-wrong">' + (ex.phrase || '') + '</div>' +
+          '<div class="error-right">→ ' + (ex.correction || '') + '</div>' +
+          (ex.explanation ? '<div class="error-expl">💡 ' + ex.explanation + '</div>' : '') +
+          (ex.date ? '<div class="error-date">' + ex.date + '</div>' : '') +
+        '</div>'
+      ).join('') +
+      '</div>';
+  }
+
+  document.getElementById("modal-body").innerHTML =
+    '<div class="detail-progress">' +
+      '<div class="detail-progress-row">' +
+        '<div class="detail-progress-label">Прогрес теми</div>' +
+        '<div class="detail-progress-pct ' + data.color + '">' + data.mastery + '%</div>' +
+      '</div>' +
+      '<div class="detail-bar-track"><div class="detail-bar-fill" style="width:' + data.mastery + '%;background:var(--' + data.color + ')"></div></div>' +
+    '</div>' +
+    '<div class="workflow">' +
+      '<div class="workflow-title">Як вчити цю тему</div>' +
+      '<div class="workflow-hint">Проходь у такому порядку — кожен крок будує наступний. Підсвічений крок наступний.</div>' +
+      stepsHTML +
+    '</div>' +
+    errorsHTML;
+
+  document.getElementById("topic-modal").classList.add("active");
+}
+
+function closeModal() {
+  document.getElementById("topic-modal").classList.remove("active");
+}
+
+function startFirstLesson() {
+  maAction("start_lesson", {});
+  if (typeof Telegram !== 'undefined' && Telegram.WebApp) {
+    try { Telegram.WebApp.close(); } catch(e){}
+  }
+}
+
+function goToStep(cmd, topic) {
+  // Крок 3 — відкриваємо exercises прямо тут
+  if (cmd === 'tutor_me') {
+    openExercises(topic);
+    return;
+  }
+
+  // Toast винагорода
+  if (window.showReward) {
+    const rewardMap = {
+      "lesson":    "video_lesson_done",
+      "table":     "table_read_aloud",
+      "buddy":     "buddy_session",
+    };
+    const rewardKey = rewardMap[cmd];
+    if (rewardKey) showReward(rewardKey, {topic: topic});
+  }
+
+  // Передаємо команду боту (HTTP; sendData як фолбек усередині maAction)
+  setTimeout(() => {
+    maAction("open_topic_step", { cmd: cmd, topic: topic });
+    if (typeof Telegram !== 'undefined' && Telegram.WebApp) {
+      try { Telegram.WebApp.close(); } catch(e){}
+    }
+  }, 600);
+}
+
+// ══════════════════════════════════════════════════════════════
+// EXERCISES — 30 речень з TTS і мікрофоном
+// ══════════════════════════════════════════════════════════════
+
+let exSentences   = [];
+let exIdx         = 0;
+let exSpoken      = 0;
+let exTopic       = '';
+let exRecognition = null;
+let exIsRecording = false;
+let exMediaStream = null;
+
+async function openExercises(topic) {
+  exTopic   = topic;
+  exIdx     = 0;
+  exSpoken  = 0;
+
+  // Показуємо panel в модалці
+  let panel = document.getElementById('exercises-panel');
+  if (!panel) {
+    panel = document.createElement('div');
+    panel.id = 'exercises-panel';
+    panel.className = 'exercises-panel show';
+    document.getElementById('modal-body').appendChild(panel);
+  }
+  panel.classList.add('show');
+  panel.innerHTML = '<div class="ex-sentence" style="color:var(--text2)">Генерую речення...</div>';
+
+  // Скролимо вниз щоб показати panel
+  document.getElementById('modal-body').scrollTo({top: 99999, behavior: 'smooth'});
+
+  // Завантажуємо речення з API
+  try {
+    const res = await fetch(API + '/exercises_data', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        uid: UID, init_data: INIT_DATA,
+        topic: topic,
+        level: D.level || 'B1'
+      })
+    });
+    const d = await res.json();
+    exSentences = d.sentences || generateLocalSentences(topic);
+  } catch(e) {
+    exSentences = generateLocalSentences(topic);
+  }
+
+  renderExercise();
+}
+
+function generateLocalSentences(topic) {
+  // Fallback — базові речення для практики
+  const templates = [
+    "I use this structure every day.",
+    "She doesn't understand the question.",
+    "Do they speak English at work?",
+    "He has already finished his homework.",
+    "We were talking when the phone rang.",
+    "Have you ever been to London?",
+    "I will call you tomorrow morning.",
+    "They didn't go to the party last night.",
+    "Is she coming to the meeting?",
+    "I had never seen such a beautiful place.",
+    "We have been waiting for an hour.",
+    "Did he tell you the news?",
+    "She won't be able to come today.",
+    "I was reading when she arrived.",
+    "Have they finished the project yet?",
+    "He doesn't usually work on weekends.",
+    "We had already eaten when they arrived.",
+    "Are you studying English now?",
+    "I haven't spoken to him since Monday.",
+    "She will have finished by tomorrow.",
+    "Do you want to go for a walk?",
+    "They were living in Paris at that time.",
+    "I don't know what to say.",
+    "Has she ever tried sushi?",
+    "We'll be leaving early in the morning.",
+    "He used to play football every Saturday.",
+    "I've been learning English for two years.",
+    "She didn't say anything about it.",
+    "Will you help me with this?",
+    "They have just arrived at the airport.",
+  ];
+  return templates.slice(0, 30);
+}
+
+function renderExercise() {
+  const panel = document.getElementById('exercises-panel');
+  if (!panel) return;
+
+  if (exIdx >= exSentences.length) {
+    // Завершено!
+    if (window.showReward) showReward('sentences_30_done', {topic: exTopic});
+
+    // Відправляємо в бот
+    try {
+      fetch(API + '/session_activity', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          uid: UID, init_data: INIT_DATA,
+          activity: 'exercises_done',
+          topic: exTopic,
+          spoken_count: exSpoken,
+        })
+      });
+    } catch(e) {}
+
+    panel.innerHTML = `
+      <div class="ex-done-banner">
+        <div class="ex-done-title">🎉 30 речень завершено!</div>
+        <div class="ex-done-sub">Проговорено: ${exSpoken} з ${exSentences.length}<br>Тема зараховується ✅</div>
+      </div>`;
+    return;
+  }
+
+  const sentence = exSentences[exIdx];
+  const pct = Math.round((exIdx / exSentences.length) * 100);
+
+  panel.innerHTML = `
+    <div class="ex-header">
+      <div class="ex-title">🗣 Речення ${exIdx + 1}/30</div>
+      <div class="ex-counter">Проговорено: ${exSpoken}</div>
+    </div>
+    <div class="ex-progress">
+      <div class="ex-progress-fill" style="width:${pct}%"></div>
+    </div>
+    <div class="ex-sentence" id="ex-sentence">${sentence}</div>
+    <div class="ex-actions">
+      <button class="ex-btn" id="ex-tts-btn" onclick="exSpeak()">🔊 Послухати</button>
+      <button class="ex-btn" id="ex-mic-btn" onclick="exToggleRecord()">🎤 Проговорити</button>
+    </div>
+    <button class="ex-next" id="ex-next-btn" onclick="exNext()">
+      Далі →
+    </button>`;
+
+  // Автоматично озвучуємо кожне нове речення
+  setTimeout(() => exSpeak(), 400);
+}
+
+function exSpeak() {
+  const sentence = exSentences[exIdx];
+  if (!sentence) return;
+  window.speechSynthesis.cancel();
+  const utt = new SpeechSynthesisUtterance(sentence);
+  utt.lang = 'en-US';
+  utt.rate = 0.85;
+  const voices = speechSynthesis.getVoices();
+  const v = voices.find(v => v.lang.startsWith('en') && !v.localService)
+         || voices.find(v => v.lang.startsWith('en'));
+  if (v) utt.voice = v;
+  speechSynthesis.speak(utt);
+}
+
+async function exToggleRecord() {
+  if (exIsRecording) {
+    exStopRecord();
+    return;
+  }
+
+  const btn = document.getElementById('ex-mic-btn');
+
+  // Спробуємо Speech Recognition
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (SR) {
+    exRecognition = new SR();
+    exRecognition.lang = 'en-US';
+    exRecognition.interimResults = false;
+    exRecognition.onresult = (e) => {
+      const transcript = e.results[0][0].transcript;
+      // Показуємо що сказав юзер
+      const sentEl = document.getElementById('ex-sentence');
+      if (sentEl) {
+        sentEl.innerHTML =
+          '<span style="color:var(--text2);font-size:12px">Ти сказав:</span><br>' +
+          '<span style="color:var(--green)">' + transcript + '</span><br>' +
+          '<span style="color:var(--text2);font-size:12px;margin-top:4px;display:block">' +
+          exSentences[exIdx] + '</span>';
+      }
+      exMarkSpoken();
+      exStopRecord();
+    };
+    exRecognition.onerror = () => {
+      // Fallback на запис без розпізнавання
+      exRecognition = null;
+      exStartMediaRecord(btn);
+    };
+    exRecognition.onend = () => exStopRecord();
+    try {
+      window.speechSynthesis.cancel();
+      exRecognition.start();
+      exIsRecording = true;
+      if (btn) { btn.classList.add('recording'); btn.textContent = '⏹ Зупинити'; }
+      return;
+    } catch(e) {
+      exRecognition = null;
+    }
+  }
+
+  // Fallback — просто запис
+  exStartMediaRecord(btn);
+}
+
+async function exStartMediaRecord(btn) {
+  try {
+    exMediaStream = await navigator.mediaDevices.getUserMedia({audio: true});
+    exIsRecording = true;
+    if (btn) { btn.classList.add('recording'); btn.textContent = '⏹ Зупинити'; }
+    window.speechSynthesis.cancel();
+
+    const chunks = [];
+    const recorder = new MediaRecorder(exMediaStream);
+    recorder.ondataavailable = e => chunks.push(e.data);
+    recorder.onstop = () => {
+      const blob = new Blob(chunks, {type: 'audio/webm'});
+      const url  = URL.createObjectURL(blob);
+      // Спочатку TTS оригінал, потім запис юзера
+      exSpeak();
+      setTimeout(() => new Audio(url).play(), 2000);
+      exMarkSpoken();
+    };
+    recorder.start();
+    exIsRecording = true;
+
+    // Автозупинка 8 сек
+    setTimeout(() => {
+      if (recorder.state === 'recording') recorder.stop();
+      exStopRecord();
+    }, 8000);
+  } catch(e) {
+    exIsRecording = false;
+  }
+}
+
+function exStopRecord() {
+  exIsRecording = false;
+  if (exRecognition) {
+    try { exRecognition.stop(); } catch(e) {}
+    exRecognition = null;
+  }
+  if (exMediaStream) {
+    exMediaStream.getTracks().forEach(t => t.stop());
+    exMediaStream = null;
+  }
+  const btn = document.getElementById('ex-mic-btn');
+  if (btn) { btn.classList.remove('recording'); btn.textContent = '🎤 Проговорити'; }
+}
+
+function exMarkSpoken() {
+  exSpoken++;
+  const btn = document.getElementById('ex-mic-btn');
+  if (btn) { btn.classList.add('spoken'); btn.textContent = '✓ Проговорив'; }
+  const counter = document.querySelector('.ex-counter');
+  if (counter) counter.textContent = `Проговорено: ${exSpoken}`;
+}
+
+function exNext() {
+  exStopRecord();
+  window.speechSynthesis.cancel();
+  exIdx++;
+  renderExercise();
+  // Скролимо до exercises panel
+  const panel = document.getElementById('exercises-panel');
+  if (panel) panel.scrollIntoView({behavior: 'smooth', block: 'start'});
+}
+
+init();
+
+// ── Картка після сесії ──
+let beaconSent = false;
+function endSession() {
+  if (beaconSent || exSpoken < 1) return;
+  beaconSent = true;
+  try {
+    const blob = new Blob([JSON.stringify({
+      uid: UID, init_data: INIT_DATA, source: 'progress', count: exSpoken,
+    })], { type: 'application/json' });
+    navigator.sendBeacon(`${API}/miniapp_session_end`, blob);
+  } catch(e) {}
+}
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') endSession();
+});
+window.addEventListener('pagehide', endSession);
+</script>
+</body>
+</html>
