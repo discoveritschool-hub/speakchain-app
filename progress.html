@@ -431,7 +431,19 @@ function renderLevel() {
     '</div>';
 
   const vc = (D.vocab_coverage || {})[activeLevel];
+  const vol = (D.vocab_volume || {})[activeLevel];
+  const volDelta = (D.vocab_volume_delta || {})[activeLevel] || 0;
   const vcEl = document.getElementById("vocab-progress");
+  const deltaBadge = (volDelta > 0)
+    ? '<div style="font-size:11px;color:var(--green);margin-top:3px">↑ +' + volDelta + ' за тиждень</div>'
+    : '';
+  const volLine = (typeof vol === 'number')
+    ? '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">' +
+        '<div><div style="font-size:13px;color:var(--text)">📚 Активний словник ' + activeLevel + '</div>' +
+        '<div style="font-size:11px;color:var(--text3);margin-top:1px">усі слова рівня, що ти знаєш</div></div>' +
+        '<div style="text-align:right"><div style="font-size:22px;font-weight:700;color:var(--text)">' + vol.toLocaleString('uk') + '</div>' + deltaBadge + '</div>' +
+      '</div>'
+    : '';
   if (vc) {
     const vpct = vc.pct || 0;
     vcEl.innerHTML =
@@ -445,7 +457,10 @@ function renderLevel() {
         '<div class="lvl-track"><div class="lvl-fill" style="width:' + vpct + '%"></div></div>' +
         (vc.gap > 0 ? '<div style="font-size:12px;color:var(--text3);margin-top:6px">' +
           'Заповнити ще ' + vc.gap + ' слів до цілі рівня</div>' : '') +
+        volLine +
       '</div>';
+  } else if (volLine) {
+    vcEl.innerHTML = '<div class="lvl-progress" style="margin-top:10px">' + volLine + '</div>';
   } else {
     vcEl.innerHTML = "";
   }
