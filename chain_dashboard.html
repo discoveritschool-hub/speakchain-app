@@ -295,7 +295,7 @@ body {
 <div class="tab-bar">
   <div class="tab active" onclick="switchTab('chain')">🔗 Ланцюжок</div>
   <div class="tab" onclick="switchTab('network')">👥 Мережа</div>
-  <div class="tab" onclick="maAction('open_leaderboard')">🏆 Рейтинги →</div>
+  <div class="tab" onclick="switchTab('leaders')">🏆 Рейтинги</div>
   <div class="tab" onclick="switchTab('upgrade')">⚡️ Доступ</div>
 </div>
 
@@ -459,19 +459,21 @@ body {
 <!-- ══ TAB 3: LEADERBOARD ══ -->
 <div class="screen" id="screen-leaders">
   <div class="section">
-    <div style="display:flex;gap:8px;margin-bottom:12px">
-      <button id="lb-tab-chain" onclick="lbSwitch('chain')"
-        style="flex:1;padding:8px;border-radius:10px;border:.5px solid var(--purple);background:rgba(124,110,247,.15);color:var(--purple);font-size:12px;font-weight:700;cursor:pointer">
-        🔗 Ланцюжки
-      </button>
-      <button id="lb-tab-xp" onclick="lbSwitch('xp')"
-        style="flex:1;padding:8px;border-radius:10px;border:.5px solid var(--border);background:var(--bg3);color:var(--text2);font-size:12px;font-weight:700;cursor:pointer">
-        ⚡️ XP тижня
-      </button>
+    <div style="position:relative;margin-bottom:8px;">
+      <div id="lb-cats" style="display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px;"></div>
+      <div id="lb-cats-hint" style="position:absolute;top:0;bottom:2px;right:0;width:28px;background:linear-gradient(to right,transparent,var(--bg));pointer-events:none;display:flex;align-items:center;justify-content:flex-end;"><span style="color:var(--text2);font-size:15px;">›</span></div>
     </div>
+    <div id="lb-periods" style="display:flex;gap:6px;margin-bottom:14px;"></div>
     <div id="lb-list"></div>
   </div>
 </div>
+
+<style>
+.lb-cat{flex-shrink:0;padding:6px 12px;border-radius:16px;font-size:12px;font-weight:600;border:.5px solid var(--border);background:var(--bg3);color:var(--text2);cursor:pointer;white-space:nowrap;}
+.lb-cat.on{background:rgba(124,110,247,.18);border-color:rgba(124,110,247,.4);color:var(--purple);}
+.lb-per{flex:1;padding:6px 4px;border-radius:8px;font-size:11px;font-weight:600;border:.5px solid var(--border);background:var(--bg3);color:var(--text2);cursor:pointer;}
+.lb-per.on{background:var(--bg4);border-color:rgba(255,255,255,.15);color:var(--text);}
+</style>
 
 <!-- ══ TAB 4: UPGRADE ══ -->
 <div class="screen" id="screen-upgrade">
@@ -683,37 +685,65 @@ function fillNetwork(){
 }
 
 /* ── Tab 3: Leaderboard ── */
-let currentLbType='chain';
-function lbSwitch(type){
-  currentLbType=type;
-  document.getElementById('lb-tab-chain').style.background=type==='chain'?'rgba(124,110,247,.15)':'var(--bg3)';
-  document.getElementById('lb-tab-chain').style.color=type==='chain'?'var(--purple)':'var(--text2)';
-  document.getElementById('lb-tab-chain').style.borderColor=type==='chain'?'var(--purple)':'var(--border)';
-  document.getElementById('lb-tab-xp').style.background=type==='xp'?'rgba(124,110,247,.15)':'var(--bg3)';
-  document.getElementById('lb-tab-xp').style.color=type==='xp'?'var(--purple)':'var(--text2)';
-  document.getElementById('lb-tab-xp').style.borderColor=type==='xp'?'var(--purple)':'var(--border)';
-  fillLeaderboard();
+const LB_CATS=[
+  {key:'chain',   label:'🔗 Ланцюжок',   unit:'ланок',  meta:'🔗 ланцюжок'},
+  {key:'xp',      label:'⚡️ XP',         unit:'XP',     meta:'⚡️ XP'},
+  {key:'streak',  label:'🔥 Стрік',      unit:'дн.',    meta:'🔥 днів поспіль'},
+  {key:'jump',    label:'📈 Стрибок',    unit:'балів',  meta:'📈 приріст балів'},
+  {key:'consist', label:'📅 Стабільність',unit:'%',     meta:'📅 регулярність'},
+  {key:'chains',  label:'👥 Chains',     unit:'ланок',  meta:'👥 друзів-ланок'},
+];
+const LB_PERIODS=[
+  {key:'day',  label:'День'},
+  {key:'week', label:'Тиждень'},
+  {key:'month',label:'Місяць'},
+  {key:'all',  label:'Весь час'},
+];
+let lbCat='chain';       // дефолт — ланцюжок
+let lbPeriod='all';      // дефолт — весь час
+
+function lbScore(u,cat){
+  if(cat==='consist'){
+    const d=u.consist||[];
+    return d.length?Math.round(d.filter(Boolean).length/d.length*100):0;
+  }
+  if(cat==='chains') return u.ref_chained||0;
+  return u[cat]||0;
 }
+
+function renderLbControls(){
+  document.getElementById('lb-cats').innerHTML=LB_CATS.map(c=>
+    `<button class="lb-cat ${c.key===lbCat?'on':''}" onclick="setLbCat('${c.key}')">${c.label}</button>`
+  ).join('');
+  document.getElementById('lb-periods').innerHTML=LB_PERIODS.map(p=>
+    `<button class="lb-per ${p.key===lbPeriod?'on':''}" onclick="setLbPeriod('${p.key}')">${p.label}</button>`
+  ).join('');
+}
+function setLbCat(k){lbCat=k;renderLbControls();fillLeaderboard();}
+function setLbPeriod(k){lbPeriod=k;renderLbControls();fillLeaderboard();}
+
 function fillLeaderboard(){
-  const data=(D.leaderboard_chain||[]).slice().sort((a,b)=>
-    currentLbType==='chain'?(b.chain-a.chain):(b.xp-a.xp)
-  );
+  renderLbControls();
+  const cat=LB_CATS.find(c=>c.key===lbCat)||LB_CATS[0];
+  const data=(D.leaderboard_chain||[]).slice()
+    .sort((a,b)=>lbScore(b,lbCat)-lbScore(a,lbCat));
   const rankClass=['','gold','silver','bronze'];
   let html='';
   data.forEach((u,i)=>{
     const rank=i+1;
     const rc=rankClass[rank]||'';
     const emoji=rank===1?'🥇':rank===2?'🥈':rank===3?'🥉':rank;
-    const score=currentLbType==='chain'?`${u.chain} <span>ланок</span>`:`${u.xp} <span>XP</span>`;
+    const val=lbScore(u,lbCat);
+    const valStr=(lbCat==='xp')?val.toLocaleString():val;
     html+=`
     <div class="lb-row">
       <div class="lb-rank ${rc}">${emoji}</div>
       <div class="lb-avatar ${u.me?'me':''}">${ini(u.name)}</div>
       <div class="lb-info">
         <div class="lb-name">${u.name}${u.me?' (Ти)':''}</div>
-        <div class="lb-meta">${currentLbType==='chain'?'🔗 ланцюжок':'⚡️ XP цього тижня'}</div>
+        <div class="lb-meta">${cat.meta}</div>
       </div>
-      <div class="lb-score">${score}</div>
+      <div class="lb-score">${valStr} <span>${cat.unit}</span></div>
     </div>`;
   });
   document.getElementById('lb-list').innerHTML=html||'<div style="text-align:center;color:var(--text2);padding:24px">Немає даних</div>';
