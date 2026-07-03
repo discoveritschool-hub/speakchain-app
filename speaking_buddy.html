@@ -1332,7 +1332,11 @@ async function sendMessage() {
     const data = await res.json();
     removeTyping();
 
-    if (data.error) {
+    if (data.show_paywall) {
+      // Ліміт вичерпано — показуємо повідомлення + робочу кнопку тріалу/Premium
+      addMessage('ai', data.reply || 'Щоб продовжити — приєднайся до SpeakChain 🚀', []);
+      showTrialCTA();
+    } else if (data.error) {
       addMessage('ai', data.error, []);
     } else {
       msgCount++;
@@ -1354,6 +1358,27 @@ async function sendMessage() {
 
   isLoading = false;
   document.getElementById('send-btn').disabled = false;
+}
+
+// Bug #3: показує CTA-кнопку тріалу/Premium прямо в чаті, коли вичерпано ліміт
+function showTrialCTA() {
+  const chat = document.getElementById('chat-messages') || document.getElementById('chat-body');
+  if (!chat) { goToTrial(); return; }
+  // не дублюємо, якщо вже показана
+  if (document.getElementById('trial-cta-inline')) return;
+  const wrap = document.createElement('div');
+  wrap.id = 'trial-cta-inline';
+  wrap.style.cssText = 'display:flex;justify-content:center;padding:12px 16px;';
+  const btn = document.createElement('button');
+  btn.textContent = '🚀 Приєднатися до тріалу';
+  btn.style.cssText = 'padding:12px 24px;border-radius:24px;border:none;background:linear-gradient(135deg,#7c6ef7,#a78bfa);color:#fff;font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 4px 16px rgba(124,110,247,.35);';
+  btn.onclick = goToTrial;
+  wrap.appendChild(btn);
+  chat.appendChild(wrap);
+  chat.scrollTop = chat.scrollHeight;
+  // ховаємо поле вводу — далі писати немає сенсу до апгрейду
+  const inputArea = document.querySelector('.chat-input-area');
+  if (inputArea) inputArea.style.display = 'none';
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -1742,7 +1767,11 @@ renderScenarios();
   // Завершення сесії з показом анімованої картки.
   // Викликати з кнопки «Завершити сесію» в режимі чату.
   async function finishSessionWithCard() {
-    if (sessionMsgCount < 1) { return; }      // порожня сесія
+    if (sessionMsgCount < 1) {
+      // порожня сесія — не рахуємо, але даємо зрозумілий відгук замість «нічого»
+      addMessage('ai', 'Скажи хоч кілька фраз — і тоді зможемо підбити підсумок 😊', []);
+      return;
+    }
     // шлемо session_end як fetch (щоб бек встиг порахувати), тоді тягнемо victory
     try {
       await fetch(BOT_API + '/buddy_session_end', {
