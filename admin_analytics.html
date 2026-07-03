@@ -1121,6 +1121,25 @@ function renderBuddy() {
     </table>
   </div>
 
+  <div class="table-block" style="margin-top:14px">
+    <div class="table-title">🔥 Популярність тем <span style="color:var(--text3);font-weight:400">(усього відкриттів)</span></div>
+    ${(() => {
+      const list = d.topic_popularity || [];
+      if (!list.length) return '<div style="font-size:12px;color:var(--text2);padding:6px 0">Даних ще немає — зʼявляться, щойно учні почнуть відкривати теми.</div>';
+      const max = Math.max(...list.map(t => t.opens), 1);
+      return list.map(t => `
+        <div style="margin-bottom:9px">
+          <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px">
+            <span style="color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:78%">${t.name}</span>
+            <span style="color:var(--purple);font-weight:700">${fmt(t.opens)}</span>
+          </div>
+          <div style="height:7px;background:var(--bg2,rgba(255,255,255,.05));border-radius:4px;overflow:hidden">
+            <div style="height:100%;width:${Math.round(t.opens / max * 100)}%;background:linear-gradient(90deg,#7c6ef7,#a78bfa);border-radius:4px"></div>
+          </div>
+        </div>`).join('');
+    })()}
+  </div>
+
   <div class="cards">
     <div class="card green">
       <div class="card-label">✓ Правильних</div>
