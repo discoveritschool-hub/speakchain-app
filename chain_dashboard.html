@@ -703,10 +703,7 @@ let lbCat='chain';       // дефолт — ланцюжок
 let lbPeriod='all';      // дефолт — весь час
 
 function lbScore(u,cat){
-  if(cat==='consist'){
-    const d=u.consist||[];
-    return d.length?Math.round(d.filter(Boolean).length/d.length*100):0;
-  }
+  if(cat==='consist') return u.consist||0;   // вже відсоток з бекенду
   if(cat==='chains') return u.ref_chained||0;
   return u[cat]||0;
 }
