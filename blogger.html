@@ -437,7 +437,7 @@
       <!-- Челендж тижня -->
       <div class="form-card">
         <div class="form-title">🏆 Челендж тижня</div>
-        <div class="form-hint">Тема speaking-челенджу, яку отримають усі твої студенти. Напиши коротко й зрозуміло.</div>
+        <div class="form-hint">Окреме від питання тижня: спільна тема-виклик для всіх твоїх студентів на тиждень (напр. «Опиши свій ідеальний вихідний»). Можна додати своє відео-завдання нижче.</div>
         <input class="form-input" id="challenge-input" placeholder="Напр.: Опиши свій ідеальний вихідний" maxlength="200">
         <div class="form-hint" style="margin-top:8px;">Відео-завдання (необов'язково): запиши коротке відео на YouTube у режимі «Доступ за посиланням» і встав лінк — студенти побачать твоє відео разом із темою.</div>
         <div id="wc-video-status" class="form-hint" style="margin-bottom:6px;"></div>
@@ -448,7 +448,7 @@
       <!-- Питання тижня (відео) -->
       <div class="form-card">
         <div class="form-title">🎯 Питання тижня</div>
-        <div class="form-hint">Відео-питання, яке студенти отримають у неділю з AI-фідбеком. Записується коротким відео.</div>
+        <div class="form-hint">Окреме від челенджу тижня: коротке відео-питання, на яке студенти відповідають голосом у неділю й отримують AI-фідбек. Записується прямо в боті.</div>
         <button class="form-btn" onclick="sendAction('blogger_weekly_q')">Записати відео-питання</button>
       </div>
 
@@ -473,7 +473,7 @@
       </button>
       <button class="action-btn green" onclick="sendAction('blogger_gen_video_link')">
         <span class="icon">🎬</span>
-        <span class="label">Посилання на відео для студентів</span>
+        <span class="label">Реф-посилання (відео-запрошення)</span>
         <span class="arr">›</span>
       </button>
       <button class="action-btn red" onclick="sendAction('blogger_live_menu')">
