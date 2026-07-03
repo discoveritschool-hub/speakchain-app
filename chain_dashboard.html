@@ -725,7 +725,9 @@ function setLbPeriod(k){lbPeriod=k;renderLbControls();fillLeaderboard();}
 function fillLeaderboard(){
   renderLbControls();
   const cat=LB_CATS.find(c=>c.key===lbCat)||LB_CATS[0];
-  const data=(D.leaderboard_chain||[]).slice()
+  // дані обраного періоду (fallback на загальний список)
+  const src=(D.leaderboard_periods&&D.leaderboard_periods[lbPeriod])||D.leaderboard_chain||[];
+  const data=src.slice()
     .sort((a,b)=>lbScore(b,lbCat)-lbScore(a,lbCat));
   const rankClass=['','gold','silver','bronze'];
   let html='';
