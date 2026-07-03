@@ -295,7 +295,7 @@ body {
 <div class="tab-bar">
   <div class="tab active" onclick="switchTab('chain')">🔗 Ланцюжок</div>
   <div class="tab" onclick="switchTab('network')">👥 Мережа</div>
-  <div class="tab" onclick="switchTab('leaders')">🏆 Топ</div>
+  <div class="tab" onclick="maAction('open_leaderboard')">🏆 Рейтинги →</div>
   <div class="tab" onclick="switchTab('upgrade')">⚡️ Доступ</div>
 </div>
 
@@ -329,6 +329,18 @@ body {
       </div>
     </div>
     <div class="xp-boost" id="xp-boost" style="display:none">+20% boost</div>
+  </div>
+
+  <!-- Stability (streak) strip — окрема метрика від ланцюжка -->
+  <div class="xp-strip" id="stability-strip" style="display:none">
+    <div class="xp-left">
+      <span class="xp-icon">🔥</span>
+      <div>
+        <div class="xp-val" id="stability-val">0 днів</div>
+        <div class="xp-label">Стабільність · днів поспіль</div>
+      </div>
+    </div>
+    <div class="xp-boost" id="stability-best" style="display:none"></div>
   </div>
 
   <!-- Identity -->
@@ -596,7 +608,7 @@ function fillChain(){
     statusEl.textContent='Почни перший урок';
     statusEl.className='chain-status';
   } else {
-    statusEl.textContent=`✅ Ланцюжок активний · ${len} ${len===1?'день':'днів'}`;
+    statusEl.textContent=`✅ Ланцюжок активний · ${len} ${len===1?'ланка':(len>=2&&len<=4?'ланки':'ланок')}`;
     statusEl.className='chain-status active';
   }
 
@@ -605,6 +617,22 @@ function fillChain(){
     const b=document.getElementById('xp-boost');
     b.style.display='block';
     b.textContent=`+20% XP · ще ${D.xp_boost_days||7} дн.`;
+  }
+
+  // ── Стабільність (стрік) — окремо від ланцюжка ──
+  const streak = D.streak_days||0;
+  const stStrip = document.getElementById('stability-strip');
+  if(streak>0){
+    stStrip.style.display='flex';
+    document.getElementById('stability-val').textContent =
+      `${streak} ${streak===1?'день':(streak>=2&&streak<=4?'дні':'днів')}`;
+    if(D.best_streak && D.best_streak>streak){
+      const bb=document.getElementById('stability-best');
+      bb.style.display='block';
+      bb.textContent=`рекорд ${D.best_streak}`;
+    }
+  } else {
+    stStrip.style.display='none';
   }
 
   const id=IDENTITY[D.identity_state]||IDENTITY['new'];
