@@ -418,12 +418,31 @@
   <!-- ===== TAB: CONTENT ===== -->
   <div class="tab-panel" id="tab-content">
     <div class="section">
+      <!-- Відео челенджу (YouTube-посилання, 7 днів) -->
+      <div class="form-card">
+        <div class="form-title">📹 Відео челенджу (YouTube, 7 днів)</div>
+        <div class="form-hint">Завантаж 7 відео за скриптами на свій YouTube у режимі «Доступ за посиланням» (unlisted) — їх не видно в пошуку й на каналі, лише за лінком. Встав сюди посилання по днях. Студенти отримають їх по черзі під час челенджу.</div>
+        <div id="challenge-videos-list"></div>
+        <div id="challenge-videos-status" class="form-hint" style="margin-top:8px;font-weight:600;"></div>
+      </div>
+
+      <!-- Фрази дня (7 на тиждень) -->
+      <div class="form-card">
+        <div class="form-title">💬 Фрази дня (7 на тиждень)</div>
+        <div class="form-hint">Запиши 7 коротких фраз — по одній на кожен день тижня. Бот публікуватиме по одній щодня у «Плані на сьогодні» твоїх студентів. Ротація не повторюється.</div>
+        <div id="phrases-list"></div>
+        <div id="phrases-status" class="form-hint" style="margin-top:8px;font-weight:600;"></div>
+      </div>
+
       <!-- Челендж тижня -->
       <div class="form-card">
         <div class="form-title">🏆 Челендж тижня</div>
         <div class="form-hint">Тема speaking-челенджу, яку отримають усі твої студенти. Напиши коротко й зрозуміло.</div>
         <input class="form-input" id="challenge-input" placeholder="Напр.: Опиши свій ідеальний вихідний" maxlength="200">
-        <button class="form-btn" onclick="submitForm('blogger_new_challenge','challenge-input')">Запустити челендж</button>
+        <div class="form-hint" style="margin-top:8px;">Відео-завдання (необов'язково): запиши коротке відео на YouTube у режимі «Доступ за посиланням» і встав лінк — студенти побачать твоє відео разом із темою.</div>
+        <div id="wc-video-status" class="form-hint" style="margin-bottom:6px;"></div>
+        <input class="form-input" id="wc-video-input" placeholder="https://youtu.be/... (необов'язково)">
+        <button class="form-btn" onclick="submitWeeklyChallenge()">Запустити челендж</button>
       </div>
 
       <!-- Питання тижня (відео) -->
@@ -560,6 +579,88 @@ function initials(name) {
   return name.split(/\s+/).map(w=>w[0]).join('').toUpperCase().slice(0,2);
 }
 
+const CHALLENGE_DAY_TITLES = [
+  'Це не твоя провина',
+  'Ворог — це страх',
+  'Перестань перекладати',
+  'Складні звуки',
+  'Говори живо — покажи себе',
+  'Твоє дзеркало',
+  'Благословення (фінал)',
+];
+
+function renderChallengeVideos() {
+  const wrap = document.getElementById('challenge-videos-list');
+  if (!wrap) return;
+  const vids = (D.challenge_videos) || {};   // { "1": {url:"..."} , ... }
+  let done = 0;
+  let html = '';
+  for (let day = 1; day <= 7; day++) {
+    const url = (vids[day] && vids[day].url) || '';
+    if (url) done++;
+    html += `
+      <div style="padding:10px 0;border-bottom:.5px solid var(--border);">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+          <div style="width:26px;height:26px;border-radius:7px;background:${url?'rgba(90,216,166,.15)':'var(--bg3)'};display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:${url?'var(--green)':'var(--text2)'};flex-shrink:0;">${url?'✓':day}</div>
+          <div style="font-size:13px;font-weight:600;color:var(--text);flex:1;">День ${day}. ${CHALLENGE_DAY_TITLES[day-1]}</div>
+        </div>
+        <div style="display:flex;gap:6px;">
+          <input class="form-input" id="cv-input-${day}" value="${url.replace(/"/g,'&quot;')}" placeholder="https://youtu.be/..." style="flex:1;font-size:12px;padding:8px 10px;">
+          <button onclick="saveChallengeVideo(${day})" style="padding:8px 14px;border-radius:8px;border:none;background:var(--purple);color:#fff;font-size:12px;font-weight:600;cursor:pointer;flex-shrink:0;">${url?'Оновити':'Зберегти'}</button>
+        </div>
+      </div>`;
+  }
+  wrap.innerHTML = html;
+  const st = document.getElementById('challenge-videos-status');
+  if (st) {
+    if (done === 7) { st.textContent = '✅ 7/7 відео готово — челендж можна запускати'; st.style.color = 'var(--green)'; }
+    else { st.textContent = `${done}/7 посилань додано`; st.style.color = 'var(--text2)'; }
+  }
+}
+
+function saveChallengeVideo(day) {
+  const inp = document.getElementById('cv-input-' + day);
+  const url = (inp && inp.value || '').trim();
+  if (!url) return;
+  maAction('blogger_set_challenge_video', { day: day, url: url });
+}
+
+const WEEKDAYS = ['Пн','Вт','Ср','Чт','Пт','Сб','Нд'];
+function renderPhrases() {
+  const wrap = document.getElementById('phrases-list');
+  if (!wrap) return;
+  const phrases = (D.week_phrases) || {};   // { "1": "text", ... } 1..7
+  let done = 0;
+  let html = '';
+  for (let i = 1; i <= 7; i++) {
+    const val = phrases[i] || '';
+    if (val) done++;
+    html += `
+      <div class="ph-row" style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:.5px solid var(--border);">
+        <div style="width:30px;height:30px;border-radius:8px;background:${val?'rgba(90,216,166,.15)':'var(--bg3)'};display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:${val?'var(--green)':'var(--text2)'};flex-shrink:0;">${WEEKDAYS[i-1]}</div>
+        <div style="flex:1;min-width:0;font-size:12px;color:${val?'var(--text)':'var(--text2)'};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${val || 'Порожньо'}</div>
+        <button onclick="editPhrase(${i})" style="padding:6px 12px;border-radius:8px;border:.5px solid var(--purple);background:${val?'transparent':'rgba(124,110,247,.12)'};color:var(--purple);font-size:12px;font-weight:600;cursor:pointer;flex-shrink:0;">${val?'Змінити':'Задати'}</button>
+      </div>`;
+  }
+  wrap.innerHTML = html;
+  const st = document.getElementById('phrases-status');
+  if (st) {
+    if (done === 7) { st.textContent = '✅ 7/7 фраз готово на тиждень'; st.style.color = 'var(--green)'; }
+    else { st.textContent = `${done}/7 фраз задано`; st.style.color = 'var(--text2)'; }
+  }
+}
+
+function editPhrase(day) {
+  maAction('blogger_set_phrase_day', { day: day });
+}
+
+function submitWeeklyChallenge() {
+  const topic = (document.getElementById('challenge-input').value || '').trim();
+  const url = (document.getElementById('wc-video-input').value || '').trim();
+  if (!topic) return;
+  maAction('blogger_new_challenge', { text: topic, video_url: url });
+}
+
 function fill() {
   const name    = D.name    || 'Blogger';
   const total   = D.total   || 0;
@@ -581,6 +682,16 @@ function fill() {
   const premPct = total > 0 ? Math.round(premium / total * 100) : 0;
   document.getElementById('prem-bar').style.width = premPct + '%';
   document.getElementById('prem-pct').textContent = premPct + '% Premium';
+
+  // ── Відео челенджу + Фрази дня ──
+  renderChallengeVideos();
+  renderPhrases();
+  // Поточне відео челенджу тижня
+  const _wcUrl = (D.weekly_challenge_video) || '';
+  const _wcInput = document.getElementById('wc-video-input');
+  const _wcStatus = document.getElementById('wc-video-status');
+  if (_wcInput && _wcUrl) _wcInput.value = _wcUrl;
+  if (_wcStatus) { _wcStatus.textContent = _wcUrl ? '✅ Відео задано' : ''; _wcStatus.style.color = 'var(--green)'; }
 
   // ── Financial journal ──
   const fin = D.fin || {};
