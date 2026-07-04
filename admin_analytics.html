@@ -113,6 +113,7 @@ tr:hover td{background:var(--surface2)}
   <div style="display:flex;gap:8px">
     <div class="refresh-btn" id="tz-btn" onclick="loadTZ()" title="ТЗ для Claude">📋</div>
     <div class="refresh-btn" id="ai-btn" onclick="loadAIInsights()" title="AI Аналіз">🤖</div>
+    <div class="refresh-btn" id="ab-btn" onclick="loadABHypotheses()" title="A/B-гіпотези з воронки">🧪</div>
     <div class="refresh-btn" onclick="loadData()">↻</div>
   </div>
 </div>
@@ -143,6 +144,15 @@ tr:hover td{background:var(--surface2)}
   <div id="ai-content" style="font-size:13px;color:var(--text);line-height:1.7;white-space:pre-wrap"></div>
 </div>
 
+<!-- A/B Hypotheses Panel (крок 3) -->
+<div id="ab-panel" style="display:none;margin:0 16px 0;background:#0f1a14;border:1px solid rgba(62,207,142,.3);border-radius:12px;padding:16px">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+    <div style="font-size:14px;font-weight:700;color:#3ecf8e">🧪 A/B-гіпотези з воронки</div>
+    <div style="font-size:11px;color:var(--text3)" id="ab-generated-at"></div>
+  </div>
+  <div id="ab-content" style="font-size:13px;color:var(--text);line-height:1.7;white-space:pre-wrap"></div>
+</div>
+
 <div class="tabs-wrap">
 <div class="tabs" id="tabs-row">
   <div class="tab active" onclick="switchTab('overview')">Огляд</div>
@@ -151,6 +161,8 @@ tr:hover td{background:var(--surface2)}
   <div class="tab" onclick="switchTab('funnel')">Funnel</div>
   <div class="tab" onclick="switchTab('revenue')">Revenue</div>
   <div class="tab" onclick="switchTab('buddy')">Buddy</div>
+  <div class="tab" onclick="switchTab('situations')">🎁 Ситуації</div>
+  <div class="tab" onclick="switchTab('chfunnel')">📉 Воронка</div>
   <div class="tab" onclick="switchTab('bloggers')">Блогери</div>
   <div class="tab" onclick="switchTab('actions')">Дії</div>
 </div>
@@ -201,6 +213,20 @@ tr:hover td{background:var(--surface2)}
     </div>
   </div>
 
+  <!-- SITUATIONS (quiz дня 1 → подарунок) -->
+  <div class="section" id="tab-situations">
+    <div id="situations-content">
+      <div class="loading"><div class="spinner"></div>Завантаження...</div>
+    </div>
+  </div>
+
+  <!-- CHALLENGE FUNNEL (крива відвалу 1→7) -->
+  <div class="section" id="tab-chfunnel">
+    <div id="chfunnel-content">
+      <div class="loading"><div class="spinner"></div>Завантаження...</div>
+    </div>
+  </div>
+
   <!-- BLOGGERS -->
   <div class="section" id="tab-bloggers">
     <div id="bloggers-content">
@@ -228,7 +254,7 @@ let activeTab = 'overview';
 function switchTab(tab) {
   activeTab = tab;
   document.querySelectorAll('.tab').forEach((t, i) => {
-    t.classList.toggle('active', ['overview','students','retention','funnel','revenue','buddy','bloggers','actions'][i] === tab);
+    t.classList.toggle('active', ['overview','students','retention','funnel','revenue','buddy','situations','chfunnel','bloggers','actions'][i] === tab);
   });
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   document.getElementById(`tab-${tab}`).classList.add('active');
@@ -359,6 +385,40 @@ async function loadAIInsights() {
   btn.style.pointerEvents = 'auto';
 }
 
+async function loadABHypotheses() {
+  const btn    = document.getElementById('ab-btn');
+  const panel  = document.getElementById('ab-panel');
+  const content= document.getElementById('ab-content');
+
+  btn.textContent = '⏳';
+  btn.style.pointerEvents = 'none';
+  panel.style.display = 'block';
+  content.textContent = 'Генерую A/B-гіпотези з кривої відвалу... ~20 секунд ⏳';
+
+  try {
+    const res = await fetch('https://speakchain-bot-production.up.railway.app/admin_ab_hypotheses', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        uid:       tg?.initDataUnsafe?.user?.id || 0,
+        init_data: tg?.initData || '',
+      })
+    });
+    const d = await res.json();
+    if (d.error) {
+      content.textContent = '❌ ' + d.error;
+    } else {
+      content.textContent = d.analysis;
+      document.getElementById('ab-generated-at').textContent = d.generated_at || '';
+    }
+  } catch(e) {
+    content.textContent = '❌ Помилка: ' + e.message;
+  }
+
+  btn.textContent = '🧪';
+  btn.style.pointerEvents = 'auto';
+}
+
 async function loadData() {
   document.getElementById('last-updated').textContent = 'Завантаження...';
   try {
@@ -385,11 +445,11 @@ async function loadData() {
     const now = new Date().toLocaleTimeString('uk-UA', {hour:'2-digit', minute:'2-digit'});
     document.getElementById('last-updated').textContent = `Оновлено ${now}`;
     renderTab(activeTab);
-    ['overview','students','retention','funnel','revenue','buddy','bloggers','actions'].forEach(t => {
+    ['overview','students','retention','funnel','revenue','buddy','situations','chfunnel','bloggers','actions'].forEach(t => {
       if (t !== activeTab) renderTab(t);
     });
   } catch(e) {
-    ['overview','students','retention','funnel','revenue','buddy'].forEach(t => {
+    ['overview','students','retention','funnel','revenue','buddy','situations','chfunnel'].forEach(t => {
       document.getElementById(`${t}-content`).innerHTML =
         `<div class="error-box">❌ ${e.message}</div>`;
     });
@@ -407,6 +467,8 @@ function renderTab(tab) {
     case 'funnel':     el.innerHTML = renderFunnel(); break;
     case 'revenue':    el.innerHTML = renderRevenue(); break;
     case 'buddy':      el.innerHTML = renderBuddy(); break;
+    case 'situations': el.innerHTML = renderSituations(); break;
+    case 'chfunnel':   el.innerHTML = renderChFunnel(); break;
     case 'bloggers':   el.innerHTML = renderBloggers(); break;
     case 'actions':    el.innerHTML = renderActions(); break;
   }
@@ -1267,6 +1329,147 @@ function renderBuddy() {
       <div class="card-value">${pct(d.demo_converted, d.demo_users)}</div>
     </div>
   </div>`;
+}
+
+// ── SITUATIONS (quiz дня 1 → подарунок під ситуації) ─────
+function renderSituations() {
+  const d = data.situations;
+  if (!d) return '<div class="loading">Немає даних по ситуаціях</div>';
+
+  const rows = d.rows || [];
+  const hasData = (d.total_respondents || 0) > 0;
+  const max = Math.max(...rows.map(r => r.count), 1);
+
+  const topLabel = hasData && rows[0] && rows[0].count
+    ? `${rows[0].emoji} ${rows[0].label}` : '—';
+
+  const bars = !hasData
+    ? `<div style="font-size:12px;color:var(--text2);padding:8px 0">
+         Даних ще немає — з'являться, щойно учні почнуть проходити quiz дня 1
+         («де мені найбільше бракує англійської»).
+       </div>`
+    : rows.map(r => `
+        <div style="margin-bottom:11px">
+          <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px">
+            <span style="color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:70%">
+              ${r.emoji} ${r.label}
+            </span>
+            <span style="color:var(--accent);font-weight:700">${fmt(r.count)} <span style="color:var(--text3);font-weight:400">(${r.pct}%)</span></span>
+          </div>
+          <div style="height:8px;background:rgba(255,255,255,.05);border-radius:4px;overflow:hidden">
+            <div style="height:100%;width:${Math.round(r.count / max * 100)}%;background:linear-gradient(90deg,#4f8ef7,#7c6ef7);border-radius:4px"></div>
+          </div>
+        </div>`).join('');
+
+  return `
+  <div style="background:rgba(167,139,250,.08);border:1px solid rgba(167,139,250,.3);border-radius:12px;padding:12px 14px;margin-bottom:14px">
+    <div style="font-size:13px;font-weight:700;color:var(--purple);margin-bottom:4px">🎁 Ситуації для подарунка</div>
+    <div style="font-size:12px;color:var(--text2);line-height:1.5">
+      Учні позначають на дні 1, де їм найбільше бракує розмовної англійської.
+      За цим рейтингом будуємо подарунок — уроки під найзатребуваніші ситуації.
+    </div>
+  </div>
+
+  <div class="cards">
+    <div class="card accent">
+      <div class="card-label">Пройшли quiz</div>
+      <div class="card-value" style="color:var(--accent)">${fmt(d.total_respondents)}</div>
+      <div class="card-delta delta-flat">респондентів</div>
+    </div>
+    <div class="card green">
+      <div class="card-label">Всього позначок</div>
+      <div class="card-value" style="color:var(--green)">${fmt(d.total_selections)}</div>
+      <div class="card-delta delta-flat">${d.avg_per_user} на людину</div>
+    </div>
+    <div class="card purple" style="grid-column:1 / -1">
+      <div class="card-label">Топ ситуація</div>
+      <div class="card-value" style="color:var(--purple);font-size:15px">${topLabel}</div>
+    </div>
+  </div>
+
+  <div class="table-block">
+    <div class="table-title">Рейтинг ситуацій <span style="color:var(--text3);font-weight:400">(% від тих, хто пройшов quiz)</span></div>
+    ${bars}
+  </div>`;
+}
+
+// ── CHALLENGE FUNNEL (крива відвалу 1→7) ─────────────────
+let chfunnelFlow = 'total';
+function setChFlow(flow) { chfunnelFlow = flow; document.getElementById('chfunnel-content').innerHTML = renderChFunnel(); }
+
+function renderChFunnel() {
+  const d = data.challenge_funnel;
+  if (!d) return '<div class="loading">Немає даних по воронці челенджу</div>';
+  const f = d[chfunnelFlow] || d.total;
+  const started = f.started || 0;
+
+  const tabBtn = (flow, label) => `
+    <button onclick="setChFlow('${flow}')" style="padding:6px 14px;border-radius:20px;font-size:12px;font-weight:500;
+      border:0.5px solid var(--border-strong);cursor:pointer;
+      background:${chfunnelFlow===flow?'var(--accent)':'transparent'};
+      color:${chfunnelFlow===flow?'#fff':'var(--text-secondary)'}">${label}</button>`;
+
+  const switcher = `<div style="display:flex;gap:8px;margin-bottom:14px">
+    ${tabBtn('total','Усі')} ${tabBtn('blogger','Blogger')} ${tabBtn('organic','Organic')}
+  </div>`;
+
+  if (!started) {
+    return switcher + `<div style="font-size:13px;color:var(--text-secondary);padding:8px 0;line-height:1.6">
+      Даних ще немає для цього flow. З'являться, щойно учні почнуть стартувати челендж
+      і проходити дні (потрібен новий трекінг подій — уже увімкнено).
+    </div>`;
+  }
+
+  const cards = `<div class="cards">
+    <div class="card accent">
+      <div class="card-label">Стартувало</div>
+      <div class="card-value" style="color:var(--accent)">${fmt(started)}</div>
+    </div>
+    <div class="card green">
+      <div class="card-label">Купили</div>
+      <div class="card-value" style="color:var(--green)">${fmt(f.paid)}</div>
+    </div>
+    <div class="card purple" style="grid-column:1 / -1">
+      <div class="card-label">Старт → оплата</div>
+      <div class="card-value" style="color:var(--purple)">${f.start_to_paid_pct}%</div>
+    </div>
+  </div>`;
+
+  // Знаходимо найбільший обрив (для підсвітки «ось де тече»)
+  let maxDrop = 0, maxDropIdx = -1;
+  f.steps.forEach((st, i) => {
+    if (st.drop_from_prev != null && st.drop_from_prev > maxDrop) { maxDrop = st.drop_from_prev; maxDropIdx = i; }
+  });
+
+  const bars = f.steps.map((st, i) => {
+    const w = Math.round(st.pct_of_start);
+    const isLeak = (i === maxDropIdx && maxDrop >= 15);
+    const barColor = isLeak ? 'linear-gradient(90deg,#e24b4a,#d4537e)' : 'linear-gradient(90deg,#4f8ef7,#7c6ef7)';
+    const dropTag = st.drop_from_prev != null
+      ? `<span style="color:${isLeak?'var(--red)':'var(--text3)'};font-weight:${isLeak?700:400}">−${st.drop_from_prev}%</span>`
+      : '';
+    return `
+      <div style="margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px">
+          <span style="color:var(--text)">${isLeak?'🔴 ':''}${st.label}</span>
+          <span style="color:var(--accent);font-weight:700">${fmt(st.count)} <span style="color:var(--text3);font-weight:400">(${st.pct_of_start}%)</span> ${dropTag}</span>
+        </div>
+        <div style="height:9px;background:rgba(255,255,255,.05);border-radius:4px;overflow:hidden">
+          <div style="height:100%;width:${w}%;background:${barColor};border-radius:4px"></div>
+        </div>
+      </div>`;
+  }).join('');
+
+  const leakNote = maxDropIdx >= 0 && maxDrop >= 15
+    ? `<div style="background:rgba(226,75,74,.08);border:1px solid rgba(226,75,74,.3);border-radius:10px;padding:10px 12px;margin-top:12px;font-size:12px;color:var(--text-secondary);line-height:1.5">
+         🔴 Найбільший обрив: <b>${f.steps[maxDropIdx].label}</b> (−${maxDrop}%). Це головна діра — саме сюди спрямувати A/B (крок 3 плану).
+       </div>`
+    : '';
+
+  return switcher + cards + `<div class="table-block">
+    <div class="table-title">Крива відвалу (% від тих, хто стартував)</div>
+    ${bars}
+  </div>` + leakNote;
 }
 
 // ── CHARTS ───────────────────────────────────────────────
