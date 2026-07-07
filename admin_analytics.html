@@ -1466,7 +1466,25 @@ function renderChFunnel() {
        </div>`
     : '';
 
-  return switcher + cards + `<div class="table-block">
+  const pers = d.personalization || {};
+  const proxyChips = `
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 14px">
+      <div style="background:var(--surface2);border-radius:10px;padding:8px 12px;font-size:12px">
+        👥 Метч на Д5: <b style="color:var(--accent)">${f.match_rate_of_d5 ?? 0}%</b>
+        <span style="color:var(--text3)"> тих, хто дійшов Д5</span>
+      </div>
+      <div style="background:var(--surface2);border-radius:10px;padding:8px 12px;font-size:12px">
+        🔑 Фраза 7/7: <b style="color:var(--accent)">${f.phrase_full_of_d7 ?? 0}%</b>
+        <span style="color:var(--text3)"> тих, хто дійшов Д7</span>
+        &nbsp;|&nbsp; наскрізь: <b>${f.phrase_full_of_start ?? 0}%</b>
+      </div>
+      <div style="background:var(--surface2);border-radius:10px;padding:8px 12px;font-size:12px">
+        🎯 Персоналізація: <b style="color:var(--accent)">${pers.coverage_pct ?? 0}%</b>
+        <span style="color:var(--text3)"> охоплення (${pers.shown_at_least_once ?? 0}/${pers.eligible ?? 0})</span>
+      </div>
+    </div>`;
+
+  return switcher + cards + proxyChips + `<div class="table-block">
     <div class="table-title">Крива відвалу (% від тих, хто стартував)</div>
     ${bars}
   </div>` + leakNote;
