@@ -1492,10 +1492,55 @@ function renderChFunnel() {
       </div>
     </div>`;
 
+  const wb = d.winback;
+  let wbBlock = '';
+  if (wb && wb.offered_total > 0) {
+    wbBlock = `
+    <div class="table-block" style="margin-top:16px">
+      <div class="table-title">🔄 Win-back (48-год атрибуція)</div>
+      <div class="cards" style="margin-bottom:12px">
+        <div class="card accent">
+          <div class="card-label">Показано оффер</div>
+          <div class="card-value" style="color:var(--accent)">${fmt(wb.offered_total)}</div>
+        </div>
+        <div class="card green">
+          <div class="card-label">Купили · конв</div>
+          <div class="card-value" style="color:var(--green)">${fmt(wb.paid_total)} <span style="font-size:13px;color:var(--text3)">${wb.conv_pct}%</span></div>
+        </div>
+        <div class="card purple">
+          <div class="card-label">Premium-частка (якір)</div>
+          <div class="card-value" style="color:var(--purple)">${wb.premium_share}%</div>
+        </div>
+        <div class="card">
+          <div class="card-label">Конв blogger / organic</div>
+          <div class="card-value" style="font-size:16px">${wb.conv_blogger}% <span style="color:var(--text3)">/</span> ${wb.conv_organic}%</div>
+        </div>
+      </div>
+      <div style="height:180px;position:relative"><canvas id="chart-winback"></canvas></div>
+      <div style="display:flex;gap:14px;justify-content:center;margin-top:8px;font-size:11px;color:var(--text2)">
+        <span>💚 Basic: <b style="color:var(--green)">${fmt(wb.paid_basic)}</b></span>
+        <span>💜 Premium: <b style="color:var(--purple)">${fmt(wb.paid_premium)}</b></span>
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-top:8px;line-height:1.5">
+        Premium-кнопка в win-back — це якір: висока частка Basic при малій Premium = якір працює.
+        Дані наповнюються з моменту деплою трекінгу.
+      </div>
+    </div>`;
+  } else if (wb) {
+    wbBlock = `
+    <div class="table-block" style="margin-top:16px">
+      <div class="table-title">🔄 Win-back (48-год атрибуція)</div>
+      <div style="font-size:12px;color:var(--text-secondary);padding:6px 0;line-height:1.6">
+        Оффер ще нікому не показано (або трекінг щойно ввімкнено). З'явиться, щойно
+        учні почнуть отримувати win-back після челенджу.
+      </div>
+    </div>`;
+  }
+
   return switcher + cards + proxyChips + `<div class="table-block">
     <div class="table-title">Крива відвалу (% від тих, хто стартував)</div>
     ${bars}
-  </div>` + leakNote;
+  </div>` + leakNote + wbBlock;
 }
 
 // ── CHARTS ───────────────────────────────────────────────
@@ -1526,6 +1571,21 @@ function drawCharts(tab) {
     makeChart('chart-active', 'line', r.days_labels,
       [{ data: r.active_daily, borderColor: '#3ecf8e', backgroundColor: 'rgba(62,207,142,.1)',
          fill: true, tension: .4, pointRadius: 2 }]);
+  }
+
+  if (tab === 'chfunnel') {
+    const wb = data.challenge_funnel && data.challenge_funnel.winback;
+    if (wb && wb.offered_total > 0) {
+      // Показано vs купили по потоках — усі числа реально є в JSON.
+      const paidBlogger = Math.round(wb.offered_blogger * wb.conv_blogger / 100);
+      const paidOrganic = Math.round(wb.offered_organic * wb.conv_organic / 100);
+      makeChart('chart-winback', 'bar', ['Blogger', 'Organic'], [
+        { label: 'Показано', data: [wb.offered_blogger, wb.offered_organic],
+          backgroundColor: 'rgba(79,142,247,.55)', borderRadius: 4 },
+        { label: 'Купили', data: [paidBlogger, paidOrganic],
+          backgroundColor: 'rgba(62,207,142,.75)', borderRadius: 4 },
+      ], { plugins: { legend: { display: true, labels: { color: '#888', font: { size: 11 } } } } });
+    }
   }
 
   if (tab === 'retention') {
