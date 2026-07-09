@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Діагностика рівня — SpeakChain</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  :root{
+    --ink:#12203a; --muted:#6b7891; --line:#e6eaf2;
+    --brand:#2f6df6; --brand-deep:#1b4fd0;
+    --a1:#e8663b; --a2:#e69a2e; --b1:#e6c72e; --b2:#7cbf3f; --c1:#2f9e5e;
+    --card:#ffffff; --bg:#f4f7fc; --ok:#2f9e5e; --wrong:#d9534f; --warn:#e0873a; --sink:#eef3fb;
+    --shadow:0 2px 10px rgba(20,40,80,.06);
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  body{
+    margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    background:var(--bg); color:var(--ink); line-height:1.5; overflow-x:hidden;
+  }
+  .wrap{max-width:460px; margin:0 auto; padding:16px 18px 140px; min-height:100vh;}
+
+  .top{display:flex; align-items:center; gap:12px; padding:8px 0 14px;}
+  .back{font-size:26px; line-height:1; color:var(--muted); background:none; border:none;
+    cursor:pointer; padding:2px 6px; min-width:32px;}
+  .bar{flex:1; height:8px; background:var(--line); border-radius:99px; overflow:hidden;}
+  .bar>i{display:block; height:100%; width:0%; background:linear-gradient(90deg,var(--brand),var(--brand-deep));
+    border-radius:99px; transition:width .35s cubic-bezier(.4,0,.2,1);}
+  .phase-eyebrow{font-size:12px; font-weight:700; letter-spacing:.08em; text-transform:uppercase;
+    color:var(--brand); text-align:center; margin:2px 0 4px;}
+
+  h1{font-size:22px; font-weight:800; letter-spacing:-.02em; margin:6px 0 6px; text-align:center;}
+  .sub{text-align:center; color:var(--muted); font-size:15px; margin:0 auto 18px; max-width:350px;}
+  .sub b{color:var(--brand-deep); font-weight:700;}
+
+  /* ── ЛЕКСИКА: плитки ── */
+  .tiles{display:flex; flex-wrap:wrap; gap:9px; justify-content:center;}
+  .tile{
+    background:var(--card); border:1.5px solid var(--line); border-radius:12px;
+    padding:11px 15px; font-size:16px; font-weight:600; letter-spacing:-.01em;
+    cursor:pointer; transition:all .12s; user-select:none; color:var(--ink);
+  }
+  .tile:active{transform:scale(.95);}
+  .tile.on{background:var(--brand); border-color:var(--brand); color:#fff;
+    box-shadow:0 4px 12px rgba(47,109,246,.28);}
+  .hint{text-align:center; color:var(--muted); font-size:13px; margin:18px 0 0;}
+
+  /* ── ПИТАННЯ з вибором ── */
+  .qcard{background:var(--card); border:1.5px solid var(--line); border-radius:16px;
+    padding:20px 18px; box-shadow:var(--shadow); margin-bottom:4px;}
+  .qtext{font-size:18px; font-weight:700; letter-spacing:-.01em; margin:0 0 4px; white-space:pre-line;}
+  .qtopic{font-size:12px; color:var(--muted); margin:0 0 16px;}
+  .opts{display:flex; flex-direction:column; gap:10px;}
+  .opt{
+    display:flex; align-items:center; gap:12px; background:var(--sink);
+    border:1.5px solid transparent; border-radius:13px; padding:14px 16px;
+    cursor:pointer; font-size:16px; font-weight:500; transition:all .13s; user-select:none;
+  }
+  .opt:active{transform:scale(.99);}
+  .opt.sel{background:#eaf1ff; border-color:var(--brand); font-weight:600;}
+  .opt .dot{width:20px; height:20px; border-radius:50%; border:2px solid var(--line);
+    flex-shrink:0; transition:all .13s;}
+  .opt.sel .dot{border-color:var(--brand); background:var(--brand); box-shadow:inset 0 0 0 3px #fff;}
+  .opt.locked{cursor:default;} .opt.locked:active{transform:none;}
+  .opt.correct{background:#eafaf0; border-color:var(--ok); font-weight:700;}
+  .opt.correct .dot{border-color:var(--ok); background:var(--ok); box-shadow:none;}
+  .opt.wrong{background:#fdecec; border-color:var(--wrong); font-weight:700;}
+  .opt.wrong .dot{border-color:var(--wrong); background:var(--wrong); box-shadow:none;}
+
+  /* PET-знаки (CSS, без файлів) */
+  .sign-stage{display:grid; place-items:center; margin:0 0 18px;}
+  .sign{max-width:280px; width:100%; border-radius:6px; padding:22px 24px; text-align:center;
+    font-weight:800; line-height:1.25; letter-spacing:-.01em; box-shadow:0 4px 16px rgba(20,40,80,.12);}
+  .sign.notice{background:#fff; border:5px solid #b8232f; color:#b8232f; font-size:24px;}
+  .sign.notice .sub-line{display:block; font-size:19px; margin-top:6px; font-weight:800;}
+  .sign.info{background:#f3d9dd; color:#1a1a1a; font-family:Georgia,serif; font-size:19px;
+    font-weight:700; text-align:left; border:1px solid #e2b8bf;}
+  .sign.plain{background:#fff; border:5px solid #16302e; color:#16302e; font-size:23px;}
+  .sign.yellow{background:#f6c948; color:#1a1a1a; font-size:22px; border:3px solid #1a1a1a;}
+  .sign.green{background:#1f7a4d; color:#fff; font-size:23px;}
+  .sign.notice .sub-line, .sign.yellow .sub-line{display:block; font-size:16px; margin-top:6px; font-weight:700;}
+  .sign .small{font-size:14px; font-weight:600; display:block; margin-top:8px;}
+
+  /* аудіо */
+  .audio-stage{margin:0 0 18px;}
+  .audio-card{background:#eef4ff; border-radius:14px; padding:18px; text-align:center;}
+  .audio-card audio{width:100%; margin-top:4px;}
+  .replay-note{font-size:12px; color:var(--muted); margin-top:10px;}
+
+  .skip{display:block; margin:14px auto 0; background:none; border:none; color:var(--muted);
+    font-size:14px; text-decoration:underline; cursor:pointer;}
+
+  .cta-bar{position:fixed; left:0; right:0; bottom:0; padding:14px 18px 24px;
+    background:linear-gradient(180deg,rgba(244,247,252,0),var(--bg) 32%); max-width:460px; margin:0 auto;}
+  .cta{width:100%; border:none; border-radius:15px; padding:17px; font-size:17px; font-weight:700;
+    color:#fff; background:linear-gradient(90deg,var(--brand),var(--brand-deep));
+    cursor:pointer; box-shadow:0 6px 18px rgba(47,109,246,.32); transition:transform .08s, opacity .2s;}
+  .cta:active{transform:translateY(1px);}
+  .cta:disabled{opacity:.4; box-shadow:none; cursor:default;}
+
+  .result{display:none; text-align:center; animation:fade .5s ease;}
+  @keyframes fade{from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:none;}}
+  .result h1{font-size:22px; margin-bottom:2px;}
+  .big{font-size:54px; font-weight:900; letter-spacing:-.03em; color:var(--brand-deep); margin:10px 0 2px;}
+  .big small{font-size:22px; font-weight:700; color:var(--muted);}
+  .cap{color:var(--muted); font-size:14px; margin-bottom:24px;}
+  .scale-wrap{margin:20px 4px 8px;}
+  .scale{position:relative; height:12px; border-radius:99px;
+    background:linear-gradient(90deg,var(--a1),var(--a2),var(--b1),var(--b2),var(--c1));}
+  .knob{position:absolute; top:50%; width:22px; height:22px; border-radius:50%; background:#fff;
+    border:4px solid var(--brand-deep); transform:translate(-50%,-50%); box-shadow:0 2px 6px rgba(0,0,0,.2);
+    transition:left 1s cubic-bezier(.34,1.3,.5,1);}
+  .ticks{display:flex; justify-content:space-between; margin-top:12px; padding:0 2px;}
+  .ticks span{font-size:12px; font-weight:700; color:var(--muted);}
+  .ticks span.act{color:var(--brand-deep);}
+  .nums{display:flex; justify-content:space-between; margin-top:2px; padding:0 2px;}
+  .nums span{font-size:10px; color:var(--muted);}
+
+  .tutor{background:linear-gradient(135deg,#1b4fd0,#2f6df6); color:#fff; border-radius:18px;
+    padding:22px 20px; margin:26px 0 0; text-align:left; box-shadow:0 8px 24px rgba(27,79,208,.28);}
+  .tutor .avatar{font-size:30px; margin-bottom:8px;}
+  .tutor h3{margin:0 0 8px; font-size:17px; font-weight:800;}
+  .tutor p{margin:0; font-size:14.5px; line-height:1.55; opacity:.96;}
+
+  .brk{background:var(--card); border:1px solid var(--line); border-radius:16px;
+    padding:6px 18px; margin:16px 0 0; text-align:left; box-shadow:var(--shadow);}
+  .brk-row{display:flex; align-items:center; justify-content:space-between; padding:13px 0;
+    border-bottom:1px solid var(--line);}
+  .brk-row:last-child{border-bottom:none;}
+  .brk-row .lbl{font-size:15px; font-weight:600;}
+  .brk-row .lbl small{display:block; font-size:12px; color:var(--muted); font-weight:400;}
+  .brk-row .val{font-size:15px; font-weight:800; color:var(--brand-deep);}
+  .brk-row .val.muted{color:var(--muted); font-weight:600;}
+
+  .gaps{background:#fff8ee; border:1px solid #f0dcc0; border-radius:16px;
+    padding:18px 20px; margin:16px 0 0; text-align:left;}
+  .gaps h3{margin:0 0 4px; font-size:16px; color:var(--warn);}
+  .gaps .lead{margin:0 0 12px; font-size:13.5px; color:var(--muted);}
+  .chip-row{display:flex; flex-wrap:wrap; gap:8px;}
+  .chip{background:#fff; border:1.5px solid #f0dcc0; border-radius:99px; padding:7px 14px;
+    font-size:13.5px; font-weight:600; color:#a05a1e;}
+  .chip.ok{border-color:#c7e6d2; color:var(--ok); background:#f2fbf5;}
+
+  .verdict{background:#eef4ff; border-radius:16px; padding:18px 20px; margin:16px 0 0; text-align:left;}
+  .verdict h3{margin:0 0 6px; font-size:16px; color:var(--brand-deep);}
+  .verdict p{margin:0; font-size:14px; color:var(--ink);}
+  .startpt{font-size:12.5px; color:var(--muted); text-align:center; margin:18px 6px 0; line-height:1.5;}
+  .plan{background:#eef7f1; border:1px solid #c7e6d2; border-radius:16px; padding:18px 20px; margin:16px 0 0; text-align:left;}
+  .plan h3{margin:0 0 8px; font-size:16px; color:var(--ok);}
+  .plan p{margin:0 0 14px; font-size:14px; color:var(--ink); line-height:1.55;}
+  .plan p b{color:var(--brand-deep);}
+  .plan-cta{margin-top:0;}
+  .retry-btn{display:block; width:100%; margin-top:10px; background:none; border:none;
+    color:var(--muted); font-size:14px; text-decoration:underline; cursor:pointer; padding:8px;}
+  .debug{margin-top:20px; font-size:11px; color:#aab4c8; text-align:left; background:#fbfcfe;
+    border:1px dashed var(--line); border-radius:10px; padding:10px 12px; line-height:1.7;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div id="flow">
+    <div class="top">
+      <button class="back" id="back" aria-label="назад">‹</button>
+      <div class="bar"><i id="prog"></i></div>
+    </div>
+    <div class="phase-eyebrow" id="eyebrow">Лексика</div>
+    <div id="stage"></div>
+  </div>
+
+  <div class="result" id="result">
+    <div class="top"><div class="bar"><i style="width:100%"></i></div></div>
+    <h1>Ваш рівень англійської</h1>
+    <div class="big"><span id="rWords">0</span> <small>слів</small></div>
+    <p class="cap">приблизний обсяг Вашого активного словника</p>
+    <div class="scale-wrap">
+      <div class="scale"><div class="knob" id="knob" style="left:0%"></div></div>
+      <div class="ticks" id="ticks"><span data-l="A1">A1</span><span data-l="A2">A2</span><span data-l="B1">B1</span><span data-l="B2">B2</span><span data-l="C1">C1</span></div>
+      <div class="nums"><span>0</span><span>1500</span><span>3000</span><span>4500</span><span>6000+</span></div>
+    </div>
+    <div class="tutor">
+      <div class="avatar">🧑‍🏫</div>
+      <h3 id="tutorTitle">Я проаналізував Ваш рівень</h3>
+      <p id="tutorText"></p>
+    </div>
+    <div class="brk" id="brk"></div>
+    <div class="gaps" id="gaps">
+      <h3>Що варто підтягнути на Вашому рівні</h3>
+      <p class="lead" id="gapsLead"></p>
+      <div class="chip-row" id="chipRow"></div>
+    </div>
+    <div class="verdict">
+      <h3 id="vTitle">Рівень</h3>
+      <p id="vText"></p>
+    </div>
+    <div class="plan" id="plan">
+      <h3 id="planTitle">Ваш маршрут далі</h3>
+      <p id="planText"></p>
+      <button class="cta plan-cta" id="goProgress">🗺️ Дивитись мою карту прогресу</button>
+      <button class="retry-btn" onclick="location.reload()">Пройти діагностику знову</button>
+    </div>
+    <p class="startpt" id="startpt"></p>
+    <div class="debug" id="debug"></div>
+  </div>
+</div>
+
+<div class="cta-bar" id="ctaBar"><button class="cta" id="cta" disabled>Далі</button></div>
+
+<script>
+try { if (window.Telegram && Telegram.WebApp){ Telegram.WebApp.ready(); Telegram.WebApp.expand(); } } catch(e){}
+
+// ═══════════════════════════════════════════════════════════
+//  КОНФІГ
+// ═══════════════════════════════════════════════════════════
+const LISTENING_ENABLED = true;    // аудіо mp3 на Pages
+const AUDIO_BASE = "https://discoveritschool-hub.github.io/speakchain-app/";
+const LEVELS = ["A1","A2","B1","B2","C1"];
+
+// ── ЛЕКСИКА (Meara; фінальний звірений набір, багаті A1/A2, компактні верхи) ──
+// рівні підтверджені oxford_cefr.json; псевдо ≈14%
+const WORDS = {
+  A1:["go","make","want","need","like","have","get","give","take","come","see","know","eat","water","house","friend","family","money","school","people","happy","big","introduce","routine"],
+  A2:["borrow","collect","invite","receive","save","shout","smile","worry","bridge","corner","dream","noise","season","service","army","network","expect","nature","matter","medicine"],
+  B1:["application","celebration","container","convenient","currently","despite","development","dislike","dressed","fighting","leather","leisure"],
+  B2:["abandon","amusing","anticipate","balloon","detailed","evaluation","executive","impatient","measurement","recognition"],
+  C1:["capability","citizenship","commence","constitute","coordination","emergence","exploitation","feminist","inclined","manifest"]
+};
+const PSEUDO = ["blemter","tortion","grivance","plaunt","mordable","flenty","snurge","brelish","quander","twindle","prolice","gorbish","vasten"];
+
+// ── ГРАМАТИКА: скринінг (2/рівень) + поглиблення (6/рівень) ──
+const G_SCREEN = [
+  {level:"A1", topic:"present_simple",     name:"Present Simple",     q:"She ___ coffee every morning.",           opts:["drink","drinks","drinking","drank"], correct:1},
+  {level:"A1", topic:"article_a_an",       name:"Артикль a/an",        q:"He is ___ engineer.",                      opts:["a","an","the","—"], correct:1},
+  {level:"A2", topic:"past_simple",        name:"Past Simple",        q:"We ___ to New York last summer.",          opts:["go","goes","went","have gone"], correct:2},
+  {level:"A2", topic:"present_continuous", name:"Present Continuous", q:"Look! The baby ___ right now.",            opts:["sleep","sleeps","is sleeping","slept"], correct:2},
+  {level:"B1", topic:"present_perfect",    name:"Present Perfect",    q:"I ___ this film three times already.",     opts:["saw","have seen","see","was seeing"], correct:1},
+  {level:"B1", topic:"conditional_1",      name:"Перша умовна",       q:"If it rains, we ___ at home.",             opts:["stay","stayed","will stay","would stay"], correct:2},
+  {level:"B2", topic:"conditional_2",      name:"Друга умовна",       q:"If I ___ more time, I would travel more.", opts:["have","had","would have","has"], correct:1},
+  {level:"B2", topic:"past_perfect",       name:"Past Perfect",       q:"The report ___ by the time we arrived.",   opts:["was finished","has finished","had been finished","is finished"], correct:2},
+  {level:"C1", topic:"inversion",          name:"Інверсія",           q:"Not only ___ the deadline, she exceeded it.", opts:["she met","did she meet","she did meet","has she met"], correct:1},
+  {level:"C1", topic:"mixed_conditionals", name:"Змішані умовні",     q:"If I ___ harder then, I'd be richer now.",  opts:["studied","had studied","study","would study"], correct:1},
+];
+const G_DEEP = {
+  A1:[
+    {topic:"noun_plural",           name:"Множина",           q:"I have three ___ in my bag.",       opts:["box","boxs","boxes","boxies"], correct:2},
+    {topic:"modal_can_could",       name:"can",               q:"___ you swim?",                     opts:["Do","Are","Can","Is"], correct:2},
+    {topic:"prepositions_place",    name:"Прийменники місця", q:"The cat is ___ the table.",         opts:["on","in","at","of"], correct:0},
+    {topic:"adjectives_comparison", name:"Ступені",           q:"This box is ___ than that one.",    opts:["big","bigger","biggest","more big"], correct:1},
+    {topic:"present_simple",        name:"Present Simple",    q:"They ___ football on Sundays.",     opts:["plays","play","playing","is play"], correct:1},
+    {topic:"article_a_an",          name:"Артиклі",           q:"I see ___ apple on the plate.",     opts:["a","an","the","—"], correct:1},
+  ],
+  A2:[
+    {topic:"future_going_to",       name:"going to",          q:"Look at the clouds! It ___ rain.",  opts:["will","is going to","goes to","going"], correct:1},
+    {topic:"pronouns_some_any",     name:"some/any",          q:"Is there ___ milk in the fridge?",  opts:["some","any","no","a"], correct:1},
+    {topic:"prepositions_time",     name:"Прийменники часу",  q:"My birthday is ___ July.",          opts:["at","on","in","by"], correct:2},
+    {topic:"modal_must_have_to",    name:"have to",           q:"You ___ wear a seatbelt in the car.", opts:["have to","has to","having to","to have"], correct:0},
+    {topic:"past_simple",           name:"Past Simple",       q:"She ___ her keys yesterday.",       opts:["lose","losed","lost","has lost"], correct:2},
+    {topic:"present_continuous",    name:"Present Continuous", q:"They ___ TV at the moment.",        opts:["watch","watches","are watching","watched"], correct:2},
+  ],
+  B1:[
+    {topic:"passive_simple",        name:"Пасив",             q:"This bridge ___ in 1990.",          opts:["built","was built","is building","has built"], correct:1},
+    {topic:"used_to",               name:"used to",           q:"I ___ live in London as a child.",  opts:["use to","used to","was used","am used to"], correct:1},
+    {topic:"modal_should",          name:"should",            q:"You look tired. You ___ rest.",     opts:["should","must to","shoulds","ought"], correct:0},
+    {topic:"reported_statements",   name:"Непряма мова",      q:"He said he ___ tired.",             opts:["is","was","be","been"], correct:1},
+    {topic:"present_perfect",       name:"Present Perfect",   q:"They have just ___ dinner.",        opts:["finish","finished","finishing","finishes"], correct:1},
+    {topic:"conditional_1",         name:"Перша умовна",      q:"If you heat ice, it ___.",          opts:["melts","will melt","melted","would melt"], correct:1},
+  ],
+  B2:[
+    {topic:"present_perfect_continuous", name:"Perfect Continuous", q:"She ___ for two hours.",       opts:["waits","has waited","has been waiting","is waiting"], correct:2},
+    {topic:"passive_continuous",    name:"Пасив (тривалий)",  q:"The road ___ right now.",           opts:["is repairing","is being repaired","repairs","was repaired"], correct:1},
+    {topic:"gerund_vs_infinitive",  name:"Герундій/інфінітив", q:"I enjoy ___ books.",               opts:["read","to read","reading","reads"], correct:2},
+    {topic:"reported_questions",    name:"Непрямі питання",   q:"She asked where I ___.",            opts:["live","do live","lived","was live"], correct:2},
+    {topic:"conditional_2",         name:"Друга умовна",      q:"If I were you, I ___ that.",        opts:["will do","would do","did","do"], correct:1},
+    {topic:"past_perfect",          name:"Past Perfect",      q:"When I arrived, the train ___.",    opts:["left","has left","had left","was leaving"], correct:2},
+  ],
+  C1:[
+    {topic:"conditional_3",         name:"Третя умовна",      q:"If I ___ earlier, I'd have caught the bus.", opts:["left","had left","would leave","have left"], correct:1},
+    {topic:"mixed_conditionals",    name:"Змішані умовні",    q:"If she ___ the job, she'd be happier now.",  opts:["took","had taken","takes","would take"], correct:1},
+    {topic:"inversion",             name:"Інверсія",          q:"Never ___ such a beautiful sunset.", opts:["I have seen","have I seen","I saw","did I saw"], correct:1},
+    {topic:"modal_perfect",         name:"Модальні перфектні", q:"He ___ have missed the train; he left late.", opts:["must","should","might","can"], correct:2},
+    {topic:"question_tags",         name:"Питальні хвости",   q:"You've met her, ___?",              opts:["did you","have you","haven't you","don't you"], correct:2},
+    {topic:"present_perfect_continuous", name:"Perfect Continuous", q:"It ___ raining since morning.", opts:["is","was","has been","have been"], correct:2},
+  ],
+};
+
+// ── READING (PET) ──
+const READING = [
+  {level:"A1", sign:{cls:"green", html:"Keep off<br>the grass"},
+   q:"What does the sign mean?", opts:["You can sit on the grass","You must not walk on the grass","The grass is for picnics"], correct:1},
+  {level:"A2", sign:{cls:"notice", html:"Restaurant<span class='sub-line'>Free parking at rear</span>"},
+   q:"What can visitors do?", opts:["Park in front of the restaurant","Park behind the restaurant","Park next to the restaurant"], correct:1},
+  {level:"A2", sign:{cls:"plain", html:"No smoking<br>in this area"},
+   q:"What are you not allowed to do here?", opts:["Eat food","Smoke","Take photos"], correct:1},
+  {level:"B1", sign:{cls:"plain", html:"Dogs must be<br>kept on leads"},
+   q:"What does the sign mean?", opts:["You can let your dog run free","You must keep your dog under control","You must leave your dog outside"], correct:1},
+  {level:"A2", sign:{cls:"yellow", html:"Please queue<br>here"},
+   q:"What should you do?", opts:["Wait in line","Pay at the desk","Come back later"], correct:0},
+  {level:"B1", sign:{cls:"info", html:"If you take this journey regularly, you can save money with our Super Weekly Saver Ticket."},
+   q:"What does the message say?", opts:["A special ticket is required to travel","Frequent travellers can pay less","All tickets are cheaper this week"], correct:1},
+  {level:"B1", sign:{cls:"notice", html:"Out of order<span class='sub-line'>Please use the stairs</span>"},
+   q:"What does this notice mean?", opts:["The lift is not working","The stairs are closed","The area is under repair until Monday"], correct:0},
+  {level:"A2", sign:{cls:"yellow", html:"CAUTION<span class='small'>Wet floor — please walk carefully</span>"},
+   q:"Why should you be careful?", opts:["The floor is slippery","The floor is being painted","The area is closed"], correct:0},
+];
+
+// ── LISTENING (тексти/відповіді з PLACEMENT_QUESTIONS) ──
+const LISTENING = [
+  {level:"A1", audio:"audio_a1.mp3", q:"Where does Sarah work?", opts:["A school","A hospital","A coffee shop","A bank"], correct:2},
+  {level:"A2", audio:"audio_a2.mp3", q:"How did the family travel to the Grand Canyon?", opts:["By plane","By train","By bus","By car"], correct:3},
+  {level:"B1", audio:"audio_b1.mp3", q:"What challenge do managers face with remote work?", opts:["Hiring new people","Managing office space","Building team culture remotely","Buying equipment"], correct:2},
+  {level:"B2", audio:"audio_b2.mp3", q:"Where do emotionally intelligent people perform better?", opts:["In technical roles","In creative roles","In leadership roles","In manual jobs"], correct:2},
+  {level:"C1", audio:"audio_c1.mp3", q:"What does the speaker say about globalization?", opts:["Benefits are shared equally","Benefits mostly go to elites","They help workers most","They can't be measured"], correct:1},
+];
+
+const TOPIC_LABELS = {
+  present_simple:"Present Simple", article_a_an:"Артиклі a/an", noun_plural:"Множина іменників",
+  modal_can_could:"can / could", prepositions_place:"Прийменники місця", adjectives_comparison:"Ступені порівняння",
+  past_simple:"Past Simple", present_continuous:"Present Continuous", future_going_to:"going to",
+  pronouns_some_any:"some / any", prepositions_time:"Прийменники часу", modal_must_have_to:"must / have to",
+  present_perfect:"Present Perfect", conditional_1:"Перша умовна", passive_simple:"Пасив",
+  used_to:"used to", modal_should:"should", reported_statements:"Непряма мова",
+  conditional_2:"Друга умовна", past_perfect:"Past Perfect", present_perfect_continuous:"Perfect Continuous",
+  passive_continuous:"Пасив (тривалий)", gerund_vs_infinitive:"Герундій / інфінітив", reported_questions:"Непрямі питання",
+  conditional_3:"Третя умовна", mixed_conditionals:"Змішані умовні", inversion:"Інверсія", modal_perfect:"Модальні перфектні",
+  question_tags:"Питальні хвости"
+};
+
+// ═══════════════════════════════════════════════════════════
+//  СТАН + ПОСЛІДОВНІСТЬ
+// ═══════════════════════════════════════════════════════════
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+
+let STIM = [];
+LEVELS.forEach(lvl => WORDS[lvl].forEach(w => STIM.push({w, lvl, real:true})));
+PSEUDO.forEach(w => STIM.push({w, lvl:null, real:false}));
+shuffle(STIM);
+
+// розбивка слів на сторінки по 18 (кілька екранів замість одного довгого)
+const WORDS_PER_PAGE = 18;
+const LEX_PAGES = Math.ceil(STIM.length / WORDS_PER_PAGE);
+
+let PHASES = [];
+for(let pg=0; pg<LEX_PAGES; pg++) PHASES.push({type:"lexicon", eyebrow:"Лексика", page:pg});
+G_SCREEN.forEach((g,i)=>PHASES.push({type:"choice", cat:"gram_screen", eyebrow:"Граматика", item:g, key:"gs"+i}));
+
+let deepInserted = false;
+let workingLevel = "A1";
+const answers = {};        // key → {ans, correct}
+const picked = new Set();
+let phase = 0;
+
+const stage    = document.getElementById("stage");
+const eyebrow   = document.getElementById("eyebrow");
+const prog      = document.getElementById("prog");
+const cta       = document.getElementById("cta");
+const backBtn   = document.getElementById("back");
+
+// ═══════════════════════════════════════════════════════════
+//  АДАПТИВНА ЛОГІКА
+// ═══════════════════════════════════════════════════════════
+function screeningLevel(){
+  const per = {}; LEVELS.forEach(l=>per[l]={c:0,t:0});
+  G_SCREEN.forEach((g,i)=>{ const a=answers["gs"+i]; per[g.level].t++; if(a&&a.correct)per[g.level].c++; });
+  let lvl="A1"; for(const l of LEVELS){ if(per[l].t && per[l].c/per[l].t>=0.5) lvl=l; }
+  return lvl;
+}
+
+function insertDeep(){
+  const li = LEVELS.indexOf(workingLevel);
+  const own = (G_DEEP[workingLevel]||[]).map((g,i)=>({...g, level:workingLevel, key:"gd_"+workingLevel+"_"+i}));
+  let ceil = [];
+  if(li < LEVELS.length-1){
+    const nl = LEVELS[li+1];
+    ceil = (G_DEEP[nl]||[]).slice(0,3).map((g,i)=>({...g, level:nl, key:"gc_"+nl+"_"+i}));
+  }
+  const deepPhases = own.concat(ceil).map(g=>({type:"choice", cat:"gram_deep", eyebrow:"Граматика", item:g, key:g.key}));
+  const afterScreen = LEX_PAGES + G_SCREEN.length;
+  const readPhases = READING.map((r,i)=>({type:"choice", cat:"reading", eyebrow:"Читання", item:r, key:"rd"+i}));
+  const listenPhases = LISTENING_ENABLED ? LISTENING.map((l,i)=>({type:"choice", cat:"listen", eyebrow:"Аудіювання", item:l, key:"ls"+i})) : [];
+  PHASES = PHASES.slice(0, afterScreen).concat(deepPhases, readPhases, listenPhases);
+  deepInserted = true;
+}
+
+// ═══════════════════════════════════════════════════════════
+//  РЕНДЕР
+// ═══════════════════════════════════════════════════════════
+function setProg(){ prog.style.width = Math.min(100, (phase/PHASES.length)*100 + 5) + "%"; }
+
+function render(){
+  const p = PHASES[phase];
+  eyebrow.textContent = p.eyebrow;
+  setProg();
+  backBtn.style.visibility = phase === 0 ? "hidden" : "visible";
+  if(p.type === "lexicon") return renderLexicon(p.page);
+  if(p.type === "choice")  return renderChoice(p);
+}
+
+function renderLexicon(page){
+  const start = page * WORDS_PER_PAGE;
+  const end = Math.min(STIM.length, start + WORDS_PER_PAGE);
+  let tiles = "";
+  for(let i=start; i<end; i++){
+    tiles += `<span class="tile ${picked.has(i)?'on':''}" data-i="${i}">${STIM[i].w}</span>`;
+  }
+  const head = page===0
+    ? `<h1>Які з цих слів Ви знаєте?</h1>
+       <p class="sub">Торкніться слів, значення яких <b>точно</b> знаєте. Тут є й вигадані — будьте чесні із собою.</p>`
+    : `<h1>Продовжуємо</h1>
+       <p class="sub">Позначте ще ті, що <b>точно</b> знаєте. Екран ${page+1} з ${LEX_PAGES}.</p>`;
+  stage.innerHTML =
+    `${head}
+     <div class="tiles">${tiles}</div>
+     <p class="hint" id="counter">Обрано: ${picked.size}</p>`;
+  stage.querySelectorAll(".tile").forEach(t=>{
+    t.onclick = ()=>{
+      const i=+t.dataset.i;
+      if(picked.has(i)){picked.delete(i); t.classList.remove("on");}
+      else{picked.add(i); t.classList.add("on");}
+      document.getElementById("counter").textContent = "Обрано: " + picked.size;
+    };
+  });
+  cta.textContent = "Далі";
+  cta.disabled = false;
+  cta.onclick = next;
+}
+
+function renderChoice(p){
+  const item = p.item;
+  const prev = answers[p.key];
+  const locked = !!prev;
+
+  let extra = "";
+  if(p.cat === "reading"){
+    extra = `<div class="sign-stage"><div class="sign ${item.sign.cls}">${item.sign.html}</div></div>`;
+  } else if(p.cat === "listen"){
+    extra = `<div class="audio-stage"><div class="audio-card"><div style="font-size:26px">🎧</div>
+      <audio controls preload="none" src="${AUDIO_BASE + item.audio}"></audio>
+      <div class="replay-note">Можна прослухати кілька разів</div></div></div>`;
+  }
+
+  const opts = item.opts.map((o,i)=>{
+    let cls="opt";
+    if(locked){ cls+=" locked";
+      if(i===item.correct) cls+=" correct";
+      else if(i===prev.ans) cls+=" wrong";
+    }
+    return `<div class="${cls}" data-i="${i}"><span class="dot"></span><span>${o}</span></div>`;
+  }).join("");
+
+  stage.innerHTML =
+    `${extra}
+     <div class="qcard">
+       <p class="qtext">${item.q}</p>
+       ${item.name?`<p class="qtopic">${item.name}</p>`:""}
+       <div class="opts">${opts}</div>
+     </div>
+     ${locked?"":`<button class="skip" id="skipBtn">Не знаю — пропустити</button>`}`;
+
+  if(!locked){
+    stage.querySelectorAll(".opt").forEach(el=>{
+      el.onclick = ()=>{
+        const chosen=+el.dataset.i;
+        answers[p.key] = {ans:chosen, correct: chosen===item.correct};  // ФІКС першого кліку
+        renderChoice(p);
+        cta.disabled = false;
+      };
+    });
+    const sb = document.getElementById("skipBtn");
+    if(sb) sb.onclick = ()=>{ answers[p.key]={ans:-1, correct:false}; renderChoice(p); cta.disabled=false; };
+  }
+
+  cta.textContent = (phase === PHASES.length-1) ? "Показати результат" : "Далі";
+  cta.disabled = !locked;
+  cta.onclick = onChoiceNext;
+}
+
+function onChoiceNext(){
+  const p = PHASES[phase];
+  if(!deepInserted && p.cat === "gram_screen" && p.key === "gs"+(G_SCREEN.length-1)){
+    workingLevel = screeningLevel();
+    insertDeep();
+  }
+  next();
+}
+
+// ═══════════════════════════════════════════════════════════
+//  НАВІГАЦІЯ
+// ═══════════════════════════════════════════════════════════
+function next(){ if(phase < PHASES.length-1){ phase++; render(); } else showResult(); }
+function prev(){ if(phase>0){ phase--; render(); } }
+backBtn.onclick = prev;
+
+// ═══════════════════════════════════════════════════════════
+//  ПІДРАХУНОК
+// ═══════════════════════════════════════════════════════════
+function calcLexicon(){
+  let rT=0,rH=0,pT=0,pH=0;
+  const per={A1:{t:0,h:0},A2:{t:0,h:0},B1:{t:0,h:0},B2:{t:0,h:0},C1:{t:0,h:0}};
+  STIM.forEach((it,i)=>{
+    const yes=picked.has(i);
+    if(it.real){rT++; per[it.lvl].t++; if(yes){rH++; per[it.lvl].h++;}}
+    else{pT++; if(yes)pH++;}
+  });
+  const h=rH/rT, f=pH/pT;
+  const score = f>=1?0:Math.max(0,(h-f)/(1-f));
+  // повне шахрайство: натиснув майже всі псевдо (f високий) І багато реального —
+  // це «проклацав не читаючи», а не знання. Окремий прапорець + число 0.
+  const cheated = (f >= 0.6);
+  let vlevel="A1"; for(const l of LEVELS){const p=per[l]; if((p.t?p.h/p.t:0)>=0.65)vlevel=l;}
+  // калібрування «великого числа»: планка рівня + прогрес усередині нього.
+  const VOCAB_ANCHOR={A1:750,A2:1500,B1:2800,B2:4200,C1:6000};
+  const maxByScore = Math.floor(score*5);
+  const vIdxRaw=LEVELS.indexOf(vlevel);
+  const vi=Math.max(0, Math.min(vIdxRaw, maxByScore));
+  vlevel=LEVELS[vi];
+  const base=VOCAB_ANCHOR[vlevel];
+  const nextA = vi<LEVELS.length-1 ? VOCAB_ANCHOR[LEVELS[vi+1]] : 6500;
+  const within=Math.max(0,Math.min(1,(score-0.5)/0.5));
+  let words=Math.round((base+(nextA-base)*within*score)/50)*50;
+  if(cheated){ words=0; vlevel=null; }   // абсолютний 0 за проклацування
+  const coverage={}; LEVELS.forEach(l=>{const p=per[l]; coverage[l]=p.t?Math.round(p.h/p.t*100):0;});
+  return {h,f,score,vlevel,words,coverage,per,pH,pT,cheated};
+}
+
+function calcGrammar(){
+  let correct=0,total=0; const gaps=[]; const perLvl={};
+  LEVELS.forEach(l=>perLvl[l]={c:0,t:0});
+  PHASES.forEach(p=>{
+    if(p.type!=="choice") return;
+    if(p.cat!=="gram_screen" && p.cat!=="gram_deep") return;
+    total++; const lvl=p.item.level; if(perLvl[lvl])perLvl[lvl].t++;
+    const a=answers[p.key];
+    if(a&&a.correct){correct++; if(perLvl[lvl])perLvl[lvl].c++;}
+    else{ if(p.item.topic) gaps.push({topic:p.item.topic, level:lvl}); }
+  });
+  let glevel="A1"; for(const l of LEVELS){const p=perLvl[l]; if(p.t && p.c/p.t>=0.6)glevel=l;}
+  return {correct,total,gaps,glevel,perLvl};
+}
+
+function calcSimple(cat){
+  let correct=0,total=0; let glevel="A1"; const perLvl={};
+  LEVELS.forEach(l=>perLvl[l]={c:0,t:0});
+  PHASES.forEach(p=>{
+    if(p.type!=="choice"||p.cat!==cat) return;
+    total++; const lvl=p.item.level; if(perLvl[lvl])perLvl[lvl].t++;
+    const a=answers[p.key]; if(a&&a.correct){correct++; if(perLvl[lvl])perLvl[lvl].c++;}
+  });
+  for(const l of LEVELS){const p=perLvl[l]; if(p.t && p.c/p.t>=0.6)glevel=l;}
+  return {correct,total,glevel};
+}
+
+function combineLevel(v,g){ return LEVELS[Math.min(LEVELS.indexOf(v),LEVELS.indexOf(g))]; }
+
+const VERDICTS = {
+  A1:["Початковий рівень","Ви впізнаєте базові слова — гарний старт. Челендж додаватиме нові слова щодня, від простого до впевненого."],
+  A2:["Рівень, що росте","Ви вже маєте основу для побутового спілкування. Попереду — розширення до вільнішої розмови."],
+  B1:["Впевнена база","Ви знаєте достатньо, щоб порозумітися в більшості ситуацій. Далі — говорити точніше й вільніше."],
+  B2:["Сильний рівень","Ваш словник широкий, Ви розумієте складні тексти. Тепер відточимо нюанси й природність мовлення."],
+  C1:["Високий рівень","Ви легко добираєте слова й точно висловлюєте думки. Заглибимось у нюанси та спеціалізовану лексику."]
+};
+const TUTOR_TEXT = {
+  A1:"Я побачив саме Ваші прогалини й підготував маршрут з нуля — крок за кроком, без поспіху.",
+  A2:"Я бачу, що у Вас уже є база. Покажу, які теми відкриють вільнішу розмову — і поведу Вас туди.",
+  B1:"Я проаналізував Ваші відповіді й бачу конкретні теми, що заважають говорити вільно. Виправимо їх разом.",
+  B2:"Ви сильні. Я зосереджуся на нюансах, які відрізняють впевнене мовлення від майже-вільного.",
+  C1:"Ви майже вільні. Я допоможу відшліфувати тонкощі — стиль, ідіоми, точність."
+};
+
+function showResult(){
+  const lex = calcLexicon();
+
+  document.getElementById("flow").style.display="none";
+  document.getElementById("result").style.display="block";
+  document.getElementById("ctaBar").style.display="none";
+
+  // ── повне шахрайство: проклацав не читаючи (тиснув майже всі вигадані) ──
+  if(lex.cheated){
+    document.getElementById("result").innerHTML =
+      `<div class="top"><div class="bar"><i style="width:100%"></i></div></div>
+       <h1 style="margin-top:10px;color:#12203a">Схоже, тест проклацали 🙈</h1>
+       <div class="big">0 <small>слів</small></div>
+       <p class="cap" style="max-width:340px;margin:0 auto 20px;color:#4a5670">
+         Ви позначили більшість <b style="color:#1b4fd0">вигаданих</b> слів як знайомі —
+         тобто відповідали, не читаючи. Це нормально буває поспіхом,
+         але тоді ми не можемо визначити Ваш справжній рівень.</p>
+       <div class="tutor" style="background:linear-gradient(135deg,#e0873a,#e6a24e)">
+         <div class="avatar">🧑‍🏫</div>
+         <h3 style="color:#fff">Пройдімо ще раз — уважно</h3>
+         <p style="color:#fff">Позначайте лише ті слова, значення яких Ви <b style="color:#fff;text-decoration:underline">точно</b> знаєте.
+            Вигаданих не бійтесь пропускати — чесність дасть точний результат
+            і персональний маршрут саме для Вас.</p>
+       </div>
+       <div class="cta-bar" style="position:static;padding:20px 0 0">
+         <button class="cta" onclick="location.reload()">Пройти ще раз</button>
+       </div>`;
+    sendResult({action:"diagnostic_cheated", cheated:true, false_alarm:Math.round(lex.f*100)});
+    return;
+  }
+
+  const gram = calcGrammar();
+  const read = calcSimple("reading");
+  const listen = LISTENING_ENABLED ? calcSimple("listen") : null;
+  const level = combineLevel(lex.vlevel, gram.glevel);
+
+  const target=lex.words; let cur=0; const stepN=Math.max(10,Math.round(target/40));
+  const rw=document.getElementById("rWords");
+  const timer=setInterval(()=>{cur+=stepN; if(cur>=target){cur=target;clearInterval(timer);} rw.textContent=cur;},22);
+
+  const pct=Math.min(100, lex.words/6000*100);
+  setTimeout(()=>{document.getElementById("knob").style.left=pct+"%";},120);
+  document.querySelectorAll("#ticks span").forEach(s=>{ if(s.dataset.l===level) s.classList.add("act"); });
+
+  document.getElementById("tutorText").textContent = TUTOR_TEXT[level];
+
+  let brk = `<div class="brk-row"><span class="lbl">Лексика<small>обсяг словника</small></span><span class="val">${lex.vlevel} · ≈${lex.words}</span></div>`
+          + `<div class="brk-row"><span class="lbl">Граматика<small>${gram.correct}/${gram.total} правильно</small></span><span class="val">${gram.glevel}</span></div>`
+          + `<div class="brk-row"><span class="lbl">Читання<small>${read.correct}/${read.total} правильно</small></span><span class="val">${read.glevel}</span></div>`;
+  brk += listen ? `<div class="brk-row"><span class="lbl">Аудіювання<small>${listen.correct}/${listen.total} правильно</small></span><span class="val">${listen.glevel}</span></div>`
+                : `<div class="brk-row"><span class="lbl">Аудіювання<small>додамо незабаром</small></span><span class="val muted">—</span></div>`;
+  document.getElementById("brk").innerHTML = brk;
+
+  const gapTopics = new Set(gram.gaps.filter(g=>g.level===level).map(g=>g.topic));
+  const tested = [];
+  PHASES.forEach(p=>{ if(p.type==="choice" && (p.cat==="gram_screen"||p.cat==="gram_deep") && p.item.level===level && p.item.topic) tested.push(p.item.topic); });
+  const uniqueTested = [...new Set(tested)];
+  document.getElementById("gapsLead").textContent =
+    `На рівні ${level} — теми, які перевірили. ○ варто підтягнути, ✓ вже впевнено:`;
+  document.getElementById("chipRow").innerHTML = uniqueTested.map(t=>{
+    const isGap = gapTopics.has(t);
+    return `<span class="chip ${isGap?'':'ok'}">${isGap?'○ ':'✓ '}${TOPIC_LABELS[t]||t}</span>`;
+  }).join("") || `<span class="chip ok">✓ основне на рівні ${level}</span>`;
+
+  const [vt,vx]=VERDICTS[level];
+  document.getElementById("vTitle").textContent = "Рівень: "+level+" — "+vt;
+  document.getElementById("vText").textContent = vx;
+
+  // ── план методиста: закрити поточний рівень → перейти до наступного ──
+  const gapNames = uniqueTested.filter(t=>gapTopics.has(t)).map(t=>TOPIC_LABELS[t]||t);
+  const li = LEVELS.indexOf(level);
+  const nextLvl = li<LEVELS.length-1 ? LEVELS[li+1] : null;
+  let planTxt;
+  if(gapNames.length){
+    planTxt = `Ви зараз на рівні <b>${level}</b>. Щоб закрити його повністю, спершу підтягніть теми: `
+      + `<b>${gapNames.join(", ")}</b>. `
+      + (nextLvl
+          ? `Відкрийте свою <b>карту прогресу</b> — там ці теми вже позначено, і Ви бачитимете, як рівень заповнюється. Коли опануєте їх — визначимо прогалини знову, і я поведу далі, крок за кроком, поки не закриємо ${level} і не перейдемо до <b>${nextLvl}</b> — і так до Вашої мети, вільного володіння мовою.`
+          : `Відкрийте свою <b>карту прогресу</b>, щоб відточити останні нюанси. Коли будете готові — визначимо прогалини знову.`);
+    document.getElementById("planTitle").textContent = `Ваш маршрут: закриваємо ${level}`;
+  } else {
+    planTxt = `На рівні <b>${level}</b> прогалин майже немає — чудова робота! `
+      + (nextLvl
+          ? `Ви готові рухатись до <b>${nextLvl}</b>. Відкрийте <b>карту прогресу</b> й просувайтеся далі — за тиждень визначимо прогалини знову і підемо до вільного володіння мовою.`
+          : `Ви на найвищому рівні шкали. Відкрийте карту прогресу — далі шліфуємо стиль та ідіоми до повністю вільного мовлення.`);
+    document.getElementById("planTitle").textContent = "Ваш маршрут далі";
+  }
+  document.getElementById("planText").innerHTML = planTxt;
+
+  document.getElementById("startpt").textContent =
+    "Це Ваша точка старту. За тиждень ми порівняємо — і Ви почуєте різницю у власному голосі.";
+
+  document.getElementById("debug").innerHTML =
+    `<b>debug (методисту):</b><br>`+
+    `ЛЕКСИКА h=${lex.h.toFixed(2)} f=${lex.f.toFixed(2)} score=${lex.score.toFixed(3)} → ${lex.vlevel}, ≈${lex.words}<br>`+
+    `псевдо: ${lex.pH}/${lex.pT} ${lex.f>0.3?'⚠':'✓'}<br>`+
+    `СКРИНІНГ → робочий рівень ${workingLevel}<br>`+
+    `ГРАМАТИКА ${gram.correct}/${gram.total} → ${gram.glevel} · прогалини: ${gram.gaps.map(g=>g.topic).join(", ")||"—"}<br>`+
+    `ЧИТАННЯ ${read.correct}/${read.total} → ${read.glevel}<br>`+
+    (listen?`АУДІО ${listen.correct}/${listen.total} → ${listen.glevel}<br>`:`АУДІО вимкнено<br>`)+
+    `ПІДСУМОК <b>${level}</b> · coverage ${JSON.stringify(lex.coverage)}`;
+
+  sendResult({
+    action:"diagnostic_done", level,
+    vocab_level:lex.vlevel, vocab_words:lex.words, vocab_coverage:lex.coverage,
+    grammar_level:gram.glevel, grammar_score:gram.correct, grammar_total:gram.total,
+    reading_level:read.glevel, reading_score:read.correct,
+    listening_level:listen?listen.glevel:null, listening_score:listen?listen.correct:null,
+    working_level:workingLevel, gaps:[...gapTopics]
+  });
+
+  // кнопка «карта прогресу»: бот уже відкриває прогрес після diagnostic_done,
+  // тож тут лише закриваємо мініап — карта чекає в чаті.
+  const gp = document.getElementById("goProgress");
+  if(gp) gp.onclick = ()=>{
+    try{ if(window.Telegram && Telegram.WebApp && Telegram.WebApp.close){ Telegram.WebApp.close(); return; } }catch(e){}
+    // поза Telegram (демо/браузер) — просто підказка
+    gp.textContent = "Відкрийте бота — карта вже там ✓";
+  };
+}
+
+function sendResult(data){
+  try{ if(window.Telegram && Telegram.WebApp && Telegram.WebApp.sendData) Telegram.WebApp.sendData(JSON.stringify(data)); }
+  catch(e){ console.warn("sendData failed:", e); }
+}
+
+render();
+</script>
+</body>
+</html>

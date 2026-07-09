@@ -169,6 +169,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .error-date{font-size:10px;color:var(--text3);margin-top:4px}
 
 .close-btn{display:block;margin:24px auto 0;background:transparent;border:1px solid var(--border);color:var(--text2);padding:10px 24px;border-radius:20px;font-size:13px;cursor:pointer}
+.diag-btn{display:block;width:calc(100% - 32px);margin:16px auto 0;background:linear-gradient(90deg,#2f6df6,#1b4fd0);border:none;color:#fff;padding:14px;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 6px 18px rgba(47,109,246,.28)}
 </style>
 </head>
 <body>
@@ -218,6 +219,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
   <div id="topics-list"></div>
 </div>
 
+<button class="diag-btn" onclick="openDiagnostic()">🎯 Пройти діагностику знову</button>
 <button class="close-btn" onclick="Telegram.WebApp.close()">Закрити</button>
 
 <!-- TOPIC DETAIL MODAL -->
@@ -268,6 +270,12 @@ async function maAction(action, extra){
   } catch(e){ ok=false; }
   if(!ok && tg && typeof tg.sendData==='function'){ try{ tg.sendData(JSON.stringify(body)); }catch(e){} }
   return ok;
+}
+
+// ── Кнопка «Пройти діагностику знову»: бот надішле кнопку запуску ──
+async function openDiagnostic(){
+  await maAction("open_diagnostic", {});
+  try { Telegram.WebApp.close(); } catch(e){}
 }
 
 // ── Google Noto Emoji helper ──
