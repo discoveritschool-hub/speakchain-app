@@ -128,6 +128,7 @@ body{font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
   <div class="navlabel">Огляд</div>
   <button class="nav on" onclick="go('overview',this)"><span class="ic">◆</span><span>Пульс продукту</span></button>
   <button class="nav" onclick="go('funnel',this)"><span class="ic">▸</span><span>Воронка</span></button>
+  <button class="nav" onclick="go('onboarding',this)"><span class="ic">👋</span><span>Онбординг</span></button>
   <div class="navlabel">Бізнес</div>
   <button class="nav" onclick="go('money',this)"><span class="ic">$</span><span>Гроші</span></button>
   <button class="nav" onclick="go('product',this)"><span class="ic">✦</span><span>Продукт</span></button>
@@ -186,6 +187,26 @@ body{font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
     </div>
   </div>
 </div>
+<div class="panel" id="onboarding">
+  <div class="head"><div><h2>Онбординг Дня 1</h2><div class="sub">Портрет аудиторії + де кидають квіз знайомства</div></div><div class="demo-pill">● демо-дані</div></div>
+  <div class="grid g3">
+    <div class="metric accent"><div class="lab">Відкрили квіз</div><div class="val" data-k="onb_opened">0</div><div class="delta flat">почали знайомство</div></div>
+    <div class="metric"><div class="lab">Завершили</div><div class="val" data-k="onb_completed">0</div><div class="delta up">пройшли до кінця</div></div>
+    <div class="metric"><div class="lab">% завершення</div><div class="val" data-k="onb_rate">0%</div><div class="delta flat">completion rate</div></div>
+  </div>
+  <div class="section-t">Воронка квізу — де кидають</div>
+  <div class="card"><div class="funnel" id="onb_funnelbars"></div>
+    <div class="note">Кожен рядок — екран квізу. Ширина = скільки людей дійшло. Найбільший провал між кроками показує, який екран спростити чи переставити.</div>
+  </div>
+  <div class="section-t">Портрет аудиторії (% від тих, хто завершив)</div>
+  <div class="grid g2" id="onb_dists"></div>
+  <div class="section-t">Голос клієнта — письмові відповіді</div>
+  <div class="grid g2">
+    <div class="card"><div class="lab" style="margin-bottom:8px">Чого бракувало (свої слова)</div><div id="onb_written_missing" style="font-size:13px;line-height:1.7;color:var(--muted)"></div></div>
+    <div class="card"><div class="lab" style="margin-bottom:8px">Очікування (свої слова)</div><div id="onb_written_exp" style="font-size:13px;line-height:1.7;color:var(--muted)"></div></div>
+  </div>
+</div>
+
 <div class="panel" id="money">
   <div class="head"><div><h2>Гроші</h2><div class="sub">Тарифи, дохід блогерів та юніт-економіка</div></div><div class="demo-pill">● демо-дані</div></div>
   <div class="section-t">Тарифи</div>
@@ -412,11 +433,58 @@ async function loadLive(){
 
     fillData();
     buildFunnel();
+    if(d.onboarding){ LIVE_ONB = d.onboarding; buildOnboarding(); }
     if(document.getElementById('money').classList.contains('on')) buildBlogger();
     _setDemoBadge(true);
   }catch(_){ /* лишаються демо-дані, нічого не ламаємо */ }
 }
-let LIVE_FUNNEL = null, LIVE_BLOGGER = null;
+let LIVE_FUNNEL = null, LIVE_BLOGGER = null, LIVE_ONB = null;
+
+function buildOnboarding(){
+  const o = LIVE_ONB; if(!o) return;
+  const set=(k,v)=>{ const el=document.querySelector(`[data-k="${k}"]`); if(el) el.textContent=v; };
+  set('onb_opened', o.opened||0);
+  set('onb_completed', o.completed||0);
+  set('onb_rate', (o.completion_rate||0)+'%');
+  // воронка квізу
+  const fb=document.getElementById('onb_funnelbars');
+  if(fb){ fb.innerHTML='';
+    (o.funnel||[]).forEach((f,i)=>{
+      const row=document.createElement('div'); row.className='frow';
+      row.innerHTML=`<div class="fname">${f.step}. ${f.name}</div>
+        <div class="fbar-wrap"><div class="fbar" style="width:0;background:#5B4B9E">${f.pct}%</div></div>
+        <div class="fpct">${f.reached}</div>`;
+      fb.appendChild(row);
+      setTimeout(()=>{ row.querySelector('.fbar').style.width=f.pct+'%'; }, 70*i+120);
+    });
+  }
+  // розподіли (портрет)
+  const dbox=document.getElementById('onb_dists');
+  if(dbox){ dbox.innerHTML='';
+    const fields=[['goals','Мотивація'],['speaking_blocks','Що заважає'],
+      ['tried_before','Що пробували'],['missing_before','Чого бракувало'],
+      ['fluent_means','Вільно ='],['expectations','Очікування'],['time_per_day','Час/день']];
+    fields.forEach(([key,title])=>{
+      const arr=o[key]||[]; if(!arr.length) return;
+      const card=document.createElement('div'); card.className='card';
+      let html=`<div class="lab" style="margin-bottom:8px">${title}</div>`;
+      arr.forEach(it=>{
+        html+=`<div style="display:flex;align-items:center;gap:8px;margin:5px 0">
+          <div style="flex:1;font-size:12px">${it.name}</div>
+          <div style="width:90px;background:#2a2540;border-radius:6px;overflow:hidden;height:14px">
+            <div style="width:${it.pct}%;height:100%;background:#7F77DD"></div></div>
+          <div style="width:34px;text-align:right;font-size:11px;color:var(--muted)">${it.pct}%</div></div>`;
+      });
+      card.innerHTML=html; dbox.appendChild(card);
+    });
+  }
+  // письмові
+  const wm=document.getElementById('onb_written_missing');
+  const we=document.getElementById('onb_written_exp');
+  const fmt=a=>(a&&a.length)?a.map(t=>'• '+t).join('<br>'):'—';
+  if(wm) wm.innerHTML=fmt(o.written_missing);
+  if(we) we.innerHTML=fmt(o.written_expectations);
+}
 
 function buildFunnel(){
   const box=document.getElementById('funnelbars'); if(!box) return; box.innerHTML='';
@@ -449,6 +517,7 @@ function go(id,btn){
   document.getElementById(id).classList.add('on');
   if(btn) btn.classList.add('on');
   if(id==='funnel') buildFunnel();
+  if(id==='onboarding') buildOnboarding();
   if(id==='money') buildBlogger();
 }
 try { TG?.ready(); TG?.expand(); } catch(_){}
