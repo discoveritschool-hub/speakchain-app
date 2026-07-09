@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Знайомство — SpeakChain</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  :root{
+    --bg:#0d0d14; --bg2:#16161f; --bg3:#1e1e2a;
+    --purple:#7c6ef7; --purple2:#a78bfa;
+    --green:#5ad8a6; --text:#eaeaf5; --text2:#8888a8; --text3:#5a5a72;
+    --border:rgba(255,255,255,0.07);
+  }
+  *{margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  body{background:var(--bg); color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',Roboto,sans-serif;
+    line-height:1.5; min-height:100vh; overflow-x:hidden;}
+  .wrap{max-width:460px; margin:0 auto; padding:16px 16px 110px; min-height:100vh;}
+
+  .top{display:flex; align-items:center; gap:12px; padding:8px 0 16px;}
+  .back{font-size:22px; color:var(--text2); background:var(--bg2); border:1px solid var(--border);
+    width:36px; height:36px; border-radius:50%; cursor:pointer; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center; line-height:1; transition:opacity .2s, transform .06s;}
+  .back:active{transform:scale(.94);}
+  .back:disabled{opacity:.3; cursor:default;}
+  .bar{flex:1; height:8px; background:var(--bg3); border-radius:10px; overflow:hidden;}
+  .bar>i{display:block; height:100%; width:0%;
+    background:linear-gradient(90deg,var(--purple),var(--purple2)); border-radius:10px;
+    transition:width .35s cubic-bezier(.4,0,.2,1);}
+  .step-count{font-size:12px; color:var(--text2); font-weight:600; flex-shrink:0; min-width:34px; text-align:right;}
+
+  h1{font-size:21px; font-weight:700; letter-spacing:-.3px; margin:4px 0 6px; text-align:center;}
+  .sub{text-align:center; color:var(--text2); font-size:14px; margin:0 auto 18px; max-width:340px; line-height:1.45;}
+  .phase-wrap{text-align:center;}
+  .phase-tag{display:inline-block; font-size:11px; font-weight:700; color:var(--purple2);
+    background:rgba(124,110,247,.12); border:1px solid rgba(124,110,247,.3);
+    padding:3px 11px; border-radius:20px; letter-spacing:.4px; margin-bottom:8px;}
+
+  .choices{display:flex; flex-direction:column; gap:10px;}
+  .choice{display:flex; align-items:center; gap:12px; background:var(--bg2);
+    border:1.5px solid var(--border); border-radius:14px; padding:16px;
+    cursor:pointer; transition:all .15s; user-select:none; font-size:16px; font-weight:600;}
+  .choice:active{transform:scale(.99);}
+  .choice.on{border-color:var(--purple); background:rgba(124,110,247,.14);}
+  .choice .mk{margin-left:auto; width:22px; height:22px; flex-shrink:0;
+    border:2px solid var(--bg3); display:grid; place-items:center; transition:all .15s;}
+  .choice.single .mk{border-radius:50%;}
+  .choice.multi .mk{border-radius:7px;}
+  .choice.on .mk{background:var(--purple); border-color:var(--purple);}
+  .choice .mk svg{width:12px; height:12px; opacity:0; transition:opacity .15s;}
+  .choice.on .mk svg{opacity:1;}
+
+  .cta-bar{position:fixed; left:0; right:0; bottom:0; padding:14px 16px 22px;
+    background:linear-gradient(180deg,rgba(13,13,20,0),var(--bg) 34%); max-width:460px; margin:0 auto;}
+  .cta{width:100%; border:none; border-radius:12px; padding:16px; font-size:16px; font-weight:600;
+    color:#fff; background:var(--purple); cursor:pointer; transition:transform .08s, opacity .2s;}
+  .cta:active{transform:translateY(1px);}
+  .cta:disabled{opacity:.4; cursor:default;}
+  .hint{text-align:center; color:var(--text3); font-size:12px; margin:14px 0 0;}
+  .other-wrap{margin-top:12px;}
+  .other-input{
+    width:100%; background:var(--bg2); border:1.5px solid var(--border);
+    border-radius:14px; padding:14px 16px; color:var(--text);
+    font-family:inherit; font-size:15px; line-height:1.4; resize:none;
+    transition:border-color .15s;
+  }
+  .other-input:focus{outline:none; border-color:var(--purple);}
+  .other-input::placeholder{color:var(--text3);}
+
+  .done{display:none; text-align:center; animation:fade .5s ease;}
+  @keyframes fade{from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:none;}}
+  .done .ic{font-size:52px; margin:20px 0 8px;}
+  .done h1{font-size:22px;}
+  .done p{color:var(--text2); font-size:15px; margin:8px auto 0; max-width:320px; line-height:1.5;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div id="screen">
+    <div class="top">
+      <button class="back" id="backBtn" aria-label="назад" disabled>‹</button>
+      <div class="bar"><i id="prog"></i></div>
+      <span class="step-count" id="stepCount">1/5</span>
+    </div>
+    <div id="body"></div>
+    <p class="hint" id="hint"></p>
+  </div>
+
+  <div class="done" id="doneScreen">
+    <div class="ic">🎯</div>
+    <h1>Дякуємо! Вас почули.</h1>
+    <p id="doneText">Тепер Ваш челендж підлаштований саме під Вас. Повертайтесь у чат — почнемо 🔗</p>
+  </div>
+</div>
+
+<div class="cta-bar" id="ctaBar"><button class="cta" id="cta" disabled>Далі</button></div>
+
+<script>
+try { if (window.Telegram && Telegram.WebApp){ Telegram.WebApp.ready(); Telegram.WebApp.expand(); } } catch(e){}
+
+const SCREENS = [
+  {
+    id:"goal", type:"multi", max:3, required:true, tag:"КРОК 1/7",
+    title:"Що Вас найбільше мотивує вивчати англійську?",
+    sub:"Оберіть 1-3 головні.",
+    opts:[
+      {v:"travel", t:"✈️ Подорожувати без бар'єру"},
+      {v:"work", t:"💼 Робота / кар'єра"},
+      {v:"media", t:"🎬 Дивитись фільми/контент в оригіналі"},
+      {v:"environment", t:"🌍 Впевнено в мовному середовищі / за кордоном"},
+      {v:"family", t:"❤️ Спілкуватись із близькими / сім'єю"},
+      {v:"exam", t:"🎓 Скласти іспит (IELTS тощо)"},
+      {v:"life", t:"✨ Змінити життя на краще"},
+    ],
+  },
+  {
+    id:"tried", type:"multi", tag:"КРОК 2/7",
+    hint:"Обирайте все, що було — можна кілька",
+    title:"Що вже пробували?",
+    sub:"Цікаво, який у Вас досвід.",
+    opts:[
+      {v:"school", t:"🏫 У школі / виші"},
+      {v:"apps", t:"📱 Додатки (Duolingo тощо)"},
+      {v:"courses", t:"🎓 Курси / мовна школа"},
+      {v:"tutor", t:"👩‍🏫 Репетитора"},
+      {v:"youtube", t:"📺 YouTube / відео-уроки"},
+      {v:"books", t:"📚 Підручники / самовчителі"},
+      {v:"clubs", t:"🗣 Розмовні клуби"},
+      {v:"media", t:"🎬 Серіали / фільми на слух"},
+      {v:"nothing", t:"🤷 Ще нічого серйозного", exclusive:true},
+    ],
+  },
+  {
+    id:"blocks", type:"multi", tag:"КРОК 3/7",
+    title:"Що найбільше заважає говорити?",
+    sub:"Оберіть все, що відгукується.",
+    opts:[
+      {v:"freeze", t:"😰 Завмираю, коли треба говорити"},
+      {v:"no_build", t:"🧠 Знаю слова, але не складаю речення"},
+      {v:"forget", t:"🐢 Говорю повільно — забуваю і підбираю слова"},
+      {v:"translate", t:"💭 Думаю українською, потім перекладаю"},
+      {v:"fear_err", t:"😳 Боюся помилок і осуду"},
+      {v:"listen", t:"👂 Не розумію носіїв на слух"},
+      {v:"accent", t:"🗣 Соромлюся вимови / акценту"},
+    ],
+  },
+  {
+    id:"missing", type:"multi", tag:"КРОК 4/7", hasOther:true,
+    hint:"Обирайте усе, що відгукується — можна всі",
+    title:"Чого шукаєте, щоб усе вийшло?",
+    sub:"Що заважало вивчити англійську раніше?",
+    opts:[
+      {v:"motivation", t:"🔥 Мотивації — щоб не кинути і дійти до мети"},
+      {v:"discipline", t:"📅 Регулярності / дисципліни"},
+      {v:"practice", t:"🗣 Живої практики й партнера"},
+      {v:"orientation", t:"🧭 Розуміння, де я зараз і куди рухатись"},
+      {v:"system", t:"🎯 Працюючої системи / плану"},
+      {v:"time", t:"⏱ Часу"},
+      {v:"tutor", t:"💸 Доступного репетитора"},
+      {v:"mentor", t:"🤝 Наставника, який проведе за руку"},
+      {v:"dunno", t:"🤔 Не знаю", exclusive:true},
+    ],
+  },
+  {
+    id:"fluent", type:"multi", tag:"КРОК 5/7",
+    hint:"Оберіть, що для Вас найважливіше",
+    title:"Що для Вас означає вільно говорити?",
+    sub:"Уявіть, що бар'єр зник — як це відчувається?",
+    opts:[
+      {v:"flow", t:"🌊 Слова течуть самі, без зусиль"},
+      {v:"think_en", t:"🧠 Думаю англійською, не перекладаю"},
+      {v:"calm", t:"😌 Говорю спокійно, без страху помилки"},
+      {v:"instant", t:"⚡ Не шукаю слова — вони вже там"},
+      {v:"express", t:"🎭 Жартую й висловлюю емоції, а не лише «по ділу»"},
+      {v:"initiate", t:"🙋 Сам починаю розмову, не уникаю"},
+    ],
+  },
+  {
+    id:"expectations", type:"multi", tag:"КРОК 6/7", hasOther:true,
+    hint:"Що для Вас було б справжнім результатом",
+    title:"Чого чекаєте від цих 7 днів?",
+    sub:"Нам цікаві Ваші сподівання.",
+    opts:[
+      {v:"start_speak", t:"🚀 Нарешті почати говорити"},
+      {v:"habit", t:"🔥 Втягнутись у щоденну звичку"},
+      {v:"progress_dir", t:"📈 Зрозуміти мою точку зараз і куди рухатись далі"},
+      {v:"believe", t:"💪 Повірити, що я можу"},
+      {v:"no_fear", t:"😌 Позбутись страху помилок"},
+      {v:"just_curious", t:"🙂 Нічого не чекаю — просто цікаво (бо що таке 7 днів?)"},
+    ],
+  },
+  {
+    id:"time", type:"single", tag:"КРОК 7/7",
+    title:"Скільки часу готові приділяти?",
+    sub:"Чесно — під це складемо реалістичний план.",
+    opts:[
+      {v:"5", t:"⚡ 5 хвилин на день"},
+      {v:"15", t:"🔥 15 хвилин на день"},
+      {v:"30", t:"💪 30 хвилин на день"},
+      {v:"60", t:"🚀 Можу і більше"},
+    ],
+  }
+];
+
+const answers = {};   // {screenId: value | [values]}
+let idx = 0;
+
+const bodyEl=document.getElementById("body");
+const prog=document.getElementById("prog");
+const hint=document.getElementById("hint");
+const cta=document.getElementById("cta");
+const backBtn=document.getElementById("backBtn");
+const stepCount=document.getElementById("stepCount");
+const CHECK='<svg viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L19 7" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+function isAnswered(sc){
+  const a=answers[sc.id];
+  if(sc.type==="single") return !!a;
+  return Array.isArray(a) && a.length>0;
+}
+
+function render(){
+  const sc=SCREENS[idx];
+  bodyEl.innerHTML=`<div class="phase-wrap"><span class="phase-tag">${sc.tag}</span></div>
+    <h1>${sc.title}</h1><p class="sub">${sc.sub}</p>`;
+  const box=document.createElement("div"); box.className="choices";
+
+  sc.opts.forEach(o=>{
+    const sel = sc.type==="single" ? (answers[sc.id]===o.v)
+                                   : ((answers[sc.id]||[]).includes(o.v));
+    const el=document.createElement("div");
+    el.className="choice "+sc.type+(sel?" on":"");
+    el.innerHTML=`<span>${o.t}</span><span class="mk">${CHECK}</span>`;
+    el.onclick=()=>{
+      if(sc.type==="single"){ answers[sc.id]=o.v; }
+      else {
+        let arr=answers[sc.id]||[];
+        const i=arr.indexOf(o.v);
+        if(i>=0){ arr.splice(i,1); }
+        else {
+          if(o.exclusive){
+            // exclusive-варіант (напр. «нічого серйозного») — очищає всі інші
+            arr=[o.v];
+          } else {
+            // звичайний вибір — прибираємо будь-який exclusive зі списку
+            const exKeys=sc.opts.filter(x=>x.exclusive).map(x=>x.v);
+            arr=arr.filter(v=>!exKeys.includes(v));
+            if(sc.max && arr.length>=sc.max){ return; }  // ліміт вибору
+            arr.push(o.v);
+          }
+        }
+        answers[sc.id]=arr;
+      }
+      render();
+    };
+    box.appendChild(el);
+  });
+  bodyEl.appendChild(box);
+
+  // відкрите поле «Інше» (коли sc.hasOther)
+  if(sc.hasOther){
+    const wrapOther=document.createElement("div");
+    wrapOther.className="other-wrap";
+    const ta=document.createElement("textarea");
+    ta.className="other-input";
+    ta.placeholder="✍️ Інше — напишіть своїми словами (необов'язково)";
+    ta.rows=2;
+    ta.value=(answers[sc.id+"_other"]||"");
+    ta.oninput=()=>{ answers[sc.id+"_other"]=ta.value; };
+    wrapOther.appendChild(ta);
+    bodyEl.appendChild(wrapOther);
+  }
+
+  // прогрес
+  prog.style.width=((idx+1)/SCREENS.length*100)+"%";
+  stepCount.textContent=(idx+1)+"/"+SCREENS.length;
+  backBtn.disabled=(idx===0);
+
+  // мульти можна пропустити (крім required); single — обов'язковий
+  if(sc.type==="multi"){
+    const n=(answers[sc.id]||[]).length;
+    if(sc.max && n>=sc.max){
+      hint.textContent = "Обрано максимум: "+n+"/"+sc.max;
+    } else if(n){
+      hint.textContent = "Обрано: "+n + (sc.max ? "/"+sc.max : "");
+    } else {
+      hint.textContent = sc.required ? "Обери 1-"+sc.max : (sc.hint || "Можна обрати кілька або пропустити");
+    }
+    cta.disabled = sc.required ? (n===0) : false;
+  } else {
+    hint.textContent="";
+    cta.disabled=!isAnswered(sc);
+  }
+  cta.textContent = (idx===SCREENS.length-1) ? "Завершити" : "Далі";
+  window.scrollTo(0,0);
+}
+
+backBtn.onclick=()=>{ if(idx>0){ idx--; render(); } };
+cta.onclick=()=>{
+  if(idx<SCREENS.length-1){ idx++; render(); }
+  else finish();
+};
+render();
+
+function finish(){
+  document.getElementById("screen").style.display="none";
+  document.getElementById("doneScreen").style.display="block";
+  document.getElementById("ctaBar").style.display="none";
+
+  const payload={
+    action:"day1_onboarding_done",
+    goals:        answers.goal || [],
+    goal:         (answers.goal && answers.goal[0]) || null,
+    speaking_blocks: answers.blocks || [],
+    tried:        answers.tried || [],
+    missing:      answers.missing || [],
+    missing_other: (answers.missing_other || "").trim().slice(0, 300),
+    fluent_means: answers.fluent || [],
+    expectations: answers.expectations || [],
+    expectations_other: (answers.expectations_other || "").trim().slice(0, 300),
+    time_per_day: answers.time || null,
+  };
+  try{
+    if(window.Telegram && Telegram.WebApp && Telegram.WebApp.sendData){
+      Telegram.WebApp.sendData(JSON.stringify(payload));
+    }
+  }catch(e){ console.warn("sendData failed:", e); }
+
+  // м'яко закрити мініап (бот продовжить у чаті)
+  setTimeout(()=>{ try{ if(window.Telegram&&Telegram.WebApp&&Telegram.WebApp.close) Telegram.WebApp.close(); }catch(e){} }, 1600);
+}
+</script>
+</body>
+</html>
