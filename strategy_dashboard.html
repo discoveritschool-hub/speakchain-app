@@ -129,6 +129,7 @@ body{font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
   <button class="nav on" onclick="go('overview',this)"><span class="ic">◆</span><span>Пульс продукту</span></button>
   <button class="nav" onclick="go('funnel',this)"><span class="ic">▸</span><span>Воронка</span></button>
   <button class="nav" onclick="go('onboarding',this)"><span class="ic">👋</span><span>Онбординг</span></button>
+  <button class="nav" onclick="go('diagnostic',this)"><span class="ic">🎯</span><span>Діагностика</span></button>
   <div class="navlabel">Бізнес</div>
   <button class="nav" onclick="go('money',this)"><span class="ic">$</span><span>Гроші</span></button>
   <button class="nav" onclick="go('product',this)"><span class="ic">✦</span><span>Продукт</span></button>
@@ -204,6 +205,23 @@ body{font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
   <div class="grid g2">
     <div class="card"><div class="lab" style="margin-bottom:8px">Чого бракувало (свої слова)</div><div id="onb_written_missing" style="font-size:13px;line-height:1.7;color:var(--muted)"></div></div>
     <div class="card"><div class="lab" style="margin-bottom:8px">Очікування (свої слова)</div><div id="onb_written_exp" style="font-size:13px;line-height:1.7;color:var(--muted)"></div></div>
+  </div>
+</div>
+
+<div class="panel" id="diagnostic" style="display:none">
+  <div class="head"><div><h2>Діагностика Дня 4</h2><div class="sub">Рівні аудиторії, прогалини й скільки говорять уголос</div></div><div class="demo-pill">● демо-дані</div></div>
+  <div class="grid g3">
+    <div class="metric accent"><div class="lab">Завершили тест</div><div class="val" data-k="diag_done">0</div><div class="delta flat">пройшли діагностику</div></div>
+    <div class="metric"><div class="lab">Сер. словник</div><div class="val" data-k="diag_words">0</div><div class="delta up">слів (Meara)</div></div>
+    <div class="metric"><div class="lab">Записали монолог</div><div class="val" data-k="diag_speech">0%</div><div class="delta flat">говоріння</div></div>
+  </div>
+  <div class="section-t">Розподіл рівнів (де стартує аудиторія)</div>
+  <div class="card"><div class="funnel" id="diag_levelbars"></div>
+    <div class="note">Скільки людей на кожному рівні CEFR. Показує, під який рівень підлаштовувати контент челенджу насамперед.</div>
+  </div>
+  <div class="section-t">Топ прогалин — що масово провалюють</div>
+  <div class="card"><div id="diag_gaps" style="font-size:13px;line-height:1.9;color:var(--muted)"></div>
+    <div class="note">Найчастіші теми-прогалини на рівні користувачів. Це підказка, які уроки посилити в челенджі.</div>
   </div>
 </div>
 
@@ -434,11 +452,12 @@ async function loadLive(){
     fillData();
     buildFunnel();
     if(d.onboarding){ LIVE_ONB = d.onboarding; buildOnboarding(); }
+    if(d.diagnostic){ LIVE_DIAG = d.diagnostic; buildDiagnostic(); }
     if(document.getElementById('money').classList.contains('on')) buildBlogger();
     _setDemoBadge(true);
   }catch(_){ /* лишаються демо-дані, нічого не ламаємо */ }
 }
-let LIVE_FUNNEL = null, LIVE_BLOGGER = null, LIVE_ONB = null;
+let LIVE_FUNNEL = null, LIVE_BLOGGER = null, LIVE_ONB = null, LIVE_DIAG = null;
 
 function buildOnboarding(){
   const o = LIVE_ONB; if(!o) return;
@@ -484,6 +503,48 @@ function buildOnboarding(){
   const fmt=a=>(a&&a.length)?a.map(t=>'• '+t).join('<br>'):'—';
   if(wm) wm.innerHTML=fmt(o.written_missing);
   if(we) we.innerHTML=fmt(o.written_expectations);
+}
+
+function buildDiagnostic(){
+  const g = LIVE_DIAG; if(!g) return;
+  const set=(k,v)=>{ const el=document.querySelector(`[data-k="${k}"]`); if(el) el.textContent=v; };
+  set('diag_done', g.done||0);
+  set('diag_words', '≈'+(g.avg_words||0));
+  set('diag_speech', (g.speech_rate||0)+'%');
+  // розподіл рівнів як бари
+  const lb=document.getElementById('diag_levelbars');
+  if(lb){ lb.innerHTML='';
+    const levels=g.levels||{};
+    const order=['A1','A2','B1','B2','C1'];
+    const mx=Math.max(...order.map(l=>levels[l]||0), 1);
+    const COL={A1:'#e8663b',A2:'#e69a2e',B1:'#e6c72e',B2:'#7cbf3f',C1:'#2f9e5e'};
+    order.forEach(l=>{
+      const v=levels[l]||0; const w=Math.round(v/mx*100);
+      lb.insertAdjacentHTML('beforeend',
+        `<div class="frow"><div class="flab">${l}</div>`+
+        `<div class="fbar"><div class="ffill" style="width:${w}%;background:${COL[l]}"></div></div>`+
+        `<div class="fval">${v}</div></div>`);
+    });
+  }
+  // топ прогалин
+  const gp=document.getElementById('diag_gaps');
+  if(gp){
+    const gaps=g.top_gaps||{};
+    const LBL={present_simple:'Present Simple',article_a_an:'Артиклі a/an',noun_plural:'Множина',
+      modal_can_could:'can/could',prepositions_place:'Прийменники місця',adjectives_comparison:'Ступені порівняння',
+      past_simple:'Past Simple',present_continuous:'Present Continuous',future_going_to:'going to',
+      pronouns_some_any:'some/any',prepositions_time:'Прийменники часу',modal_must_have_to:'must/have to',
+      present_perfect:'Present Perfect',conditional_1:'Перша умовна',passive_simple:'Пасив',
+      used_to:'used to',modal_should:'should',reported_statements:'Непряма мова',
+      conditional_2:'Друга умовна',past_perfect:'Past Perfect',present_perfect_continuous:'Perfect Continuous',
+      passive_continuous:'Пасив тривалий',gerund_vs_infinitive:'Герундій/інфінітив',reported_questions:'Непрямі питання',
+      conditional_3:'Третя умовна',mixed_conditionals:'Змішані умовні',inversion:'Інверсія',
+      modal_perfect:'Модальні перфектні',question_tags:'Питальні хвости'};
+    const entries=Object.entries(gaps);
+    gp.innerHTML = entries.length
+      ? entries.map(([k,v])=>`• <b style="color:var(--ink)">${LBL[k]||k}</b> — ${v}`).join('<br>')
+      : '—';
+  }
 }
 
 function buildFunnel(){

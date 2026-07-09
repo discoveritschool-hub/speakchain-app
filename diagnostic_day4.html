@@ -89,6 +89,10 @@
 
   .skip{display:block; margin:14px auto 0; background:none; border:none; color:var(--muted);
     font-size:14px; text-decoration:underline; cursor:pointer;}
+  .speak-topic{background:#eef4ff; border-radius:14px; padding:18px; text-align:center; margin:8px 0 14px;}
+  .speak-topic .st-lbl{font-size:12px; color:var(--muted); font-weight:700; text-transform:uppercase; letter-spacing:.05em; margin-bottom:8px;}
+  .speak-topic .st-q{font-size:18px; font-weight:800; color:var(--brand-deep); line-height:1.35;}
+  .speak-hint{text-align:center; color:var(--muted); font-size:14px; line-height:1.55; margin:0 auto; max-width:360px;}
 
   .cta-bar{position:fixed; left:0; right:0; bottom:0; padding:14px 18px 24px;
     background:linear-gradient(180deg,rgba(244,247,252,0),var(--bg) 32%); max-width:460px; margin:0 auto;}
@@ -311,6 +315,51 @@ const LISTENING = [
   {level:"C1", audio:"audio_c1.mp3", q:"What does the speaker say about globalization?", opts:["Benefits are shared equally","Benefits mostly go to elites","They help workers most","They can't be measured"], correct:1},
 ];
 
+// ── МОВЛЕННЯ (опційний блок; запис через нативний Telegram) ──
+const SPEAKING_ENABLED = true;
+const SPEAKING_TOPICS = {
+  A1:[
+    "Tell me about your family. Who are they and what do they do?",
+    "Describe your typical day from morning to evening.",
+    "Talk about your favourite food and why you like it.",
+    "Describe the city or town where you live.",
+    "Tell me about your hobby. What do you like doing in your free time?",
+    "Describe your best friend. What is he or she like?"
+  ],
+  A2:[
+    "Describe a trip or holiday you enjoyed. Where did you go?",
+    "Talk about your favourite film or TV series. What is it about?",
+    "Describe how you usually spend your weekends.",
+    "Tell me about a person you admire and why.",
+    "Describe your dream house. What would it look like?",
+    "Talk about a typical celebration or holiday in your country."
+  ],
+  B1:[
+    "Describe your dream job. Why would it suit you?",
+    "How has technology changed our daily life? Give examples.",
+    "Talk about a book that made an impression on you.",
+    "Describe a skill you would like to learn and why.",
+    "What are the advantages and disadvantages of living in a big city?",
+    "Talk about a memorable event in your life."
+  ],
+  B2:[
+    "Do you think university education is necessary for success? Why?",
+    "Compare living in the city and living in the countryside.",
+    "Should people work fewer hours? Give your opinion with reasons.",
+    "How do you think travel changes a person?",
+    "Talk about an environmental problem and possible solutions.",
+    "Is it better to be a specialist or a generalist? Explain."
+  ],
+  C1:[
+    "Do social media make us more connected or more lonely? Discuss.",
+    "What will the future of work look like in twenty years?",
+    "Should governments regulate artificial intelligence? Argue your view.",
+    "To what extent does culture shape our identity?",
+    "Is economic growth always a sign of progress? Discuss.",
+    "How should society balance privacy and security?"
+  ]
+};
+
 const TOPIC_LABELS = {
   present_simple:"Present Simple", article_a_an:"Артиклі a/an", noun_plural:"Множина іменників",
   modal_can_could:"can / could", prepositions_place:"Прийменники місця", adjectives_comparison:"Ступені порівняння",
@@ -376,7 +425,9 @@ function insertDeep(){
   const afterScreen = LEX_PAGES + G_SCREEN.length;
   const readPhases = READING.map((r,i)=>({type:"choice", cat:"reading", eyebrow:"Читання", item:r, key:"rd"+i}));
   const listenPhases = LISTENING_ENABLED ? LISTENING.map((l,i)=>({type:"choice", cat:"listen", eyebrow:"Аудіювання", item:l, key:"ls"+i})) : [];
-  PHASES = PHASES.slice(0, afterScreen).concat(deepPhases, readPhases, listenPhases);
+  // мовлення — опційна фаза в кінці, тема за робочим рівнем
+  const speakPhases = SPEAKING_ENABLED ? [{type:"speaking", eyebrow:"Мовлення", key:"speak"}] : [];
+  PHASES = PHASES.slice(0, afterScreen).concat(deepPhases, readPhases, listenPhases, speakPhases);
   deepInserted = true;
 }
 
@@ -392,6 +443,7 @@ function render(){
   backBtn.style.visibility = phase === 0 ? "hidden" : "visible";
   if(p.type === "lexicon") return renderLexicon(p.page);
   if(p.type === "choice")  return renderChoice(p);
+  if(p.type === "speaking") return renderSpeaking(p);
 }
 
 function renderLexicon(page){
@@ -480,6 +532,50 @@ function onChoiceNext(){
     insertDeep();
   }
   next();
+}
+
+let speakingTopic = null;
+function renderSpeaking(p){
+  // рандомна тема за робочим рівнем
+  if(!speakingTopic){
+    const pool = SPEAKING_TOPICS[workingLevel] || SPEAKING_TOPICS.A1;
+    speakingTopic = pool[Math.floor(Math.random()*pool.length)];
+  }
+  stage.innerHTML =
+    `<h1>🎤 Розкажіть монолог</h1>
+     <p class="sub">Останній крок — і він <b>необовʼязковий</b>. Говоріння покаже найбільше про Ваш рівень.</p>
+     <div class="speak-topic">
+       <div class="st-lbl">Ваша тема · рівень ${workingLevel}</div>
+       <div class="st-q">${speakingTopic}</div>
+     </div>
+     <p class="speak-hint">Говоріть 30–60 секунд англійською. Не бійтесь помилок — я послухаю й підкажу, як покращити. Запис відкриється в чаті.</p>`;
+  cta.textContent = "🎤 Записати відповідь";
+  cta.disabled = false;
+  cta.onclick = ()=>{
+    // шлемо боту тему й закриваємо мініап — запис іде нативним голосовим Telegram
+    sendResult({
+      action:"diagnostic_done", level:combineLevel(calcLexicon().vlevel, calcGrammar().glevel),
+      vocab_level:calcLexicon().vlevel, vocab_words:calcLexicon().words, vocab_coverage:calcLexicon().coverage,
+      grammar_level:calcGrammar().glevel, grammar_score:calcGrammar().correct, grammar_total:calcGrammar().total,
+      reading_level:calcSimple("reading").glevel, reading_score:calcSimple("reading").correct,
+      listening_level:LISTENING_ENABLED?calcSimple("listen").glevel:null,
+      working_level:workingLevel, gaps:collectGaps(),
+      speaking_requested:true, speaking_topic:speakingTopic
+    });
+    try{ if(window.Telegram && Telegram.WebApp && Telegram.WebApp.close){ Telegram.WebApp.close(); return; } }catch(e){}
+    showResult();
+  };
+  // кнопка «пропустити» під CTA
+  const skipHtml = `<button class="skip" id="skipSpeak">Пропустити мовлення → одразу результат</button>`;
+  stage.insertAdjacentHTML("beforeend", skipHtml);
+  document.getElementById("skipSpeak").onclick = ()=>{ speakingTopic=null; showResult(); };
+}
+
+// зібрати прогалини рівня (для payload при мовленні)
+function collectGaps(){
+  const gram=calcGrammar();
+  const level=combineLevel(calcLexicon().vlevel, gram.glevel);
+  return gram.gaps.filter(g=>g.level===level).map(g=>g.topic);
 }
 
 // ═══════════════════════════════════════════════════════════

@@ -163,6 +163,8 @@ tr:hover td{background:var(--surface2)}
   <div class="tab" onclick="switchTab('buddy')">Buddy</div>
   <div class="tab" onclick="switchTab('situations')">🎁 Ситуації</div>
   <div class="tab" onclick="switchTab('chfunnel')">📉 Воронка</div>
+  <div class="tab" onclick="switchTab('onboarding')">👋 Онбординг</div>
+  <div class="tab" onclick="switchTab('diagnostic')">🎯 Діагностика</div>
   <div class="tab" onclick="switchTab('bloggers')">Блогери</div>
   <div class="tab" onclick="switchTab('actions')">Дії</div>
 </div>
@@ -223,6 +225,20 @@ tr:hover td{background:var(--surface2)}
   <!-- CHALLENGE FUNNEL (крива відвалу 1→7) -->
   <div class="section" id="tab-chfunnel">
     <div id="chfunnel-content">
+      <div class="loading"><div class="spinner"></div>Завантаження...</div>
+    </div>
+  </div>
+
+  <!-- ONBOARDING (День 1) -->
+  <div class="section" id="tab-onboarding">
+    <div id="onboarding-content">
+      <div class="loading"><div class="spinner"></div>Завантаження...</div>
+    </div>
+  </div>
+
+  <!-- DIAGNOSTIC (День 4) -->
+  <div class="section" id="tab-diagnostic">
+    <div id="diagnostic-content">
       <div class="loading"><div class="spinner"></div>Завантаження...</div>
     </div>
   </div>
@@ -469,6 +485,8 @@ function renderTab(tab) {
     case 'buddy':      el.innerHTML = renderBuddy(); break;
     case 'situations': el.innerHTML = renderSituations(); break;
     case 'chfunnel':   el.innerHTML = renderChFunnel(); break;
+    case 'onboarding': el.innerHTML = renderOnboarding(); break;
+    case 'diagnostic': el.innerHTML = renderDiagnostic(); break;
     case 'bloggers':   el.innerHTML = renderBloggers(); break;
     case 'actions':    el.innerHTML = renderActions(); break;
   }
@@ -1541,6 +1559,105 @@ function renderChFunnel() {
     <div class="table-title">Крива відвалу (% від тих, хто стартував)</div>
     ${bars}
   </div>` + leakNote + wbBlock;
+}
+
+// ── ONBOARDING (День 1) ──────────────────────────────────
+function renderOnboarding() {
+  const o = data.onboarding;
+  if (!o) return '<div class="loading">Немає даних онбордингу</div>';
+  const cards = `<div class="cards">
+    <div class="card accent"><div class="card-label">Відкрили квіз</div>
+      <div class="card-value" style="color:var(--accent)">${fmt(o.opened||0)}</div></div>
+    <div class="card green"><div class="card-label">Завершили</div>
+      <div class="card-value" style="color:var(--green)">${fmt(o.completed||0)}</div></div>
+    <div class="card purple" style="grid-column:1 / -1"><div class="card-label">% завершення</div>
+      <div class="card-value" style="color:var(--purple)">${o.completion_rate||0}%</div></div>
+  </div>`;
+
+  // воронка квізу
+  let funnelRows = '';
+  const fn = o.funnel || [];
+  const mxF = Math.max(...fn.map(f=>f.count||f.reached||0), 1);
+  fn.forEach(f => {
+    const cnt = f.count!=null?f.count:(f.reached||0);
+    const w = Math.round(cnt/mxF*100);
+    const label = f.label || f.name || ('крок '+(f.step||''));
+    funnelRows += `<div style="margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px">
+        <span>${label}</span><span style="color:var(--text2)">${cnt}</span></div>
+      <div style="height:8px;background:var(--border);border-radius:6px;overflow:hidden">
+        <div style="height:100%;width:${w}%;background:var(--accent);border-radius:6px"></div></div></div>`;
+  });
+
+  // розподіли відповідей
+  const distBlock = (title, dist) => {
+    if (!dist || !Object.keys(dist).length) return '';
+    const tot = o.completed || 1;
+    const rows = Object.entries(dist).map(([k,v])=>
+      `<div style="display:flex;justify-content:space-between;font-size:12px;padding:4px 0;border-bottom:0.5px solid var(--border)">
+        <span>${k}</span><span style="color:var(--text2)">${v} · ${Math.round(v/tot*100)}%</span></div>`).join('');
+    return `<div class="table-block"><div class="table-title">${title}</div>${rows}</div>`;
+  };
+
+  return cards
+    + `<div class="table-block"><div class="table-title">Воронка квізу — де кидають</div>${funnelRows||'—'}</div>`
+    + distBlock('Цілі', o.goals)
+    + distBlock('Що заважає говорити', o.speaking_blocks)
+    + distBlock('Чого бракувало раніше', o.missing_before)
+    + distBlock('Що таке «вільно»', o.fluent_means)
+    + distBlock('Очікування', o.expectations)
+    + distBlock('Час на день', o.time_per_day);
+}
+
+// ── DIAGNOSTIC (День 4) ──────────────────────────────────
+function renderDiagnostic() {
+  const g = data.diagnostic;
+  if (!g) return '<div class="loading">Немає даних діагностики</div>';
+  const cards = `<div class="cards">
+    <div class="card accent"><div class="card-label">Завершили тест</div>
+      <div class="card-value" style="color:var(--accent)">${fmt(g.done||0)}</div></div>
+    <div class="card green"><div class="card-label">Сер. словник</div>
+      <div class="card-value" style="color:var(--green)">≈${fmt(g.avg_words||0)}</div></div>
+    <div class="card purple"><div class="card-label">Сер. граматика</div>
+      <div class="card-value" style="color:var(--purple)">${g.avg_grammar||0}<span style="font-size:14px;color:var(--text2)">/19</span></div></div>
+    <div class="card"><div class="card-label">Записали монолог</div>
+      <div class="card-value">${fmt(g.speech_done||0)} <span style="font-size:14px;color:var(--text2)">(${g.speech_rate||0}%)</span></div></div>
+  </div>`;
+
+  // розподіл рівнів
+  const levels = g.levels || {};
+  const order = ['A1','A2','B1','B2','C1'];
+  const COL = {A1:'#e8663b',A2:'#e69a2e',B1:'#e6c72e',B2:'#7cbf3f',C1:'#2f9e5e'};
+  const mxL = Math.max(...order.map(l=>levels[l]||0), 1);
+  let lvlRows = '';
+  order.forEach(l => {
+    const v = levels[l]||0; const w = Math.round(v/mxL*100);
+    lvlRows += `<div style="margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px">
+        <span style="font-weight:600">${l}</span><span style="color:var(--text2)">${v}</span></div>
+      <div style="height:10px;background:var(--border);border-radius:6px;overflow:hidden">
+        <div style="height:100%;width:${w}%;background:${COL[l]};border-radius:6px"></div></div></div>`;
+  });
+
+  // топ прогалин
+  const LBL = {present_simple:'Present Simple',article_a_an:'Артиклі a/an',noun_plural:'Множина',
+    modal_can_could:'can/could',prepositions_place:'Прийменники місця',adjectives_comparison:'Ступені порівняння',
+    past_simple:'Past Simple',present_continuous:'Present Continuous',future_going_to:'going to',
+    pronouns_some_any:'some/any',prepositions_time:'Прийменники часу',modal_must_have_to:'must/have to',
+    present_perfect:'Present Perfect',conditional_1:'Перша умовна',passive_simple:'Пасив',
+    used_to:'used to',modal_should:'should',reported_statements:'Непряма мова',
+    conditional_2:'Друга умовна',past_perfect:'Past Perfect',present_perfect_continuous:'Perfect Continuous',
+    passive_continuous:'Пасив тривалий',gerund_vs_infinitive:'Герундій/інфінітив',reported_questions:'Непрямі питання',
+    conditional_3:'Третя умовна',mixed_conditionals:'Змішані умовні',inversion:'Інверсія',
+    modal_perfect:'Модальні перфектні',question_tags:'Питальні хвости'};
+  const gaps = g.top_gaps || {};
+  const gapRows = Object.entries(gaps).map(([k,v])=>
+    `<div style="display:flex;justify-content:space-between;font-size:13px;padding:5px 0;border-bottom:0.5px solid var(--border)">
+      <span>${LBL[k]||k}</span><span style="color:var(--text2)">${v}</span></div>`).join('') || '—';
+
+  return cards
+    + `<div class="table-block"><div class="table-title">Розподіл рівнів (де стартує аудиторія)</div>${lvlRows}</div>`
+    + `<div class="table-block"><div class="table-title">Топ прогалин — що масово провалюють</div>${gapRows}</div>`;
 }
 
 // ── CHARTS ───────────────────────────────────────────────
