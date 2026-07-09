@@ -99,6 +99,33 @@
 <script>
 try { if (window.Telegram && Telegram.WebApp){ Telegram.WebApp.ready(); Telegram.WebApp.expand(); } } catch(e){}
 
+// ── Трекінг кроків (воронка drop-off) ──
+// api та uid передані ботом у URL. На кожному екрані шлемо крок —
+// так аналітика бачить, де саме люди кидають квіз.
+const _params = new URLSearchParams(location.search);
+const API_BASE = (_params.get("api") || "").replace(/\/+$/,"");
+let UID = parseInt(_params.get("uid") || "0", 10) || 0;
+try {
+  // якщо Telegram дає надійніший uid — беремо його
+  const _tgU = window.Telegram && Telegram.WebApp && Telegram.WebApp.initDataUnsafe
+             && Telegram.WebApp.initDataUnsafe.user;
+  if (_tgU && _tgU.id) UID = _tgU.id;
+} catch(e){}
+const _sentSteps = new Set();
+function trackStep(stepNum, total){
+  if(!API_BASE || !UID) return;              // немає куди слати (напр. відкрито в браузері)
+  if(_sentSteps.has(stepNum)) return;        // кожен крок шлемо раз
+  _sentSteps.add(stepNum);
+  try{
+    fetch(API_BASE + "/miniapp_action", {
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({uid:UID, action:"onboarding_step", step:stepNum, total:total}),
+      keepalive:true
+    }).catch(()=>{});
+  }catch(e){}
+}
+
 const SCREENS = [
   {
     id:"goal", type:"multi", max:3, required:true, tag:"КРОК 1/7",
@@ -222,6 +249,7 @@ function isAnswered(sc){
 
 function render(){
   const sc=SCREENS[idx];
+  trackStep(idx+1, SCREENS.length);   // воронка: досягнуто екран idx+1
   bodyEl.innerHTML=`<div class="phase-wrap"><span class="phase-tag">${sc.tag}</span></div>
     <h1>${sc.title}</h1><p class="sub">${sc.sub}</p>`;
   const box=document.createElement("div"); box.className="choices";
