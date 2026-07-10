@@ -165,6 +165,7 @@ tr:hover td{background:var(--surface2)}
   <div class="tab" onclick="switchTab('chfunnel')">📉 Воронка</div>
   <div class="tab" onclick="switchTab('onboarding')">👋 Онбординг</div>
   <div class="tab" onclick="switchTab('diagnostic')">🎯 Діагностика</div>
+  <div class="tab" onclick="switchTab('phrases')">💬 Фрази</div>
   <div class="tab" onclick="switchTab('bloggers')">Блогери</div>
   <div class="tab" onclick="switchTab('actions')">Дії</div>
 </div>
@@ -243,6 +244,13 @@ tr:hover td{background:var(--surface2)}
     </div>
   </div>
 
+  <!-- PHRASE RANKING (яка демо-фраза залучає) -->
+  <div class="section" id="tab-phrases">
+    <div id="phrases-content">
+      <div class="loading"><div class="spinner"></div>Завантаження...</div>
+    </div>
+  </div>
+
   <!-- BLOGGERS -->
   <div class="section" id="tab-bloggers">
     <div id="bloggers-content">
@@ -270,7 +278,7 @@ let activeTab = 'overview';
 function switchTab(tab) {
   activeTab = tab;
   document.querySelectorAll('.tab').forEach((t, i) => {
-    t.classList.toggle('active', ['overview','students','retention','funnel','revenue','buddy','situations','chfunnel','bloggers','actions'][i] === tab);
+    t.classList.toggle('active', ['overview','students','retention','funnel','revenue','buddy','situations','chfunnel','onboarding','diagnostic','phrases','bloggers','actions'][i] === tab);
   });
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   document.getElementById(`tab-${tab}`).classList.add('active');
@@ -487,6 +495,7 @@ function renderTab(tab) {
     case 'chfunnel':   el.innerHTML = renderChFunnel(); break;
     case 'onboarding': el.innerHTML = renderOnboarding(); break;
     case 'diagnostic': el.innerHTML = renderDiagnostic(); break;
+    case 'phrases':    el.innerHTML = renderPhraseRanking(); break;
     case 'bloggers':   el.innerHTML = renderBloggers(); break;
     case 'actions':    el.innerHTML = renderActions(); break;
   }
@@ -1755,6 +1764,52 @@ function drawCharts(tab) {
 }
 
 // ── BLOGGERS ─────────────────────────────────────────────
+function renderPhraseRanking() {
+  const rows = (data.phrase_ranking) || [];
+  if (!rows.length) {
+    return `<div style="font-size:13px;color:var(--text2);line-height:1.6;padding:10px 0">
+      💬 <b>Рейтинг демо-фраз</b> — тут буде видно, яка фраза найкраще залучає.<br><br>
+      Даних ще немає. Вони з'являться, щойно люди почнуть заходити в демо
+      за фразами (посилання <code>?start=demo_&lt;id&gt;</code>) і повторювати їх голосом.<br><br>
+      Для кожної фрази рахується: скільки відкрили, скільки повторили голосом,
+      скільки пішли в челендж (конверсія) і скільки кинули фразу другу (віральність).
+    </div>`;
+  }
+
+  const maxStarts = Math.max(...rows.map(r => r.starts), 1);
+  const cards = rows.map((r, i) => {
+    const rank = i + 1;
+    const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `${rank}.`;
+    const txt = (r.text || r.phrase_id || '').toString();
+    const short = txt.length > 60 ? txt.slice(0, 58) + '…' : txt;
+    return `
+      <div style="padding:12px 0;border-bottom:.5px solid rgba(255,255,255,.06)">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px">
+          <span style="font-size:13px;color:var(--text);font-weight:600">
+            ${medal} «${short}»
+          </span>
+          <span style="font-size:11px;color:var(--text3)">id ${r.phrase_id}</span>
+        </div>
+        <div style="display:flex;gap:14px;font-size:12px;color:var(--text2);flex-wrap:wrap">
+          <span>👁 відкрили: <b style="color:var(--text)">${fmt(r.starts)}</b></span>
+          <span>🎤 повторили: <b style="color:var(--text)">${fmt(r.completes)}</b></span>
+          <span>🚀 у челендж: <b style="color:#5ad8a6">${fmt(r.to_challenge)}</b> (${r.conv_pct}%)</span>
+          <span>🔥 другу: <b style="color:#f7a23b">${fmt(r.viral)}</b> (${r.viral_pct}%)</span>
+        </div>
+        <div style="height:6px;background:rgba(255,255,255,.05);border-radius:3px;overflow:hidden;margin-top:7px">
+          <div style="height:100%;width:${Math.round(r.starts / maxStarts * 100)}%;background:linear-gradient(90deg,#4f8ef7,#7c6ef7);border-radius:3px"></div>
+        </div>
+      </div>`;
+  }).join('');
+
+  return `
+    <div style="font-size:12px;color:var(--text3);margin-bottom:10px;line-height:1.5">
+      Відсортовано за конверсією в челендж. «Конверсія» = скільки % тих, хто відкрив фразу,
+      пішли в челендж. «Другу» = скільки % кинули її другові (віральність).
+    </div>
+    ${cards}`;
+}
+
 function renderBloggers() {
   const d = data.bloggers;
   const months = d.months || [];
