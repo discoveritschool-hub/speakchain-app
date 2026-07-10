@@ -1795,6 +1795,7 @@ function renderPhraseRanking() {
           <span>🎤 повторили: <b style="color:var(--text)">${fmt(r.completes)}</b></span>
           <span>🚀 у челендж: <b style="color:#5ad8a6">${fmt(r.to_challenge)}</b> (${r.conv_pct}%)</span>
           <span>🔥 другу: <b style="color:#f7a23b">${fmt(r.viral)}</b> (${r.viral_pct}%)</span>
+          <span>📢 шер: <b style="color:#7c6ef7">${fmt(r.share || 0)}</b></span>
         </div>
         <div style="height:6px;background:rgba(255,255,255,.05);border-radius:3px;overflow:hidden;margin-top:7px">
           <div style="height:100%;width:${Math.round(r.starts / maxStarts * 100)}%;background:linear-gradient(90deg,#4f8ef7,#7c6ef7);border-radius:3px"></div>
@@ -1807,7 +1808,24 @@ function renderPhraseRanking() {
       Відсортовано за конверсією в челендж. «Конверсія» = скільки % тих, хто відкрив фразу,
       пішли в челендж. «Другу» = скільки % кинули її другові (віральність).
     </div>
+    ${renderShareVariants()}
     ${cards}`;
+}
+
+function renderShareVariants() {
+  const vars = (data.share_variants) || [];
+  if (!vars.length) return '';
+  const total = vars.reduce((s, v) => s + v.shares, 0) || 1;
+  const rows = vars.map(v => `
+    <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;padding:5px 0">
+      <span style="color:var(--text)">${v.name}</span>
+      <span style="color:var(--text2)">${fmt(v.shares)} <span style="color:var(--text3)">(${Math.round(v.shares/total*100)}%)</span></span>
+    </div>`).join('');
+  return `
+    <div style="background:rgba(124,110,247,.06);border-radius:10px;padding:12px 14px;margin-bottom:14px">
+      <div style="font-size:12px;font-weight:600;color:var(--purple);margin-bottom:6px">📢 Який заклик шерять найбільше</div>
+      ${rows}
+    </div>`;
 }
 
 function renderBloggers() {
