@@ -1,0 +1,281 @@
+/* ============================================================
+   SpeakChain — ДИЗАЙН-ТОКЕНИ
+   Єдине джерело правди для кольорів, радіусів, шрифтів.
+
+   ЯК ПІДКЛЮЧИТИ (у кожному міні-апі, у <head> ПЕРЕД своїм <style>):
+     <link rel="stylesheet" href="/static/tokens.css">
+
+   Далі в коді використовувати ТІЛЬКИ змінні:
+     background: var(--bg-card);   ✓
+     background: #16161f;          ✗ (не хардкодити)
+   ============================================================ */
+
+:root {
+
+  /* ---------- КОЛЬОРИ: бренд ---------- */
+  /* Ядро. Теплий фіолет (рожевий підтон) + яскравий зелений. */
+  --purple:        #7c6ef7;   /* головний акцент, CTA, активні стани */
+  --purple-dark:   #5b4bc4;   /* градієнти, натиснутий стан */
+  --purple-bg:     #241d4d;   /* фон акцентних блоків */
+  --purple-text:   #c9c2ff;   /* текст на фіолетовому фоні */
+
+  --green:         #5ad8a6;   /* успіх, зроблено, зростання */
+  --green-bg:      #1b3229;   /* фон зелених блоків */
+
+  /* ---------- КОЛЬОРИ: статуси ---------- */
+  --red:           #f76e6e;   /* помилка, слабке місце, попередження */
+  --orange:        #f7a35c;   /* стрік 🔥, увага */
+  --gold:          #f5c842;   /* 1-е місце, преміум, нагорода */
+  --silver:        #b0b0c0;   /* 2-е місце (подіум) */
+  --bronze:        #cd7f32;   /* 3-є місце (подіум) */
+  --yellow:        #f7c95c;   /* «треба повторити» */
+  --blue:          #5ab4f7;   /* інформація, постійність */
+  --telegram:      #2ea6da;   /* кнопки Telegram */
+
+  /* ---------- КОЛЬОРИ: поверхні ---------- */
+  /* Від найтемнішої (фон екрана) до найсвітлішої (підняті елементи) */
+  --bg:            #0d0d14;   /* фон екрана */
+  --bg-card:       #16161f;   /* картка, блок */
+  --bg-card2:      #1e1e2a;   /* картка при натисканні, вкладений блок */
+  --bg-card3:      #252535;   /* найсвітліша поверхня, треки прогресу */
+
+  /* ---------- КОЛЬОРИ: текст ---------- */
+  /* УВАГА: у коді було 4 різні значення --text — зведено до одного */
+  --text:          #eaeaf5;   /* основний текст */
+  --text2:         #8888a8;   /* другорядний, підписи */
+  --text3:         #5a5a72;   /* тьмяний, службовий */
+
+  /* ---------- КОЛЬОРИ: лінії ---------- */
+  --line:          #2a2a3a;   /* рамки, розділювачі (0.5px) */
+
+  /* ---------- РАДІУСИ ---------- */
+  /* Було 8 різних значень — зведено до 3 + pill */
+  --r-sm:          8px;       /* дрібні елементи, чіпи */
+  --r:             12px;      /* стандарт: картки, блоки, плитки */
+  --r-lg:          20px;      /* великі: шторки, модалки */
+  --r-pill:        999px;     /* кнопки-пігулки, бейджі */
+
+  /* ---------- ШРИФТИ: розміри ---------- */
+  /* Було 10+ розмірів — зведено до 6 ролей */
+  --fs-xs:         11px;      /* дрібні підписи, службове */
+  --fs-sm:         12px;      /* другорядний текст */
+  --fs:            14px;      /* базовий текст, кнопки */
+  --fs-md:         16px;      /* заголовок картки */
+  --fs-lg:         20px;      /* заголовок секції, велике число */
+  --fs-xl:         28px;      /* герой, головна цифра */
+
+  /* ---------- ШРИФТИ: жирність ---------- */
+  --fw:            400;       /* звичайний */
+  --fw-md:         600;       /* напівжирний: підзаголовки */
+  --fw-bold:       800;       /* жирний: заголовки, числа */
+
+  /* ---------- ВІДСТУПИ ---------- */
+  --sp-xs:         4px;
+  --sp-sm:         8px;
+  --sp:            12px;
+  --sp-md:         16px;
+  --sp-lg:         24px;
+
+  /* ---------- ТІНІ / ЕФЕКТИ ---------- */
+  --glow-purple:   0 0 0 4px var(--purple-bg);   /* підсвітка активного */
+  --shadow-sheet:  0 -8px 32px rgba(0,0,0,.5);   /* шторка знизу */
+
+  /* ---------- ГРАДІЄНТИ (готові) ---------- */
+  --grad-purple:   linear-gradient(135deg, #7c6ef7, #5b4bc4);
+  --grad-progress: linear-gradient(90deg, var(--green), var(--purple));
+  --grad-gold:     linear-gradient(135deg, #f5c451, #e0a020);
+
+  /* ---------- АНІМАЦІЯ ---------- */
+  --dur-fast:      .12s;
+  --dur:           .15s;
+  --ease:          cubic-bezier(.4, 0, .2, 1);
+}
+
+
+/* ============================================================
+   БАЗОВІ КЛАСИ — спільні для всіх міні-аппів
+   Щоб не переписувати те саме в кожному файлі.
+   ============================================================ */
+
+/* --- Картка --- */
+.sc-card {
+  background: var(--bg-card);
+  border: 0.5px solid var(--line);
+  border-radius: var(--r);
+  padding: var(--sp-md);
+}
+
+/* --- Кнопка: головна дія --- */
+.sc-btn {
+  background: var(--grad-purple);
+  color: #fff;
+  border: none;
+  border-radius: var(--r-pill);
+  padding: 14px var(--sp-lg);
+  font-size: var(--fs);
+  font-weight: var(--fw-bold);
+  cursor: pointer;
+  transition: transform var(--dur-fast) var(--ease);
+}
+.sc-btn:active { transform: scale(.97); }
+
+/* --- Кнопка: другорядна --- */
+.sc-btn-ghost {
+  background: var(--bg-card2);
+  color: var(--text);
+  border: 0.5px solid var(--line);
+  border-radius: var(--r-pill);
+  padding: 12px var(--sp-md);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-md);
+  cursor: pointer;
+}
+
+/* --- Чіп / пігулка (фільтри, категорії) --- */
+.sc-chip {
+  display: inline-flex;
+  align-items: center;
+  background: var(--bg-card2);
+  border: 0.5px solid var(--line);
+  color: var(--text2);
+  padding: 7px 13px;
+  border-radius: var(--r-pill);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-md);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all var(--dur) var(--ease);
+}
+.sc-chip.on {
+  background: var(--purple-bg);
+  border-color: var(--purple);
+  color: var(--purple-text);
+}
+
+/* --- Рядок-меню (список пунктів) --- */
+.sc-menu {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-card);
+  border: 0.5px solid var(--line);
+  border-radius: var(--r);
+  overflow: hidden;
+}
+.sc-menu-item {
+  display: flex;
+  align-items: center;
+  gap: var(--sp);
+  padding: 13px 14px;
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease);
+}
+.sc-menu-item:active { background: var(--bg-card2); }
+.sc-menu-item + .sc-menu-item { border-top: 0.5px solid var(--line); }
+
+/* --- Смуга прогресу --- */
+.sc-bar {
+  height: 6px;
+  background: var(--bg-card3);
+  border-radius: var(--r-pill);
+  overflow: hidden;
+}
+.sc-bar > i {
+  display: block;
+  height: 100%;
+  background: var(--grad-progress);
+  border-radius: var(--r-pill);
+  transition: width .4s var(--ease);
+}
+
+/* --- Заголовок секції --- */
+.sc-section {
+  font-size: var(--fs-md);
+  font-weight: var(--fw-bold);
+  color: var(--text);
+  margin: var(--sp-md) 0 var(--sp-sm);
+}
+
+/* --- Значок YouTube (скрізь, де відео) --- */
+.sc-yt {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 21px;
+  background: #ff0000;
+  border-radius: 6px;
+  vertical-align: middle;
+}
+.sc-yt::after {
+  content: '';
+  border-style: solid;
+  border-width: 5px 0 5px 8px;
+  border-color: transparent transparent transparent #fff;
+  margin-left: 1px;
+}
+
+/* --- Шторка знизу (оверлей) --- */
+.sc-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(8, 8, 12, .82);
+  z-index: 50;
+  display: none;
+  align-items: flex-end;
+}
+.sc-overlay.on { display: flex; }
+.sc-sheet {
+  width: 100%;
+  background: var(--bg-card);
+  border-top-left-radius: var(--r-lg);
+  border-top-right-radius: var(--r-lg);
+  padding: 20px 18px 26px;
+  border-top: 0.5px solid var(--line);
+  box-shadow: var(--shadow-sheet);
+  max-height: 88vh;
+  overflow-y: auto;
+}
+.sc-sheet::before {
+  content: '';
+  display: block;
+  width: 38px;
+  height: 4px;
+  background: var(--line);
+  border-radius: var(--r-pill);
+  margin: 0 auto var(--sp-md);
+}
+
+
+/* ============================================================
+   МІГРАЦІЯ — що на що міняти в наявних файлах
+
+   Кольори (у коді знайдено розбіжності):
+     --text: #e8e8f0 / #f0f0f0  →  var(--text)      [було 4 значення]
+     --text2: #9090b0 / #888    →  var(--text2)     [було 5 значень]
+     --text3: #444 / #555       →  var(--text3)     [було 4 значення]
+     --red: #ef4444             →  var(--red)
+     --surface: #1a1a1a         →  var(--bg-card)
+     --surface2: #242424        →  var(--bg-card2)
+     --bg2 / --bg3 / --bg4      →  --bg-card / --bg-card2 / --bg-card3
+
+   Радіуси (було 8 значень: 3,6,8,10,12,14,16,20):
+     3px, 6px, 8px              →  var(--r-sm)
+     10px, 12px, 14px, 16px     →  var(--r)
+     20px+                      →  var(--r-lg)
+
+   Шрифти (було 10+ розмірів):
+     10px, 11px                 →  var(--fs-xs)
+     12px                       →  var(--fs-sm)
+     13px, 14px, 15px           →  var(--fs)
+     16px, 18px                 →  var(--fs-md)
+     20px, 22px                 →  var(--fs-lg)
+     24px+                      →  var(--fs-xl)
+
+   ПОРЯДОК МІГРАЦІЇ (по одному файлу, не все одразу):
+     1. player.html      — найбільший, найважливіший
+     2. progress.html    — багато станів
+     3. chain_dashboard.html
+     4. решта — за потребою
+
+   Після кожного файлу — перевірити на телефоні перед наступним.
+   ============================================================ */
