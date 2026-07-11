@@ -1,7 +1,37 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <link rel="stylesheet" href="/static/tokens.css">
+  <!-- ── Дизайн-токени: два шари ──────────────────────────────────
+       1) inline :root нижче — фундамент. Сторінка НІКОЛИ не побіліє,
+          навіть якщо tokens.css не завантажиться.
+       2) <link> після нього — головний. Перекриває inline і дає
+          класи .sc-card/.sc-btn/.sc-chip. Палітра керується з
+          одного файлу: правиш tokens.css → міняється всюди.
+       ВАЖЛИВО: шлях БЕЗ початкового слеша. Слеш = корінь домену,
+       а сайт живе в підпапці /speakchain-app/ → 404.
+  ─────────────────────────────────────────────────────────────── -->
+  <style>
+  :root {
+    --purple:#7c6ef7; --purple-dark:#5b4bc4; --purple-bg:#241d4d; --purple-text:#c9c2ff;
+    --green:#5ad8a6; --green-bg:#1b3229;
+    --red:#f76e6e; --orange:#f7a35c; --gold:#f5c842; --silver:#b0b0c0;
+    --bronze:#cd7f32; --yellow:#f7c95c; --blue:#5ab4f7; --telegram:#2ea6da;
+    --bg:#0d0d14; --bg-card:#16161f; --bg-card2:#1e1e2a; --bg-card3:#252535;
+    --text:#eaeaf5; --text2:#8888a8; --text3:#5a5a72;
+    --line:#2a2a3a;
+    --r-sm:8px; --r:12px; --r-lg:20px; --r-pill:999px;
+    --fs-xs:11px; --fs-sm:12px; --fs:14px; --fs-md:16px; --fs-lg:20px; --fs-xl:28px;
+    --fw:400; --fw-md:600; --fw-bold:800;
+    --sp-xs:4px; --sp-sm:8px; --sp:12px; --sp-md:16px; --sp-lg:24px;
+    --glow-purple:0 0 0 4px var(--purple-bg);
+    --shadow-sheet:0 -8px 32px rgba(0,0,0,.5);
+    --grad-purple:linear-gradient(135deg,#7c6ef7,#5b4bc4);
+    --grad-progress:linear-gradient(90deg,var(--green),var(--purple));
+    --grad-gold:linear-gradient(135deg,#f5c451,#e0a020);
+    --dur-fast:.12s; --dur:.15s; --ease:cubic-bezier(.4,0,.2,1);
+  }
+  </style>
+  <link rel="stylesheet" href="tokens.css">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Chainy</title>
