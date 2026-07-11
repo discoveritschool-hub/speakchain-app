@@ -191,8 +191,15 @@ tr:hover td{background:var(--surface2)}
 
 <div class="content">
 
+  <!-- 📊 ЗВЕДЕННЯ — усе на одному екрані, згори вниз -->
+  <div class="section active" id="tab-summary">
+    <div id="summary-content">
+      <div class="loading"><div class="spinner"></div>Завантаження...</div>
+    </div>
+  </div>
+
   <!-- 🏠 СЬОГОДНІ — Що робити · Огляд · AI · A/B · ТЗ -->
-  <div class="section active" id="tab-today">
+  <div class="section" id="tab-today">
     <div id="today-content">
       <div class="loading"><div class="spinner"></div>Завантаження...</div>
     </div>
@@ -210,6 +217,11 @@ tr:hover td{background:var(--surface2)}
     <div id="money-content">
       <div class="loading"><div class="spinner"></div>Завантаження...</div>
     </div>
+  </div>
+
+  <!-- 🧾 БУХГАЛТЕРІЯ — P&L: дохід − витрати = прибуток -->
+  <div class="section" id="tab-finance">
+    <div id="finance-content"></div>
   </div>
 
   <!-- 🤝 БЛОГЕРИ — Рейтинг · Бухгалтерія · Новий -->
@@ -359,7 +371,7 @@ if (tg) { tg.ready(); tg.expand(); }
 
 let charts = {};
 let data = null;
-let activeTab = 'today';
+let activeTab = 'summary';
 
 /* ═══ 🎛 РУБИЛЬНИКИ — рендер із живих даних бота ═══ */
 function renderSwitches() {
@@ -397,9 +409,11 @@ function renderSwitches() {
    Стало: 6 вкладок. Колишні вкладки — акордеони всередині.
    Жодну функцію не викинуто, усі 34 render-* на місці. */
 const NAV = [
+  ['summary',  '📊 Зведення'],
   ['today',    '🏠 Сьогодні'],
   ['students', '👥 Учні'],
   ['money',    '💰 Гроші'],
+  ['finance',  '🧾 Бухгалтерія'],
   ['partners', '🤝 Блогери'],
   ['content',  '🔥 Контент'],
   ['system',   '⚙️ Система'],
@@ -615,8 +629,10 @@ function switchTab(tab) {
   const _c = document.querySelector('.content');
   if (_c) _c.scrollTop = 0;
   /* Система і Команди малюються навіть без data — це не аналітика */
-  if (tab === 'system') { renderSystem(); return; }
-  if (tab === 'cmds')   { renderCommands(); return; }
+  if (tab === 'summary') { renderSummary(); return; }   /* поля видно навіть без даних */
+  if (tab === 'finance') { renderFinance(); return; }   /* так само */
+  if (tab === 'system')  { renderSystem(); return; }
+  if (tab === 'cmds')    { renderCommands(); return; }
   if (data) renderTab(tab);
 }
 
@@ -807,6 +823,10 @@ async function loadData() {
     NAV.forEach(([id]) => {
       const el = document.getElementById(id + '-content');
       if (!el) return;
+      /* Зведення показує ВСІ поля з «—» — правило проєкту:
+         поле не ховається тільки тому, що порожнє. */
+      if (id === 'summary') { renderSummary(); el.innerHTML = box + el.innerHTML; return; }
+      if (id === 'finance') { renderFinance(); el.innerHTML = box + el.innerHTML; return; }
       el.innerHTML = box + renderSkeleton(id);
     });
     const lu = document.getElementById('last-updated');
@@ -818,8 +838,10 @@ async function loadData() {
    Кожен acc() загортає стару render-функцію БЕЗ ЗМІН.
    Порядок усередині — за важливістю: те, на що дивишся щодня, вгорі. */
 function renderTab(tab) {
-  if (tab === 'system') { renderSystem(); return; }
-  if (tab === 'cmds')   { renderCommands(); return; }
+  if (tab === 'summary') { renderSummary(); return; }
+  if (tab === 'finance') { renderFinance(); return; }
+  if (tab === 'system')  { renderSystem(); return; }
+  if (tab === 'cmds')    { renderCommands(); return; }
   const el = document.getElementById(tab + '-content');
   if (!el || !data) return;
 
@@ -872,6 +894,616 @@ function renderTab(tab) {
   }
 
   setTimeout(() => drawCharts(tab), 60);
+}
+
+/* ═══ 🧾 БУХГАЛТЕРІЯ — P&L ═══
+   Дохід → Витрати → Прибуток. Період: місяць / квартал / рік.
+
+   ПРАВИЛО ПРОЄКТУ: усі рядки видно ЗАВЖДИ, навіть із нулем.
+   Порожня стаття не ховається — інакше не видно, що вона існує.
+
+   Введені відсотки й статті зберігаються в базі бота (/admin_finance),
+   щоб не вбивати їх щоразу. */
+
+/* ═══ ПОШУК ОПЛАТ ПО ID ═══
+   «Цей учень платив? Коли? Скільки? За що?»
+   Раніше це можна було дізнатись тільки вручну в Google Sheets. */
+async function findPayment() {
+  const q   = (document.getElementById('pf-q') || {}).value || '';
+  const box = document.getElementById('pf-res');
+  if (!box) return;
+  if (!q.trim()) { box.innerHTML = ''; return; }
+
+  box.innerHTML = '<div style="font-size:12px;color:var(--text3);padding:8px 0">Шукаю...</div>';
+  try {
+    const res = await fetch('https://speakchain-bot-production.up.railway.app/admin_payment_find', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        uid: tg?.initDataUnsafe?.user?.id || 0,
+        init_data: tg?.initData || '',
+        q: q.trim(),
+      })
+    });
+    const d = await res.json();
+    if (d.error) throw new Error(d.error);
+
+    let h = '';
+
+    /* Картка учня — навіть якщо оплат нема, видно, хто це */
+    if (d.student) {
+      const st = d.student;
+      h += '<div style="background:var(--surface2);border-radius:9px;padding:11px 12px;'
+        + 'margin-bottom:9px;font-size:12px;line-height:1.7">'
+        + '<b style="color:var(--text)">' + esc(st.name || 'Без імені') + '</b>'
+        + '<div style="color:var(--text2);font-size:11px">'
+        +   'Тариф: <b>' + esc(st.plan || '—') + '</b>'
+        +   ' · Рівень: ' + esc(st.level || '—') + '<br>'
+        +   'Активний до: ' + esc(st.until || '—') + '<br>'
+        +   'Блогер: ' + esc(st.blogger || '— пряма') + '</div></div>';
+    }
+
+    if (!d.found) {
+      h += '<div style="font-size:12px;color:var(--text2);padding:8px 0">'
+        + 'Оплат не знайдено.'
+        + (d.journal_from
+            ? '<br><span style="font-size:11px;color:var(--text3)">Журнал ведеться з '
+              + esc(d.journal_from) + '. Раніші оплати ніде не записувались.</span>'
+            : '<br><span style="font-size:11px;color:var(--text3)">Журнал ще порожній — '
+              + 'наповниться після перших оплат.</span>')
+        + '</div>';
+    } else {
+      h += '<div style="font-size:11px;color:var(--text3);margin-bottom:7px">'
+        + 'Знайдено <b style="color:var(--green)">' + d.found + '</b> оплат на '
+        + '<b style="color:var(--green)">$' + d.total + '</b></div>';
+      h += '<table><tr><th>Коли</th><th>Що</th><th style="text-align:right">Сума</th></tr>'
+        + d.rows.map(r =>
+            '<tr><td style="font-size:11px;color:var(--text2)">' + esc(r.ts) + '</td>'
+            + '<td>' + esc(r.label)
+            + (r.blogger
+                ? '<div style="font-size:10px;color:var(--text3)">@' + esc(r.blogger) + '</div>'
+                : '')
+            + '</td>'
+            + '<td style="text-align:right;font-weight:600;color:var(--green)">$'
+            + Number(r.amount).toFixed(2) + '</td></tr>').join('')
+        + '</table>';
+    }
+    box.innerHTML = h;
+  } catch (e) {
+    box.innerHTML = '<div class="error-box">❌ ' + esc(e.message) + '</div>';
+  }
+}
+
+let finPeriod = 'month';
+let finDirty  = false;
+
+function setFinPeriod(p) {
+  finPeriod = p;
+  renderFinance();
+}
+
+const money = v => '$' + (Number(v || 0)).toFixed(2);
+
+function renderFinance() {
+  const el = document.getElementById('finance-content');
+  if (!el) return;
+
+  const f = data && data.finance;
+
+  if (data && data.is_dev) {
+    el.innerHTML = '<div class="error-box">Фінанси видно тільки власниці</div>';
+    return;
+  }
+
+  /* Порожні заглушки — щоб КОЖНЕ поле відрендерилось навіть без даних */
+  const inc = (f && f.income)  || {rows: [], custom: [], total: 0};
+  const exp = (f && f.expense) || {
+    blogger:{label:'Блогерам (25%)',amount:0}, tax:{label:'Податок',pct:0,amount:0},
+    acquiring:{label:'Комісія еквайринга',pct:0,amount:0},
+    ai:{label:'AI (Claude + Whisper)',amount:0}, staff:[], custom:[], total:0};
+  const st = (f && f.settings) || {};
+
+  /* Якщо бот ще не віддав finance — показуємо всі 10 рядків із нулями */
+  const FALLBACK = [
+    ['⚡️ Basic · місяць', 22.00], ['⚡️ Basic · місяць (реф)', 19.77],
+    ['⚡️ Basic · 6 місяців', 109.00], ['⚡️ Basic · 6 місяців (реф)', 99.00],
+    ['🌟 Premium · місяць', 93.00], ['🌟 Premium · місяць (реф)', 79.00],
+    ['🌟 Premium · 6 місяців', 475.00], ['🌟 Premium · 6 місяців (реф)', 397.00],
+    ['🎁 Мікропродукт', 4.99], ['📕 Книга-подарунок', 4.99],
+  ];
+  const rows = inc.rows.length
+    ? inc.rows
+    : FALLBACK.map(([label, price]) => ({label, price, count: 0, total: 0}));
+
+  /* ── Перемикач періоду ── */
+  const per = ['month', 'quarter', 'year'].map(p => {
+    const nm = p === 'month' ? 'Місяць' : p === 'quarter' ? 'Квартал' : 'Рік';
+    return '<div onclick="setFinPeriod(\'' + p + '\')" style="flex:1;text-align:center;'
+      + 'padding:8px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;'
+      + (finPeriod === p
+          ? 'background:var(--accent);color:#fff'
+          : 'background:var(--surface2);color:var(--text2)') + '">' + nm + '</div>';
+  }).join('');
+
+  /* Пошук оплат по ID — вгорі, бо це найчастіше питання */
+  let h = '<div style="background:var(--surface);border:1px solid var(--border);'
+    + 'border-radius:10px;padding:11px 12px;margin-bottom:12px">'
+    + '<div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:3px">'
+    + '🔍 Перевірити оплату</div>'
+    + '<div style="font-size:10px;color:var(--text3);margin-bottom:8px">'
+    + 'ID учня, імʼя або блогер. «Цей платив? Коли? Скільки?»</div>'
+    + '<div style="display:flex;gap:6px">'
+    +   '<input id="pf-q" placeholder="123456789 або імʼя" '
+    +   'onkeydown="if(event.key===\'Enter\')findPayment()" style="flex:1;min-width:0;'
+    +   'background:var(--surface2);border:1px solid var(--border);border-radius:7px;'
+    +   'color:var(--text);font-size:12px;padding:8px 10px">'
+    +   '<button onclick="findPayment()" style="flex-shrink:0;background:var(--accent);'
+    +   'border:none;border-radius:7px;color:#fff;font-size:12px;font-weight:600;'
+    +   'padding:8px 14px;cursor:pointer">Знайти</button>'
+    + '</div>'
+    + '<div id="pf-res" style="margin-top:9px"></div>'
+    + '</div>';
+
+  h += '<div style="display:flex;gap:6px;margin-bottom:12px">' + per + '</div>';
+
+  if (!f) {
+    h += '<div style="background:var(--surface2);border-radius:9px;padding:11px 12px;'
+      + 'margin-bottom:12px;font-size:11px;color:var(--text3);line-height:1.6">'
+      + '⏳ Бот ще не віддав дані. Поля нижче — структура, яку побачиш, коли зʼявляться оплати.'
+      + '</div>';
+  } else if (f.journal_from) {
+    h += '<div style="background:var(--surface2);border-radius:9px;padding:9px 11px;'
+      + 'margin-bottom:12px;font-size:11px;color:var(--text3)">'
+      + 'Журнал платежів ведеться з <b>' + esc(f.journal_from) + '</b>. '
+      + 'Оплати до цієї дати ніде не записувались — відновити неможливо.</div>';
+  }
+
+  /* ═══ ДОХІД ═══ */
+  h += '<div style="font-size:13px;font-weight:700;color:var(--green);margin:14px 0 8px">'
+    + '📥 ДОХІД</div>';
+
+  const incRows = rows.map(r => {
+    const zero = !r.count;
+    return '<tr' + (zero ? ' style="opacity:.45"' : '') + '>'
+      + '<td>' + esc(r.label) + '</td>'
+      + '<td style="text-align:center">' + (r.count || 0) + '</td>'
+      + '<td style="text-align:right;color:var(--text3)">' + money(r.price) + '</td>'
+      + '<td style="text-align:right;font-weight:600">' + money(r.total) + '</td>'
+      + '</tr>';
+  }).join('');
+
+  const customIncRows = (inc.custom || []).map((c, i) =>
+    '<tr><td colspan="3">➕ ' + esc(c.name) + '</td>'
+    + '<td style="text-align:right;font-weight:600">' + money(c.amount) + '</td></tr>').join('');
+
+  h += '<div class="table-block"><table>'
+    + '<tr><th>Стаття</th><th style="text-align:center">К-сть</th>'
+    + '<th style="text-align:right">Ціна</th><th style="text-align:right">Сума</th></tr>'
+    + incRows + customIncRows
+    + '<tr style="border-top:1px solid var(--border-strong)">'
+    +   '<td colspan="3" style="font-weight:700">РАЗОМ ДОХІД</td>'
+    +   '<td style="text-align:right;font-weight:700;color:var(--green);font-size:14px">'
+    +     money(inc.total) + '</td></tr>'
+    + '</table>'
+    /* Порожнє поле — своя стаття доходу */
+    + '<div style="display:flex;gap:6px;margin-top:10px">'
+    +   '<input id="fi-name" placeholder="Своя стаття доходу" style="flex:1;min-width:0;'
+    +   'background:var(--surface2);border:1px solid var(--border);border-radius:7px;'
+    +   'color:var(--text);font-size:12px;padding:7px 9px">'
+    +   '<input id="fi-amt" type="number" placeholder="$" style="width:78px;'
+    +   'background:var(--surface2);border:1px solid var(--border);border-radius:7px;'
+    +   'color:var(--text);font-size:12px;padding:7px 9px">'
+    +   '<button onclick="addFinRow(\'custom_income\')" style="flex-shrink:0;'
+    +   'background:var(--green);border:none;border-radius:7px;color:#0f0f0f;'
+    +   'font-size:12px;font-weight:700;padding:7px 12px;cursor:pointer">+</button>'
+    + '</div></div>';
+
+  /* ═══ ВИТРАТИ ═══ */
+  h += '<div style="font-size:13px;font-weight:700;color:var(--red);margin:18px 0 8px">'
+    + '📤 ВИТРАТИ</div>';
+
+  const pctRow = (id, label, pct, amount, note) =>
+    '<tr><td>' + label
+    + (note ? '<div style="font-size:10px;color:var(--text3)">' + note + '</div>' : '')
+    + '</td>'
+    + '<td style="text-align:center">'
+    +   (id
+        ? '<input id="' + id + '" type="number" value="' + (pct || 0) + '" step="0.1" '
+          + 'oninput="finDirty=true" style="width:52px;text-align:center;'
+          + 'background:var(--surface2);border:1px solid var(--border);border-radius:6px;'
+          + 'color:var(--accent);font-size:12px;font-weight:600;padding:4px 6px">%'
+        : '<span style="color:var(--text3)">—</span>')
+    + '</td>'
+    + '<td style="text-align:right;font-weight:600">' + money(amount) + '</td></tr>';
+
+  const staffRows = (exp.staff || []).map((p, i) =>
+    '<tr><td>👤 ' + esc(p.name) + '</td>'
+    + '<td style="text-align:center"><span style="color:var(--text3)">—</span></td>'
+    + '<td style="text-align:right;font-weight:600">' + money(p.amount) + '</td></tr>').join('');
+
+  const customExpRows = (exp.custom || []).map(c =>
+    '<tr><td>➕ ' + esc(c.name) + '</td>'
+    + '<td style="text-align:center">' + (c.pct ? c.pct + '%' : '—') + '</td>'
+    + '<td style="text-align:right;font-weight:600">' + money(c.amount) + '</td></tr>').join('');
+
+  h += '<div class="table-block"><table>'
+    + '<tr><th>Стаття</th><th style="text-align:center">%</th>'
+    + '<th style="text-align:right">Сума</th></tr>'
+    + pctRow(null, exp.blogger.label, null, exp.blogger.amount, 'від доходу за рефералами')
+    + pctRow('fx-tax', 'Податок', exp.tax.pct, exp.tax.amount, 'введи % — порахує само')
+    + pctRow('fx-acq', 'Комісія еквайринга', exp.acquiring.pct, exp.acquiring.amount,
+             'WayForPay тощо')
+    + pctRow(null, exp.ai.label, null, exp.ai.amount, 'з обліку витрат на AI')
+    + staffRows + customExpRows
+    + '<tr style="border-top:1px solid var(--border-strong)">'
+    +   '<td colspan="2" style="font-weight:700">РАЗОМ ВИТРАТИ</td>'
+    +   '<td style="text-align:right;font-weight:700;color:var(--red);font-size:14px">'
+    +     money(exp.total) + '</td></tr>'
+    + '</table>'
+    /* Порожні поля — працівник і своя стаття */
+    + '<div style="display:flex;gap:6px;margin-top:10px">'
+    +   '<input id="fs-name" placeholder="👤 Працівник" style="flex:1;min-width:0;'
+    +   'background:var(--surface2);border:1px solid var(--border);border-radius:7px;'
+    +   'color:var(--text);font-size:12px;padding:7px 9px">'
+    +   '<input id="fs-amt" type="number" placeholder="$/міс" style="width:78px;'
+    +   'background:var(--surface2);border:1px solid var(--border);border-radius:7px;'
+    +   'color:var(--text);font-size:12px;padding:7px 9px">'
+    +   '<button onclick="addFinRow(\'staff\')" style="flex-shrink:0;background:var(--accent);'
+    +   'border:none;border-radius:7px;color:#fff;font-size:12px;font-weight:700;'
+    +   'padding:7px 12px;cursor:pointer">+</button>'
+    + '</div>'
+    + '<div style="display:flex;gap:6px;margin-top:6px">'
+    +   '<input id="fe-name" placeholder="➕ Своя стаття витрат" style="flex:1;min-width:0;'
+    +   'background:var(--surface2);border:1px solid var(--border);border-radius:7px;'
+    +   'color:var(--text);font-size:12px;padding:7px 9px">'
+    +   '<input id="fe-amt" type="number" placeholder="$" style="width:60px;'
+    +   'background:var(--surface2);border:1px solid var(--border);border-radius:7px;'
+    +   'color:var(--text);font-size:12px;padding:7px 9px">'
+    +   '<input id="fe-pct" type="number" placeholder="%" style="width:48px;'
+    +   'background:var(--surface2);border:1px solid var(--border);border-radius:7px;'
+    +   'color:var(--text);font-size:12px;padding:7px 9px">'
+    +   '<button onclick="addFinRow(\'custom_expense\')" style="flex-shrink:0;'
+    +   'background:var(--accent);border:none;border-radius:7px;color:#fff;font-size:12px;'
+    +   'font-weight:700;padding:7px 10px;cursor:pointer">+</button>'
+    + '</div>'
+    + '<div style="font-size:10px;color:var(--text3);margin-top:5px">'
+    + 'Стаття може бути сумою АБО відсотком від доходу — заповни одне поле.</div>'
+    + '</div>';
+
+  /* ═══ ПРИБУТОК ═══ */
+  const profit = f ? f.profit : 0;
+  const pcol = profit >= 0 ? 'var(--green)' : 'var(--red)';
+  h += '<div style="background:var(--surface);border:1px solid ' + pcol + ';'
+    + 'border-radius:12px;padding:15px;margin-top:16px;text-align:center">'
+    + '<div style="font-size:11px;color:var(--text3);text-transform:uppercase;'
+    + 'letter-spacing:.05em;margin-bottom:6px">💚 Прибуток · дохід − витрати</div>'
+    + '<div style="font-size:28px;font-weight:800;color:' + pcol + ';line-height:1.1">'
+    +   money(profit) + '</div>'
+    + '<div style="font-size:11px;color:var(--text2);margin-top:5px">'
+    +   (f && f.margin_pct !== null && f.margin_pct !== undefined
+        ? 'маржа ' + f.margin_pct + '%'
+        : 'маржа —')
+    + '</div></div>';
+
+  h += '<button onclick="saveFinance()" style="width:100%;margin-top:12px;'
+    + 'background:var(--accent);border:none;border-radius:9px;color:#fff;font-size:13px;'
+    + 'font-weight:600;padding:11px;cursor:pointer">Зберегти налаштування</button>'
+    + '<div id="fin-msg" style="font-size:11px;text-align:center;margin-top:7px;'
+    + 'color:var(--text3)"></div>';
+
+  el.innerHTML = h;
+}
+
+/* Додає рядок у налаштування і зберігає */
+function addFinRow(kind) {
+  const st = (data && data.finance && data.finance.settings) || {};
+  const patch = {};
+
+  if (kind === 'staff') {
+    const n = (document.getElementById('fs-name') || {}).value || '';
+    const a = parseFloat((document.getElementById('fs-amt') || {}).value || 0);
+    if (!n.trim() || !a) return;
+    patch.staff = (st.staff || []).concat([{name: n.trim(), amount: a}]);
+  }
+  if (kind === 'custom_income') {
+    const n = (document.getElementById('fi-name') || {}).value || '';
+    const a = parseFloat((document.getElementById('fi-amt') || {}).value || 0);
+    if (!n.trim() || !a) return;
+    patch.custom_income = (st.custom_income || []).concat([{name: n.trim(), amount: a}]);
+  }
+  if (kind === 'custom_expense') {
+    const n = (document.getElementById('fe-name') || {}).value || '';
+    const a = parseFloat((document.getElementById('fe-amt') || {}).value || 0);
+    const p = parseFloat((document.getElementById('fe-pct') || {}).value || 0);
+    if (!n.trim() || (!a && !p)) return;
+    const row = {name: n.trim()};
+    if (p) row.pct = p; else row.amount = a;
+    patch.custom_expense = (st.custom_expense || []).concat([row]);
+  }
+  pushFinance(patch);
+}
+
+function saveFinance() {
+  const tax = parseFloat((document.getElementById('fx-tax') || {}).value || 0);
+  const acq = parseFloat((document.getElementById('fx-acq') || {}).value || 0);
+  pushFinance({tax_pct: tax, acquiring_pct: acq});
+}
+
+async function pushFinance(patch) {
+  const msg = document.getElementById('fin-msg');
+  if (msg) msg.textContent = 'Зберігаю...';
+  try {
+    const res = await fetch('https://speakchain-bot-production.up.railway.app/admin_finance', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        uid: tg?.initDataUnsafe?.user?.id || 0,
+        init_data: tg?.initData || '',
+        settings: patch,
+      })
+    });
+    const j = await res.json();
+    if (j.error) throw new Error(j.error);
+    if (msg) { msg.textContent = '✓ Збережено'; msg.style.color = 'var(--green)'; }
+    finDirty = false;
+    await loadData();          // перерахувати з новими налаштуваннями
+    switchTab('finance');
+  } catch (e) {
+    if (msg) { msg.textContent = '❌ ' + e.message; msg.style.color = 'var(--red)'; }
+  }
+}
+
+/* ═══ 📊 ЗВЕДЕННЯ — ОДИН ЕКРАН, УСЕ ЗГОРИ ВНИЗ ═══
+   Як /admin у чаті, але візуально. Без акордеонів, без кліків:
+   прокрутив — побачив усю картину.
+
+   ПРАВИЛО ПРОЄКТУ: КОЖНЕ ПОЛЕ ВИДНЕ ЗАВЖДИ.
+   Немає даних → показуємо «—» і пояснення, звідки воно візьметься.
+   Ніколи не ховаємо поле тільки тому, що воно порожнє. */
+
+/* Одна клітинка. v === null/undefined → «—», але поле НЕ ЗНИКАЄ. */
+function sCell(label, v, sub, color) {
+  const has = v !== null && v !== undefined && v !== '';
+  return '<div style="background:var(--surface);border:1px solid var(--border);'
+    + 'border-radius:10px;padding:11px 12px' + (has ? '' : ';opacity:.55') + '">'
+    + '<div style="font-size:10px;color:var(--text3);text-transform:uppercase;'
+    + 'letter-spacing:.04em;margin-bottom:5px">' + label + '</div>'
+    + '<div style="font-size:19px;font-weight:700;color:'
+    + (has && color ? color : 'var(--text)') + ';line-height:1.15">'
+    + (has ? v : '—') + '</div>'
+    + (sub ? '<div style="font-size:10px;color:var(--text3);margin-top:3px">' + sub + '</div>' : '')
+    + '</div>';
+}
+
+function sRow(cells, cols) {
+  return '<div style="display:grid;grid-template-columns:repeat(' + (cols || 2)
+    + ',1fr);gap:8px;margin-bottom:8px">' + cells.join('') + '</div>';
+}
+
+function sTitle(t, hint) {
+  return '<div style="margin:20px 0 10px">'
+    + '<div style="font-size:13px;font-weight:700;color:var(--text)">' + t + '</div>'
+    + (hint ? '<div style="font-size:11px;color:var(--text3);margin-top:2px">' + hint + '</div>' : '')
+    + '</div>';
+}
+
+/* Смуги розподілу. Порожньо → показуємо назву й «даних поки немає». */
+function sBars(title, items, hint, empty) {
+  /* Бот може віддати МАСИВ [{name,count,pct}] або обʼєкт {ключ: число}.
+     Приймаємо обидва — інакше падає. */
+  let list = [];
+  if (Array.isArray(items)) {
+    list = items.map(x => ({name: x.name != null ? x.name : '?',
+                            count: x.count || 0, pct: x.pct}));
+  } else if (items && typeof items === 'object') {
+    list = Object.entries(items).map(([k, v]) => ({name: k, count: v || 0}));
+  }
+  list = list.filter(x => x.count > 0);
+  const head = '<div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:3px">'
+    + title + '</div>'
+    + (hint ? '<div style="font-size:10px;color:var(--text3);margin-bottom:7px">' + hint + '</div>' : '');
+
+  if (!list.length) {
+    return '<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;'
+      + 'padding:11px 12px;margin-bottom:8px;opacity:.55">' + head
+      + '<div style="font-size:11px;color:var(--text3)">' + (empty || 'Даних поки немає') + '</div></div>';
+  }
+
+  list.sort((a, b) => b.count - a.count);
+  const tot = list.reduce((s, x) => s + x.count, 0) || 1;
+  const max = list[0].count || 1;
+  const rows = list.slice(0, 6).map((x, i) =>
+    '<div style="margin-bottom:6px">'
+    + '<div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:2px">'
+    +   '<span style="color:var(--text)' + (i === 0 ? ';font-weight:600' : '') + '">'
+    +     esc(String(x.name)) + '</span>'
+    +   '<span style="color:var(--text3);flex-shrink:0;margin-left:8px">'
+    +     fmt(x.count) + ' · ' + (x.pct != null ? x.pct : Math.round(x.count / tot * 100)) + '%</span>'
+    + '</div>'
+    + '<div style="background:var(--surface2);border-radius:3px;height:5px;overflow:hidden">'
+    +   '<div style="background:' + (i === 0 ? 'var(--accent)' : 'var(--purple)')
+    +   ';height:100%;width:' + Math.round(x.count / max * 100) + '%;border-radius:3px"></div></div>'
+    + '</div>').join('');
+
+  return '<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;'
+    + 'padding:11px 12px;margin-bottom:8px">' + head + rows + '</div>';
+}
+
+function renderSummary() {
+  const el = document.getElementById('summary-content');
+  if (!el) return;
+
+  /* Порожні об'єкти замість null — щоб КОЖНЕ поле відрендерилось,
+     навіть коли бот не відповів або даних ще немає. */
+  const d = data || {};
+  const o = d.overview   || {};
+  const st = (d.students && d.students.summary) || {};
+  const rev = d.revenue  || {};
+  const ret = d.retention || {};
+  const onb = d.onboarding || {};
+  const dia = d.diagnostic || {};
+  const bl  = d.bloggers  || {};
+  const rf  = d.refs      || {};
+  const cost = d.ai_costs || {};
+  const bud = d.buddy     || {};
+  const fun = d.funnel    || {};
+
+  const n  = v => (v === null || v === undefined) ? null : fmt(v);
+  const $  = v => (v === null || v === undefined) ? null : '$' + v;
+  const p  = v => (v === null || v === undefined) ? null : v + '%';
+  const dev = d.is_dev;
+
+  let h = '<div style="font-size:11px;color:var(--text3);margin-bottom:4px">'
+    + 'Уся картина на одному екрані. Прокрути — побачиш усе.<br>'
+    + '<b>Порожні поля не ховаються</b> — видно, що зʼявиться, коли дані наберуться.</div>';
+
+  /* ── ЛЮДИ ── */
+  h += sTitle('👥 Люди', 'Скільки їх і чи ростуть');
+  h += sRow([
+    sCell('Усього', n(o.total_users)),
+    sCell('Нових сьогодні', n(o.new_today), null, 'var(--green)'),
+    sCell('За 7 днів', n(o.new_7d)),
+    sCell('За 30 днів', n(o.new_30d)),
+  ], 2);
+  h += sRow([
+    sCell('Активних сьогодні', n(o.active_today), null, 'var(--accent)'),
+    sCell('Платних', n(o.paid_users), null, 'var(--green)'),
+    sCell('У тріалі', n(o.trial_users), null, 'var(--amber)'),
+    sCell('Середній ланцюжок', o.avg_chain != null ? o.avg_chain : null, 'днів поспіль'),
+  ], 2);
+
+  /* ── ЗДОРОВʼЯ ── */
+  h += sTitle('❤️ Здоровʼя бази', 'Категорії учнів. Правила — з коду бота.');
+  h += sRow([
+    sCell('🔴 Кинули', n(st.churned),
+      'не заходили ' + (st.churn_days || 14) + '+ дн.',
+      (st.churned || 0) > 0 ? 'var(--red)' : null),
+    sCell('🟠 Застрягли', n(st.stuck),
+      '≤' + (st.stuck_progress_max || 20) + '% і ' + (st.stuck_inactive_days || 7) + '+ дн.',
+      (st.stuck || 0) > 0 ? 'var(--amber)' : null),
+    sCell('🟡 Не платять', n(st.unpaid), 'тріал минув, активність була',
+      (st.unpaid || 0) > 0 ? 'var(--amber)' : null),
+    sCell('🟢 Рухаються', n(st.progressing), 'мали перехід рівня',
+      (st.progressing || 0) > 0 ? 'var(--green)' : null),
+  ], 2);
+
+  /* ── УТРИМАННЯ ── */
+  h += sTitle('📈 Утримання', 'Чи повертаються');
+  h += sRow([
+    sCell('D1', ret.d1 != null ? Math.round(ret.d1) + '%' : null, 'наступного дня'),
+    sCell('D7', ret.d7 != null ? Math.round(ret.d7) + '%' : null, 'через тиждень'),
+    sCell('D30', ret.d30 != null ? Math.round(ret.d30) + '%' : null, 'через місяць'),
+  ], 3);
+
+  /* ── ГРОШІ ── */
+  h += sTitle('💰 Гроші', dev ? 'Приховано в режимі розробника' : 'Дохід і собівартість');
+  if (dev) {
+    h += '<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;'
+      + 'padding:12px;font-size:12px;color:var(--text3);opacity:.6">Фінанси видно тільки власниці</div>';
+  } else {
+    h += sRow([
+      sCell('MRR', $(rev.mrr), rev.mrr_delta != null
+        ? (rev.mrr_delta >= 0 ? '▲ ' : '▼ ') + Math.abs(Math.round(rev.mrr_delta)) + '% за міс.'
+        : 'щомісячний дохід', 'var(--green)'),
+      sCell('За місяць', $(rev.revenue_month)),
+      sCell('⚡️ Basic', n(rev.basic_count), rev.basic_price ? '$' + rev.basic_price : null),
+      sCell('🌟 Premium', n(rev.premium_count), rev.premium_price ? '$' + rev.premium_price : null),
+    ], 2);
+
+    h += sTitle('💸 Собівартість AI',
+      'Claude — за токени. Whisper — за хвилини аудіо. Різні одиниці.');
+    const hasC = cost.has_data;
+    h += sRow([
+      sCell('💬 Claude / учня', hasC ? '$' + cost.claude_per_user : null, 'мозок'),
+      sCell('🎙 Whisper / учня', hasC ? '$' + cost.whisper_per_user : null, 'вуха'),
+      sCell('💰 Разом / учня', hasC ? '$' + cost.per_user : null, 'собівартість',
+            hasC ? 'var(--amber)' : null),
+    ], 3);
+
+    /* Маржа по тарифах — КОЖЕН рядок видно, навіть без даних */
+    const plans = (cost.plans || []).filter(x => x.plan !== 'trial');
+    const prows = ['basic', 'premium'].map(pl => {
+      const f = plans.find(x => x.plan === pl);
+      const nm = pl === 'premium' ? '🌟 Premium' : '⚡️ Basic';
+      if (!f) {
+        return '<tr style="opacity:.5"><td>' + nm + '</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>';
+      }
+      const b = f.burn_pct;
+      const c = b === null ? 'var(--text2)' : b > 100 ? 'var(--red)' : b > 30 ? 'var(--amber)' : 'var(--green)';
+      return '<tr><td style="font-weight:600">' + nm + '</td>'
+        + '<td>' + f.users + '</td><td>$' + f.revenue + '</td>'
+        + '<td style="color:var(--amber)">$' + f.per_user + '</td>'
+        + '<td style="color:' + c + ';font-weight:600">' + (b === null ? '—' : b + '%')
+        + (b !== null && b > 100 ? ' ⚠️' : '') + '</td></tr>';
+    }).join('');
+    h += '<div class="table-block"><div class="table-title">Маржа по тарифах</div>'
+      + '<div style="font-size:10px;color:var(--text3);margin-bottom:7px">'
+      + '«AI зʼїдає» — скільки % ціни йде постачальникам. &gt;100% = збиток.</div>'
+      + '<table><tr><th>Тариф</th><th>Юзерів</th><th>Ціна</th><th>AI</th><th>Зʼїдає</th></tr>'
+      + prows + '</table></div>';
+  }
+
+  /* ── ВОРОНКА ── */
+  h += sTitle('🫙 Воронка', 'Від реєстрації до оплати');
+  const reg = fun.registered || 0;
+  const fpct = v => reg ? Math.round((v || 0) / reg * 100) + '%' : null;
+  h += sRow([
+    sCell('Зареєстровані', n(fun.registered)),
+    sCell('Демо', n(fun.demo), fpct(fun.demo)),
+    sCell('Тріал', n(fun.trial), fpct(fun.trial)),
+    sCell('Оплатили', n(fun.paid), fpct(fun.paid), 'var(--green)'),
+  ], 2);
+
+  /* ── БЛОГЕРИ ── */
+  h += sTitle('🤝 Блогери й реферали', 'Звідки приходять люди');
+  h += sRow([
+    sCell('Блогерів', n(bl.total_bloggers)),
+    sCell('Привели', n(bl.total_referred)),
+    sCell('За посиланням', n(rf.total), rf.ref_pct != null ? rf.ref_pct + '% усіх' : null),
+    sCell('Органіка', n(rf.organic), 'прийшли самі'),
+  ], 2);
+  if (!dev) {
+    h += sRow([
+      sCell('Виплачено', $(bl.total_paid_out), 'синк із Google Sheets', 'var(--green)'),
+      sCell('Борг', $(bl.unpaid_all_total), 'до виплати',
+            (bl.unpaid_all_total || 0) > 0 ? 'var(--amber)' : null),
+    ], 2);
+  }
+  h += sBars('Яке посилання працює',
+    (rf.rows || []).map(x => ({name: x.ref, count: x.count})),
+    'У блогера кілька кодів — під різні відео',
+    'Ще ніхто не прийшов за посиланням');
+
+  /* ── ОНБОРДИНГ ── */
+  h += sTitle('👋 Онбординг', 'Квіз дня 1 — портрет аудиторії');
+  h += sRow([
+    sCell('Відкрили квіз', n(onb.opened)),
+    sCell('Завершили', n(onb.completed)),
+    sCell('Завершення', p(onb.completion_rate)),
+  ], 3);
+  h += sBars('🎯 Цілі', onb.goals, 'Навіщо їм англійська — про це має кричати лендінг');
+  h += sBars('🧱 Що заважає говорити', onb.speaking_blocks, 'Головний біль — продукт має знімати його першим');
+  h += sBars('🔁 Що вже пробували', onb.tried_before, 'З ким тебе порівнюють → контраргументи');
+  h += sBars('🕳 Чого бракувало', onb.missing_before, 'Чому попередні спроби провалились → твоя перевага');
+  h += sBars('⏱ Час на день', onb.time_per_day, 'Уроки мають влазити');
+
+  /* ── ДІАГНОСТИКА ── */
+  h += sTitle('🎯 Діагностика', 'День 4 — рівень аудиторії');
+  h += sRow([
+    sCell('Пройшли', n(dia.done)),
+    sCell('Сер. словник', n(dia.avg_words), 'слів'),
+    sCell('Записали монолог', p(dia.speech_rate), 'говоріння'),
+  ], 3);
+
+  /* ── CHAINY ── */
+  h += sTitle('🗣 Chainy', 'AI-репетитор');
+  h += sRow([
+    sCell('Сесій усього', n(bud.total_sessions)),
+    sCell('Сьогодні', n(bud.sessions_today)),
+    sCell('Активних', n(bud.active_users)),
+    sCell('Глибина', bud.avg_msgs_per_session != null ? bud.avg_msgs_per_session : null, 'повід./сесія'),
+  ], 2);
+
+  el.innerHTML = h;
 }
 
 /* ═══ СТРУКТУРА ВКЛАДКИ — видно навіть коли даних немає ═══
@@ -947,9 +1579,13 @@ function renderSkeleton(tab) {
    Кожен рядок — клік → веде на вкладку, де це лікується. */
 /* ── Перехід у Стратегію. Зберігаємо ?api=, бо вона теж його читає. ── */
 function goStrategy() {
-  const p = new URLSearchParams(location.search);
+  /* БУЛО 404: відносний шлях 'strategy_dashboard.html' ненадійний у
+     Telegram WebApp. Будуємо АБСОЛЮТНИЙ URL із поточного location. */
+  const p   = new URLSearchParams(location.search);
   const api = p.get('api') || '';
-  const url = 'strategy_dashboard.html' + (api ? '?api=' + encodeURIComponent(api) : '');
+  // теки поточної сторінки: .../speakchain-app/admin_analytics.html → .../speakchain-app/
+  const dir = location.href.split('?')[0].split('#')[0].replace(/[^/]*$/, '');
+  const url = dir + 'strategy_dashboard.html' + (api ? '?api=' + encodeURIComponent(api) : '');
   location.href = url;
 }
 
@@ -2725,6 +3361,8 @@ function renderDiagnostic() {
    Chart.js не малює у ПРИХОВАНОМУ блоці — вийде 0x0.
    Тому drawCharts кличеться ще раз, коли акордеон відкривають (toggleAcc). */
 const CHARTS_IN_TAB = {
+  summary:  [],
+  finance:  [],
   today:    ['overview'],
   students: ['students', 'retention', 'onboarding', 'diagnostic'],
   money:    ['revenue', 'funnel', 'chfunnel', 'actions'],

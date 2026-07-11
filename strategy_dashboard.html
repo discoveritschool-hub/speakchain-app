@@ -414,9 +414,11 @@ function _apiBase(){
 }
 /* ── Перехід в Аналітику. Зберігаємо ?api=, вона його теж читає. ── */
 function goAnalytics(){
-  const p = new URLSearchParams(location.search);
+  /* Абсолютний URL — у Telegram WebApp відносний шлях дає 404 */
+  const p   = new URLSearchParams(location.search);
   const api = p.get('api') || '';
-  location.href = 'admin_analytics.html' + (api ? '?api=' + encodeURIComponent(api) : '');
+  const dir = location.href.split('?')[0].split('#')[0].replace(/[^/]*$/, '');
+  location.href = dir + 'admin_analytics.html' + (api ? '?api=' + encodeURIComponent(api) : '');
 }
 function _fmtMoney(n){ return '$' + Math.round(n).toLocaleString('en-US'); }
 function _setDemoBadge(live){
