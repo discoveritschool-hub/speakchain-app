@@ -43,6 +43,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);
   box-shadow:0 2px 8px rgba(0,0,0,.25);z-index:5;transition:opacity .2s;
   pointer-events:auto}
 .tabs-hint.hidden{opacity:0;pointer-events:none}
+.tabs-hint-l{left:8px;right:auto}
 
 /* ── Content ── */
 .content{padding:14px 16px 80px;overflow-y:auto;height:calc(100vh - 100px);scrollbar-width:none}
@@ -184,7 +185,8 @@ tr:hover td{background:var(--surface2)}
 
 <div class="tabs-wrap">
   <div class="tabs" id="tabs-row"></div>
-<div class="tabs-hint" id="tabs-hint" onclick="scrollTabs()">›</div>
+<div class="tabs-hint tabs-hint-l hidden" id="tabs-hint-l" onclick="scrollTabs('left')">‹</div>
+<div class="tabs-hint" id="tabs-hint-r" onclick="scrollTabs('right')">›</div>
 </div>
 
 <div class="content">
@@ -618,18 +620,20 @@ function switchTab(tab) {
   if (data) renderTab(tab);
 }
 
-// ── Гортання вкладок стрілкою ──
-function scrollTabs() {
+// ── Гортання вкладок: стрілки В ОБИДВА БОКИ ──
+function scrollTabs(dir) {
   const row = document.getElementById('tabs-row');
-  if (row) row.scrollBy({ left: 140, behavior: 'smooth' });
+  if (row) row.scrollBy({ left: (dir === 'left' ? -140 : 140), behavior: 'smooth' });
 }
 function updateTabsHint() {
   const row = document.getElementById('tabs-row');
-  const hint = document.getElementById('tabs-hint');
-  if (!row || !hint) return;
-  // Ховаємо стрілку, якщо гортати нікуди (кінець або все влазить)
-  const atEnd = row.scrollLeft + row.clientWidth >= row.scrollWidth - 4;
-  hint.classList.toggle('hidden', atEnd);
+  const hL  = document.getElementById('tabs-hint-l');
+  const hR  = document.getElementById('tabs-hint-r');
+  if (!row) return;
+  const atStart = row.scrollLeft <= 4;
+  const atEnd   = row.scrollLeft + row.clientWidth >= row.scrollWidth - 4;
+  if (hL) hL.classList.toggle('hidden', atStart);
+  if (hR) hR.classList.toggle('hidden', atEnd);
 }
 document.addEventListener('DOMContentLoaded', () => {
   const row = document.getElementById('tabs-row');
@@ -783,11 +787,30 @@ async function loadData() {
     NAV.forEach(([id]) => renderTab(id));
     renderTab(activeTab);
   } catch(e) {
+    /* «Failed to fetch» = бот не відповів. Пояснюємо, що це означає,
+       замість голої помилки, з якою нічого не зробиш. */
+    const net = /fetch|network|load failed/i.test(e.message || '');
+    const box = net
+      ? '<div class="error-box" style="text-align:left;line-height:1.7">'
+        + '<b>❌ Бот не відповідає</b><br><br>'
+        + '<span style="font-size:12px;color:var(--text2)">Панель жива — мовчить бот. Перевір по черзі:</span><br><br>'
+        + '<span style="font-size:12px">'
+        + '<b>1.</b> Чи залиті <b>ai_costs.py</b> і <b>bloggers_admin.py</b> поруч із bot.py?<br>'
+        + '<span style="color:var(--text3)">Без них бот падає на старті: ModuleNotFoundError</span><br><br>'
+        + '<b>2.</b> Railway → Deployments → чи не Crashed?<br><br>'
+        + '<b>3.</b> Railway ще деплоїться? Зачекай ~60 сек і тисни ↻'
+        + '</span></div>'
+      : '<div class="error-box">❌ ' + esc(e.message) + '</div>';
+    /* Помилка не має ховати СТРУКТУРУ. Показуємо, що буде в кожній
+       вкладці, коли бот відповість — щоб було видно, як усе влаштовано. */
+    data = null;
     NAV.forEach(([id]) => {
       const el = document.getElementById(id + '-content');
-      if (el) el.innerHTML = '<div class="error-box">❌ ' + e.message + '</div>';
+      if (!el) return;
+      el.innerHTML = box + renderSkeleton(id);
     });
-    document.getElementById('last-updated').textContent = 'Помилка завантаження';
+    const lu = document.getElementById('last-updated');
+    if (lu) lu.textContent = net ? 'Бот не відповідає' : 'Помилка завантаження';
   }
 }
 
@@ -849,6 +872,74 @@ function renderTab(tab) {
   }
 
   setTimeout(() => drawCharts(tab), 60);
+}
+
+/* ═══ СТРУКТУРА ВКЛАДКИ — видно навіть коли даних немає ═══
+   Раніше при помилці ти бачила тільки «Failed to fetch» і не знала,
+   ЩО взагалі буде в цій вкладці і як категоризуються учні.
+   Тепер структура видна завжди. Правила — точні, з коду бота. */
+const SKELETON = {
+  today: [
+    ['🎯 Що робити зараз', 'Бот сам знаходить гострі проблеми: хто кинув, хто застряг, борги блогерам. Тицяєш — веде туди, де лікується.'],
+    ['📊 Огляд', 'Юзери · нові сьогодні/7д/30д · активні · платні · тріал · зриви ланцюжка · середній ланцюжок'],
+    ['🤖 AI-аналіз', 'Клікаєш — бот дивиться на всі цифри й пише, що з ними не так'],
+    ['🧪 A/B-гіпотези', 'Бот пропонує, що тестувати — з кривої відвалу'],
+    ['📋 ТЗ для Claude', 'Збирає повний бриф проєкту — копіюєш і даєш мені'],
+  ],
+  students: [
+    ['👥 Учні — 4 категорії', 'КАТЕГОРИЗАЦІЯ (правила з коду):<br>' +
+      '🔴 <b>Кинув</b> — не заходив ≥ 14 днів<br>' +
+      '🟠 <b>Застряг</b> — не заходив ≥ 7 днів І прогрес ≤ 20% (але ще не кинув)<br>' +
+      '🟡 <b>Не платить</b> — тріал минув, не Basic і не Premium, але активність БУЛА<br>' +
+      '🟢 <b>Рухається</b> — мав хоча б один перехід рівня<br><br>' +
+      'Кожен учень — картка: ім\'я, рівень, прогрес, днів без входу, тариф, звідки прийшов. Тицяєш → історія переходів.'],
+    ['📈 Retention', 'Когорти по тижнях: скільки лишилось через 1/7/30 днів. Крива зривів ланцюжка.'],
+    ['👋 Онбординг', 'Квіз дня 1. Воронка — де кидають. І 7 діаграм: цілі · що заважає говорити · що вже пробували · чого бракувало · що таке «вільно» · очікування · час на день. Плюс письмові відповіді своїми словами.'],
+    ['🎯 Діагностика', 'День 4: розподіл рівнів · середній словник · скільки записали монолог · топ прогалин у граматиці'],
+  ],
+  money: [
+    ['💵 Revenue', 'MRR + дельта · дохід за місяць · Basic/Premium · графіки по місяцях · дохід у розрізі блогерів'],
+    ['💸 Собівартість AI', 'Claude (за токени) + Whisper (за хвилини аудіо) = реальна собівартість. І МАРЖА по тарифах: скільки % ціни з\'їдає AI. Premium говорить більше → коштує дорожче.'],
+    ['🫙 Воронка підписки', 'Registered → Demo → Trial → Paid. Win-back. A/B нагадувань.'],
+    ['📉 Воронка челенджу', 'Крива відвалу день 1→7. Фільтри: всі / від блогера / органіка / демо.'],
+    ['⚡️ Дії в продукті', 'Де відвалюються · глибина розмов · які фічі знаходять · кореляції'],
+  ],
+  partners: [
+    ['👥 Блогери', 'Список: скільки студентів, Basic/Premium/Trial, активних, комісія. І <b>посилання</b> кожного — копіюєш і відправляєш.'],
+    ['🏆 Рейтинг партнерів', 'Не «хто дав більше», а <b>хто дав КРАЩИХ</b>: конверсія в оплату, утримання, $ на учня. 50 учнів із конверсією 20% цінніші за 300 із 3%.'],
+    ['🔗 Реферали', 'Яке САМЕ посилання працює. У блогера кілька кодів — під різні відео. Видно, який зайшов. Плюс частка органіки.'],
+    ['💸 Бухгалтерія', 'Нарахування · оплати · виплати · борги по місяцях. Кнопка «Виплачено» — в чаті: /admin_payouts. Google Sheets оновиться сам.'],
+    ['➕ Новий блогер', 'Як створити посилання: /gen_ref ІМ\'Я'],
+  ],
+  content: [
+    ['🔥 Що працює', 'Реальні лічильники: що учні ПРАКТИКУЮТЬ. У розрізі блогера — що резонує в його аудиторії.'],
+    ['💬 Фрази', 'Що ЗАЛУЧАЄ — демо-воронка. Які фрази ведуть до реєстрації.'],
+    ['🗣 Chainy / Buddy', 'Сесії AI-репетитора · глибина розмов · популярні теми · фідбек'],
+    ['🎁 Ситуації', 'Квіз дня 1 → який подарунок обрали'],
+  ],
+  system: [
+    ['🚨 Що зламалось', 'Бот ловить кожну помилку сам. Однакові — групуються. Мережевий шум відфільтровано.'],
+    ['🎛 Рубильники', 'Аварійні вимикачі. Вимкнути фічу, не чіпаючи код: Railway → Variables → Redeploy (~60 сек).'],
+    ['📋 Журнал змін', 'Що розробили, що виправили'],
+  ],
+  cmds: [
+    ['⌨️ Усі 40 команд', 'Згруповані: гроші · блогери · контент · комунікація · доступи · система · тести. Описи — з коду бота, не вигадані.'],
+  ],
+};
+
+function renderSkeleton(tab) {
+  const items = SKELETON[tab];
+  if (!items) return '';
+  return '<div style="margin-top:14px">'
+    + '<div style="font-size:11px;color:var(--text3);margin-bottom:10px;text-transform:uppercase;'
+    + 'letter-spacing:.04em">Що буде тут, коли бот відповість</div>'
+    + items.map(([t, d]) =>
+        '<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);'
+        + 'padding:12px 13px;margin-bottom:9px;opacity:.75">'
+        + '<div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:5px">' + t + '</div>'
+        + '<div style="font-size:11px;color:var(--text2);line-height:1.65">' + d + '</div>'
+        + '</div>').join('')
+    + '</div>';
 }
 
 /* ═══ «ЩО РОБИТИ» — панель перестає інформувати й починає вести ═══
@@ -964,6 +1055,107 @@ function tzSlot() {
    Що працює, Воронка). Щоб оцінити партнера — треба обійти всю панель.
    Стало: рейтинг зверху відповідає на головне питання —
    НЕ «хто дав більше», а «хто дав КРАЩИХ». */
+/* Список блогерів із ПОСИЛАННЯМИ — як у боті (/list_bloggers).
+   Посилання будується з імені: t.me/BOT?start=ref_ІМЯ — бот не чіпаємо. */
+/* Юзернейм бота. У коді бота зустрічається двічі по-різному —
+   реальний той, що в MINIAPP_URL: t.me/SpeakChain_bot
+   Якщо посилання не працює — заміни тут. */
+const BOT_USERNAME = 'SpeakChain_bot';
+
+function renderBloggerList() {
+  const d = data.bloggers;
+  if (!d) return '<div class="error-box">Немає даних</div>';
+  const stats = d.blogger_stats || [];
+  if (!stats.length) {
+    /* Порожньо — але видно, ЩО тут буде і які поля */
+    return '<div style="font-size:13px;color:var(--text2);line-height:1.7">'
+      + 'Блогерів ще немає.<br><br>'
+      + '<b style="color:var(--text)">Що тут буде на кожного:</b><br>'
+      + '<span style="font-size:12px;color:var(--text3);line-height:1.8">'
+      + '@ім\'я · конверсія в оплату<br>'
+      + '👥 студентів · ⚡️Basic · 🌟Premium · 🎁Trial<br>'
+      + '🔥 активних цього місяця · 💰 комісія<br>'
+      + '🔗 <b>посилання</b> + кнопка «Копіювати»</span><br><br>'
+      + 'Створити: <code style="background:var(--surface2);'
+      + 'padding:3px 8px;border-radius:6px;color:var(--accent)">/gen_ref ІМ\'Я</code></div>';
+  }
+
+  const cards = stats.slice().sort((a,b) => (b.total||0) - (a.total||0)).map(b => {
+    const name = b.name || '?';
+    const link = 'https://t.me/' + BOT_USERNAME + '?start=ref_' + encodeURIComponent(name);
+    const total = b.total || 0;
+    const paid  = (b.basic || 0) + (b.premium || 0);
+    const conv  = total ? Math.round(paid / total * 100) : 0;
+    const cC = conv >= 10 ? 'var(--green)' : conv >= 5 ? 'var(--amber)' : 'var(--red)';
+
+    return '<div style="background:var(--surface2);border-radius:9px;padding:11px 12px;margin-bottom:8px">'
+      + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">'
+      +   '<b style="font-size:13px;color:var(--text)">@' + esc(name) + '</b>'
+      +   '<span style="font-size:11px;font-weight:700;color:' + cC + '">' + conv + '%</span>'
+      + '</div>'
+      + '<div style="font-size:11px;color:var(--text2);margin-bottom:8px">'
+      +   '👥 ' + fmt(total) + ' студ. · ⚡️' + (b.basic||0) + ' 🌟' + (b.premium||0)
+      +   ' 🎁' + (b.trial||0) + ' · 🔥 ' + fmt(b.active||0) + ' активних'
+      +   ' · 💰 $' + (b.commission || 0)
+      + '</div>'
+      + '<div style="display:flex;gap:6px;align-items:center">'
+      +   '<code style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;'
+      +   'background:var(--bg);padding:5px 8px;border-radius:6px;font-size:10px;color:var(--accent)">'
+      +   esc(link) + '</code>'
+      +   '<button onclick="copyRef(\'' + escAttr(link) + '\', this)" '
+      +   'style="flex-shrink:0;background:var(--accent);border:none;border-radius:6px;color:#fff;'
+      +   'font-size:11px;font-weight:600;padding:5px 10px;cursor:pointer">Копіювати</button>'
+      + '</div></div>';
+  }).join('');
+
+  return '<div style="font-size:11px;color:var(--text3);margin-bottom:9px">'
+    + 'Посилання блогера. Тицяй «Копіювати» — і відправ йому.</div>' + cards;
+}
+
+function copyRef(link, btn) {
+  navigator.clipboard.writeText(link).then(() => {
+    const old = btn.textContent;
+    btn.textContent = '✓ Готово';
+    btn.style.background = 'var(--green)';
+    setTimeout(() => { btn.textContent = old; btn.style.background = 'var(--accent)'; }, 1400);
+  }).catch(() => alert(link));
+}
+
+/* Реферали: ЯКЕ посилання працює.
+   Було тільки в /admin текстом у чаті — панель цього не бачила.
+   У блогера може бути кілька ref-кодів (під різні відео) — видно, який зайшов. */
+function renderRefs() {
+  const r = data.refs;
+  if (!r) return '<div style="font-size:12px;color:var(--text3)">Немає даних</div>';
+
+  const rows = (r.rows || []).length
+    ? r.rows.map(x => {
+        const pct = r.total ? Math.round(x.count / r.total * 100) : 0;
+        return '<tr><td style="font-weight:600">' + esc(x.ref) + '</td>'
+          + '<td>' + fmt(x.count) + '</td>'
+          + '<td><div style="background:var(--surface2);border-radius:4px;height:6px;'
+          + 'overflow:hidden;min-width:60px"><div style="background:var(--accent);height:100%;'
+          + 'width:' + pct + '%"></div></div></td>'
+          + '<td style="color:var(--text2)">' + pct + '%</td></tr>';
+      }).join('')
+    : '<tr><td colspan="4" style="color:var(--text3);text-align:center">Ніхто ще не прийшов за посиланням</td></tr>';
+
+  return '<div class="cards">'
+    + '<div class="card"><div class="card-label">За посиланням</div>'
+    +   '<div class="card-value" style="color:var(--accent)">' + fmt(r.total || 0) + '</div>'
+    +   '<div class="card-sub">' + (r.ref_pct || 0) + '% усіх учнів</div></div>'
+    + '<div class="card"><div class="card-label">Прийшли самі</div>'
+    +   '<div class="card-value">' + fmt(r.organic || 0) + '</div>'
+    +   '<div class="card-sub">органіка</div></div>'
+    + '</div>'
+    + '<div class="table-block" style="margin-top:12px">'
+    + '<div class="table-title">Яке посилання працює</div>'
+    + '<div style="font-size:11px;color:var(--text3);margin-bottom:8px">'
+    + 'У блогера може бути кілька кодів — під різні відео. Тут видно, який зайшов.</div>'
+    + '<table><tr><th>Посилання</th><th>Учнів</th><th></th><th>Частка</th></tr>'
+    + rows + '</table></div>';
+}
+
 function renderPartners() {
   const d = data.bloggers;
   if (!d) return '<div class="error-box">Фінансові дані приховані (режим розробника)</div>';
@@ -1014,12 +1206,17 @@ function renderPartners() {
 
   const debt = d.unpaid_all_total || 0;
 
-  return acc('a-rank', '🏆', 'Рейтинг партнерів', 'Хто дав КРАЩИХ, а не просто більше',
-             ratingBody, {open:true})
+  return acc('a-list', '👥', 'Блогери', 'Список · статистика · посилання',
+             renderBloggerList(), {open:true,
+             badge: stats.length ? String(stats.length) : null})
+    + acc('a-rank', '🏆', 'Рейтинг партнерів', 'Хто дав КРАЩИХ, а не просто більше',
+             ratingBody)
     + acc('a-pay', '💸', 'Бухгалтерія', 'Нарахування · оплати · виплати · борги',
           payoutHow() + renderBloggers(),
           {badge: debt ? '$' + fmt(debt) : null,
            badgeBg:'rgba(245,158,11,.15)', badgeFg:'var(--amber)'})
+    + acc('a-refs', '🔗', 'Реферали', 'Яке посилання працює · органіка',
+          renderRefs())
     + acc('a-new', '➕', 'Новий блогер', 'Як створити реферальне посилання',
           '<div style="font-size:13px;color:var(--text);line-height:1.7">'
           + 'Посилання генерується <b>в чаті з ботом</b>, не тут:<br><br>'
@@ -1212,9 +1409,12 @@ function renderStudents() {
 
   function problemTable(title, list, hint, emptyMsg, key) {
     if (!list || !list.length) {
-      return `<div class="table-block" style="margin-top:14px">
-        <div class="table-title">${title}</div>
-        <div style="font-size:12px;color:var(--text2);padding:8px 0">${emptyMsg||'Порожньо 🎉'}</div>
+      /* Порожньо — але ПРАВИЛО показуємо все одно.
+         Інакше не видно, ЯК визначається ця категорія. */
+      return `<div class="table-block" style="margin-top:14px;opacity:.7">
+        <div class="table-title">${title} <span style="font-weight:400;color:var(--text3)">· 0</span></div>
+        <div style="font-size:11px;color:var(--text3);margin-bottom:6px">${hint||''}</div>
+        <div style="font-size:12px;color:var(--text2);padding:6px 0">${emptyMsg||'Порожньо 🎉'}</div>
       </div>`;
     }
     const rows = list.map((c, i) => `
@@ -2364,23 +2564,109 @@ function renderOnboarding() {
   });
 
   // розподіли відповідей
-  const distBlock = (title, dist) => {
-    if (!dist || !Object.keys(dist).length) return '';
-    const tot = o.completed || 1;
-    const rows = Object.entries(dist).map(([k,v])=>
-      `<div style="display:flex;justify-content:space-between;font-size:12px;padding:4px 0;border-bottom:0.5px solid var(--border)">
-        <span>${k}</span><span style="color:var(--text2)">${v} · ${Math.round(v/tot*100)}%</span></div>`).join('');
-    return `<div class="table-block"><div class="table-title">${title}</div>${rows}</div>`;
+  /* БУЛО ЗЛАМАНО: distBlock робив Object.entries() над МАСИВОМ.
+     Бот віддає [{name, count, pct}], а не {ключ: число} — виходило
+     «0 · [object Object]» замість назв. Тепер приймає обидва формати.
+
+     І кожна відповідь тепер — ДІАГРАМА: смуга, довжина = частка.
+     Око бачить перекіс миттєво, без читання цифр. */
+  const distBlock = (title, dist, hint) => {
+    if (!dist) return '';
+
+    // Нормалізуємо: масив із бота АБО об'єкт (старий формат)
+    let items = [];
+    if (Array.isArray(dist)) {
+      items = dist.map(d => ({
+        name:  d.name != null ? String(d.name) : '?',
+        count: d.count || 0,
+        pct:   d.pct,
+      }));
+    } else if (typeof dist === 'object') {
+      items = Object.entries(dist).map(([k, v]) => ({name: String(k), count: v || 0}));
+    }
+    items = items.filter(x => x.count > 0);
+    /* Порожній розділ НЕ ЗНИКАЄ — інакше не знаєш, що він існує */
+    if (!items.length) {
+      return '<div class="table-block" style="opacity:.6">'
+        + '<div class="table-title">' + title
+        + ' <span style="font-weight:400;color:var(--text3)">· 0</span></div>'
+        + (hint ? '<div style="font-size:11px;color:var(--text3);margin-bottom:6px">' + hint + '</div>' : '')
+        + '<div style="font-size:12px;color:var(--text3);padding:6px 0">Ще ніхто не відповів</div>'
+        + '</div>';
+    }
+
+    items.sort((a, b) => b.count - a.count);
+    const tot = items.reduce((s, x) => s + x.count, 0) || 1;
+    const max = items[0].count || 1;
+
+    const rows = items.map((x, i) => {
+      const pct = x.pct != null ? x.pct : Math.round(x.count / tot * 100);
+      const w   = Math.round(x.count / max * 100);   // довжина смуги
+      // Лідер — акцентом, решта — приглушено
+      const col = i === 0 ? 'var(--accent)' : 'var(--purple)';
+      return '<div style="margin-bottom:7px">'
+        + '<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px">'
+        +   '<span style="color:var(--text)' + (i === 0 ? ';font-weight:600' : '') + '">'
+        +     esc(x.name) + '</span>'
+        +   '<span style="color:var(--text2);flex-shrink:0;margin-left:8px">'
+        +     fmt(x.count) + ' · ' + pct + '%</span>'
+        + '</div>'
+        + '<div style="background:var(--surface2);border-radius:4px;height:7px;overflow:hidden">'
+        +   '<div style="background:' + col + ';height:100%;width:' + w + '%;'
+        +   'border-radius:4px;transition:width .4s"></div></div>'
+        + '</div>';
+    }).join('');
+
+    return '<div class="table-block">'
+      + '<div class="table-title">' + title
+      + ' <span style="font-weight:400;color:var(--text3)">· ' + fmt(tot) + ' відповідей</span></div>'
+      + (hint ? '<div style="font-size:11px;color:var(--text3);margin-bottom:9px">' + hint + '</div>' : '')
+      + rows + '</div>';
+  };
+
+  /* Письмові відповіді — ГОЛОС КЛІЄНТА своїми словами.
+     Бот віддавав їх завжди (останні 30), панель викидала. */
+  const words = (title, arr, hint) => {
+    const list = (arr || []).filter(x => x && String(x).trim());
+    if (!list.length) {
+      return '<div class="table-block" style="opacity:.6">'
+        + '<div class="table-title">' + title
+        + ' <span style="font-weight:400;color:var(--text3)">· 0</span></div>'
+        + '<div style="font-size:11px;color:var(--text3);margin-bottom:6px">' + hint + '</div>'
+        + '<div style="font-size:12px;color:var(--text3);padding:6px 0">'
+        + 'Поки ніхто не написав своїми словами</div></div>';
+    }
+    const items = list.slice().reverse().map(t =>
+      '<div style="padding:9px 11px;background:var(--surface2);border-radius:8px;'
+      + 'margin-bottom:6px;font-size:12px;color:var(--text);line-height:1.6;'
+      + 'border-left:2px solid var(--accent)">' + esc(String(t)) + '</div>').join('');
+    return '<div class="table-block">'
+      + '<div class="table-title">' + title + ' <span style="font-weight:400;color:var(--text3)">· '
+      + list.length + '</span></div>'
+      + '<div style="font-size:11px;color:var(--text3);margin-bottom:8px">' + hint + '</div>'
+      + items + '</div>';
   };
 
   return cards
     + `<div class="table-block"><div class="table-title">Воронка квізу — де кидають</div>${funnelRows||'—'}</div>`
-    + distBlock('Цілі', o.goals)
-    + distBlock('Що заважає говорити', o.speaking_blocks)
-    + distBlock('Чого бракувало раніше', o.missing_before)
-    + distBlock('Що таке «вільно»', o.fluent_means)
-    + distBlock('Очікування', o.expectations)
-    + distBlock('Час на день', o.time_per_day);
+    + distBlock('🎯 Цілі', o.goals,
+        'Навіщо їм англійська. Лідер — те, про що має кричати лендінг.')
+    + distBlock('🧱 Що заважає говорити', o.speaking_blocks,
+        'Головний біль. Продукт має його знімати першим.')
+    + distBlock('🔁 Що вже пробували', o.tried_before,
+        'З чим порівнюють тебе. Контраргументи в продажі.')
+    + distBlock('🕳 Чого бракувало раніше', o.missing_before,
+        'Чому попередні спроби провалились. Твоя перевага.')
+    + distBlock('💭 Що таке «вільно»', o.fluent_means,
+        'Як вони визначають успіх. По цьому судитимуть тебе.')
+    + distBlock('📌 Очікування', o.expectations,
+        'Що обіцяти можна, а що — ні.')
+    + distBlock('⏱ Час на день', o.time_per_day,
+        'Скільки реально готові вкладати. Уроки мають влазити.')
+    + words('💬 Очікування — своїми словами', o.written_expectations,
+            'Що люди ПИШУТЬ, коли варіантів не вистачає. Мова для лендінгу й реклами.')
+    + words('💬 Чого бракувало — своїми словами', o.written_missing,
+            'Чому попередні спроби вчити англійську провалились. Контраргументи в продажі.');
 }
 
 // ── DIAGNOSTIC (День 4) ──────────────────────────────────
