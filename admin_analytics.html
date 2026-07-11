@@ -30,7 +30,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);
 .refresh-btn{width:34px;height:34px;border-radius:50%;background:var(--surface);
   border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px}
 
-/* ── Tabs ── */
+/* ── Tabs: ОДИН рівень. Було 2 (група → вкладка) = 2 тапи до всього. ── */
 .tabs-wrap{position:relative}
 .tabs{display:flex;gap:0;padding:12px 16px 0;overflow-x:auto;scrollbar-width:none}
 .tabs::-webkit-scrollbar{display:none}
@@ -49,6 +49,50 @@ html,body{height:100%;background:var(--bg);color:var(--text);
 .content::-webkit-scrollbar{display:none}
 .section{display:none}
 .section.active{display:block}
+
+/* ══ АКОРДЕОН — колишні вкладки живуть тут ══
+   17 вкладок не вміщались у рядок. Тепер вони — згорнуті блоки
+   всередині 6 вкладок. Жодну функцію не викинуто. */
+.acc{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);
+  margin-bottom:10px;overflow:hidden}
+.acc-head{display:flex;align-items:center;gap:10px;padding:14px 14px;cursor:pointer;
+  user-select:none;transition:background .15s}
+.acc-head:active{background:var(--surface2)}
+.acc-ic{font-size:16px;flex-shrink:0;width:20px;text-align:center}
+.acc-tt{flex:1;min-width:0}
+.acc-t{font-size:14px;font-weight:600;color:var(--text)}
+.acc-s{font-size:11px;color:var(--text2);margin-top:2px}
+.acc-badge{font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;flex-shrink:0}
+.acc-arr{font-size:13px;color:var(--text3);flex-shrink:0;transition:transform .2s}
+.acc.open .acc-arr{transform:rotate(90deg)}
+.acc-body{display:none;padding:0 12px 12px}
+.acc.open .acc-body{display:block}
+.acc-body > .chart-block:first-child,
+.acc-body > .cards:first-child{margin-top:0}
+
+/* ══ «ЩО РОБИТИ» — блок дій на вкладці Сьогодні ══ */
+.todo{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);
+  padding:14px;margin-bottom:14px}
+.todo-h{font-size:13px;font-weight:600;color:var(--text);margin-bottom:3px}
+.todo-sub{font-size:11px;color:var(--text3);margin-bottom:11px}
+.todo-i{display:flex;align-items:center;gap:10px;padding:10px 11px;border-radius:9px;
+  background:var(--surface2);margin-bottom:7px;cursor:pointer;transition:transform .1s}
+.todo-i:active{transform:scale(.99)}
+.todo-i:last-child{margin-bottom:0}
+.todo-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.todo-tx{flex:1;min-width:0}
+.todo-t{font-size:13px;font-weight:600;color:var(--text)}
+.todo-d{font-size:11px;color:var(--text2);margin-top:1px}
+.todo-go{font-size:11px;font-weight:700;color:var(--accent);flex-shrink:0}
+.todo-ok{font-size:12px;color:var(--green);padding:8px 0}
+
+/* ── Командний центр: другий дашборд, поки окремо ── */
+.xlink{display:flex;align-items:center;gap:10px;padding:12px 13px;margin-bottom:10px;
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--r);
+  cursor:pointer;transition:border-color .15s}
+.xlink:active{border-color:var(--accent)}
+.xlink-t{flex:1;font-size:13px;font-weight:600;color:var(--text)}
+.xlink-s{font-size:11px;color:var(--text2);margin-top:2px}
 
 /* ── Stat cards ── */
 .cards{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
@@ -116,9 +160,7 @@ tr:hover td{background:var(--surface2)}
     <div class="header-sub" id="last-updated">Завантаження...</div>
   </div>
   <div style="display:flex;gap:8px">
-    <div class="refresh-btn" id="tz-btn" onclick="loadTZ()" title="ТЗ для Claude">📋</div>
-    <div class="refresh-btn" id="ai-btn" onclick="loadAIInsights()" title="AI Аналіз">🤖</div>
-    <div class="refresh-btn" id="ab-btn" onclick="loadABHypotheses()" title="A/B-гіпотези з воронки">🧪</div>
+    <div class="refresh-btn" onclick="goStrategy()" title="Командний центр: пульс, дорожня карта, принципи">🧭</div>
     <div class="refresh-btn" onclick="loadData()">↻</div>
   </div>
 </div>
@@ -140,180 +182,83 @@ tr:hover td{background:var(--surface2)}
   </div>
 </div>
 
-<!-- AI Insights Panel -->
-<div id="ai-panel" style="display:none;margin:0 16px 0;background:#12102a;border:1px solid rgba(124,110,247,.3);border-radius:12px;padding:16px">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-    <div style="font-size:14px;font-weight:700;color:#a78bfa">🤖 AI Аналіз системи</div>
-    <div style="font-size:11px;color:var(--text3)" id="ai-generated-at"></div>
-  </div>
-  <div id="ai-content" style="font-size:13px;color:var(--text);line-height:1.7;white-space:pre-wrap"></div>
-</div>
-
-<!-- A/B Hypotheses Panel (крок 3) -->
-<div id="ab-panel" style="display:none;margin:0 16px 0;background:#0f1a14;border:1px solid rgba(62,207,142,.3);border-radius:12px;padding:16px">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-    <div style="font-size:14px;font-weight:700;color:#3ecf8e">🧪 A/B-гіпотези з воронки</div>
-    <div style="font-size:11px;color:var(--text3)" id="ab-generated-at"></div>
-  </div>
-  <div id="ab-content" style="font-size:13px;color:var(--text);line-height:1.7;white-space:pre-wrap"></div>
-</div>
-
 <div class="tabs-wrap">
-<div class="grp-row" id="grp-row"></div>
   <div class="tabs" id="tabs-row"></div>
 <div class="tabs-hint" id="tabs-hint" onclick="scrollTabs()">›</div>
 </div>
 
 <div class="content">
 
-  <!-- OVERVIEW -->
-  <div class="section active" id="tab-overview">
-    <div id="overview-content">
+  <!-- 🏠 СЬОГОДНІ — Що робити · Огляд · AI · A/B · ТЗ -->
+  <div class="section active" id="tab-today">
+    <div id="today-content">
       <div class="loading"><div class="spinner"></div>Завантаження...</div>
     </div>
   </div>
 
-  <!-- STUDENTS -->
+  <!-- 👥 УЧНІ — Учні · Retention · Онбординг · Діагностика -->
   <div class="section" id="tab-students">
     <div id="students-content">
       <div class="loading"><div class="spinner"></div>Завантаження...</div>
     </div>
   </div>
 
-  <!-- RETENTION -->
-  <div class="section" id="tab-retention">
-    <div id="retention-content">
+  <!-- 💰 ГРОШІ — Revenue · Воронки · Дії -->
+  <div class="section" id="tab-money">
+    <div id="money-content">
       <div class="loading"><div class="spinner"></div>Завантаження...</div>
     </div>
   </div>
 
-  <!-- FUNNEL -->
-  <div class="section" id="tab-funnel">
-    <div id="funnel-content">
+  <!-- 🤝 БЛОГЕРИ — Рейтинг · Бухгалтерія · Новий -->
+  <div class="section" id="tab-partners">
+    <div id="partners-content">
       <div class="loading"><div class="spinner"></div>Завантаження...</div>
     </div>
   </div>
 
-  <!-- REVENUE -->
-  <div class="section" id="tab-revenue">
-    <div id="revenue-content">
-      <div class="loading"><div class="spinner"></div>Завантаження...</div>
-    </div>
-  </div>
-
-  <!-- BUDDY -->
-  <div class="section" id="tab-buddy">
-    <div id="buddy-content">
-      <div class="loading"><div class="spinner"></div>Завантаження...</div>
-    </div>
-  </div>
-
-  <!-- SITUATIONS (quiz дня 1 → подарунок) -->
-  <div class="section" id="tab-situations">
-    <div id="situations-content">
-      <div class="loading"><div class="spinner"></div>Завантаження...</div>
-    </div>
-  </div>
-
-  <!-- CHALLENGE FUNNEL (крива відвалу 1→7) -->
-  <div class="section" id="tab-chfunnel">
-    <div id="chfunnel-content">
-      <div class="loading"><div class="spinner"></div>Завантаження...</div>
-    </div>
-  </div>
-
-  <!-- ONBOARDING (День 1) -->
-  <div class="section" id="tab-onboarding">
-    <div id="onboarding-content">
-      <div class="loading"><div class="spinner"></div>Завантаження...</div>
-    </div>
-  </div>
-
-  <!-- DIAGNOSTIC (День 4) -->
-  <div class="section" id="tab-diagnostic">
-    <div id="diagnostic-content">
-      <div class="loading"><div class="spinner"></div>Завантаження...</div>
-    </div>
-  </div>
-
-  <!-- PHRASE RANKING (яка демо-фраза залучає) -->
-  <div class="section" id="tab-phrases">
-    <div id="phrases-content">
-      <div class="loading"><div class="spinner"></div>Завантаження...</div>
-    </div>
-  </div>
-
-  <!-- CONTENT — що учні реально практикують -->
+  <!-- 🔥 КОНТЕНТ — Що працює · Фрази · Buddy · Ситуації -->
   <div class="section" id="tab-content">
     <div id="content-content">
       <div class="loading"><div class="spinner"></div>Завантаження...</div>
     </div>
   </div>
 
-  <!-- BLOGGERS -->
-  <div class="section" id="tab-bloggers">
-    <div id="bloggers-content">
+  <!-- ⚙️ СИСТЕМА — Помилки · Рубильники · Журнал + документація -->
+  <div class="section" id="tab-system">
+    <div id="system-content">
       <div class="loading"><div class="spinner"></div>Завантаження...</div>
     </div>
-  </div>
 
-  <!-- ACTIONS -->
-  <div class="section" id="tab-actions">
-    <div id="actions-content">
-      <div class="loading"><div class="spinner"></div>Завантаження...</div>
+    <h2 style="margin:26px 0 6px;font-size:15px">📖 Як працюють рубильники</h2>
+    <div class="sw-card" style="border-color:var(--purple)">
+      <div class="sw-doc">
+        <b>Що вмикати / вимикати</b><br>
+        Рубильник розуміє будь-що: <code>1</code>, <code>true</code>, <code>yes</code>, <code>on</code>, <code>так</code> — увімкнено.
+        <code>0</code>, <code>false</code>, <code>no</code>, <code>off</code> — вимкнено. Регістр не важливий.<br><br>
+        Напишеш щось незрозуміле — бот <b>не зламається</b>: залишить дефолт і напише попередження в лог.<br><br>
+        <b>Куди йти</b><br>
+        Railway → твій сервіс → вкладка <b>Variables</b> → знайди змінну (або додай) → <b>Redeploy</b>.<br><br>
+        <b>Як перевірити</b><br>
+        Напиши боту <code>/switches</code> — покаже живий стан.<br><br>
+        <b>Якщо змінної нема в Railway</b> — діє дефолт із коду.
+      </div>
+    </div>
+
+    <h2 style="margin:26px 0 6px;font-size:15px">🧭 Другий дашборд</h2>
+    <div class="sw-card">
+      <div class="sw-doc">
+        <b>Командний центр</b> — окрема панель: пульс продукту, дорожня карта, принципи навчання.
+        Відкривається командою <code>/strategy</code>.<br><br>
+        <span style="color:#8888a8">Це другий дашборд. Він поки живе окремо — не злитий із цією панеллю.</span>
+      </div>
     </div>
   </div>
 
-
-<!-- ═══ 🎛 РУБИЛЬНИКИ ═══ -->
-
-<!-- ═══ 🚨 ПОМИЛКИ ═══ -->
-<div class="section" id="tab-errors">
-  <h2 style="margin:0 0 6px">🚨 Що зламалось</h2>
-  <p style="color:var(--text2);font-size:13px;margin:0 0 16px">
-    Бот ловить <b>кожну</b> помилку автоматично й кладе сюди.
-    Однакові — групуються. Мережевий шум відфільтровано.
-  </p>
-  <div class="err-sum" id="err-sum"></div>
-  <div id="err-list"></div>
-</div>
-
-
-<!-- ═══ 📋 ЖУРНАЛ ЗМІН ═══ -->
-<div class="section" id="tab-changes">
-  <h2 style="margin:0 0 6px">📋 Журнал змін</h2>
-  <p style="color:var(--text2);font-size:13px;margin:0 0 18px">
-    Що розробили, що допиляли, що виправили. Плюс те, що бот зафіксував сам.
-  </p>
-  <div id="chg-ver"></div>
-  <h2 style="margin:26px 0 10px">Що сталось у боті</h2>
-  <div id="chg-events"></div>
-</div>
-
-<div class="section" id="tab-switches">
-  <h2 style="margin:0 0 6px">🎛 Рубильники</h2>
-  <p style="color:var(--text2);font-size:13px;margin:0 0 18px">
-    Аварійні вимикачі. Щось зламалось — вимкни, не чіпаючи код.<br>
-    <b>Railway → Variables → зміни значення → Redeploy.</b> ~60 секунд.
-  </p>
-  <div id="sw-list"></div>
-
-  <h2 style="margin:26px 0 6px">📖 Як це працює</h2>
-  <div class="sw-card" style="border-color:var(--purple)">
-    <div class="sw-doc">
-      <b>Що вмикати / вимикати</b><br>
-      Рубильник розуміє будь-що: <code>1</code>, <code>true</code>, <code>yes</code>, <code>on</code>, <code>так</code> — увімкнено.
-      <code>0</code>, <code>false</code>, <code>no</code>, <code>off</code> — вимкнено. Регістр не важливий.<br><br>
-      Напишеш щось незрозуміле — бот <b>не зламається</b>: залишить дефолт і напише попередження в лог.<br><br>
-      <b>Куди йти</b><br>
-      Railway → твій сервіс → вкладка <b>Variables</b> → знайди змінну (або додай) → <b>Redeploy</b>.<br><br>
-      <b>Як перевірити</b><br>
-      Напиши боту <code>/switches</code> — покаже живий стан.<br><br>
-      <b>Якщо змінної нема в Railway</b> — діє дефолт із коду (позначено нижче).
-    </div>
+  <!-- ⌨️ КОМАНДИ — довідник усіх 39 адмінських команд бота -->
+  <div class="section" id="tab-cmds">
+    <div id="cmds-content"></div>
   </div>
-</div>
-</div>
 
 <style>
 .sw-card{background:var(--card,#16161f);border:1px solid var(--line,#2a2a3a);
@@ -338,15 +283,8 @@ tr:hover td{background:var(--surface2)}
   font-family:ui-monospace,Menlo,monospace;font-size:12px;color:#c9c2ff}
 </style>
 <style>
-/* Двоповерхова навігація: 14 вкладок в один ряд — задовго гортати вбік */
-.grp-row{display:flex;gap:6px;padding:10px 12px 0;overflow-x:auto;
-  -webkit-overflow-scrolling:touch;scrollbar-width:none}
-.grp-row::-webkit-scrollbar{display:none}
-.grp{flex-shrink:0;padding:8px 14px;border-radius:10px;font-size:13px;font-weight:700;
-  background:transparent;color:#8888a8;border:1px solid transparent;cursor:pointer;
-  white-space:nowrap;transition:all .15s}
-.grp.on{background:#241d4d;color:#c9c2ff;border-color:#7c6ef7}
-#tabs-row{display:flex;gap:6px;padding:8px 12px 10px;overflow-x:auto;
+/* Один рівень навігації — 6 вкладок */
+#tabs-row{display:flex;gap:6px;padding:10px 12px 10px;overflow-x:auto;
   -webkit-overflow-scrolling:touch;scrollbar-width:none;border-bottom:1px solid #2a2a3a}
 #tabs-row::-webkit-scrollbar{display:none}
 </style>
@@ -419,7 +357,7 @@ if (tg) { tg.ready(); tg.expand(); }
 
 let charts = {};
 let data = null;
-let activeTab = 'overview';
+let activeTab = 'today';
 
 /* ═══ 🎛 РУБИЛЬНИКИ — рендер із живих даних бота ═══ */
 function renderSwitches() {
@@ -452,44 +390,71 @@ function renderSwitches() {
 }
 
 
-/* ═══ ДВОПОВЕРХОВА НАВІГАЦІЯ ═══
-   Було: 14 вкладок в один ряд, довго гортати. Стало: розділ → вкладка. */
-const TAB_GROUPS = [
-  { id:'main',   label:'📊 Головне',   tabs:[
-      ['overview','Огляд'], ['students','Учні'], ['actions','Дії'] ]},
-  { id:'growth', label:'📈 Зростання', tabs:[
-      ['retention','Retention'], ['funnel','Funnel'], ['chfunnel','📉 Воронка'],
-      ['revenue','Revenue'], ['bloggers','Блогери'] ]},
-  { id:'learn',  label:'🎓 Навчання',  tabs:[
-      ['onboarding','👋 Онбординг'], ['diagnostic','🎯 Діагностика'],
-      ['buddy','Buddy'], ['phrases','💬 Фрази'], ['content','🔥 Що працює'],
-      ['situations','🎁 Ситуації'] ]},
-  { id:'system', label:'⚙️ Система',   tabs:[
-      ['errors','🚨 Помилки'], ['switches','🎛 Рубильники'], ['changes','📋 Журнал змін'] ]},
+/* ═══ НАВІГАЦІЯ — ОДИН РІВЕНЬ ═══
+   Було: група → вкладка (2 тапи) + 17 вкладок, які треба гортати вбік.
+   Стало: 6 вкладок. Колишні вкладки — акордеони всередині.
+   Жодну функцію не викинуто, усі 34 render-* на місці. */
+const NAV = [
+  ['today',    '🏠 Сьогодні'],
+  ['students', '👥 Учні'],
+  ['money',    '💰 Гроші'],
+  ['partners', '🤝 Блогери'],
+  ['content',  '🔥 Контент'],
+  ['system',   '⚙️ Система'],
+  ['cmds',     '⌨️ Команди'],
 ];
-let activeGroup = 'main';
 
-function groupOf(tab){
-  const g = TAB_GROUPS.find(g => g.tabs.some(t => t[0] === tab));
-  return g ? g.id : 'main';
-}
+/* Куди їде кожна колишня вкладка. Ключ — стара назва, значення — нова. */
+const OLD_TO_NEW = {
+  overview:'today', students:'students', retention:'students',
+  onboarding:'students', diagnostic:'students',
+  revenue:'money', funnel:'money', chfunnel:'money', actions:'money',
+  bloggers:'partners',
+  content:'content', phrases:'content', buddy:'content', situations:'content',
+  errors:'system', switches:'system', changes:'system',
+};
+
 function renderNav(){
-  const gr = document.getElementById('grp-row');
   const tr = document.getElementById('tabs-row');
-  if (!gr || !tr) return;
-  gr.innerHTML = TAB_GROUPS.map(g =>
-    '<div class="grp' + (g.id === activeGroup ? ' on' : '') + '" onclick="pickGroup(\'' + g.id + '\')">'
-    + g.label + '</div>').join('');
-  const g = TAB_GROUPS.find(x => x.id === activeGroup) || TAB_GROUPS[0];
-  tr.innerHTML = g.tabs.map(([id,label]) =>
+  if (!tr) return;
+  tr.innerHTML = NAV.map(([id,label]) =>
     '<div class="tab' + (id === activeTab ? ' active' : '') + '" onclick="switchTab(\'' + id + '\')">'
     + label + '</div>').join('');
 }
-function pickGroup(gid){
-  activeGroup = gid;
-  renderNav();
-  const g = TAB_GROUPS.find(x => x.id === gid);
-  if (g && g.tabs.length && !g.tabs.some(t => t[0] === activeTab)) switchTab(g.tabs[0][0]);
+
+/* ═══ АКОРДЕОН ═══
+   Один відкритий за раз усередині вкладки — щоб не було стіни.
+   Стан пам'ятається: повернувся на вкладку — той самий блок відкритий. */
+const accOpen = {};
+
+function acc(id, icon, title, sub, body, opts){
+  opts = opts || {};
+  const isOpen = accOpen[id] === true || (accOpen[id] === undefined && opts.open === true);
+  const badge = opts.badge
+    ? '<span class="acc-badge" style="background:' + (opts.badgeBg || 'var(--surface2)')
+      + ';color:' + (opts.badgeFg || 'var(--text2)') + '">' + opts.badge + '</span>'
+    : '';
+  return '<div class="acc' + (isOpen ? ' open' : '') + '" id="acc-' + id + '">'
+    + '<div class="acc-head" onclick="toggleAcc(\'' + id + '\')">'
+    +   '<span class="acc-ic">' + icon + '</span>'
+    +   '<span class="acc-tt"><div class="acc-t">' + title + '</div>'
+    +     (sub ? '<div class="acc-s">' + sub + '</div>' : '') + '</span>'
+    +   badge
+    +   '<span class="acc-arr">›</span>'
+    + '</div>'
+    + '<div class="acc-body">' + body + '</div>'
+    + '</div>';
+}
+
+function toggleAcc(id){
+  const el = document.getElementById('acc-' + id);
+  if (!el) return;
+  const willOpen = !el.classList.contains('open');
+  el.classList.toggle('open', willOpen);
+  accOpen[id] = willOpen;
+  /* Графіки всередині акордеона малюються ТІЛЬКИ коли його відкрили.
+     Chart.js не вміє малювати у прихованому блоці — виходить 0x0. */
+  if (willOpen) setTimeout(() => drawCharts(activeTab), 60);
 }
 
 /* Малюємо навігацію одразу — до завантаження даних */
@@ -640,16 +605,16 @@ function renderChanges(){
 }
 
 function switchTab(tab) {
-  activeTab   = tab;
-  activeGroup = groupOf(tab);
+  activeTab = tab;
   renderNav();
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-  const _sec = document.getElementById(`tab-${tab}`);
+  const _sec = document.getElementById('tab-' + tab);
   if (_sec) _sec.classList.add('active');
-  // Рубильники малюються навіть без повного data — це не аналітика
-  if (tab === 'changes')  { renderChanges(); return; }
-  if (tab === 'errors')   { renderErrors();  return; }
-  if (tab === 'switches') { renderSwitches(); return; }
+  const _c = document.querySelector('.content');
+  if (_c) _c.scrollTop = 0;
+  /* Система і Команди малюються навіть без data — це не аналітика */
+  if (tab === 'system') { renderSystem(); return; }
+  if (tab === 'cmds')   { renderCommands(); return; }
   if (data) renderTab(tab);
 }
 
@@ -679,12 +644,8 @@ let lastAIAnalysis = '';
 let lastTZText = '';
 
 async function loadTZ() {
-  const btn   = document.getElementById('tz-btn');
   const modal = document.getElementById('tz-modal');
   const content = document.getElementById('tz-content');
-
-  btn.textContent = '⏳';
-  btn.style.pointerEvents = 'none';
   modal.style.display = 'flex';
   content.textContent = 'Генерую технічне завдання... ~20 секунд ⏳';
 
@@ -708,9 +669,6 @@ async function loadTZ() {
   } catch(e) {
     content.textContent = '❌ Помилка: ' + e.message;
   }
-
-  btn.textContent = '📋';
-  btn.style.pointerEvents = 'auto';
 }
 
 function closeTZ() {
@@ -743,13 +701,8 @@ async function copyTZ() {
 }
 
 async function loadAIInsights() {
-  const btn    = document.getElementById('ai-btn');
-  const panel  = document.getElementById('ai-panel');
-  const content= document.getElementById('ai-content');
-
-  btn.textContent = '⏳';
-  btn.style.pointerEvents = 'none';
-  panel.style.display = 'block';
+  const content = document.getElementById('ai-content');
+  if (!content) return;
   content.textContent = 'Аналізую дані... Це займе ~15 секунд ⏳';
 
   try {
@@ -767,24 +720,17 @@ async function loadAIInsights() {
     } else {
       lastAIAnalysis = d.analysis;  // зберігаємо для передачі в ТЗ
       content.textContent = d.analysis;
-      document.getElementById('ai-generated-at').textContent = d.generated_at || '';
+      const _g = document.getElementById('ai-generated-at');
+      if (_g) _g.textContent = d.generated_at || '';
     }
   } catch(e) {
     content.textContent = '❌ Помилка: ' + e.message;
   }
-
-  btn.textContent = '🤖';
-  btn.style.pointerEvents = 'auto';
 }
 
 async function loadABHypotheses() {
-  const btn    = document.getElementById('ab-btn');
-  const panel  = document.getElementById('ab-panel');
-  const content= document.getElementById('ab-content');
-
-  btn.textContent = '⏳';
-  btn.style.pointerEvents = 'none';
-  panel.style.display = 'block';
+  const content = document.getElementById('ab-content');
+  if (!content) return;
   content.textContent = 'Генерую A/B-гіпотези з кривої відвалу... ~20 секунд ⏳';
 
   try {
@@ -801,14 +747,12 @@ async function loadABHypotheses() {
       content.textContent = '❌ ' + d.error;
     } else {
       content.textContent = d.analysis;
-      document.getElementById('ab-generated-at').textContent = d.generated_at || '';
+      const _g = document.getElementById('ab-generated-at');
+      if (_g) _g.textContent = d.generated_at || '';
     }
   } catch(e) {
     content.textContent = '❌ Помилка: ' + e.message;
   }
-
-  btn.textContent = '🧪';
-  btn.style.pointerEvents = 'auto';
 }
 
 async function loadData() {
@@ -826,50 +770,412 @@ async function loadData() {
     data = await res.json();
     if (data.error) throw new Error(data.error);
 
-    // Ховаємо фінансові вкладки для розробника
+    /* Ховаємо фінанси від розробника — тепер це ЦІЛІ вкладки «Гроші» і «Блогери» */
     if (data.is_dev) {
       document.querySelectorAll('.tab').forEach(t => {
-        if (t.textContent === 'Revenue' || t.textContent === 'Блогери') {
-          t.style.display = 'none';
-        }
+        const x = t.textContent;
+        if (x.indexOf('Гроші') >= 0 || x.indexOf('Блогери') >= 0) t.style.display = 'none';
       });
+      if (activeTab === 'money' || activeTab === 'partners') switchTab('today');
     }
     const now = new Date().toLocaleTimeString('uk-UA', {hour:'2-digit', minute:'2-digit'});
     document.getElementById('last-updated').textContent = `Оновлено ${now}`;
+    NAV.forEach(([id]) => renderTab(id));
     renderTab(activeTab);
-    ['overview','students','retention','funnel','revenue','buddy','situations','chfunnel','bloggers','actions'].forEach(t => {
-      if (t !== activeTab) renderTab(t);
-    });
   } catch(e) {
-    ['overview','students','retention','funnel','revenue','buddy','situations','chfunnel'].forEach(t => {
-      document.getElementById(`${t}-content`).innerHTML =
-        `<div class="error-box">❌ ${e.message}</div>`;
+    NAV.forEach(([id]) => {
+      const el = document.getElementById(id + '-content');
+      if (el) el.innerHTML = '<div class="error-box">❌ ' + e.message + '</div>';
     });
     document.getElementById('last-updated').textContent = 'Помилка завантаження';
   }
 }
 
+/* ═══ ДИСПЕТЧЕР — 6 вкладок, усередині акордеони ═══
+   Кожен acc() загортає стару render-функцію БЕЗ ЗМІН.
+   Порядок усередині — за важливістю: те, на що дивишся щодня, вгорі. */
 function renderTab(tab) {
-  if (tab === 'switches') { renderSwitches(); return; }
-  const el = document.getElementById(`${tab}-content`);
-  if (!data) return;
-  switch(tab) {
-    case 'overview':   el.innerHTML = renderOverview(); break;
-    case 'students':   el.innerHTML = renderStudents(); break;
-    case 'retention':  el.innerHTML = renderRetention(); break;
-    case 'funnel':     el.innerHTML = renderFunnel(); break;
-    case 'revenue':    el.innerHTML = renderRevenue(); break;
-    case 'buddy':      el.innerHTML = renderBuddy(); break;
-    case 'situations': el.innerHTML = renderSituations(); break;
-    case 'chfunnel':   el.innerHTML = renderChFunnel(); break;
-    case 'onboarding': el.innerHTML = renderOnboarding(); break;
-    case 'diagnostic': el.innerHTML = renderDiagnostic(); break;
-    case 'phrases':    el.innerHTML = renderPhraseRanking(); break;
-    case 'content':    el.innerHTML = renderContent(); break;
-    case 'bloggers':   el.innerHTML = renderBloggers(); break;
-    case 'actions':    el.innerHTML = renderActions(); break;
+  if (tab === 'system') { renderSystem(); return; }
+  if (tab === 'cmds')   { renderCommands(); return; }
+  const el = document.getElementById(tab + '-content');
+  if (!el || !data) return;
+
+  if (tab === 'today') {
+    el.innerHTML =
+        renderTodo()
+      + acc('a-over', '📊', 'Огляд', 'Юзери, активні, платні, тріал', renderOverview(), {open:true})
+      + acc('a-ai',   '🤖', 'AI-аналіз системи', 'Клікни — бот подумає й напише', aiSlot())
+      + acc('a-ab',   '🧪', 'A/B-гіпотези', 'Що тестувати далі — з воронки', abSlot())
+      + acc('a-tz',   '📋', 'ТЗ для Claude', 'Готовий бриф — скопіювати й вставити', tzSlot());
   }
-  setTimeout(() => drawCharts(tab), 50);
+
+  if (tab === 'students') {
+    const s  = (data.students && data.students.summary) || {};
+    const bad = (s.stuck || 0) + (s.churned || 0);
+    el.innerHTML =
+        acc('a-stu', '👥', 'Учні', 'Застрягли · кинули · не платять · рухаються',
+            renderStudents(), {open:true,
+            badge: bad ? bad + ' ⚠️' : null, badgeBg:'rgba(245,158,11,.15)', badgeFg:'var(--amber)'})
+      + acc('a-ret', '📈', 'Retention', 'Когорти — хто лишається', renderRetention())
+      + acc('a-onb', '👋', 'Онбординг', 'День 1 — перший крок', renderOnboarding())
+      + acc('a-dia', '🎯', 'Діагностика', 'День 4 — рівень', renderDiagnostic());
+  }
+
+  if (tab === 'money') {
+    el.innerHTML =
+        acc('a-rev', '💵', 'Revenue', 'Дохід, плани, джерела', renderRevenue(), {open:true})
+      + acc('a-fun', '🫙', 'Воронка підписки', 'Від старту до оплати · win-back', renderFunnel())
+      + acc('a-chf', '📉', 'Воронка челенджу', 'Крива відвалу 1→7 день', renderChFunnel())
+      + acc('a-act', '⚡️', 'Дії в продукті', 'Drop-off · глибина · discovery', renderActions());
+  }
+
+  if (tab === 'partners') {
+    el.innerHTML = renderPartners();
+  }
+
+  if (tab === 'content') {
+    el.innerHTML =
+        acc('a-cnt', '🔥', 'Що працює', 'Що реально практикують — лічильники',
+            renderContent(), {open:true})
+      + acc('a-phr', '💬', 'Фрази', 'Що ЗАЛУЧАЄ — демо-воронка', renderPhraseRanking())
+      + acc('a-bud', '🗣', 'Chainy / Buddy', 'Сесії, глибина розмов', renderBuddy())
+      + acc('a-sit', '🎁', 'Ситуації', 'Квіз дня 1 → подарунок', renderSituations());
+  }
+
+  setTimeout(() => drawCharts(tab), 60);
+}
+
+/* ═══ «ЩО РОБИТИ» — панель перестає інформувати й починає вести ═══
+   Рахується з ДАНИХ, ЯКІ ВЖЕ Є. bot.py не чіпали.
+   Кожен рядок — клік → веде на вкладку, де це лікується. */
+/* ── Перехід у Стратегію. Зберігаємо ?api=, бо вона теж його читає. ── */
+function goStrategy() {
+  const p = new URLSearchParams(location.search);
+  const api = p.get('api') || '';
+  const url = 'strategy_dashboard.html' + (api ? '?api=' + encodeURIComponent(api) : '');
+  location.href = url;
+}
+
+/* Українська множина: 1 учень / 2 учні / 5 учнів */
+function plu(n, one, few, many) {
+  const a = Math.abs(n) % 100, b = a % 10;
+  if (a > 10 && a < 20) return many;
+  if (b > 1 && b < 5)   return few;
+  if (b === 1)          return one;
+  return many;
+}
+
+function renderTodo() {
+  const items = [];
+  const S = data.students || {};
+  const s = S.summary || {};
+  const E = data.errors || {};
+
+  const churn = s.churned || 0;
+  if (churn > 0) items.push({
+    c:'var(--red)', t: churn + ' ' + plu(churn,'учень кинув','учні кинули','учнів кинули'),
+    d:'Не заходили ' + (s.churn_days || '?') + '+ днів. Кандидати на win-back.',
+    go:'Учні ›', tab:'students', open:'a-stu'
+  });
+
+  const unpaid = (S.unpaid || []).length;
+  if (unpaid > 0) items.push({
+    c:'var(--amber)', t: unpaid + ' не платять',
+    d:'Тріал минув, активність була, оплати нема.',
+    go:'Учні ›', tab:'students', open:'a-stu'
+  });
+
+  const stuck = s.stuck || 0;
+  if (stuck > 0) items.push({
+    c:'var(--amber)', t: stuck + ' ' + plu(stuck,'застряг','застрягли','застрягли'),
+    d:'Низький прогрес + пасивні. Нагадування допоможе.',
+    go:'Учні ›', tab:'students', open:'a-stu'
+  });
+
+  const hot = ((E.list || []).filter(x => x.status === 'hot')).length;
+  if (hot > 0) items.push({
+    c:'var(--red)', t: hot + ' ' + plu(hot,'помилка повторюється','помилки повторюються','помилок повторюються'),
+    d:'Бот падає в тому самому місці. Це видно учням.',
+    go:'Система ›', tab:'system', open:'a-err'
+  });
+
+  const B = data.bloggers || {};
+  const debt = B.unpaid_all_total || 0;
+  if (debt > 0) items.push({
+    c:'var(--amber)', t:'$' + fmt(debt) + ' боргу блогерам',
+    d:'За всі місяці, включно з пропущеними.',
+    go:'Блогери ›', tab:'partners', open:'a-pay'
+  });
+
+  const body = items.length
+    ? items.map(i =>
+        '<div class="todo-i" onclick="goTo(\'' + i.tab + '\',\'' + i.open + '\')">'
+        + '<span class="todo-dot" style="background:' + i.c + '"></span>'
+        + '<span class="todo-tx"><div class="todo-t">' + i.t + '</div>'
+        + '<div class="todo-d">' + i.d + '</div></span>'
+        + '<span class="todo-go">' + i.go + '</span></div>').join('')
+    : '<div class="todo-ok">✅ Гострого нічого. Дивись цифри нижче.</div>';
+
+  return '<div class="todo"><div class="todo-h">🎯 Що робити зараз</div>'
+    + '<div class="todo-sub">Бот сам знайшов. Тицяй — відкриється те місце.</div>'
+    + body + '</div>';
+}
+
+/* Перехід: вкладка + одразу розкритий потрібний акордеон */
+function goTo(tab, accId) {
+  if (accId) accOpen[accId] = true;
+  switchTab(tab);
+  setTimeout(() => {
+    const el = document.getElementById('acc-' + accId);
+    if (el) el.scrollIntoView({behavior:'smooth', block:'start'});
+  }, 120);
+}
+
+/* ── Слоти AI / A-B / ТЗ. Були іконками в шапці — ніхто не знаходив. ── */
+function aiSlot() {
+  return '<div id="ai-generated-at" style="font-size:11px;color:var(--text3);margin-bottom:8px"></div>'
+    + '<div id="ai-content" style="font-size:13px;color:var(--text);line-height:1.7;white-space:pre-wrap"></div>'
+    + '<button onclick="loadAIInsights()" style="background:var(--purple);border:none;border-radius:8px;'
+    + 'color:#fff;font-size:13px;font-weight:600;padding:9px 16px;cursor:pointer;margin-top:4px">'
+    + 'Проаналізувати</button>';
+}
+function abSlot() {
+  return '<div id="ab-generated-at" style="font-size:11px;color:var(--text3);margin-bottom:8px"></div>'
+    + '<div id="ab-content" style="font-size:13px;color:var(--text);line-height:1.7;white-space:pre-wrap"></div>'
+    + '<button onclick="loadABHypotheses()" style="background:var(--green);border:none;border-radius:8px;'
+    + 'color:#0f0f0f;font-size:13px;font-weight:600;padding:9px 16px;cursor:pointer;margin-top:4px">'
+    + 'Згенерувати гіпотези</button>';
+}
+function tzSlot() {
+  return '<div style="font-size:12px;color:var(--text2);margin-bottom:10px">'
+    + 'Бот збере повний бриф — стан, цифри, проблеми. Копіюєш і даєш Claude.</div>'
+    + '<button onclick="loadTZ()" style="background:var(--accent);border:none;border-radius:8px;'
+    + 'color:#fff;font-size:13px;font-weight:600;padding:9px 16px;cursor:pointer">Зібрати ТЗ</button>';
+}
+
+/* ═══ 🤝 БЛОГЕРИ ═══
+   Було: блогерські дані розкидані по 4 вкладках (Блогери, Revenue,
+   Що працює, Воронка). Щоб оцінити партнера — треба обійти всю панель.
+   Стало: рейтинг зверху відповідає на головне питання —
+   НЕ «хто дав більше», а «хто дав КРАЩИХ». */
+function renderPartners() {
+  const d = data.bloggers;
+  if (!d) return '<div class="error-box">Фінансові дані приховані (режим розробника)</div>';
+  const stats = d.blogger_stats || [];
+
+  /* Рейтинг рахується з полів, які бот УЖЕ віддає. Нічого нового. */
+  const rank = stats.map(b => {
+    const total = b.total || 0;
+    const paid  = (b.basic || 0) + (b.premium || 0);
+    const conv  = total ? Math.round(paid / total * 100) : 0;
+    const act   = total ? Math.round((b.active || 0) / total * 100) : 0;
+    const per   = total ? (parseFloat(b.commission || 0) / total) : 0;
+    return {name:b.name, total, paid, conv, act, per, trial:b.trial || 0};
+  }).sort((x, y) => (y.conv - x.conv) || (y.total - x.total));
+
+  const rows = rank.length ? rank.map(b => {
+    const cC = b.conv >= 10 ? 'var(--green)' : b.conv >= 5 ? 'var(--amber)' : 'var(--red)';
+    const aC = b.act  >= 50 ? 'var(--green)' : b.act  >= 25 ? 'var(--amber)' : 'var(--red)';
+    return '<tr>'
+      + '<td style="font-weight:600">' + esc(b.name) + '</td>'
+      + '<td>' + fmt(b.total) + '</td>'
+      + '<td style="color:' + cC + ';font-weight:600">' + b.conv + '%</td>'
+      + '<td style="color:' + aC + '">' + b.act + '%</td>'
+      + '<td style="color:var(--green)">$' + b.per.toFixed(1) + '</td>'
+      + '</tr>';
+  }).join('') : '<tr><td colspan="5" style="color:var(--text3);text-align:center">Немає блогерів</td></tr>';
+
+  const best = rank.length ? rank[0] : null;
+  const weak = rank.length > 1 ? rank[rank.length - 1] : null;
+
+  const verdict = best
+    ? '<div style="font-size:12px;color:var(--text2);line-height:1.6;margin-top:10px">'
+      + '🏆 <b style="color:var(--green)">' + esc(best.name) + '</b> — найкраща конверсія ('
+      + best.conv + '%). Шукай схожих блогерів.'
+      + (weak && weak.conv < 5
+          ? '<br>⚠️ <b style="color:var(--amber)">' + esc(weak.name) + '</b> — конверсія '
+            + weak.conv + '%. Аудиторія приходить, але не купує: не той меседж або не та аудиторія.'
+          : '')
+      + '</div>'
+    : '';
+
+  const ratingBody =
+      '<div style="font-size:11px;color:var(--text3);margin-bottom:8px">'
+    + 'Конверсія = скільки з приведених ЗАПЛАТИЛИ. Утримання = скільки досі активні.<br>'
+    + '<b>50 учнів із конверсією 20% цінніші за 300 із конверсією 3%.</b></div>'
+    + '<table><tr><th>Блогер</th><th>Учнів</th><th>Конв.</th><th>Актив.</th><th>$ / учня</th></tr>'
+    + rows + '</table>' + verdict;
+
+  const debt = d.unpaid_all_total || 0;
+
+  return acc('a-rank', '🏆', 'Рейтинг партнерів', 'Хто дав КРАЩИХ, а не просто більше',
+             ratingBody, {open:true})
+    + acc('a-pay', '💸', 'Бухгалтерія', 'Нарахування · оплати · виплати · борги',
+          payoutHow() + renderBloggers(),
+          {badge: debt ? '$' + fmt(debt) : null,
+           badgeBg:'rgba(245,158,11,.15)', badgeFg:'var(--amber)'})
+    + acc('a-new', '➕', 'Новий блогер', 'Як створити реферальне посилання',
+          '<div style="font-size:13px;color:var(--text);line-height:1.7">'
+          + 'Посилання генерується <b>в чаті з ботом</b>, не тут:<br><br>'
+          + '<code style="background:var(--surface2);padding:4px 9px;border-radius:6px;'
+          + 'color:var(--accent);font-size:13px">/gen_ref ІМ\'Я</code><br><br>'
+          + '<span style="color:var(--text2);font-size:12px">Бот віддасть посилання. '
+          + 'Далі блогер з\'явиться в рейтингу вище автоматично.</span></div>');
+}
+
+/* Пояснює, ЯК позначити виплату — бо кнопки в панелі немає, вона в чаті.
+   Панель показує борг, але погасити його можна тільки командою. */
+function payoutHow() {
+  return '<div style="background:var(--surface2);border-radius:9px;padding:11px 12px;'
+    + 'margin-bottom:12px;font-size:12px;color:var(--text2);line-height:1.65">'
+    + '<b style="color:var(--text);font-size:12px">Як позначити виплату</b><br>'
+    + 'Кнопка «Виплачено» живе <b>в чаті</b>, не тут:<br>'
+    + '<code style="background:var(--bg);padding:2px 7px;border-radius:5px;color:var(--accent)">'
+    + '/admin_payouts</code> → тисни «Виплачено»<br><br>'
+    + '<span style="color:var(--green)">✓</span> Google Sheets (лист <b>Payouts</b>) оновиться сам<br>'
+    + '<span style="color:var(--green)">✓</span> Блогеру прийде повідомлення про виплату<br>'
+    + '<span style="color:var(--green)">✓</span> Сума тут перерахується'
+    + '</div>';
+}
+
+/* ═══ ДОВІДНИК КОМАНД ═══
+   Усі 39 адмінських команд бота. Описи взяті З КОДУ (docstring), не вигадані.
+   Панель показує проблему — команда її лікує. Тут написано, яка саме.
+
+   Позначки:
+   chat  — виконується ТІЛЬКИ в чаті (файл/аргумент), у панель не переноситься
+   panel — те саме вже є в панелі, команда дублює
+   soon  — можна перенести в панель, потрібен ендпоїнт у bot.py           */
+const CMDS = [
+ {g:'💸 Гроші й виплати', items:[
+   {c:'/admin_payouts', a:'[YYYY-MM]', d:'Таблиця виплат блогерам за місяць. Тут же кнопка «Виплачено» — вона синкає Google Sheets і шле блогеру повідомлення.', t:'chat', why:'Головна команда для грошей. Позначка виплати живе тільки тут.'},
+   {c:'/deliver_pending', a:'', d:'Дошле покупки, що зависли в черзі, поки не було завантажено контент. Запускати ПІСЛЯ того, як залив файл.', t:'chat', why:'Люди заплатили й не отримали. Найгостріше.'},
+   {c:'/setpremium', a:'USER_ID', d:'Вручну активувати Premium користувачу.', t:'soon'},
+   {c:'/test_pay', a:'[basic|premium] [сума]', d:'Тестовий разовий платіж — перевірити, що оплата проходить.', t:'test'},
+ ]},
+ {g:'🤝 Блогери', items:[
+   {c:'/gen_ref', a:'ІМ\'Я', d:'Генерує реферальне посилання для блогера. Після цього він з\'явиться в рейтингу партнерів.', t:'soon'},
+   {c:'/list_bloggers', a:'', d:'Список усіх блогерів.', t:'panel', where:'🤝 Блогери → Рейтинг'},
+   {c:'/view_blogger', a:'ІМ\'Я', d:'Дашборд одного блогера: студенти, прогрес, дохід.', t:'panel', where:'🤝 Блогери → Рейтинг'},
+   {c:'/create_blogger_code', a:'@username', d:'Створити код доступу для блогера.', t:'soon'},
+   {c:'/list_blogger_codes', a:'', d:'Активні (невикористані) коди блогерів.', t:'soon'},
+   {c:'/admin_refs', a:'', d:'Хто кого привів — реферальні зв\'язки.', t:'soon'},
+   {c:'/admin_partners', a:'', d:'Черга заявок у партнери.', t:'soon'},
+   {c:'/blogger', a:'', d:'Прихований вхід у кабінет блогера (для адміна теж).', t:'chat'},
+   {c:'/my_students', a:'', d:'Дашборд блогера: його студенти й дохід.', t:'chat', why:'Це кабінет блогера, не адмінки.'},
+   {c:'/my_challenge', a:'ТЕМА', d:'Блогер задає челендж своїм студентам.', t:'chat'},
+ ]},
+ {g:'📦 Контент і продукти', items:[
+   {c:'/gift_book_id', a:'reply на файл', d:'Відповісти цією командою на документ → бот віддасть file_id для GIFT_BOOK_FILE_ID (вписати в Railway).', t:'chat', why:'Працює через reply на файл. У панелі файлу нема.'},
+   {c:'/extra_product_id', a:'reply на файл', d:'Те саме для мікропродукту → EXTRA_PRODUCT_FILE_ID.', t:'chat'},
+   {c:'/code_phrase_gift_id', a:'reply на файл', d:'Те саме для подарунка за кодову фразу → CODE_PHRASE_GIFT_FILE_ID.', t:'chat'},
+   {c:'/set_challenge', a:'ТЕМА', d:'Встановити новий челендж для всіх.', t:'soon'},
+   {c:'/export_audio', a:'', d:'Витягує збережені placement-аудіо з Telegram і шле файлами.', t:'chat'},
+   {c:'/resetaudio', a:'', d:'Скидає кеш аудіо (audio_ids.json).', t:'chat'},
+ ]},
+ {g:'📣 Комунікація', items:[
+   {c:'/broadcast', a:'[тип] текст', d:'Розсилка всім. Типи: system (за замовч.), blogger, chain, promo.', t:'soon'},
+   {c:'/reply', a:'UID текст', d:'Відповісти студенту на його питання.', t:'soon'},
+   {c:'/setup_live_group', a:'посилання|ID', d:'Прив\'язати Premium-групу.', t:'soon'},
+ ]},
+ {g:'👤 Доступи', items:[
+   {c:'/add_admin', a:'USER_ID', d:'Супер-адмін додає під-адміна.', t:'soon'},
+   {c:'/remove_admin', a:'USER_ID', d:'Відкликати права під-адміна.', t:'soon'},
+   {c:'/list_admins', a:'', d:'Показати всіх адмінів.', t:'soon'},
+   {c:'/add_dev', a:'', d:'Інструкція, як призначити розробника.', t:'chat'},
+   {c:'/myid', a:'', d:'Твій Telegram ID + чи ти адмін.', t:'chat'},
+ ]},
+ {g:'⚙️ Система', items:[
+   {c:'/analytics', a:'', d:'Відкриває цю панель.', t:'panel', where:'ти вже тут'},
+   {c:'/strategy', a:'', d:'Відкриває Командний центр: пульс, дорожня карта, принципи.', t:'panel', where:'🧭 кнопка вгорі'},
+   {c:'/switches', a:'', d:'Усі рубильники: стан, що роблять, коли смикати.', t:'panel', where:'⚙️ Система → Рубильники'},
+   {c:'/dev', a:'', d:'Панель розробника.', t:'chat'},
+   {c:'/healthcheck', a:'', d:'Перевірка зовнішніх ключів (Pixabay, OpenAI) з середовища бота.', t:'chat'},
+ ]},
+ {g:'🧪 Тести (не для щоденного вжитку)', items:[
+   {c:'/test_expiry', a:'[3|0|-1] [UID]', d:'Надіслати нагадування про закінчення підписки. 3 = за 3 дні.', t:'test'},
+   {c:'/test_phrase', a:'[UID]', d:'Миттєво надіслати фразу дня.', t:'test'},
+   {c:'/test_streak_rescue', a:'[UID]', d:'Миттєво надіслати streak rescue.', t:'test'},
+   {c:'/test_wrapped', a:'[UID]', d:'Миттєво надіслати місячний Wrapped.', t:'test'},
+   {c:'/dev_level', a:'[A1..C2]', d:'Симулювати рівень (для себе).', t:'test'},
+   {c:'/dev_plan', a:'[demo|trial|basic|premium]', d:'Симулювати тариф.', t:'test'},
+   {c:'/dev_reset', a:'', d:'Скинути тестовий стан.', t:'test'},
+ ]},
+];
+
+const CMD_T = {
+  chat:  {l:'тільки в чаті', bg:'rgba(139,148,178,.15)', fg:'var(--text2)'},
+  panel: {l:'вже в панелі',  bg:'rgba(62,207,142,.15)',  fg:'var(--green)'},
+  soon:  {l:'можна перенести', bg:'rgba(124,110,247,.15)', fg:'var(--purple)'},
+  test:  {l:'тест',          bg:'rgba(245,158,11,.15)',  fg:'var(--amber)'},
+};
+
+function renderCommands() {
+  const el = document.getElementById('cmds-content');
+  if (!el) return;
+  let n = 0;
+  CMDS.forEach(g => n += g.items.length);
+
+  const body = CMDS.map((g, gi) => {
+    const rows = g.items.map(i => {
+      const t = CMD_T[i.t] || CMD_T.chat;
+      const arg = i.a ? '<span style="color:var(--text3);font-weight:400"> ' + esc(i.a) + '</span>' : '';
+      const where = i.where
+        ? '<div style="font-size:11px;color:var(--green);margin-top:3px">→ ' + esc(i.where) + '</div>' : '';
+      const why = i.why
+        ? '<div style="font-size:11px;color:var(--amber);margin-top:3px">⚠️ ' + esc(i.why) + '</div>' : '';
+      return '<div style="padding:11px 0;border-bottom:1px solid var(--border)">'
+        + '<div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap">'
+        +   '<code style="background:var(--surface2);padding:3px 8px;border-radius:6px;'
+        +   'color:var(--accent);font-size:13px;font-weight:600">' + esc(i.c) + arg + '</code>'
+        +   '<span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:9px;'
+        +   'background:' + t.bg + ';color:' + t.fg + '">' + t.l + '</span>'
+        + '</div>'
+        + '<div style="font-size:12px;color:var(--text2);margin-top:5px;line-height:1.55">' + esc(i.d) + '</div>'
+        + where + why
+        + '</div>';
+    }).join('');
+    return acc('cmd-' + gi, '', g.g, g.items.length + ' шт.', rows, {open: gi === 0});
+  }).join('');
+
+  el.innerHTML =
+      '<div class="todo" style="margin-bottom:12px">'
+    + '<div class="todo-h">⌨️ Усі команди бота — ' + n + '</div>'
+    + '<div class="todo-sub">Описи взяті з коду, не вигадані. Копіюй і встав у чат з ботом.</div>'
+    + '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:9px">'
+    +   Object.keys(CMD_T).map(k => '<span style="font-size:10px;font-weight:700;padding:3px 8px;'
+        + 'border-radius:9px;background:' + CMD_T[k].bg + ';color:' + CMD_T[k].fg + '">'
+        + CMD_T[k].l + '</span>').join('')
+    + '</div></div>'
+    + body;
+}
+
+/* ═══ ⚙️ СИСТЕМА — малюється навіть без даних аналітики ═══ */
+function renderSystem() {
+  const el = document.getElementById('system-content');
+  if (!el) return;
+  const E = data && data.errors;
+  const hot = E ? (E.list || []).filter(x => x.status === 'hot').length : 0;
+
+  el.innerHTML =
+      acc('a-err', '🚨', 'Що зламалось', 'Бот ловить кожну помилку сам',
+          '<p style="color:var(--text2);font-size:12px;margin:0 0 12px">'
+          + 'Однакові — групуються. Мережевий шум відфільтровано.</p>'
+          + '<div class="err-sum" id="err-sum"></div><div id="err-list"></div>',
+          {open:true, badge: hot ? hot + ' 🔥' : null,
+           badgeBg:'rgba(239,68,68,.15)', badgeFg:'var(--red)'})
+    + acc('a-sw', '🎛', 'Рубильники', 'Аварійні вимикачі — вимкни, не чіпаючи код',
+          '<p style="color:var(--text2);font-size:12px;margin:0 0 12px">'
+          + '<b>Railway → Variables → зміни значення → Redeploy.</b> ~60 секунд.</p>'
+          + '<div id="sw-list"></div>')
+    + acc('a-chg', '📋', 'Журнал змін', 'Що розробили, що виправили',
+          '<div id="chg-ver"></div>'
+          + '<h2 style="margin:22px 0 10px;font-size:15px">Що сталось у боті</h2>'
+          + '<div id="chg-events"></div>');
+
+  renderErrors();
+  renderSwitches();
+  renderChanges();
 }
 
 // ── STUDENTS (Phase 1: трекшн учнів) ────────────────────
@@ -1597,6 +1903,7 @@ function renderNudgeAB() {
 // ── REVENUE ─────────────────────────────────────────────
 function renderRevenue() {
   const d = data.revenue;
+  if (!d) return '<div class="error-box">Фінансові дані приховані (режим розробника)</div>';
   return `
   <div class="cards">
     <div class="card green">
@@ -1793,7 +2100,14 @@ function renderSituations() {
 
 // ── CHALLENGE FUNNEL (крива відвалу 1→7) ─────────────────
 let chfunnelFlow = 'total';
-function setChFlow(flow) { chfunnelFlow = flow; document.getElementById('chfunnel-content').innerHTML = renderChFunnel(); }
+/* Воронка челенджу тепер живе в акордеоні всередині «Гроші».
+   Контейнера chfunnel-content більше нема — перемальовуємо тіло акордеона. */
+function setChFlow(flow) {
+  chfunnelFlow = flow;
+  const el = document.querySelector('#acc-a-chf .acc-body');
+  if (el) el.innerHTML = renderChFunnel();
+  setTimeout(() => drawChartsOld('chfunnel'), 60);
+}
 
 function renderChFunnel() {
   const d = data.challenge_funnel;
@@ -2041,7 +2355,26 @@ function renderDiagnostic() {
 }
 
 // ── CHARTS ───────────────────────────────────────────────
+/* Нова вкладка → які старі графіки в ній малювати.
+   Chart.js не малює у ПРИХОВАНОМУ блоці — вийде 0x0.
+   Тому drawCharts кличеться ще раз, коли акордеон відкривають (toggleAcc). */
+const CHARTS_IN_TAB = {
+  today:    ['overview'],
+  students: ['students', 'retention', 'onboarding', 'diagnostic'],
+  money:    ['revenue', 'funnel', 'chfunnel', 'actions'],
+  partners: ['bloggers'],
+  content:  ['content', 'phrases', 'buddy', 'situations'],
+  system:   [],
+  cmds:     [],
+};
+
 function drawCharts(tab) {
+  const list = CHARTS_IN_TAB[tab];
+  if (list) { list.forEach(t => drawChartsOld(t)); return; }
+  drawChartsOld(tab);
+}
+
+function drawChartsOld(tab) {
   const chartCfg = {
     responsive: true, maintainAspectRatio: false,
     plugins: { legend: { display: false } },
@@ -2099,6 +2432,18 @@ function drawCharts(tab) {
       { label: 'Basic', data: r.basic_monthly, borderColor: '#f59e0b', tension: .4, pointRadius: 2 },
       { label: 'Premium', data: r.premium_monthly, borderColor: '#a78bfa', tension: .4, pointRadius: 2 }
     ], { plugins: { legend: { display: true, labels: { color: '#888', font: { size: 11 } } } } });
+  }
+
+  /* Було зламано ДО переупаковки: канвас chart-blogger-revenue існував,
+     але makeChart для нього ніхто не кликав. Графік не малювався ніколи. */
+  if (tab === 'bloggers') {
+    const b = data.bloggers;
+    if (b && b.months && b.months.length) {
+      makeChart('chart-blogger-revenue', 'bar',
+        b.months.map(m => m.label),
+        [{ data: b.months.map(m => parseFloat(m.total_commission || 0)),
+           backgroundColor: 'rgba(62,207,142,.7)', borderRadius: 4 }]);
+    }
   }
 
   if (tab === 'buddy') {
@@ -2315,6 +2660,7 @@ function renderShareVariants() {
 
 function renderBloggers() {
   const d = data.bloggers;
+  if (!d) return '<div class="error-box">Немає даних</div>';
   const months = d.months || [];
 
   // Місяць-селектор

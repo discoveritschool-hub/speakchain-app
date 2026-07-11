@@ -41,6 +41,16 @@ body{font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
 .head{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:26px;gap:20px;flex-wrap:wrap}
 .head h2{font-size:26px;font-weight:750;letter-spacing:-.02em}
 .head .sub{color:var(--muted);font-size:14px;margin-top:3px}
+.xref{display:flex;align-items:center;gap:8px;background:#f4f1ea;border:1px solid #e2dbd0;
+  border-radius:8px;padding:9px 12px;margin-bottom:14px;font-size:12px;color:#6b6357;cursor:pointer;
+  transition:border-color .15s}
+.xref:hover{border-color:#8a7f6d}
+.xref b{color:#3a352d}
+.manual{display:inline-block;font-size:9px;font-weight:700;color:#8a6d2f;background:#fdf3dc;
+  border:1px solid #f0d9b0;border-radius:4px;padding:1px 5px;margin-left:5px;vertical-align:middle;
+  cursor:help;letter-spacing:.02em}
+.live-dot{display:inline-block;width:5px;height:5px;border-radius:50%;background:#5a8a2f;
+  margin-left:5px;vertical-align:middle}
 .demo-pill{font-size:11px;font-weight:600;color:var(--amber);background:var(--amber-soft);padding:5px 11px;border-radius:20px;border:1px solid #f0d9b0}
 
 /* cards */
@@ -136,7 +146,14 @@ body{font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
   <div class="navlabel">План</div>
   <button class="nav" onclick="go('roadmap',this)"><span class="ic">→</span><span>Дорожня карта</span></button>
   <button class="nav" onclick="go('principles',this)"><span class="ic">◇</span><span>Принципи</span></button>
-  <div class="foot">Демо-дані.<br>Підстав свої реальні цифри в коді (об'єкт DATA).</div>
+  <div class="navlabel">Щоденне</div>
+  <button class="nav" onclick="goAnalytics()" style="border:1px solid #d8cfc0">
+    <span class="ic">📈</span><span>Аналітика →</span></button>
+  <div class="foot">
+    <b>Це стратегічний огляд.</b><br>
+    Деталі, таблиці й учні — в Аналітиці.<br><br>
+    <span style="opacity:.75">Позначка <b>вписано</b> = бот цього ще не рахує.</span>
+  </div>
 </aside>
 <main class="main">
 <div class="panel on" id="overview">
@@ -145,27 +162,28 @@ body{font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
     <div class="demo-pill">● демо-дані</div>
   </div>
   <div class="grid g4">
-    <div class="metric accent"><div class="lab">MRR</div><div class="val" data-k="mrr">$0</div><div class="delta up" data-k="mrr_d">—</div></div>
-    <div class="metric"><div class="lab">Активних користувачів</div><div class="val" data-k="dau">0</div><div class="delta up" data-k="dau_d">—</div></div>
-    <div class="metric"><div class="lab">Платних підписок</div><div class="val" data-k="paid">0</div><div class="delta up" data-k="paid_d">—</div></div>
-    <div class="metric"><div class="lab">Конверсія челенджу D6</div><div class="val" data-k="conv">0%</div><div class="delta flat" data-k="conv_d">—</div></div>
+    <div class="metric accent"><div class="lab">MRR<span class="live-dot" title="Живі дані з бота"></span></div><div class="val" data-k="mrr">$0</div><div class="delta up" data-k="mrr_d">—</div></div>
+    <div class="metric"><div class="lab">Активних користувачів<span class="live-dot" title="Живі дані з бота"></span></div><div class="val" data-k="dau">0</div><div class="delta up" data-k="dau_d">—<span class="manual" title="Бот не рахує зміну за тиждень. Цю дельту вписано вручну.">вписано</span></div></div>
+    <div class="metric"><div class="lab">Платних підписок<span class="live-dot" title="Живі дані з бота"></span></div><div class="val" data-k="paid">0</div><div class="delta up" data-k="paid_d">—<span class="manual" title="Бот не рахує приріст. Вписано вручну.">вписано</span></div></div>
+    <div class="metric"><div class="lab">Конверсія челенджу D6<span class="live-dot" title="Живі дані з бота"></span></div><div class="val" data-k="conv">0%</div><div class="delta flat" data-k="conv_d">—<span class="manual" title="Бот не рахує тренд конверсії. Вписано вручну.">вписано</span></div></div>
   </div>
   <div class="section-t">Утримання</div>
   <div class="grid g3">
-    <div class="metric"><div class="lab">D1 retention</div><div class="val" data-k="d1">0%</div><div class="delta up">повертаються наступного дня</div></div>
-    <div class="metric"><div class="lab">D7 retention</div><div class="val" data-k="d7">0%</div><div class="delta up">тримаються тиждень</div></div>
-    <div class="metric"><div class="lab">D30 retention</div><div class="val" data-k="d30">0%</div><div class="delta up">залишаються місяць</div></div>
+    <div class="metric"><div class="lab">D1 retention<span class="live-dot" title="Живі дані з бота"></span></div><div class="val" data-k="d1">0%</div><div class="delta up">повертаються наступного дня</div></div>
+    <div class="metric"><div class="lab">D7 retention<span class="live-dot" title="Живі дані з бота"></span></div><div class="val" data-k="d7">0%</div><div class="delta up">тримаються тиждень</div></div>
+    <div class="metric"><div class="lab">D30 retention<span class="live-dot" title="Живі дані з бота"></span></div><div class="val" data-k="d30">0%</div><div class="delta up">залишаються місяць</div></div>
   </div>
   <div class="section-t">Здоров'я юніт-економіки</div>
   <div class="grid g3">
-    <div class="metric"><div class="lab">Вартість AI / користувач</div><div class="val" data-k="aicost">$0</div><div class="delta flat">Haiku · 20 повід./день</div></div>
-    <div class="metric"><div class="lab">Середній ланцюжок</div><div class="val" data-k="chain">0</div><div class="delta flat">днів поспіль</div></div>
-    <div class="metric"><div class="lab">Виплати блогерам</div><div class="val" data-k="payout">$0</div><div class="delta flat">25% від платежів</div></div>
+    <div class="metric"><div class="lab">Вартість AI / користувач<span class="manual" title="Бот НЕ рахує витрати на токени. Це число вписано вручну як орієнтир. Щоб оживити — треба логувати токени в bot.py.">вписано</span></div><div class="val" data-k="aicost">$0</div><div class="delta flat">Haiku · 20 повід./день · оцінка</div></div>
+    <div class="metric"><div class="lab">Середній ланцюжок<span class="live-dot" title="Живі дані з бота"></span></div><div class="val" data-k="chain">0</div><div class="delta flat">днів поспіль</div></div>
+    <div class="metric"><div class="lab">Виплати блогерам<span class="live-dot" title="Живі дані. Сума комісій, позначених як виплачені. Синхронізується з Google Sheets (лист Payouts)."></span></div><div class="val" data-k="payout">$0</div><div class="delta flat">25% · синк з Google Sheets</div></div>
   </div>
   <div class="note">Це демо-каркас. Кожна цифра тягнеться з об'єкта <b>DATA</b> у коді — підстав туди реальні значення зі своєї бази, і дашборд оживе. Метрики згруповані так, як їх читає засновник: спершу гроші й активність, потім утримання, потім здоров'я економіки.</div>
 </div>
 <div class="panel" id="funnel">
-  <div class="head"><div><h2>Воронка</h2><div class="sub">Шлях від відео блогера до оплати — де втрачаємо людей</div></div><div class="demo-pill">● демо-дані</div></div>
+  <div class="head"><div><h2>Воронка</h2><div class="sub">Шлях від відео блогера до оплати — де втрачаємо людей</div></div>
+  <div class="xref" onclick="goAnalytics()"><span>📈</span><span>Огляд за період. <b>Повна воронка</b> — кроки, win-back, A/B, джерела — в Аналітиці. <b>Відкрити →</b></span></div><div class="demo-pill">● демо-дані</div></div>
   <div class="card">
     <div class="funnel" id="funnelbars"></div>
     <div class="note">Кожен рядок — крок воронки. Ширина = скільки людей дійшло. Найбільший провал між кроками показує, де треба покращувати продукт. Демо показує типову форму: основний відвал — на стику «відео → бот» і на оплаті.</div>
@@ -189,7 +207,8 @@ body{font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
   </div>
 </div>
 <div class="panel" id="onboarding">
-  <div class="head"><div><h2>Онбординг Дня 1</h2><div class="sub">Портрет аудиторії + де кидають квіз знайомства</div></div><div class="demo-pill">● демо-дані</div></div>
+  <div class="head"><div><h2>Онбординг Дня 1</h2><div class="sub">Портрет аудиторії + де кидають квіз знайомства</div></div>
+  <div class="xref" onclick="goAnalytics()"><span>📈</span><span>Огляд. <b>Повні дані онбордингу</b> — в Аналітиці. <b>Відкрити →</b></span></div><div class="demo-pill">● демо-дані</div></div>
   <div class="grid g3">
     <div class="metric accent"><div class="lab">Відкрили квіз</div><div class="val" data-k="onb_opened">0</div><div class="delta flat">почали знайомство</div></div>
     <div class="metric"><div class="lab">Завершили</div><div class="val" data-k="onb_completed">0</div><div class="delta up">пройшли до кінця</div></div>
@@ -210,6 +229,7 @@ body{font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
 
 <div class="panel" id="diagnostic" style="display:none">
   <div class="head"><div><h2>Діагностика Дня 4</h2><div class="sub">Рівні аудиторії, прогалини й скільки говорять уголос</div></div><div class="demo-pill">● демо-дані</div></div>
+  <div class="xref" onclick="goAnalytics()"><span>📈</span><span>Огляд. <b>Повна діагностика</b> — рівні, прогалини — в Аналітиці. <b>Відкрити →</b></span></div>
   <div class="grid g3">
     <div class="metric accent"><div class="lab">Завершили тест</div><div class="val" data-k="diag_done">0</div><div class="delta flat">пройшли діагностику</div></div>
     <div class="metric"><div class="lab">Сер. словник</div><div class="val" data-k="diag_words">0</div><div class="delta up">слів (Meara)</div></div>
@@ -226,7 +246,8 @@ body{font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
 </div>
 
 <div class="panel" id="money">
-  <div class="head"><div><h2>Гроші</h2><div class="sub">Тарифи, дохід блогерів та юніт-економіка</div></div><div class="demo-pill">● демо-дані</div></div>
+  <div class="head"><div><h2>Гроші</h2><div class="sub">Тарифи, дохід блогерів та юніт-економіка</div></div>
+  <div class="xref" onclick="goAnalytics()"><span>📈</span><span>Тарифи й юніт-економіка — <b>це рішення</b>. Живі цифри доходу — в Аналітиці. <b>Відкрити →</b></span></div><div class="demo-pill">● демо-дані</div></div>
   <div class="section-t">Тарифи</div>
   <div class="grid g2">
     <div class="tier">
@@ -391,6 +412,12 @@ function _apiBase(){
   try { const sp = TG?.initDataUnsafe?.start_param || ''; if(!base && sp.startsWith('http')) base = sp; } catch(_){}
   return base.replace(/\/+$/,'');
 }
+/* ── Перехід в Аналітику. Зберігаємо ?api=, вона його теж читає. ── */
+function goAnalytics(){
+  const p = new URLSearchParams(location.search);
+  const api = p.get('api') || '';
+  location.href = 'admin_analytics.html' + (api ? '?api=' + encodeURIComponent(api) : '');
+}
 function _fmtMoney(n){ return '$' + Math.round(n).toLocaleString('en-US'); }
 function _setDemoBadge(live){
   document.querySelectorAll('.demo-pill').forEach(el=>{
@@ -427,7 +454,12 @@ async function loadLive(){
     if(ov.total_users && ov.paid_users != null){
       DATA.conv = Math.round(ov.paid_users / ov.total_users * 100) + '%';
     }
-    if(rev && rev.total_paid_out != null) DATA.payout = _fmtMoney(rev.total_paid_out);
+    /* БУЛО: rev.total_paid_out — але в revenue такого ключа НЕМА.
+       Бот кладе його в bloggers.total_paid_out (bot.py:28106).
+       Через це показувалось вписане $3,100 замість реальних виплат.
+       Метрика правильна: сума комісій з paid=True, синкається в Google Sheets. */
+    const blg = d.bloggers;
+    if(blg && blg.total_paid_out != null) DATA.payout = _fmtMoney(blg.total_paid_out);
 
     // ── Жива воронка (registered → demo → trial → paid) ──
     const fn = d.funnel || {};
