@@ -268,6 +268,18 @@ tr:hover td{background:var(--surface2)}
   <div id="err-list"></div>
 </div>
 
+
+<!-- ═══ 📋 ЖУРНАЛ ЗМІН ═══ -->
+<div class="section" id="tab-changes">
+  <h2 style="margin:0 0 6px">📋 Журнал змін</h2>
+  <p style="color:var(--text2);font-size:13px;margin:0 0 18px">
+    Що розробили, що допиляли, що виправили. Плюс те, що бот зафіксував сам.
+  </p>
+  <div id="chg-ver"></div>
+  <h2 style="margin:26px 0 10px">Що сталось у боті</h2>
+  <div id="chg-events"></div>
+</div>
+
 <div class="section" id="tab-switches">
   <h2 style="margin:0 0 6px">🎛 Рубильники</h2>
   <p style="color:var(--text2);font-size:13px;margin:0 0 18px">
@@ -336,20 +348,60 @@ tr:hover td{background:var(--surface2)}
 .err-box .n{font-size:22px;font-weight:800;line-height:1.1}
 .err-box.bad .n{color:#f76e6e}
 .err-box .l{font-size:11px;color:#8888a8;margin-top:3px}
-.err-row{background:#16161f;border:1px solid #2a2a3a;border-radius:10px;
-  padding:11px 13px;margin-bottom:8px;display:flex;gap:11px;align-items:flex-start}
-.err-row.fresh{border-color:#f7a35c;background:rgba(247,163,92,.05)}
-.err-row.err{border-left:3px solid #f76e6e}
-.err-row.warn{border-left:3px solid #f7c95c}
-.err-ic{font-size:15px;flex-shrink:0;line-height:1.4}
-.err-b{flex:1;min-width:0}
-.err-m{font-size:13px;color:#eaeaf5;line-height:1.45;word-break:break-word;
+.err-hd{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:0 4px 8px;
+  font-size:11px;font-weight:700;color:#8888a8;letter-spacing:.04em;text-transform:uppercase}
+.err-row2{display:grid;grid-template-columns:1fr 1fr;gap:12px;
+  background:#16161f;border:1px solid #2a2a3a;border-radius:10px;
+  padding:12px 14px;margin-bottom:8px;align-items:start}
+.err-row2.fresh{border-color:#f7a35c}
+.err-row2.done{opacity:.6}
+.err-l{min-width:0}
+.err-r{min-width:0;border-left:1px solid #2a2a3a;padding-left:12px}
+.err-m{font-size:12.5px;color:#eaeaf5;line-height:1.45;word-break:break-word;
   font-family:ui-monospace,Menlo,monospace}
-.err-meta{font-size:11px;color:#8888a8;margin-top:4px;display:flex;gap:9px;flex-wrap:wrap}
-.err-cnt{background:#252535;padding:1px 7px;border-radius:99px;font-weight:700;
-  font-size:11px;color:#c9c2ff;flex-shrink:0;height:fit-content}
+.err-meta{font-size:11px;color:#8888a8;margin-top:5px;display:flex;gap:8px;flex-wrap:wrap}
+.err-cnt{background:#252535;padding:1px 7px;border-radius:99px;font-weight:700;color:#c9c2ff}
+.err-badge{display:inline-block;font-size:11px;font-weight:700;padding:3px 9px;
+  border-radius:99px;margin-bottom:7px}
+.err-badge.ok{background:rgba(90,216,166,.14);color:#5ad8a6}
+.err-badge.bad{background:rgba(247,110,110,.14);color:#f76e6e}
+.err-badge.mid{background:#252535;color:#8888a8}
+.err-fix{font-size:12.5px;color:#eaeaf5;line-height:1.45}
+.err-diag{font-size:12px;color:#8888a8;line-height:1.45;margin-bottom:8px}
+.err-btn{background:#252535;border:1px solid #2a2a3a;color:#c9c2ff;
+  font-size:11.5px;font-weight:600;padding:5px 11px;border-radius:7px;cursor:pointer}
+.err-btn:hover{border-color:#7c6ef7}
+.err-sum{display:flex;gap:10px;margin-bottom:16px}
+.err-box{flex:1;background:#16161f;border:1px solid #2a2a3a;border-radius:12px;
+  padding:12px 14px;text-align:center}
+.err-box.bad{border-color:#f76e6e;background:rgba(247,110,110,.06)}
+.err-box .n{font-size:22px;font-weight:800;line-height:1.1}
+.err-box.bad .n{color:#f76e6e}
+.err-box .l{font-size:11px;color:#8888a8;margin-top:3px}
 .err-ok{text-align:center;padding:40px 20px;color:#5ad8a6}
 .err-ok .e{font-size:36px;display:block;margin-bottom:10px}
+</style>
+<style>
+.chg-v{background:#16161f;border:1px solid #2a2a3a;border-radius:12px;
+  padding:16px 18px;margin-bottom:12px}
+.chg-v.now{border-color:#7c6ef7;background:#1a1730}
+.chg-h{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.chg-tag{background:#241d4d;color:#c9c2ff;font-size:12px;font-weight:800;
+  padding:3px 10px;border-radius:99px}
+.chg-v.now .chg-tag{background:#7c6ef7;color:#0d0d14}
+.chg-t{font-size:15px;font-weight:700;flex:1}
+.chg-d{font-size:11px;color:#8888a8}
+.chg-i{display:flex;gap:9px;font-size:13px;color:#eaeaf5;line-height:1.5;
+  padding:5px 0;border-top:1px solid #21212e}
+.chg-i:first-of-type{border-top:0}
+.chg-i .e{flex-shrink:0;width:18px}
+.chg-e{background:#16161f;border:1px solid #2a2a3a;border-radius:10px;
+  padding:10px 13px;margin-bottom:7px;display:flex;gap:11px;align-items:flex-start}
+.chg-e .ic{font-size:14px;flex-shrink:0}
+.chg-e .b{flex:1;min-width:0}
+.chg-e .w{font-size:13px;color:#eaeaf5;line-height:1.4}
+.chg-e .dt{font-size:11.5px;color:#8888a8;margin-top:2px}
+.chg-e .ag{font-size:11px;color:#8888a8;flex-shrink:0}
 </style>
 <script>
 const tg = window.Telegram?.WebApp;
@@ -402,7 +454,7 @@ const TAB_GROUPS = [
       ['onboarding','👋 Онбординг'], ['diagnostic','🎯 Діагностика'],
       ['buddy','Buddy'], ['phrases','💬 Фрази'], ['situations','🎁 Ситуації'] ]},
   { id:'system', label:'⚙️ Система',   tabs:[
-      ['errors','🚨 Помилки'], ['switches','🎛 Рубильники'] ]},
+      ['errors','🚨 Помилки'], ['switches','🎛 Рубильники'], ['changes','📋 Журнал змін'] ]},
 ];
 let activeGroup = 'main';
 
@@ -435,9 +487,17 @@ if (document.readyState === 'loading')
 else renderNav();
 
 
-/* ═══ 🚨 ЖУРНАЛ ПОМИЛОК ═══ */
+/* ═══ 🚨 ЖУРНАЛ ПОМИЛОК — 2 колонки: помилка | виправлення ═══ */
+const ERR_ST = {
+  fixed: {ic:'✅', lb:'Виправлено', cl:'ok'},
+  gone:  {ic:'🌤', lb:'Зникла сама', cl:'ok'},
+  quiet: {ic:'😴', lb:'Мовчить',     cl:'mid'},
+  hot:   {ic:'🔥', lb:'Повторюється',cl:'bad'},
+  open:  {ic:'⏳', lb:'Чекає',       cl:'mid'},
+};
+
 function renderErrors(){
-  const E = (data && data.errors) || null;
+  const E   = (data && data.errors) || null;
   const sum = document.getElementById('err-sum');
   const box = document.getElementById('err-list');
   if (!sum || !box) return;
@@ -445,8 +505,7 @@ function renderErrors(){
   if (!E) {
     sum.innerHTML = '';
     box.innerHTML = '<div class="sw-card"><div class="sw-doc">'
-      + 'Бот не прислав журнал. Онови <code>bot.py</code> — потрібна версія з <code>_err_install()</code>.'
-      + '</div></div>';
+      + 'Бот не прислав журнал. Онови <code>bot.py</code>.</div></div>';
     return;
   }
 
@@ -461,32 +520,112 @@ function renderErrors(){
 
   const items = E.items || [];
   if (!items.length) {
-    box.innerHTML = '<div class="err-ok"><span class="e">✅</span>'
-      + '<b>Тиша.</b><br><span style="color:#8888a8;font-size:13px">'
-      + 'Жодної помилки. Бот працює чисто.</span></div>';
+    box.innerHTML = '<div class="err-ok"><span class="e">✅</span><b>Тиша.</b><br>'
+      + '<span style="color:#8888a8;font-size:13px">Жодної помилки. Бот працює чисто.</span></div>';
     return;
   }
 
-  box.innerHTML = items.map(e => {
-    const isErr = e.level === 'error';
-    return '<div class="err-row ' + (isErr ? 'err' : 'warn')
-      +   (e.fresh ? ' fresh' : '') + '">'
-      + '<span class="err-ic">' + (isErr ? '🔴' : '🟡') + '</span>'
-      + '<div class="err-b">'
-      +   '<div class="err-m">' + escHtml(e.msg) + '</div>'
-      +   '<div class="err-meta">'
-      +     '<span>' + e.ago + '</span>'
-      +     (e.where ? '<span>' + escHtml(e.where) + '</span>' : '')
-      +   '</div>'
-      + '</div>'
-      + (e.count > 1 ? '<span class="err-cnt">×' + e.count + '</span>' : '')
-      + '</div>';
-  }).join('');
+  box.innerHTML =
+      '<div class="err-hd"><div>Що зламалось</div><div>Чи виправлено · як</div></div>'
+    + items.map(e => {
+        const st = ERR_ST[e.status] || ERR_ST.open;
+        const isErr = e.level === 'error';
+
+        /* ЛІВА колонка — сама помилка */
+        const left =
+            '<div class="err-l">'
+          +   '<div class="err-m">' + (isErr ? '🔴 ' : '🟡 ') + escHtml(e.msg) + '</div>'
+          +   '<div class="err-meta">'
+          +     '<span>' + e.ago + '</span>'
+          +     (e.where ? '<span>' + escHtml(e.where) + '</span>' : '')
+          +     (e.count > 1 ? '<span class="err-cnt">×' + e.count + '</span>' : '')
+          +   '</div>'
+          + '</div>';
+
+        /* ПРАВА колонка — статус і що зробили */
+        let right = '<div class="err-r">'
+          + '<div class="err-badge ' + st.cl + '">' + st.ic + ' ' + st.lb + '</div>';
+
+        if (e.status === 'fixed') {
+          right += '<div class="err-fix">' + escHtml(e.hint) + '</div>'
+                +  '<div class="err-meta"><span>' + escHtml(e.fix_by) + ' · ' + e.fix_at + '</span></div>';
+        } else {
+          if (e.diag) right += '<div class="err-diag">💡 ' + escHtml(e.diag) + '</div>';
+          right += '<button class="err-btn" onclick="markFixed(\'' + escAttr(e.key) + '\')">'
+                +  'Позначити виправленою</button>';
+        }
+        right += '</div>';
+
+        return '<div class="err-row2' + (e.fresh ? ' fresh' : '')
+             + (e.status === 'fixed' || e.status === 'gone' ? ' done' : '') + '">'
+             + left + right + '</div>';
+      }).join('');
 }
+
+async function markFixed(key){
+  const note = prompt('Що саме зробили, щоб виправити?\n\n(Порожньо — зняти позначку)');
+  if (note === null) return;
+  try {
+    const r = await fetch(BOT_API + '/err_fix', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        uid: (window.Telegram?.WebApp?.initDataUnsafe?.user?.id) || 0,
+        init_data: (window.Telegram?.WebApp?.initData) || '',
+        key: key, note: note,
+      }),
+    });
+    const j = await r.json();
+    if (j.ok) { loadData(); }
+    else alert('Не вдалося зберегти');
+  } catch(e) { alert('Помилка: ' + e.message); }
+}
+
+function escAttr(s){ return String(s||'').replace(/'/g, "\\'").replace(/"/g,'&quot;'); }
 
 function escHtml(s){
   return String(s || '').replace(/[&<>"]/g,
     c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+}
+
+
+/* ═══ 📋 ЖУРНАЛ ЗМІН ═══ */
+function renderChanges(){
+  const C = (data && data.changes) || null;
+  const v = document.getElementById('chg-ver');
+  const e = document.getElementById('chg-events');
+  if (!v || !e) return;
+
+  if (!C) {
+    v.innerHTML = '<div class="sw-card"><div class="sw-doc">'
+      + 'Бот не прислав журнал. Онови <code>bot.py</code>.</div></div>';
+    e.innerHTML = '';
+    return;
+  }
+
+  v.innerHTML = (C.changelog || []).map((rel, i) =>
+      '<div class="chg-v' + (i === 0 ? ' now' : '') + '">'
+    +   '<div class="chg-h">'
+    +     '<span class="chg-tag">v' + rel.v + '</span>'
+    +     '<span class="chg-t">' + escHtml(rel.title) + '</span>'
+    +     '<span class="chg-d">' + rel.date + '</span>'
+    +   '</div>'
+    +   (rel.items || []).map(([ic, txt]) =>
+          '<div class="chg-i"><span class="e">' + ic + '</span>'
+        + '<span>' + escHtml(txt) + '</span></div>').join('')
+    + '</div>').join('');
+
+  const ev = C.events || [];
+  e.innerHTML = ev.length
+    ? ev.map(x =>
+        '<div class="chg-e">'
+      +   '<span class="ic">' + x.icon + '</span>'
+      +   '<div class="b"><div class="w">' + escHtml(x.what) + '</div>'
+      +     (x.detail ? '<div class="dt">' + escHtml(x.detail) + '</div>' : '')
+      +   '</div>'
+      +   '<span class="ag">' + x.ago + '</span>'
+      + '</div>').join('')
+    : '<div class="sw-card"><div class="sw-doc">Поки тихо — бот ще нічого не зафіксував.</div></div>';
 }
 
 function switchTab(tab) {
@@ -497,6 +636,7 @@ function switchTab(tab) {
   const _sec = document.getElementById(`tab-${tab}`);
   if (_sec) _sec.classList.add('active');
   // Рубильники малюються навіть без повного data — це не аналітика
+  if (tab === 'changes')  { renderChanges(); return; }
   if (tab === 'errors')   { renderErrors();  return; }
   if (tab === 'switches') { renderSwitches(); return; }
   if (data) renderTab(tab);
@@ -1020,6 +1160,7 @@ function closeStudentCard() {
 }
 
 // ── NUDGES (Phase 3) ─────────────────────────────────────
+const BOT_API = 'https://speakchain-bot-production.up.railway.app';
 const NUDGE_API = 'https://speakchain-bot-production.up.railway.app';
 let nudgeData = null;
 let nudgeChoice = {};   // segmentKey -> {variantIdx, text}
