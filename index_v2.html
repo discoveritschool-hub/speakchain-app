@@ -556,6 +556,18 @@ html,body{height:100%;overflow:hidden}
 .screen{display:none}
 .screen.on{display:block}
 .nav{flex-shrink:0;padding-bottom:env(safe-area-inset-bottom);z-index:50}
+.topbar{flex-shrink:0;gap:8px}
+/* Стрілки скролерів керуються з JS (scSync) — глушимо жорсткі правила прототипу */
+.sc-arrow.left,.sc-arrow.right{opacity:0;pointer-events:none;transition:opacity .2s}
+.tb-arw{background:var(--bg-card2);border:.5px solid var(--line);color:var(--text2);
+  width:30px;height:30px;border-radius:50%;font-size:17px;line-height:1;cursor:pointer;
+  flex-shrink:0;display:flex;align-items:center;justify-content:center;
+  transition:all .15s var(--ease);padding:0}
+.tb-arw:active{transform:scale(.9);background:var(--purple-bg);color:var(--purple-text)}
+.tb-arw:disabled{opacity:.25;pointer-events:none}
+.tb-title{flex:1;text-align:center;font-size:var(--fs-sm);font-weight:700;
+  color:var(--text2);letter-spacing:.02em}
+.topbar .top-right{margin-left:0}
 .lb-row .rank.silver{color:var(--silver,#c4c8d4)}
 .lb-row .rank.bronze{color:var(--bronze,#c98c5e)}
 .lvl-dot.sel .lb{color:var(--purple-text)}
@@ -566,6 +578,20 @@ html,body{height:100%;overflow:hidden}
 <body>
 
 <div class="app">
+
+  <!-- TOP BAR — висить над усіма екранами -->
+  <div class="topbar" id="topbar">
+    <button class="tb-arw" id="tb-prev" onclick="tabStep(-1)" aria-label="Попередній">‹</button>
+    <div class="streak-chip" id="tb-streak">
+      <span class="f">🔥</span><span class="n">0</span><span class="l">дні</span>
+    </div>
+    <div class="tb-title" id="tb-title">Сьогодні</div>
+    <div class="top-right">
+      <div class="top-stat" id="tb-xp">⚡ 0<span class="l">XP</span></div>
+    </div>
+    <button class="tb-arw" id="tb-next" onclick="tabStep(1)" aria-label="Наступний">›</button>
+  </div>
+
   <div class="scroll">
     <div class="screen on" id="s-home">
 <div class="hero">
@@ -598,6 +624,11 @@ html,body{height:100%;overflow:hidden}
   <div class="body"><div class="t" style="color:var(--purple-text)">Моя ситуація</div>
   <div class="s" style="color:var(--purple-text)">опиши свою — Chainy зіграє співрозмовника</div></div>
   <span class="ch" style="color:var(--purple-text)">›</span>
+</div>
+<div class="net-item" onclick="openOv('ov-vid')">
+  <span class="ic"><span class="yt"></span></span>
+  <div class="body"><div class="t">Своє відео з YouTube</div><div class="s">встав лінк — розберемо разом</div></div>
+  <span class="ch">›</span>
 </div>
 <div class="net-item" onclick="cyChat()">
   <span class="ic">🤖</span>
@@ -649,14 +680,21 @@ html,body{height:100%;overflow:hidden}
   <div class="pair-tile accent" onclick="act('sc_send_challenge')"><span class="ic">🎙️</span><div class="t">Кинути виклик</div><div class="s">надіслати фразу</div></div>
   <div class="pair-tile" onclick="act('chain_invite_screen')"><span class="ic">🔗</span><div class="t">Зміцнити ланцюжок</div><div class="s">запросити друга</div></div>
 </div>
-<div class="sec-h"><span class="ti">Рейтинг</span></div>
-<div class="scroller" id="sc2">
-  <div class="chips" id="lb-cats"></div>
-  <button class="sc-arrow left" onclick="scArr('sc2',-1)">‹</button>
-  <button class="sc-arrow right" onclick="scArr('sc2',1)">›</button>
+<div id="partners-wrap" style="display:none">
+  <div class="sec-h"><span class="ti">Speaking Partners</span></div>
+  <div id="partners"></div>
+  <div class="partner-note">💬 Тисни на партнера — побачиш вашу історію викликів. Або йдіть у чат Telegram: там зручно кидати одне одному відео й голосові.</div>
 </div>
-<div class="period-pills" id="lb-per"></div>
-<div id="lb"></div>
+<div class="sec-h"><span class="ti">Рейтинг</span></div>
+<div class="menu-group" style="margin-bottom:8px">
+  <div class="mi" onclick="openOv('ov-rating')"><span class="ic">🏆</span>
+    <div class="body"><div class="t">Таблиця лідерів</div><div class="s" id="lb-my">твоє місце</div></div>
+    <span class="ch">›</span></div>
+</div>
+<div class="sec-h"><span class="ti">Бонуси за мережу</span></div>
+<div class="bonus-row"><div class="txt"><div class="bt">Друг зробив 1-у ланку</div><div class="bs">обидва отримують +20% XP × 7 днів</div></div><span class="rew">⚡</span></div>
+<div class="bonus-row"><div class="txt"><div class="bt">Обидва зробили урок сьогодні</div><div class="bs">Speaking Sync — +25 XP кожному</div></div><span class="rew">🔗</span></div>
+<div class="bonus-row"><div class="txt"><div class="bt">Speaking Partners бейдж</div><div class="bs">після першого спільного виклику</div></div><span class="rew">🎖️</span></div>
 </div>
     <div class="screen" id="s-listen">
 <div class="sec-h" style="margin-top:8px"><span class="ti">Обери режим</span></div>
@@ -689,15 +727,32 @@ html,body{height:100%;overflow:hidden}
   <div><div class="nm" id="p-nm">—</div><div class="sub" id="p-sub">—</div></div>
 </div>
 <div class="sec-h"><span class="ti">Досягнення</span><span class="meta" id="ach-n"></span></div>
-<div class="ach-grid" id="ach"></div>
+<div class="ach-grid" id="ach" style="grid-template-columns:repeat(4,1fr)"></div>
 <div class="sec-h"><span class="ti">Навчання</span></div>
 <div class="menu-group">
-  <div class="mi" onclick="openOv('ov-vocab')"><span class="ic">💬</span><div class="body"><div class="t">Картотека фраз</div><div class="s">збережені · SRS-повтор</div></div><span class="ch">›</span></div>
-  <div class="mi" onclick="go('s-prog')"><span class="ic">📊</span><div class="body"><div class="t">Мій прогрес</div><div class="s">рівень, теми, лексика</div></div><span class="ch">›</span></div>
-  <div class="mi" onclick="act('open_diagnostic')"><span class="ic">🎯</span><div class="body"><div class="t">Пройти діагностику</div><div class="s">перевірити рівень знову</div></div><span class="ch">›</span></div>
+  <div class="mi" onclick="act('start_lesson')"><span class="ic"><span class="yt"></span></span>
+    <div class="body"><div class="t">Мої відео</div><div class="s">бібліотека за назвою YouTube</div></div><span class="ch">›</span></div>
+  <div class="mi" onclick="openOv('ov-vocab')"><span class="ic">💬</span>
+    <div class="body"><div class="t">Картотека фраз</div><div class="s">збережені · SRS-повтор</div></div><span class="ch">›</span></div>
+  <div class="mi" onclick="go('s-prog')"><span class="ic">📊</span>
+    <div class="body"><div class="t">Мій прогрес</div><div class="s">рівень, теми, лексика</div></div><span class="ch">›</span></div>
+  <div class="mi" onclick="act('open_diagnostic')"><span class="ic">🎯</span>
+    <div class="body"><div class="t">Пройти діагностику</div><div class="s">перевірити рівень знову</div></div><span class="ch">›</span></div>
 </div>
-<div class="sec-h"><span class="ti">Доступ</span></div>
+<div class="sec-h"><span class="ti">Спільнота</span></div>
+<div class="premium-banner" onclick="act('buy_premium')"><span class="ic">👑</span>
+  <div><div class="t">Преміум-група</div><div class="s">закритий чат для Premium</div></div></div>
+<div class="menu-group">
+  <div class="mi" onclick="openCommunity()"><span class="ic">💬</span>
+    <div class="body"><div class="t">Community SpeakChain</div><div class="s">відкритий чат — питання, підтримка</div></div><span class="ch">›</span></div>
+</div>
+<div class="sec-h"><span class="ti">Мій план</span></div>
 <div id="plan-box"></div>
+<button class="plan-btn" onclick="openOv('ov-plans')">Обрати план →</button>
+<div class="menu-group" style="margin-top:12px">
+  <div class="mi" onclick="openOv('ov-unsub')"><span class="ic">💳</span>
+    <div class="body"><div class="t">Керувати підпискою</div></div><span class="ch">›</span></div>
+</div>
 </div>
   </div>
 
@@ -707,6 +762,62 @@ html,body{height:100%;overflow:hidden}
     <button data-s="s-prog"><span class="ic">📊</span><span class="lbl">Прогрес</span></button>
     <button data-s="s-social"><span class="ic">👥</span><span class="lbl">Друзі</span></button>
     <button data-s="s-profile"><span class="ic">👤</span><span class="lbl">Профіль</span></button>
+  </div>
+</div>
+
+<!-- Своє відео з YouTube -->
+<div class="overlay" id="ov-vid">
+  <div class="sheet">
+    <div class="grip"></div>
+    <h3><span class="yt" style="margin-right:6px"></span>Своє відео з YouTube</h3>
+    <p>Встав посилання на будь-яке відео — розберемо фрази, потренуємо shadowing і поговоримо про зміст.</p>
+    <input class="vid" id="vid-url" placeholder="https://youtube.com/watch?v=…">
+    <button class="go" onclick="submitVid()">Розібрати відео →</button>
+  </div>
+</div>
+
+<!-- Таблиця лідерів -->
+<div class="overlay" id="ov-rating">
+  <div class="sheet" style="max-height:82vh;overflow-y:auto">
+    <div class="grip"></div>
+    <h3 style="margin-bottom:12px">Таблиця лідерів</h3>
+    <div class="period-pills" id="rt-per"></div>
+    <div class="scroller" id="sc3">
+      <div class="cat-tabs" id="rt-cats"></div>
+      <button class="sc-arrow left" onclick="scArr2('sc3',-1)">‹</button>
+      <button class="sc-arrow right" onclick="scArr2('sc3',1)">›</button>
+    </div>
+    <div id="rt-lb"></div>
+  </div>
+</div>
+
+<!-- Плани -->
+<div class="overlay" id="ov-plans">
+  <div class="sheet" style="max-height:88vh;overflow-y:auto">
+    <div class="grip"></div>
+    <h3 style="margin-bottom:12px">Обрати план</h3>
+    <div id="pl-box"></div>
+  </div>
+</div>
+
+<!-- Підписка -->
+<div class="overlay" id="ov-unsub">
+  <div class="sheet">
+    <div class="grip"></div>
+    <h3>Керування підпискою</h3>
+    <p>Тут можна змінити або скасувати підписку в будь-який момент.</p>
+    <button class="go" onclick="closeOv();openOv('ov-plans')">Змінити план</button>
+    <div class="unsub" style="margin-top:14px" onclick="act('paywall_remind_later');closeOv()">Скасувати підписку</div>
+  </div>
+</div>
+
+<!-- Дуель -->
+<div class="overlay" id="ov-duel">
+  <div class="sheet" style="max-height:88vh;overflow-y:auto">
+    <div class="grip"></div>
+    <h3 id="dl-t" style="margin-bottom:4px">Дуель</h3>
+    <p style="margin-bottom:14px">Ваша історія викликів — хто влучніше сказав фразу.</p>
+    <div id="dl-body"></div>
   </div>
 </div>
 
@@ -814,8 +925,79 @@ function toast(m){
   t._x=setTimeout(()=>{t.style.opacity='0';t.style.transform='translateX(-50%) translateY(10px)';},2200);
 }
 
+/* ══ ГОРИЗОНТАЛЬНІ СКРОЛЕРИ ══
+   Ліва стрілка з'являється, коли є куди гортати НАЗАД.
+   Права зникає, коли доїхали до кінця. Раніше лівої не було взагалі —
+   пролистала вперед і не могла повернутись до перших вкладок. */
+function scInner(id){
+  const box=$('#'+id);
+  return box ? (box.querySelector('.chips') || box.querySelector('.cat-tabs')) : null;
+}
 function scArr(id,d){
-  const el=$('#'+id+' .chips'); if(el) el.scrollLeft+=d*160;
+  const el=scInner(id);
+  if(!el) return;
+  el.scrollBy({left:d*150, behavior:'smooth'});
+  setTimeout(()=>scSync(id), 320);
+}
+const scArr2 = scArr;   /* cat-tabs — той самий механізм */
+
+function scSync(id){
+  const box=$('#'+id), el=scInner(id);
+  if(!box||!el) return;
+  const L=box.querySelector('.sc-arrow.left');
+  const R=box.querySelector('.sc-arrow.right');
+  const max=el.scrollWidth-el.clientWidth;
+  const canL=el.scrollLeft>4;
+  const canR=el.scrollLeft<max-4 && max>4;
+  if(L){ L.style.opacity=canL?'1':'0'; L.style.pointerEvents=canL?'auto':'none'; }
+  if(R){ R.style.opacity=canR?'1':'0'; R.style.pointerEvents=canR?'auto':'none'; }
+}
+
+/* Стежимо за скролом усіх скролерів */
+function scWatch(id){
+  const el=scInner(id);
+  if(!el || el._w) return;
+  el._w=1;
+  el.addEventListener('scroll', ()=>scSync(id), {passive:true});
+  scSync(id);
+}
+function scWatchAll(){
+  ['sc1','sc2','sc3'].forEach(id=>{ if($('#'+id)) scWatch(id); });
+}
+
+/* ══════════ TOPBAR — 🔥 стрік + ⚡ XP над усіма екранами ══════════ */
+function renderTop(D){
+  const st=D.streak_days||0, xp=D.xp_total||0;
+  const sc=$('#tb-streak'), xc=$('#tb-xp');
+  /* Нема стріку/XP → чіп зникає, але шапка лишається (там стрілки) */
+  if(st>0){
+    sc.style.display='';
+    sc.querySelector('.n').textContent=st;
+    sc.querySelector('.l').textContent=plur(st,'день','дні','днів');
+  } else sc.style.display='none';
+  if(xp>0){
+    xc.style.display='';
+    xc.innerHTML='⚡ '+xp.toLocaleString('uk')+'<span class="l">XP</span>';
+  } else xc.style.display='none';
+}
+
+/* Стрілки ‹ › — крок між вкладками */
+const TAB_NAMES={'s-home':'Сьогодні','s-buddy':'Chainy','s-prog':'Прогрес',
+  's-social':'Друзі','s-profile':'Профіль','s-listen':'Слухати'};
+function tabStep(d){
+  const i=TABS.indexOf(CUR);
+  if(i<0){ go('s-home'); return; }
+  const j=i+d;
+  if(j<0||j>=TABS.length) return;
+  HIST.length=0;
+  go(TABS[j]);
+}
+function syncTop(sid){
+  const t=$('#tb-title'); if(t) t.textContent=TAB_NAMES[sid]||'';
+  const i=TABS.indexOf(sid);
+  const p=$('#tb-prev'), n=$('#tb-next');
+  if(p) p.disabled=(i<=0);
+  if(n) n.disabled=(i<0||i>=TABS.length-1);
 }
 
 /* ══════════ СЬОГОДНІ ══════════ */
@@ -830,6 +1012,7 @@ const STEPS=[
 
 async function renderHome(){
   const D=await load('s-home');
+  renderTop(D);
   const len=D.chain_length||0, tot=D.trial_links||7;
   const nm=(D.name||'').split(' ')[0];
   if(D.chain_status==='broken'){
@@ -894,6 +1077,7 @@ function renderBuddy(){
   $('#cy-styles').innerHTML=ST.map(([k,l])=>
     '<span class="style-pill'+(cyStyle===k?' on':'')+'" onclick="cySetStyle(\''+k+'\')">'+l+'</span>').join('');
   cyList();
+  setTimeout(scWatchAll,50);
 }
 
 function cyList(){
@@ -923,9 +1107,10 @@ async function cyChat(){ await cyLaunch(w=>w.startChainyChat()); }
 async function cyMy(){   await cyLaunch(w=>{ w.showScreen('s-home'); w.openMySituation(); }); }
 
 async function cyLaunch(fn){
-  const ov=$('#ov-buddy'); ov.classList.add('on');
+  const ov=$('#ov-buddy'); ov.classList.add('on'); tgBack(true);
   const win=await mountApp('s-buddy', $('#ov-buddy-host'), null);
   try{ fn(win); }catch(e){ console.warn('chainy',e.message); }
+  return win;
 }
 
 /* ══════════ ПРОГРЕС ══════════ */
@@ -990,15 +1175,15 @@ async function renderProg(){
 }
 function pgSet(l){pgLvl=l;renderProg();}
 async function pgTopic(t){
-  const ov=$('#ov-prog'); ov.classList.add('on');
+  const ov=$('#ov-prog'); ov.classList.add('on'); tgBack(true);
   const win=await mountApp('s-prog',$('#ov-prog-host'),'s-prog');
   try{ win.openTopic(t); }catch(e){ console.warn('topic',e.message); }
 }
 
 /* ══════════ ДРУЗІ ══════════ */
-const LBC=[{k:'chain',l:'🔗 Ланцюжок',u:'ланок'},{k:'xp',l:'⚡️ XP',u:'XP'},
+const LBC=[{k:'chain',l:'🔗 Ланцюжок',u:'ланок'},{k:'xp',l:'⚡ XP',u:'XP'},
  {k:'streak',l:'🔥 Стрік',u:'дн.'},{k:'ref_chained',l:'👥 Chains',u:'ланок'}];
-const LBP=[['day','День'],['week','Тиждень'],['month','Місяць'],['all','Весь час']];
+const LBP=[['week','Тиждень'],['month','Місяць'],['all','Весь час']];
 let lbC='chain', lbP='week';
 
 async function renderSocial(){
@@ -1006,6 +1191,7 @@ async function renderSocial(){
   const U=D.users||[];
   const me=U.find(u=>u.me);
   const top=U.filter(u=>!u.me).sort((a,b)=>(b.chain||0)-(a.chain||0))[0];
+
   const rows=[];
   if(me)rows.push({...me,rl:'я',top:0});
   if(top)rows.push({...top,rl:'лідер тижня',top:1});
@@ -1020,14 +1206,37 @@ async function renderSocial(){
   }).join('')
    :'<div class="instr-note">Запроси друга — і тут з’явиться ваш спільний ланцюжок.</div>';
 
-  $('#lb-cats').innerHTML=LBC.map(c=>
-    '<span class="chip'+(c.k===lbC?' on':'')+'" onclick="lbSetC(\''+c.k+'\')">'+c.l+'</span>').join('');
-  $('#lb-per').innerHTML=LBP.map(([k,l])=>
-    '<span class="period-pill'+(lbP===k?' on':'')+'" onclick="lbSetP(\''+k+'\')">'+l+'</span>').join('');
+  /* Speaking Partners — тільки якщо бот прислав реальних */
+  const P=D.partners||[];
+  const pw=$('#partners-wrap');
+  if(P.length){
+    pw.style.display='';
+    $('#partners').innerHTML=P.map(p=>
+      '<div class="partner-chat" onclick="openDuel('+(p.uid||0)+')">'
+      +'<div class="av2">'+ini(p.name)+'</div>'
+      +'<div class="body"><div class="nm">'+esc(p.name||'—')+'</div>'
+      +'<div class="rl">рахунок '+(p.my_score||0)+':'+(p.their_score||0)
+      +(p.waiting?' · 1 виклик чекає':'')+'</div></div>'
+      +(p.tg?'<button class="tg-btn" onclick="event.stopPropagation();openTg(\''+p.tg+'\')">✈️ Чат</button>':'')
+      +'</div>').join('');
+  } else pw.style.display='none';
 
-  const cat=LBC.find(c=>c.k===lbC);
-  const S=U.slice().sort((a,b)=>(b[lbC]||0)-(a[lbC]||0)).slice(0,12);
-  $('#lb').innerHTML=S.length?S.map((u,i)=>{
+  /* Моє місце в рейтингу — коротко */
+  const S=U.slice().sort((a,b)=>(b.chain||0)-(a.chain||0));
+  const pos=S.findIndex(u=>u.me)+1;
+  $('#lb-my').textContent=pos?('твоє місце · '+pos+' з '+S.length):'подивитись таблицю';
+  setTimeout(scWatchAll,50);
+}
+
+/* Рейтинг — в оверлеї, як у прототипі */
+function renderRating(){
+  const D=PAYLOAD['s-social']||{}, U=D.users||[];
+  $('#rt-per').innerHTML=LBP.map(([k,l])=>
+    '<div class="period-pill'+(lbP===k?' on':'')+'" onclick="rtP(\''+k+'\')">'+l+'</div>').join('');
+  $('#rt-cats').innerHTML=LBC.map(c=>
+    '<span class="cat-tab'+(c.k===lbC?' on':'')+'" onclick="rtC(\''+c.k+'\')">'+c.l+'</span>').join('');
+  const S=U.slice().sort((a,b)=>(b[lbC]||0)-(a[lbC]||0)).slice(0,20);
+  $('#rt-lb').innerHTML=S.length?S.map((u,i)=>{
     const v=u[lbC]||0, rk=['gold','silver','bronze'][i]||'';
     return '<div class="lb-row"'+(u.me?' style="border-color:var(--purple)"':'')+'>'
       +'<div class="rank '+rk+'">'+(i+1)+'</div>'
@@ -1035,9 +1244,44 @@ async function renderSocial(){
       +'<div class="nm">'+esc(u.name||'—')+(u.me?' · ти':'')+'</div>'
       +'<div class="xp">'+(lbC==='xp'?v.toLocaleString('uk'):v)+'</div></div>';
   }).join(''):'<div class="instr-note">Рейтинг з’явиться після першого уроку.</div>';
+  setTimeout(scWatchAll,50);
 }
-function lbSetC(k){lbC=k;renderSocial();}
-function lbSetP(k){lbP=k;renderSocial();}
+function rtC(k){lbC=k;renderRating();}
+function rtP(k){lbP=k;renderRating();}
+function openTg(u){ try{ TG?.openTelegramLink?.('https://t.me/'+u) || window.open('https://t.me/'+u); }catch(e){} }
+async function openDuel(uid){
+  const D=PAYLOAD['s-social']||{};
+  const p=(D.partners||[]).find(x=>x.uid===uid);
+  if(!p){ toast('Немає історії викликів'); return; }
+  $('#dl-t').textContent='Ти · '+esc(p.name||'Друг');
+  const my=p.my_score||0, th=p.their_score||0;
+  let h='<div class="score">'
+    +'<div class="sd"><div class="sn">'+my+'</div><div class="sl">ти</div></div>'
+    +'<div class="vs">— рахунок —</div>'
+    +'<div class="sd them"><div class="sn">'+th+'</div><div class="sl">'+esc(p.name)+'</div></div></div>';
+  if(p.waiting){
+    h+='<div class="waiting"><div>'
+      +'<div class="wt">'+esc(p.name)+' чекає на відповідь</div>'
+      +(p.waiting_phrase?'<div class="wp">«'+esc(p.waiting_phrase)+'»</div>':'')
+      +'</div><button class="wb" onclick="act(\'sc_send_challenge\')">🎙 Відповісти</button></div>';
+  }
+  (p.history||[]).forEach(d=>{
+    const win=d.winner==='me';
+    h+='<div class="duel '+(win?'win':'lose')+'">'
+      +'<div class="dh"><span class="ph">«'+esc(d.phrase||'')+'»</span>'
+      +'<span class="dt">'+esc(d.when||'')+'</span></div>'
+      +'<div class="plays">'
+      +'<div class="play-chip'+(win?' best':'')+'"><span class="pi">▶</span>'
+      +'<span class="pl">твій запис'+(d.my_len?' · '+d.my_len:'')+'</span></div>'
+      +'<div class="play-chip'+(win?'':' best')+'"><span class="pi">▶</span>'
+      +'<span class="pl">'+esc(p.name)+(d.their_len?' · '+d.their_len:'')+'</span></div></div>'
+      +'<div class="verdict">'+(win?'Ти влучніше — +1':esc(p.name)+' влучніше')+'</div></div>';
+  });
+  if(!p.history?.length && !p.waiting)
+    h+='<div class="instr-note">Ще не було викликів. Кинь перший 🎙</div>';
+  $('#dl-body').innerHTML=h;
+  $('#ov-duel').classList.add('on'); tgBack(true);
+}
 
 /* ══════════ СЛУХАТИ ══════════ */
 let LMODE='active';
@@ -1054,7 +1298,7 @@ function setMode(m){
   $('#pl-s').textContent=act?'YouTube · повтор фрази · запис голосу':'без дій · таймер вимкнено';
 }
 async function openPlayer(){
-  const ov=$('#ov-player'); ov.classList.add('on');
+  const ov=$('#ov-player'); ov.classList.add('on'); tgBack(true);
   const win=await mountApp('ov-player',$('#ov-player-host'),null);
   /* Фоновий режим: глушимо 3-хв таймер бездіяльності — інакше вікно
      закриється саме, поки учениця просто слухає. */
@@ -1093,22 +1337,50 @@ async function renderProfile(){
   $('#ach').innerHTML=A.map(a=>'<div class="ach'+(a.g?' got':' lock')+'">'
     +'<span class="e">'+a.e+'</span><span class="n">'+a.n+'</span></div>').join('');
 
-  const bp=D.basic_price||'22', pp=D.prem_price||'93';
-  const tot=H.trial_links||D.trial_links||7, pct=Math.min(100,Math.round(chain/tot*100));
-  const left=Math.max(0,tot-chain);
+  const tot=H.trial_links||D.trial_links||7;
+  const pct=Math.min(100,Math.round(chain/tot*100));
   const F=(ok,t)=>'<div class="feat"><span class="dot'+(ok?'':' lock')+'">'+(ok?'✓':'🔒')+'</span>'+t+'</div>';
-  $('#plan-box').innerHTML=
-    '<div class="plan-card"><div class="lab">'
-    +(left>0?('Пробний доступ · залишилось '+left+' '+plur(left,'ланка','ланки','ланок'))
-            :'Пробний доступ завершено')+'</div>'
+  $('#plan-box').innerHTML='<div class="plan-card">'
+    +'<div class="lab">Пробний доступ · '+chain+' / '+tot+' ланок</div>'
     +'<div class="access-bar"><i style="width:'+pct+'%"></i></div>'
-    +F(true,'AI-уроки з відео')+F(true,'Ланцюжок · XP · рейтинг')
-    +F(false,'Speaking Buddy — жива розмова')+F(false,'Gap-аналіз і звіти')+'</div>'
-    +'<div class="plan-card"><div class="lab">⚡️ Basic — $'+bp+'/міс</div>'
-    +'<button class="plan-btn" onclick="act(\'buy_basic\')">Обрати Basic</button></div>'
-    +'<div class="plan-card" style="border-color:var(--gold)">'
-    +'<div class="lab">🌟 Premium — $'+pp+'/міс · усе + жива практика</div>'
-    +'<button class="plan-btn" style="background:linear-gradient(135deg,var(--gold),var(--orange));color:var(--bg)" onclick="act(\'buy_premium\')">Обрати Premium</button></div>';
+    +F(true,'Урок дня, ланцюжок, рейтинг')
+    +F(false,'Chainy без ліміту, преміум-група')+'</div>';
+}
+
+function openCommunity(){
+  const D=PAYLOAD['s-profile']||{};
+  const l=D.community_link||'https://t.me/speakchain_community';
+  try{ TG?.openTelegramLink?.(l) || window.open(l); }catch(e){ window.open(l); }
+}
+
+function renderPlans(){
+  const D=PAYLOAD['s-profile']||{};
+  const bp=D.basic_price||'22', pp=D.prem_price||'93';
+  $('#pl-box').innerHTML=
+    '<div class="plan-card"><div class="lab">⚡ Basic — $'+bp+'/міс</div>'
+    +'<div class="feat"><span class="dot">✓</span>Безлімітні уроки з відео</div>'
+    +'<div class="feat"><span class="dot">✓</span>Gap-аналіз і звіти прогресу</div>'
+    +'<button class="plan-btn" style="margin-top:10px" onclick="act(\'buy_basic\')">Обрати Basic</button></div>'
+    +'<div class="plan-card" style="border-color:var(--gold)"><div class="lab">🌟 Premium — $'+pp+'/міс</div>'
+    +'<div class="feat"><span class="dot">✓</span>Усе з Basic</div>'
+    +'<div class="feat"><span class="dot">✓</span>Chainy без ліміту</div>'
+    +'<div class="feat"><span class="dot">✓</span>Speaking Buddy — жива людина</div>'
+    +'<div class="feat"><span class="dot">✓</span>Закрита преміум-група</div>'
+    +'<button class="plan-btn" style="margin-top:10px;background:linear-gradient(135deg,var(--gold),var(--orange));color:var(--bg)" onclick="act(\'buy_premium\')">Обрати Premium</button></div>';
+}
+
+/* Своє відео з YouTube → віддаємо робочому Chainy */
+async function submitVid(){
+  const url=$('#vid-url').value.trim();
+  if(!url){ $('#vid-url').style.borderColor='var(--red)'; return; }
+  closeOv();
+  const win=await cyLaunch(w=>{});
+  try{
+    const sh=$('#ov-buddy-host').shadowRoot;
+    const inp=sh.getElementById('custom-video-url');
+    if(inp){ inp.value=url; win.submitCustomVideo && win.submitCustomVideo(); }
+    else toast('Не вдалося відкрити розбір');
+  }catch(e){ toast('Помилка: '+e.message); }
 }
 
 /* ══════════ SHADOW-МОДУЛІ ══════════ */
@@ -1164,28 +1436,104 @@ async function mountApp(id,host,pk){
 /* ══════════ НАВІГАЦІЯ ══════════ */
 const R={'s-home':renderHome,'s-buddy':renderBuddy,'s-prog':renderProg,
          's-social':renderSocial,'s-profile':renderProfile};
-async function go(sid){
+const TABS=['s-home','s-buddy','s-prog','s-social','s-profile'];
+
+/* Стек історії: куди вертатись по «назад». Порожній = ми на Сьогодні. */
+const HIST=[];
+let CUR=null;   /* null → перший go() спрацює */
+
+function tgBack(show){
+  try{
+    const b=TG?.BackButton;
+    if(!b) return;
+    show ? b.show() : b.hide();
+  }catch(e){}
+}
+
+/* Головна кнопка «назад»: спершу закриває оверлей, потім вертає екран */
+function goBack(){
+  const ov=$('.overlay.on');
+  if(ov){ closeOv(); return; }
+  if(HIST.length){ go(HIST.pop(), true); return; }
+  if(CUR!=='s-home'){ go('s-home', true); return; }
+  try{ TG?.close(); }catch(e){}
+}
+
+async function go(sid, isBack){
+  if(sid===CUR && !isBack) return;
+  if(!isBack && CUR) HIST.push(CUR);
+  CUR=sid;
+
   $$('.screen').forEach(s=>s.classList.remove('on'));
   $$('.nav button').forEach(b=>b.classList.remove('on'));
   $('#'+sid).classList.add('on');
   const b=$('.nav button[data-s="'+sid+'"]'); if(b)b.classList.add('on');
   try{const sc=$('.scroll'); if(sc)sc.scrollTop=0;}catch(e){}
+
+  syncTop(sid);
+  /* «Назад» показуємо скрізь, крім Сьогодні */
+  tgBack(sid!=='s-home' || HIST.length>0);
+
+  /* Кнопка «Слухати» — не вкладка, підсвічуємо Сьогодні */
+  if(sid==='s-listen'){ const h=$('.nav button[data-s="s-home"]'); if(h)h.classList.add('on'); }
+
   if(R[sid]) await R[sid]();
 }
-$$('.nav button').forEach(b=>b.addEventListener('click',()=>go(b.dataset.s)));
+$$('.nav button').forEach(b=>b.addEventListener('click',()=>{
+  HIST.length=0;              /* тап по вкладці = новий корінь */
+  go(b.dataset.s);
+}));
+
+/* Telegram BackButton — системна кнопка «назад» */
+try{
+  TG?.BackButton?.onClick(goBack);
+}catch(e){}
+
+/* Свайп ліворуч/праворуч між вкладками */
+(function swipe(){
+  const sc=$('.scroll'); if(!sc) return;
+  let x0=null,y0=null,t0=0;
+  sc.addEventListener('touchstart',e=>{
+    if(e.touches.length!==1) return;
+    x0=e.touches[0].clientX; y0=e.touches[0].clientY; t0=Date.now();
+  },{passive:true});
+  sc.addEventListener('touchend',e=>{
+    if(x0===null) return;
+    const t=e.changedTouches[0];
+    const dx=t.clientX-x0, dy=t.clientY-y0, dt=Date.now()-t0;
+    x0=null;
+    /* Тільки чіткий горизонтальний свайп, не скрол */
+    if(dt>600 || Math.abs(dx)<70 || Math.abs(dx)<Math.abs(dy)*2) return;
+    if($('.overlay.on')) return;
+    const i=TABS.indexOf(CUR);
+    if(i<0) return;
+    const j=dx<0 ? i+1 : i-1;
+    if(j<0||j>=TABS.length) return;
+    HIST.length=0;
+    go(TABS[j]);
+  },{passive:true});
+})();
 
 /* ══════════ ОВЕРЛЕЇ ══════════ */
 async function openOv(id){
   $('#'+id).classList.add('on');
+  tgBack(true);
   const M={'ov-vocab':['ov-vocab',null],'ov-invite':['ov-invite','ov-invite']};
-  if(M[id]){const[a,p]=M[id]; await mountApp(a,$('#'+id+'-host'),p);}
+  if(M[id]){const[a,p]=M[id]; await mountApp(a,$('#'+id+'-host'),p); return;}
+  if(id==='ov-rating'){ await load('s-social'); renderRating(); }
+  if(id==='ov-plans'){ await load('s-profile'); renderPlans(); }
 }
-function closeOv(){$$('.overlay').forEach(o=>o.classList.remove('on'));}
+function closeOv(){
+  $$('.overlay').forEach(o=>o.classList.remove('on'));
+  tgBack(CUR!=='s-home' || HIST.length>0);
+}
 $$('.overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)closeOv();}));
 
 try{TG&&TG.ready();TG&&TG.expand();}catch(e){}
 setMode('active');
 go('s-home');
+setTimeout(scWatchAll,300);
+window.addEventListener('resize',scWatchAll);
 
 </script>
 </body>

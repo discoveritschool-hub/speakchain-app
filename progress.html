@@ -164,6 +164,17 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 
 .close-btn{display:block;margin:24px auto 0;background:transparent;border:1px solid var(--line);color:var(--text2);padding:10px 24px;border-radius:var(--r-lg);font-size:var(--fs);cursor:pointer}
 .diag-btn{display:block;width:calc(100% - 32px);margin:16px auto 0;background:var(--grad-purple);border:none;color:#fff;padding:14px;border-radius:var(--r);font-size:var(--fs);font-weight:700;cursor:pointer;box-shadow:0 6px 18px rgba(124,110,247,.28)}
+
+  /* ── ЛІВА стрілка: раніше її не було. Пролистала вперед — і не повернутись. ── */
+  .scroll-hint-l { position:absolute; top:0; bottom:0; left:0; display:flex; align-items:center;
+    cursor:pointer; padding-right:18px; z-index:5;
+    background:linear-gradient(to left, transparent, var(--bg) 45%);
+    opacity:0; pointer-events:none; transition:opacity .2s; }
+  .scroll-hint-l.show { opacity:1; pointer-events:auto; }
+  .scroll-hint-l span { width:26px; height:26px; border-radius:50%; background:var(--bg-card);
+    border:1px solid var(--line); display:flex; align-items:center; justify-content:center;
+    font-size:var(--fs-md); font-weight:700; color:var(--purple);
+    box-shadow:0 1px 4px rgba(0,0,0,.15); line-height:1; }
 </style>
 </head>
 <body>
@@ -201,7 +212,8 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 
 <div style="position:relative;">
   <div class="tabs" id="tabs"></div>
-  <div class="scroll-hint" id="tabs-scroll-hint" onclick="scrollProgressTabs()"><span>›</span></div>
+  <div class="scroll-hint-l" id="tabs-scroll-hint-l" onclick="__scL('tabs')"><span>‹</span></div>
+    <div class="scroll-hint" id="tabs-scroll-hint" onclick="scrollProgressTabs()"><span>›</span></div>
 </div>
 
 <div class="section">
@@ -914,6 +926,37 @@ document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'hidden') endSession();
 });
 window.addEventListener('pagehide', endSession);
+</script>
+
+<script>
+/* ── Стрілки скролера: ‹ зʼявляється, коли є куди гортати назад ── */
+(function(){
+  function sync(){
+    var t=document.getElementById('tabs');
+    if(!t) return;
+    var hL=document.getElementById('tabs-scroll-hint-l');
+    var hR=document.getElementById('tabs-scroll-hint');
+    var max=t.scrollWidth-t.clientWidth;
+    if(hL) hL.classList.toggle('show', t.scrollLeft>4);
+    if(hR) hR.classList.toggle('show', t.scrollLeft<max-4 && max>4);
+  }
+  window.__scL=function(id){
+    var t=document.getElementById(id);
+    if(t) t.scrollBy({left:-140, behavior:'smooth'});
+    setTimeout(sync,320);
+  };
+  function init(){
+    var t=document.getElementById('tabs');
+    if(!t){ setTimeout(init,200); return; }
+    t.addEventListener('scroll', sync, {passive:true});
+    window.addEventListener('resize', sync);
+    /* права стрілка теж має ховатись у кінці */
+    var old=t.onscroll;
+    sync(); setTimeout(sync,400); setTimeout(sync,1200);
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init);
+  else init();
+})();
 </script>
 </body>
 </html>

@@ -4,7 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>SpeakChain Analytics</title>
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="https://telegram.org/js/telegram-web-app.js">
+renderNav();
+</script>
 <script src="https://discoveritschool-hub.github.io/speakchain-app/toast_rewards.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
@@ -154,21 +156,8 @@ tr:hover td{background:var(--surface2)}
 </div>
 
 <div class="tabs-wrap">
-<div class="tabs" id="tabs-row">
-  <div class="tab active" onclick="switchTab('overview')">Огляд</div>
-  <div class="tab" onclick="switchTab('students')">Учні</div>
-  <div class="tab" onclick="switchTab('retention')">Retention</div>
-  <div class="tab" onclick="switchTab('funnel')">Funnel</div>
-  <div class="tab" onclick="switchTab('revenue')">Revenue</div>
-  <div class="tab" onclick="switchTab('buddy')">Buddy</div>
-  <div class="tab" onclick="switchTab('situations')">🎁 Ситуації</div>
-  <div class="tab" onclick="switchTab('chfunnel')">📉 Воронка</div>
-  <div class="tab" onclick="switchTab('onboarding')">👋 Онбординг</div>
-  <div class="tab" onclick="switchTab('diagnostic')">🎯 Діагностика</div>
-  <div class="tab" onclick="switchTab('phrases')">💬 Фрази</div>
-  <div class="tab" onclick="switchTab('bloggers')">Блогери</div>
-  <div class="tab" onclick="switchTab('actions')">Дії</div>
-</div>
+<div class="grp-row" id="grp-row"></div>
+  <div class="tabs" id="tabs-row"></div>
 <div class="tabs-hint" id="tabs-hint" onclick="scrollTabs()">›</div>
 </div>
 
@@ -265,8 +254,103 @@ tr:hover td{background:var(--surface2)}
     </div>
   </div>
 
+
+<!-- ═══ 🎛 РУБИЛЬНИКИ ═══ -->
+
+<!-- ═══ 🚨 ПОМИЛКИ ═══ -->
+<div class="section" id="tab-errors">
+  <h2 style="margin:0 0 6px">🚨 Що зламалось</h2>
+  <p style="color:var(--text2);font-size:13px;margin:0 0 16px">
+    Бот ловить <b>кожну</b> помилку автоматично й кладе сюди.
+    Однакові — групуються. Мережевий шум відфільтровано.
+  </p>
+  <div class="err-sum" id="err-sum"></div>
+  <div id="err-list"></div>
 </div>
 
+<div class="section" id="tab-switches">
+  <h2 style="margin:0 0 6px">🎛 Рубильники</h2>
+  <p style="color:var(--text2);font-size:13px;margin:0 0 18px">
+    Аварійні вимикачі. Щось зламалось — вимкни, не чіпаючи код.<br>
+    <b>Railway → Variables → зміни значення → Redeploy.</b> ~60 секунд.
+  </p>
+  <div id="sw-list"></div>
+
+  <h2 style="margin:26px 0 6px">📖 Як це працює</h2>
+  <div class="sw-card" style="border-color:var(--purple)">
+    <div class="sw-doc">
+      <b>Що вмикати / вимикати</b><br>
+      Рубильник розуміє будь-що: <code>1</code>, <code>true</code>, <code>yes</code>, <code>on</code>, <code>так</code> — увімкнено.
+      <code>0</code>, <code>false</code>, <code>no</code>, <code>off</code> — вимкнено. Регістр не важливий.<br><br>
+      Напишеш щось незрозуміле — бот <b>не зламається</b>: залишить дефолт і напише попередження в лог.<br><br>
+      <b>Куди йти</b><br>
+      Railway → твій сервіс → вкладка <b>Variables</b> → знайди змінну (або додай) → <b>Redeploy</b>.<br><br>
+      <b>Як перевірити</b><br>
+      Напиши боту <code>/switches</code> — покаже живий стан.<br><br>
+      <b>Якщо змінної нема в Railway</b> — діє дефолт із коду (позначено нижче).
+    </div>
+  </div>
+</div>
+</div>
+
+<style>
+.sw-card{background:var(--card,#16161f);border:1px solid var(--line,#2a2a3a);
+  border-radius:12px;padding:14px 16px;margin-bottom:10px}
+.sw-top{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.sw-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.sw-dot.on{background:#5ad8a6;box-shadow:0 0 0 3px rgba(90,216,166,.15)}
+.sw-dot.off{background:#f76e6e;box-shadow:0 0 0 3px rgba(247,110,110,.15)}
+.sw-dot.na{background:#8888a8}
+.sw-name{font-weight:700;font-size:15px;flex:1}
+.sw-state{font-size:11px;font-weight:700;letter-spacing:.04em;
+  padding:3px 9px;border-radius:99px;background:#252535;color:#8888a8}
+.sw-state.on{background:rgba(90,216,166,.14);color:#5ad8a6}
+.sw-state.off{background:rgba(247,110,110,.14);color:#f76e6e}
+.sw-env{font-family:ui-monospace,Menlo,monospace;font-size:12px;color:#8888a8;margin-bottom:8px}
+.sw-env b{color:#c9c2ff}
+.sw-does{font-size:13px;color:#eaeaf5;line-height:1.5;margin-bottom:8px}
+.sw-when{font-size:12.5px;color:#8888a8;line-height:1.5;
+  border-left:2px solid #2a2a3a;padding-left:10px;white-space:pre-line}
+.sw-doc{font-size:13px;line-height:1.7;color:#eaeaf5}
+.sw-doc code{background:#252535;padding:2px 6px;border-radius:5px;
+  font-family:ui-monospace,Menlo,monospace;font-size:12px;color:#c9c2ff}
+</style>
+<style>
+/* Двоповерхова навігація: 14 вкладок в один ряд — задовго гортати вбік */
+.grp-row{display:flex;gap:6px;padding:10px 12px 0;overflow-x:auto;
+  -webkit-overflow-scrolling:touch;scrollbar-width:none}
+.grp-row::-webkit-scrollbar{display:none}
+.grp{flex-shrink:0;padding:8px 14px;border-radius:10px;font-size:13px;font-weight:700;
+  background:transparent;color:#8888a8;border:1px solid transparent;cursor:pointer;
+  white-space:nowrap;transition:all .15s}
+.grp.on{background:#241d4d;color:#c9c2ff;border-color:#7c6ef7}
+#tabs-row{display:flex;gap:6px;padding:8px 12px 10px;overflow-x:auto;
+  -webkit-overflow-scrolling:touch;scrollbar-width:none;border-bottom:1px solid #2a2a3a}
+#tabs-row::-webkit-scrollbar{display:none}
+</style>
+<style>
+.err-sum{display:flex;gap:10px;margin-bottom:16px}
+.err-box{flex:1;background:#16161f;border:1px solid #2a2a3a;border-radius:12px;
+  padding:12px 14px;text-align:center}
+.err-box.bad{border-color:#f76e6e;background:rgba(247,110,110,.06)}
+.err-box .n{font-size:22px;font-weight:800;line-height:1.1}
+.err-box.bad .n{color:#f76e6e}
+.err-box .l{font-size:11px;color:#8888a8;margin-top:3px}
+.err-row{background:#16161f;border:1px solid #2a2a3a;border-radius:10px;
+  padding:11px 13px;margin-bottom:8px;display:flex;gap:11px;align-items:flex-start}
+.err-row.fresh{border-color:#f7a35c;background:rgba(247,163,92,.05)}
+.err-row.err{border-left:3px solid #f76e6e}
+.err-row.warn{border-left:3px solid #f7c95c}
+.err-ic{font-size:15px;flex-shrink:0;line-height:1.4}
+.err-b{flex:1;min-width:0}
+.err-m{font-size:13px;color:#eaeaf5;line-height:1.45;word-break:break-word;
+  font-family:ui-monospace,Menlo,monospace}
+.err-meta{font-size:11px;color:#8888a8;margin-top:4px;display:flex;gap:9px;flex-wrap:wrap}
+.err-cnt{background:#252535;padding:1px 7px;border-radius:99px;font-weight:700;
+  font-size:11px;color:#c9c2ff;flex-shrink:0;height:fit-content}
+.err-ok{text-align:center;padding:40px 20px;color:#5ad8a6}
+.err-ok .e{font-size:36px;display:block;margin-bottom:10px}
+</style>
 <script>
 const tg = window.Telegram?.WebApp;
 if (tg) { tg.ready(); tg.expand(); }
@@ -275,13 +359,146 @@ let charts = {};
 let data = null;
 let activeTab = 'overview';
 
+/* ═══ 🎛 РУБИЛЬНИКИ — рендер із живих даних бота ═══ */
+function renderSwitches() {
+  const sw = (data && data.switches) || [];
+  const box = document.getElementById('sw-list');
+  if (!box) return;
+  if (!sw.length) {
+    box.innerHTML = '<div class="sw-card"><div class="sw-doc">'
+      + 'Бот не прислав стан рубильників.<br>'
+      + 'Онови <code>bot.py</code> — потрібна версія з <code>_SWITCHES</code>.'
+      + '</div></div>';
+    return;
+  }
+  box.innerHTML = sw.map(s => {
+    const isMode = s.env === 'RUN_MODE';
+    const cls = isMode ? 'na' : (s.on ? 'on' : 'off');
+    const lbl = isMode ? s.value : (s.on ? 'УВІМК' : 'ВИМК');
+    return '<div class="sw-card">'
+      + '<div class="sw-top">'
+      +   '<span class="sw-dot ' + cls + '"></span>'
+      +   '<span class="sw-name">' + s.name + '</span>'
+      +   '<span class="sw-state ' + cls + '">' + lbl + '</span>'
+      + '</div>'
+      + '<div class="sw-env"><b>' + s.env + '</b> = ' + s.value
+      +   ' <span style="opacity:.6">(дефолт: ' + s.default + ')</span></div>'
+      + '<div class="sw-does">' + s.does + '</div>'
+      + '<div class="sw-when">' + s.when + '</div>'
+      + '</div>';
+  }).join('');
+}
+
+
+/* ═══ ДВОПОВЕРХОВА НАВІГАЦІЯ ═══
+   Було: 14 вкладок в один ряд, довго гортати. Стало: розділ → вкладка. */
+const TAB_GROUPS = [
+  { id:'main',   label:'📊 Головне',   tabs:[
+      ['overview','Огляд'], ['students','Учні'], ['actions','Дії'] ]},
+  { id:'growth', label:'📈 Зростання', tabs:[
+      ['retention','Retention'], ['funnel','Funnel'], ['chfunnel','📉 Воронка'],
+      ['revenue','Revenue'], ['bloggers','Блогери'] ]},
+  { id:'learn',  label:'🎓 Навчання',  tabs:[
+      ['onboarding','👋 Онбординг'], ['diagnostic','🎯 Діагностика'],
+      ['buddy','Buddy'], ['phrases','💬 Фрази'], ['situations','🎁 Ситуації'] ]},
+  { id:'system', label:'⚙️ Система',   tabs:[
+      ['errors','🚨 Помилки'], ['switches','🎛 Рубильники'] ]},
+];
+let activeGroup = 'main';
+
+function groupOf(tab){
+  const g = TAB_GROUPS.find(g => g.tabs.some(t => t[0] === tab));
+  return g ? g.id : 'main';
+}
+function renderNav(){
+  const gr = document.getElementById('grp-row');
+  const tr = document.getElementById('tabs-row');
+  if (!gr || !tr) return;
+  gr.innerHTML = TAB_GROUPS.map(g =>
+    '<div class="grp' + (g.id === activeGroup ? ' on' : '') + '" onclick="pickGroup(\'' + g.id + '\')">'
+    + g.label + '</div>').join('');
+  const g = TAB_GROUPS.find(x => x.id === activeGroup) || TAB_GROUPS[0];
+  tr.innerHTML = g.tabs.map(([id,label]) =>
+    '<div class="tab' + (id === activeTab ? ' active' : '') + '" onclick="switchTab(\'' + id + '\')">'
+    + label + '</div>').join('');
+}
+function pickGroup(gid){
+  activeGroup = gid;
+  renderNav();
+  const g = TAB_GROUPS.find(x => x.id === gid);
+  if (g && g.tabs.length && !g.tabs.some(t => t[0] === activeTab)) switchTab(g.tabs[0][0]);
+}
+
+/* Малюємо навігацію одразу — до завантаження даних */
+if (document.readyState === 'loading')
+  document.addEventListener('DOMContentLoaded', renderNav);
+else renderNav();
+
+
+/* ═══ 🚨 ЖУРНАЛ ПОМИЛОК ═══ */
+function renderErrors(){
+  const E = (data && data.errors) || null;
+  const sum = document.getElementById('err-sum');
+  const box = document.getElementById('err-list');
+  if (!sum || !box) return;
+
+  if (!E) {
+    sum.innerHTML = '';
+    box.innerHTML = '<div class="sw-card"><div class="sw-doc">'
+      + 'Бот не прислав журнал. Онови <code>bot.py</code> — потрібна версія з <code>_err_install()</code>.'
+      + '</div></div>';
+    return;
+  }
+
+  sum.innerHTML =
+      '<div class="err-box' + (E.errors_24h ? ' bad' : '') + '">'
+    +   '<div class="n">' + (E.errors_24h || 0) + '</div>'
+    +   '<div class="l">помилок за 24 год</div></div>'
+    + '<div class="err-box"><div class="n">' + (E.warns_24h || 0) + '</div>'
+    +   '<div class="l">попереджень</div></div>'
+    + '<div class="err-box"><div class="n">' + (E.total || 0) + '</div>'
+    +   '<div class="l">усього в журналі</div></div>';
+
+  const items = E.items || [];
+  if (!items.length) {
+    box.innerHTML = '<div class="err-ok"><span class="e">✅</span>'
+      + '<b>Тиша.</b><br><span style="color:#8888a8;font-size:13px">'
+      + 'Жодної помилки. Бот працює чисто.</span></div>';
+    return;
+  }
+
+  box.innerHTML = items.map(e => {
+    const isErr = e.level === 'error';
+    return '<div class="err-row ' + (isErr ? 'err' : 'warn')
+      +   (e.fresh ? ' fresh' : '') + '">'
+      + '<span class="err-ic">' + (isErr ? '🔴' : '🟡') + '</span>'
+      + '<div class="err-b">'
+      +   '<div class="err-m">' + escHtml(e.msg) + '</div>'
+      +   '<div class="err-meta">'
+      +     '<span>' + e.ago + '</span>'
+      +     (e.where ? '<span>' + escHtml(e.where) + '</span>' : '')
+      +   '</div>'
+      + '</div>'
+      + (e.count > 1 ? '<span class="err-cnt">×' + e.count + '</span>' : '')
+      + '</div>';
+  }).join('');
+}
+
+function escHtml(s){
+  return String(s || '').replace(/[&<>"]/g,
+    c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+}
+
 function switchTab(tab) {
-  activeTab = tab;
-  document.querySelectorAll('.tab').forEach((t, i) => {
-    t.classList.toggle('active', ['overview','students','retention','funnel','revenue','buddy','situations','chfunnel','onboarding','diagnostic','phrases','bloggers','actions'][i] === tab);
-  });
+  activeTab   = tab;
+  activeGroup = groupOf(tab);
+  renderNav();
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-  document.getElementById(`tab-${tab}`).classList.add('active');
+  const _sec = document.getElementById(`tab-${tab}`);
+  if (_sec) _sec.classList.add('active');
+  // Рубильники малюються навіть без повного data — це не аналітика
+  if (tab === 'errors')   { renderErrors();  return; }
+  if (tab === 'switches') { renderSwitches(); return; }
   if (data) renderTab(tab);
 }
 
@@ -482,6 +699,7 @@ async function loadData() {
 }
 
 function renderTab(tab) {
+  if (tab === 'switches') { renderSwitches(); return; }
   const el = document.getElementById(`${tab}-content`);
   if (!data) return;
   switch(tab) {
