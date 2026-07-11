@@ -425,6 +425,10 @@
         <div class="form-title">💬 Фрази дня (7 на тиждень)</div>
         <div class="form-hint">Запиши 7 коротких фраз — по одній на кожен день тижня. Бот публікуватиме по одній щодня у «Плані на сьогодні» твоїх студентів. Ротація не повторюється.</div>
         <div class="form-hint" style="margin-top:6px;opacity:.85;">💡 Те саме можна зробити швидко в боті: команда <b>/phrase_week</b>, а далі 7 фраз — кожна з нового рядка. Пишуться в те саме місце, що й тут.</div>
+        <div class="form-hint" style="margin-bottom:8px;">
+          🎬 <b>Відео до фрази:</b> надсилаючи фразу боту, встав поруч посилання на YouTube —
+          учні побачать твоє відео разом із фразою.
+        </div>
         <div id="phrases-list"></div>
         <div id="phrases-status" class="form-hint" style="margin-top:8px;font-weight:600;"></div>
       </div>
@@ -625,15 +629,22 @@ function renderPhrases() {
   const wrap = document.getElementById('phrases-list');
   if (!wrap) return;
   const phrases = (D.week_phrases) || {};   // { "1": "text", ... } 1..7
+  const pvids   = (D.week_phrase_videos) || {};   // { "1": "youtubeId", ... }
   let done = 0;
   let html = '';
   for (let i = 1; i <= 7; i++) {
     const val = phrases[i] || '';
+    const vid = pvids[i] || '';
     if (val) done++;
     html += `
       <div class="ph-row" style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:.5px solid var(--line);">
         <div style="width:30px;height:30px;border-radius:var(--r-sm);background:${val?'rgba(90,216,166,.15)':'var(--bg-card2)'};display:flex;align-items:center;justify-content:center;font-size:var(--fs-sm);font-weight:700;color:${val?'var(--green)':'var(--text2)'};flex-shrink:0;">${WEEKDAYS[i-1]}</div>
-        <div style="flex:1;min-width:0;font-size:var(--fs-sm);color:${val?'var(--text)':'var(--text2)'};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${val || 'Порожньо'}</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:var(--fs-sm);color:${val?'var(--text)':'var(--text2)'};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${val || 'Порожньо'}</div>
+          ${vid
+            ? `<div style="font-size:var(--fs-xs);color:var(--green);margin-top:2px;">🎬 відео додано</div>`
+            : (val ? `<div style="font-size:var(--fs-xs);color:var(--text2);margin-top:2px;">без відео</div>` : '')}
+        </div>
         <button onclick="editPhrase(${i})" style="padding:6px 12px;border-radius:var(--r-sm);border:.5px solid var(--purple);background:${val?'transparent':'rgba(124,110,247,.12)'};color:var(--purple);font-size:var(--fs-sm);font-weight:600;cursor:pointer;flex-shrink:0;">${val?'Змінити':'Задати'}</button>
       </div>`;
   }
