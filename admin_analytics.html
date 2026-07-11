@@ -240,6 +240,13 @@ tr:hover td{background:var(--surface2)}
     </div>
   </div>
 
+  <!-- CONTENT — що учні реально практикують -->
+  <div class="section" id="tab-content">
+    <div id="content-content">
+      <div class="loading"><div class="spinner"></div>Завантаження...</div>
+    </div>
+  </div>
+
   <!-- BLOGGERS -->
   <div class="section" id="tab-bloggers">
     <div id="bloggers-content">
@@ -452,7 +459,8 @@ const TAB_GROUPS = [
       ['revenue','Revenue'], ['bloggers','Блогери'] ]},
   { id:'learn',  label:'🎓 Навчання',  tabs:[
       ['onboarding','👋 Онбординг'], ['diagnostic','🎯 Діагностика'],
-      ['buddy','Buddy'], ['phrases','💬 Фрази'], ['situations','🎁 Ситуації'] ]},
+      ['buddy','Buddy'], ['phrases','💬 Фрази'], ['content','🔥 Що працює'],
+      ['situations','🎁 Ситуації'] ]},
   { id:'system', label:'⚙️ Система',   tabs:[
       ['errors','🚨 Помилки'], ['switches','🎛 Рубильники'], ['changes','📋 Журнал змін'] ]},
 ];
@@ -854,6 +862,7 @@ function renderTab(tab) {
     case 'onboarding': el.innerHTML = renderOnboarding(); break;
     case 'diagnostic': el.innerHTML = renderDiagnostic(); break;
     case 'phrases':    el.innerHTML = renderPhraseRanking(); break;
+    case 'content':    el.innerHTML = renderContent(); break;
     case 'bloggers':   el.innerHTML = renderBloggers(); break;
     case 'actions':    el.innerHTML = renderActions(); break;
   }
@@ -2123,6 +2132,120 @@ function drawCharts(tab) {
 }
 
 // ── BLOGGERS ─────────────────────────────────────────────
+function cBars(items, color) {
+  if (!items || !items.length) return '<div style="font-size:12px;color:var(--text3);padding:8px 0">—</div>';
+  const max = Math.max(...items.map(x => x.count || 0), 1);
+  return items.map((x, i) => {
+    const pct  = Math.round((x.count || 0) / max * 100);
+    const name = (x.name || '').toString();
+    const short = name.length > 46 ? name.slice(0, 44) + '…' : name;
+    const medal = i === 0 ? '🔥' : (i + 1) + '.';
+    return `
+      <div style="display:flex;align-items:center;gap:9px;padding:6px 0">
+        <span style="width:22px;font-size:12px;color:var(--text3);text-align:center;flex-shrink:0">${medal}</span>
+        <span style="flex:1;min-width:0;font-size:13px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${name}">${short}</span>
+        <span style="width:70px;height:6px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden;flex-shrink:0">
+          <span style="display:block;height:100%;width:${pct}%;background:${color};border-radius:3px"></span>
+        </span>
+        <span style="width:38px;text-align:right;font-size:13px;font-weight:600;color:${color};flex-shrink:0">${fmt(x.count)}</span>
+      </div>`;
+  }).join('');
+}
+
+function renderContent() {
+  const c = data.content || {};
+  const spoken  = c.top_spoken  || [];
+  const saved   = c.top_saved   || [];
+  const videos  = c.top_videos  || [];
+  const grammar = c.top_grammar || [];
+  const byB     = c.by_blogger  || [];
+
+  if (!spoken.length && !saved.length && !videos.length) {
+    return `<div style="font-size:13px;color:var(--text2);line-height:1.7;padding:10px 0">
+      🔥 <b>Що працює</b> — які фрази учні реально практикують.<br><br>
+      Даних ще немає. Лічильники почнуть наповнюватись одразу після деплою:
+      коли учні зберігають фразу з відео або проговорюють її вголос у вправах.<br><br>
+      <b style="color:var(--text)">Чим це відрізняється від «💬 Фрази»:</b><br>
+      Та вкладка міряє <b>залучення</b> — хто прийшов за демо-посиланням і конвертнувся.<br>
+      Ця міряє <b>практику</b> — що вчать ті, хто вже всередині.<br><br>
+      <span style="color:var(--text3)">Історії немає — раніше ці дані ніхто не записував.</span>
+    </div>`;
+  }
+
+  const reps = c.uniq_spoken ? (c.spoken_total / c.uniq_spoken).toFixed(1) : '0';
+
+  return `
+  <div class="cards">
+    <div class="card green">
+      <div class="card-label">Проговорено вголос</div>
+      <div class="card-value" style="color:var(--green)">${fmt(c.spoken_total || 0)}</div>
+      <div class="card-delta delta-flat">${fmt(c.uniq_spoken || 0)} унікальних фраз</div>
+    </div>
+    <div class="card accent">
+      <div class="card-label">Збережено фраз</div>
+      <div class="card-value" style="color:var(--accent)">${fmt(c.saved_total || 0)}</div>
+      <div class="card-delta delta-flat">${fmt(c.uniq_saved || 0)} унікальних</div>
+    </div>
+    <div class="card purple">
+      <div class="card-label">Повторів на фразу</div>
+      <div class="card-value" style="color:var(--purple)">${reps}×</div>
+      <div class="card-delta delta-flat">у середньому</div>
+    </div>
+    <div class="card amber">
+      <div class="card-label">Блогерів з даними</div>
+      <div class="card-value" style="color:var(--amber)">${fmt(byB.length)}</div>
+    </div>
+  </div>
+
+  <div style="font-size:12px;color:var(--text3);margin:14px 0 4px;line-height:1.5">
+    Це <b style="color:var(--text2)">практика</b>, а не залучення. Вкладка «💬 Фрази» показує,
+    хто прийшов за демо-посиланням; ця — що вчать ті, хто вже всередині.
+  </div>
+
+  <div class="table-block" style="margin-top:14px">
+    <div class="table-title">🗣 Найчастіше проговорюють вголос</div>
+    ${cBars(spoken, '#5ad8a6')}
+  </div>
+
+  <div class="table-block" style="margin-top:14px">
+    <div class="table-title">💎 Найчастіше зберігають</div>
+    ${cBars(saved, '#4f8ef7')}
+  </div>
+
+  <div class="table-block" style="margin-top:14px">
+    <div class="table-title">🎬 Відео, з яких зберігають</div>
+    ${cBars(videos, '#f5c842')}
+  </div>
+
+  <div class="table-block" style="margin-top:14px">
+    <div class="table-title">📖 Граматика, яку ловлять</div>
+    ${cBars(grammar, '#7c6ef7')}
+  </div>
+
+  ${byB.length ? `
+  <div class="table-block" style="margin-top:14px">
+    <div class="table-title">У кого контент «заходить»</div>
+    <table>
+      <tr>
+        <th>Блогер</th><th>Проговорень</th><th>Збережень</th>
+        <th>Повторів/фразу</th><th>Топ-фраза</th>
+      </tr>
+      ${byB.map(b => `
+        <tr>
+          <td style="font-weight:600">${b.name}</td>
+          <td style="color:#5ad8a6">${fmt(b.spoken_total)}</td>
+          <td>${fmt(b.saved_total)}</td>
+          <td style="color:${b.reps >= 3 ? '#5ad8a6' : 'var(--text2)'}">${b.reps}×</td>
+          <td style="color:var(--text2);font-size:12px">${(b.top_phrase || '').slice(0, 34)}</td>
+        </tr>`).join('')}
+    </table>
+    <div style="font-size:11px;color:var(--text3);margin-top:8px;line-height:1.5">
+      «Повторів/фразу» — скільки разів у середньому проговорюють одну фразу.
+      Високий показник = учні реально ганяють матеріал, а не просто зберігають і забувають.
+    </div>
+  </div>` : ''}`;
+}
+
 function renderPhraseRanking() {
   const rows = (data.phrase_ranking) || [];
   if (!rows.length) {
