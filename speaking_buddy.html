@@ -1,31 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <link rel="stylesheet" href="/static/tokens.css">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Chainy</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="https://discoveritschool-hub.github.io/speakchain-app/toast_rewards.js"></script>
 <style>
-  :root {
-    --bg: #0f0f0f;
-    --surface: #1a1a1a;
-    --surface2: #242424;
-    --border: rgba(255,255,255,0.08);
-    --text: #f0f0f0;
-    --text2: #888;
-    --text3: #555;
-    --accent: #4f8ef7;
-    --accent-dim: rgba(79,142,247,0.15);
-    --green: #3ecf8e;
-    --green-dim: rgba(62,207,142,0.15);
-    --amber: #f59e0b;
-    --red: #ef4444;
-    --radius: 14px;
-    --radius-sm: 8px;
-  }
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-  html, body { height: 100%; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif; font-size: 15px; overflow: hidden; }
+  html, body { height: 100%; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif; font-size: var(--fs); overflow: hidden; }
 
   /* ── Screens ── */
   .screen { display: none; height: 100vh; flex-direction: column; overflow: hidden; }
@@ -34,149 +18,149 @@
   /* ── Screen 1: Category picker ── */
   #s-home { background: var(--bg); }
   .home-header { padding: 16px 16px 0; flex-shrink: 0; }
-  .home-title { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; }
-  .home-sub { font-size: 13px; color: var(--text2); margin-top: 4px; }
+  .home-title { font-size: var(--fs-lg); font-weight: 700; letter-spacing: -0.5px; }
+  .home-sub { font-size: var(--fs); color: var(--text2); margin-top: 4px; }
   .cat-tabs { display: flex; gap: 8px; padding: 14px 16px; overflow-x: auto; flex-shrink: 0; scrollbar-width: none; }
   .cat-tabs::-webkit-scrollbar { display: none; }
-  .cat-tab { flex-shrink: 0; padding: 7px 14px; border-radius: 20px; border: 1px solid var(--border); background: var(--surface); color: var(--text2); font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.18s; }
-  .cat-tab.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .cat-tab { flex-shrink: 0; padding: 7px 14px; border-radius: var(--r-lg); border: 1px solid var(--line); background: var(--bg-card); color: var(--text2); font-size: var(--fs); font-weight: 500; cursor: pointer; transition: all 0.18s; }
+  .cat-tab.active { background: var(--purple); border-color: var(--purple); color: #fff; }
   .cat-tabs-wrap { position: relative; flex-shrink: 0; }
   .cat-scroll-hint { position: absolute; top: 0; bottom: 0; right: 0; display: flex; align-items: center; cursor: pointer; padding-left: 18px; background: linear-gradient(to right, transparent, var(--bg) 45%); opacity: 0; transition: opacity 0.2s; }
   .cat-scroll-hint.show { opacity: 1; }
-  .cat-scroll-hint span { width: 26px; height: 26px; border-radius: 50%; background: var(--surface); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 700; color: var(--accent); box-shadow: 0 1px 4px rgba(0,0,0,.15); line-height: 1; }
+  .cat-scroll-hint span { width: 26px; height: 26px; border-radius: 50%; background: var(--bg-card); border: 1px solid var(--line); display: flex; align-items: center; justify-content: center; font-size: var(--fs-md); font-weight: 700; color: var(--purple); box-shadow: 0 1px 4px rgba(0,0,0,.15); line-height: 1; }
   .scenarios-list { flex: 1; overflow-y: auto; padding: 0 16px 104px; display: flex; flex-direction: column; gap: 10px; scrollbar-width: none; }
   .scenarios-list::-webkit-scrollbar { display: none; }
   .sc-search-wrap { position: relative; padding: 0 16px 10px; flex-shrink: 0; }
-  .sc-search-wrap .sc-search-icon { position: absolute; left: 28px; top: 50%; transform: translateY(-50%); pointer-events: none; opacity: .5; font-size: 15px; }
-  .sc-search { width: 100%; box-sizing: border-box; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 12px 10px 34px; font-size: 14px; color: var(--text); outline: none; }
-  .sc-search:focus { border-color: var(--accent); }
+  .sc-search-wrap .sc-search-icon { position: absolute; left: 28px; top: 50%; transform: translateY(-50%); pointer-events: none; opacity: .5; font-size: var(--fs); }
+  .sc-search { width: 100%; box-sizing: border-box; background: var(--bg-card); border: 1px solid var(--line); border-radius: var(--r-sm); padding: 10px 12px 10px 34px; font-size: var(--fs); color: var(--text); outline: none; }
+  .sc-search:focus { border-color: var(--purple); }
   .sc-search::placeholder { color: var(--text2); }
-  .sc-empty { text-align: center; color: var(--text2); font-size: 14px; padding: 30px 16px; }
-  .scenario-card { flex-shrink: 0; border-radius: var(--radius); border: 1px solid var(--border); background: var(--surface); overflow: hidden; cursor: pointer; transition: border-color 0.15s, transform 0.1s; active:transform: scale(0.98); display: flex; align-items: center; gap: 0; height: 76px; }
+  .sc-empty { text-align: center; color: var(--text2); font-size: var(--fs); padding: 30px 16px; }
+  .scenario-card { flex-shrink: 0; border-radius: var(--r); border: 1px solid var(--line); background: var(--bg-card); overflow: hidden; cursor: pointer; transition: border-color 0.15s, transform 0.1s; active:transform: scale(0.98); display: flex; align-items: center; gap: 0; height: 76px; }
   .scenario-card:active { transform: scale(0.98); }
-  .sc-photo { width: 88px; height: 100%; object-fit: cover; flex-shrink: 0; background: var(--surface2); display: flex; align-items: center; justify-content: center; font-size: 32px; }
+  .sc-photo { width: 88px; height: 100%; object-fit: cover; flex-shrink: 0; background: var(--bg-card2); display: flex; align-items: center; justify-content: center; font-size: var(--fs-xl); }
   .sc-photo img { width: 100%; height: 100%; object-fit: cover; }
   .sc-body { padding: 0 14px; flex: 1; min-width: 0; }
-  .sc-title { font-size: 14px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .sc-sub { font-size: 12px; color: var(--text2); margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .sc-badge { font-size: 10px; padding: 2px 7px; border-radius: 10px; display: inline-block; margin-top: 5px; font-weight: 500; }
+  .sc-title { font-size: var(--fs); font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sc-sub { font-size: var(--fs-sm); color: var(--text2); margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sc-badge { font-size: var(--fs-xs); padding: 2px 7px; border-radius: var(--r); display: inline-block; margin-top: 5px; font-weight: 500; }
 
   /* ── Screen 2: Scenario detail ── */
   #s-detail { background: var(--bg); }
   .detail-scroll { flex: 1; overflow-y: auto; scrollbar-width: none; }
   .detail-scroll::-webkit-scrollbar { display: none; }
-  .detail-hero { height: 200px; position: relative; background: var(--surface2); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .detail-hero { height: 200px; position: relative; background: var(--bg-card2); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
   .detail-hero img { width: 100%; height: 100%; object-fit: cover; }
   .detail-hero-emoji { font-size: 72px; }
   .detail-hero-overlay { position: absolute; inset: 0; background: linear-gradient(to bottom, transparent 30%, rgba(0,0,0,0.85) 100%); }
   .detail-hero-back { position: absolute; top: 12px; left: 12px; width: 36px; height: 36px; border-radius: 50%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; cursor: pointer; backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.1); }
   .detail-hero-back svg { width: 18px; height: 18px; stroke: #fff; fill: none; }
-  .detail-hero-cat { position: absolute; top: 12px; right: 12px; font-size: 11px; padding: 4px 10px; border-radius: 12px; font-weight: 600; backdrop-filter: blur(8px); }
+  .detail-hero-cat { position: absolute; top: 12px; right: 12px; font-size: var(--fs-xs); padding: 4px 10px; border-radius: var(--r); font-weight: 600; backdrop-filter: blur(8px); }
   .detail-hero-title { position: absolute; bottom: 14px; left: 16px; right: 16px; }
-  .detail-hero-title h2 { font-size: 20px; font-weight: 700; color: #fff; letter-spacing: -0.3px; }
-  .detail-hero-title p { font-size: 13px; color: rgba(255,255,255,0.65); margin-top: 3px; }
+  .detail-hero-title h2 { font-size: var(--fs-lg); font-weight: 700; color: #fff; letter-spacing: -0.3px; }
+  .detail-hero-title p { font-size: var(--fs); color: rgba(255,255,255,0.65); margin-top: 3px; }
   .detail-body { padding: 16px; display: flex; flex-direction: column; gap: 14px; }
-  .detail-desc { font-size: 14px; color: var(--text2); line-height: 1.6; }
-  .section-title { font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 8px; }
-  .video-block { border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface); overflow: hidden; }
+  .detail-desc { font-size: var(--fs); color: var(--text2); line-height: 1.6; }
+  .section-title { font-size: var(--fs-xs); font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 8px; }
+  .video-block { border-radius: var(--r-sm); border: 1px solid var(--line); background: var(--bg-card); overflow: hidden; }
   .video-placeholder { height: 80px; display: flex; align-items: center; gap: 12px; padding: 0 16px; cursor: pointer; }
-  .video-play { width: 40px; height: 40px; border-radius: 50%; background: var(--accent-dim); border: 1px solid var(--accent); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-  .video-play svg { width: 16px; height: 16px; fill: var(--accent); margin-left: 2px; }
-  .video-info p { font-size: 13px; font-weight: 500; color: var(--text); }
-  .video-info span { font-size: 12px; color: var(--text2); }
+  .video-play { width: 40px; height: 40px; border-radius: 50%; background: var(--purple-dark); border: 1px solid var(--purple); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .video-play svg { width: 16px; height: 16px; fill: var(--purple); margin-left: 2px; }
+  .video-info p { font-size: var(--fs); font-weight: 500; color: var(--text); }
+  .video-info span { font-size: var(--fs-sm); color: var(--text2); }
   #custom-video-section { margin-top: 14px; }
   .custom-video-row { display: flex; gap: 8px; }
-  .custom-video-input { flex: 1; min-width: 0; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 12px; font-size: 13px; color: var(--text); outline: none; }
-  .custom-video-input:focus { border-color: var(--accent); }
+  .custom-video-input { flex: 1; min-width: 0; background: var(--bg-card); border: 1px solid var(--line); border-radius: var(--r-sm); padding: 10px 12px; font-size: var(--fs); color: var(--text); outline: none; }
+  .custom-video-input:focus { border-color: var(--purple); }
   .custom-video-input::placeholder { color: var(--text2); }
-  .custom-video-btn { flex-shrink: 0; padding: 10px 14px; border-radius: var(--radius-sm); border: none; background: var(--accent); color: #fff; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .custom-video-btn { flex-shrink: 0; padding: 10px 14px; border-radius: var(--r-sm); border: none; background: var(--purple); color: #fff; font-size: var(--fs); font-weight: 600; cursor: pointer; }
   .custom-video-btn:active { transform: scale(0.97); }
-  .custom-video-hint { font-size: 11px; color: var(--text2); margin-top: 6px; }
+  .custom-video-hint { font-size: var(--fs-xs); color: var(--text2); margin-top: 6px; }
   #video-mode-section { margin-top: 14px; }
   .video-mode-row { display: flex; gap: 8px; }
-  .video-mode-btn { flex: 1; padding: 10px 8px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface); color: var(--text2); font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
-  .video-mode-btn.active { background: var(--accent-dim, rgba(79,142,247,0.15)); border-color: var(--accent); color: var(--accent); }
+  .video-mode-btn { flex: 1; padding: 10px 8px; border-radius: var(--r-sm); border: 1px solid var(--line); background: var(--bg-card); color: var(--text2); font-size: var(--fs); font-weight: 600; cursor: pointer; transition: all 0.15s; }
+  .video-mode-btn.active { background: var(--accent-dim, rgba(79,142,247,0.15)); border-color: var(--purple); color: var(--purple); }
   .video-yt { display: none; width: 100%; aspect-ratio: 16/9; border: none; }
-  .role-select { width:100%; padding:11px 14px; border-radius:var(--radius-sm); border:1px solid var(--border); background:var(--surface); color:var(--text); font-size:14px; font-family:inherit; outline:none; cursor:pointer; appearance:none; -webkit-appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23888' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 14px center; padding-right:36px; }
-  .role-select:focus { border-color:var(--accent); }
+  .role-select { width:100%; padding:11px 14px; border-radius:var(--r-sm); border:1px solid var(--line); background:var(--bg-card); color:var(--text); font-size:var(--fs); font-family:inherit; outline:none; cursor:pointer; appearance:none; -webkit-appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23888' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 14px center; padding-right:36px; }
+  .role-select:focus { border-color:var(--purple); }
   .level-row { display: flex; gap: 8px; }
-  .level-btn { flex: 1; padding: 9px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface); cursor: pointer; text-align: center; font-size: 13px; font-weight: 500; color: var(--text2); transition: all 0.15s; }
-  .level-btn.active { border-color: var(--green); background: var(--green-dim); color: var(--green); }
-  .start-btn { width: 100%; padding: 15px; border-radius: var(--radius); background: var(--accent); border: none; color: #fff; font-size: 16px; font-weight: 700; cursor: pointer; letter-spacing: -0.2px; transition: opacity 0.15s; }
+  .level-btn { flex: 1; padding: 9px; border-radius: var(--r-sm); border: 1px solid var(--line); background: var(--bg-card); cursor: pointer; text-align: center; font-size: var(--fs); font-weight: 500; color: var(--text2); transition: all 0.15s; }
+  .level-btn.active { border-color: var(--green); background: var(--green-bg); color: var(--green); }
+  .start-btn { width: 100%; padding: 15px; border-radius: var(--r); background: var(--purple); border: none; color: #fff; font-size: var(--fs-md); font-weight: 700; cursor: pointer; letter-spacing: -0.2px; transition: opacity 0.15s; }
   .start-btn:active { opacity: 0.85; }
-  .limit-info { font-size: 12px; color: var(--text3); text-align: center; }
+  .limit-info { font-size: var(--fs-sm); color: var(--text3); text-align: center; }
 
   /* ── Screen 3: Chat ── */
   #s-chat { background: var(--bg); }
-  .chat-header { padding: 12px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; flex-shrink: 0; background: var(--surface); }
+  .chat-header { padding: 12px 16px; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 10px; flex-shrink: 0; background: var(--bg-card); }
   .chat-back { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; border-radius: 50%; }
   .chat-back svg { width: 20px; height: 20px; stroke: var(--text); fill: none; }
-  .chat-avatar { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+  .chat-avatar { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: var(--fs-md); flex-shrink: 0; }
   .chat-info { flex: 1; min-width: 0; }
-  .chat-info-name { font-size: 14px; font-weight: 600; color: var(--text); }
-  .chat-info-status { font-size: 12px; color: var(--green); }
-  .chat-counter { font-size: 12px; color: var(--text3); text-align: right; flex-shrink: 0; }
+  .chat-info-name { font-size: var(--fs); font-weight: 600; color: var(--text); }
+  .chat-info-status { font-size: var(--fs-sm); color: var(--green); }
+  .chat-counter { font-size: var(--fs-sm); color: var(--text3); text-align: right; flex-shrink: 0; }
   .chat-messages { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; scrollbar-width: none; }
   .chat-messages::-webkit-scrollbar { display: none; }
   .msg { max-width: 82%; display: flex; flex-direction: column; gap: 4px; }
   .msg.user { align-self: flex-end; align-items: flex-end; }
   .msg.ai { align-self: flex-start; align-items: flex-start; }
-  .bubble { padding: 10px 14px; border-radius: 18px; font-size: 14px; line-height: 1.55; }
-  .msg.user .bubble { background: var(--accent); color: #fff; border-bottom-right-radius: 4px; }
-  .msg.ai .bubble { background: var(--surface2); color: var(--text); border-bottom-left-radius: 4px; }
+  .bubble { padding: 10px 14px; border-radius: 18px; font-size: var(--fs); line-height: 1.55; }
+  .msg.user .bubble { background: var(--purple); color: #fff; border-bottom-right-radius: 4px; }
+  .msg.ai .bubble { background: var(--bg-card2); color: var(--text); border-bottom-left-radius: 4px; }
   .feedback-row { display: flex; gap: 5px; flex-wrap: wrap; }
-  .fb-tag { font-size: 11px; padding: 3px 8px; border-radius: 10px; font-weight: 500; }
-  .fb-good { background: var(--green-dim); color: var(--green); }
-  .fb-tip { background: rgba(245,158,11,0.15); color: var(--amber); }
-  .typing-bubble { background: var(--surface2); padding: 12px 16px; border-radius: 18px; border-bottom-left-radius: 4px; display: flex; gap: 5px; align-items: center; }
+  .fb-tag { font-size: var(--fs-xs); padding: 3px 8px; border-radius: var(--r); font-weight: 500; }
+  .fb-good { background: var(--green-bg); color: var(--green); }
+  .fb-tip { background: rgba(245,158,11,0.15); color: var(--orange); }
+  .typing-bubble { background: var(--bg-card2); padding: 12px 16px; border-radius: 18px; border-bottom-left-radius: 4px; display: flex; gap: 5px; align-items: center; }
   .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text3); animation: bounce 1s infinite; }
   .dot:nth-child(2) { animation-delay: 0.15s; }
   .dot:nth-child(3) { animation-delay: 0.3s; }
   @keyframes bounce { 0%,80%,100%{transform:translateY(0)} 40%{transform:translateY(-5px)} }
-  .chat-input-area { padding: 10px 12px; border-top: 1px solid var(--border); display: flex; gap: 8px; align-items: flex-end; flex-shrink: 0; background: var(--surface); }
-  .finish-btn { margin-left: 6px; width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--green); background: var(--green-dim); color: var(--green); font-size: 16px; font-weight: 700; cursor: pointer; flex-shrink: 0; }
+  .chat-input-area { padding: 10px 12px; border-top: 1px solid var(--line); display: flex; gap: 8px; align-items: flex-end; flex-shrink: 0; background: var(--bg-card); }
+  .finish-btn { margin-left: 6px; width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--green); background: var(--green-bg); color: var(--green); font-size: var(--fs-md); font-weight: 700; cursor: pointer; flex-shrink: 0; }
   .finish-btn:active { transform: scale(0.92); }
-  .chat-input-area textarea { flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 20px; padding: 10px 14px; font-size: 14px; color: var(--text); resize: none; max-height: 100px; min-height: 40px; font-family: inherit; line-height: 1.4; outline: none; }
+  .chat-input-area textarea { flex: 1; background: var(--bg-card2); border: 1px solid var(--line); border-radius: var(--r-lg); padding: 10px 14px; font-size: var(--fs); color: var(--text); resize: none; max-height: 100px; min-height: 40px; font-family: inherit; line-height: 1.4; outline: none; }
   .chat-input-area textarea::placeholder { color: var(--text3); }
-  .send-btn { width: 40px; height: 40px; border-radius: 50%; background: var(--accent); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: opacity 0.15s; }
+  .send-btn { width: 40px; height: 40px; border-radius: 50%; background: var(--purple); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: opacity 0.15s; }
   .send-btn:disabled { opacity: 0.4; }
   .send-btn svg { width: 18px; height: 18px; fill: #fff; }
-  .limit-banner { margin: 0 16px 8px; padding: 10px 14px; border-radius: var(--radius-sm); background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.2); font-size: 12px; color: var(--amber); text-align: center; display: none; }
-  .trial-cta { width: 100%; padding: 12px 16px; border-radius: var(--radius-sm); border: none; background: linear-gradient(135deg,#7c6ef7,#a78bfa); color: #fff; font-size: 15px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 16px rgba(124,110,247,.35); }
+  .limit-banner { margin: 0 16px 8px; padding: 10px 14px; border-radius: var(--r-sm); background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.2); font-size: var(--fs-sm); color: var(--orange); text-align: center; display: none; }
+  .trial-cta { width: 100%; padding: 12px 16px; border-radius: var(--r-sm); border: none; background: linear-gradient(135deg,var(--purple),var(--purple)); color: #fff; font-size: var(--fs); font-weight: 700; cursor: pointer; box-shadow: 0 4px 16px rgba(124,110,247,.35); }
   .trial-cta:active { transform: scale(0.98); }
 
   /* ── Voice mode ── */
-  .mic-btn { width: 40px; height: 40px; border-radius: 50%; background: var(--surface2); border: 1px solid var(--border); cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 18px; transition: all .15s; }
-  .mic-btn.listening { background: rgba(239,68,68,.15); border-color: #ef4444; animation: micPulse 1s infinite; }
+  .mic-btn { width: 40px; height: 40px; border-radius: 50%; background: var(--bg-card2); border: 1px solid var(--line); cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: var(--fs-md); transition: all .15s; }
+  .mic-btn.listening { background: rgba(239,68,68,.15); border-color: var(--red); animation: micPulse 1s infinite; }
   @keyframes micPulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.1)} }
-  .voice-toggle { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 16px; transition: all .15s; }
+  .voice-toggle { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: var(--fs-md); transition: all .15s; }
   .voice-toggle.active { background: rgba(62,207,142,.15); }
 
   /* ── Grammar card ── */
   .grammar-card { position: fixed; top: -100px; left: 16px; right: 16px; z-index: 500;
-    background: linear-gradient(135deg, #1e2a47, #2a1a3a); border: 1px solid rgba(167,139,250,.4);
-    border-radius: 12px; padding: 12px 16px; box-shadow: 0 8px 24px rgba(0,0,0,.4);
+    background: linear-gradient(135deg, var(--purple-bg), var(--purple-bg)); border: 1px solid rgba(167,139,250,.4);
+    border-radius: var(--r); padding: 12px 16px; box-shadow: 0 8px 24px rgba(0,0,0,.4);
     transition: top .35s cubic-bezier(.34,1.56,.64,1); }
   .grammar-card.show { top: 12px; }
   .grammar-card-inner { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
-  .grammar-topic { font-size: 11px; font-weight: 700; color: #a78bfa; text-transform: uppercase;
+  .grammar-topic { font-size: var(--fs-xs); font-weight: 700; color: var(--purple); text-transform: uppercase;
     letter-spacing: .07em; width: 100%; margin-bottom: 2px; }
-  .grammar-error { font-size: 14px; color: #ef4444; text-decoration: line-through; font-weight: 500; }
-  .grammar-arrow { font-size: 14px; color: var(--text3); }
-  .grammar-correct { font-size: 14px; color: #3ecf8e; font-weight: 600; }
-  .grammar-rule { font-size: 12px; color: var(--text2); width: 100%; margin-top: 3px; line-height: 1.4; }
+  .grammar-error { font-size: var(--fs); color: var(--red); text-decoration: line-through; font-weight: 500; }
+  .grammar-arrow { font-size: var(--fs); color: var(--text3); }
+  .grammar-correct { font-size: var(--fs); color: var(--green); font-weight: 600; }
+  .grammar-rule { font-size: var(--fs-sm); color: var(--text2); width: 100%; margin-top: 3px; line-height: 1.4; }
 
   /* ── My Situation ── */
   .my-situation-fab {
     position: fixed; left: 16px; right: 16px; bottom: 16px;
-    background: linear-gradient(135deg, #7c6ef7, #5b4bd6);
-    color: #fff; border: none; border-radius: 16px;
-    padding: 14px 18px; font-size: 16px; font-weight: 700;
+    background: linear-gradient(135deg, var(--purple), var(--purple-dark));
+    color: #fff; border: none; border-radius: var(--r);
+    padding: 14px 18px; font-size: var(--fs-md); font-weight: 700;
     box-shadow: 0 8px 24px rgba(124,110,247,.4);
     cursor: pointer; display: flex; flex-direction: column; gap: 3px;
     align-items: flex-start; z-index: 50;
   }
-  .my-situation-fab span { font-size: 12px; font-weight: 500; opacity: .85; }
+  .my-situation-fab span { font-size: var(--fs-sm); font-weight: 500; opacity: .85; }
   .ms-overlay {
     display: none; position: fixed; inset: 0; z-index: 100;
     background: rgba(0,0,0,.6); backdrop-filter: blur(4px);
@@ -184,27 +168,27 @@
   }
   .ms-overlay.show { display: flex; }
   .ms-modal {
-    background: var(--card, #181826); border-radius: 20px;
+    background: var(--card, var(--bg-card)); border-radius: var(--r-lg);
     padding: 22px; width: 100%; max-width: 420px;
     box-shadow: 0 20px 60px rgba(0,0,0,.5);
   }
-  .ms-title { font-size: 20px; font-weight: 800; color: var(--text, #fff); margin-bottom: 16px; }
-  .ms-label { display: block; font-size: 13px; color: var(--text2, #9a9ab0); margin: 12px 0 6px; font-weight: 600; }
+  .ms-title { font-size: var(--fs-lg); font-weight: 800; color: var(--text, #fff); margin-bottom: 16px; }
+  .ms-label { display: block; font-size: var(--fs); color: var(--text2, var(--text2)); margin: 12px 0 6px; font-weight: 600; }
   .ms-input {
     width: 100%; box-sizing: border-box; background: rgba(255,255,255,.06);
-    border: 1px solid rgba(255,255,255,.12); border-radius: 12px;
-    padding: 12px 14px; font-size: 15px; color: var(--text, #fff); outline: none;
+    border: 1px solid rgba(255,255,255,.12); border-radius: var(--r);
+    padding: 12px 14px; font-size: var(--fs); color: var(--text, #fff); outline: none;
   }
-  .ms-input:focus { border-color: #7c6ef7; }
-  .ms-input::placeholder { color: #6a6a80; }
+  .ms-input:focus { border-color: var(--purple); }
+  .ms-input::placeholder { color: var(--text3); }
   .ms-start {
-    width: 100%; margin-top: 18px; background: linear-gradient(135deg,#7c6ef7,#5b4bd6);
-    color: #fff; border: none; border-radius: 14px; padding: 14px;
-    font-size: 16px; font-weight: 700; cursor: pointer;
+    width: 100%; margin-top: 18px; background: linear-gradient(135deg,var(--purple),var(--purple-dark));
+    color: #fff; border: none; border-radius: var(--r); padding: 14px;
+    font-size: var(--fs-md); font-weight: 700; cursor: pointer;
   }
   .ms-cancel {
-    width: 100%; margin-top: 8px; background: transparent; color: var(--text2,#9a9ab0);
-    border: none; padding: 10px; font-size: 14px; cursor: pointer;
+    width: 100%; margin-top: 8px; background: transparent; color: var(--text2,var(--text2));
+    border: none; padding: 10px; font-size: var(--fs); cursor: pointer;
   }
 
   /* Victory overlay */
@@ -220,7 +204,7 @@
   #victory.show { display: flex; opacity: 1; }
 
   .vc-eyebrow {
-    font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase;
+    font-size: var(--fs-xs); letter-spacing: 0.18em; text-transform: uppercase;
     color: var(--text3); font-weight: 600;
     opacity: 0; transform: translateY(8px);
     animation: vcUp 0.5s ease 0.05s forwards;
@@ -235,9 +219,9 @@
     opacity: 0; transform: scale(0.7);
     animation: vcPop 0.55s cubic-bezier(0.2,1.4,0.4,1) 0.15s forwards;
   }
-  .vc-xp-label { font-size: 13px; color: var(--text2);
+  .vc-xp-label { font-size: var(--fs); color: var(--text2);
     opacity: 0; animation: vcFade 0.4s ease 0.5s forwards; }
-  .vc-mult { color: #f7b84f; font-size: 0.5em; vertical-align: super; }
+  .vc-mult { color: var(--yellow); font-size: 0.5em; vertical-align: super; }
 
   /* Chain — спалах */
   .vc-chain {
@@ -246,17 +230,17 @@
     opacity: 0; transform: translateY(10px);
     animation: vcUp 0.5s ease 0.75s forwards;
   }
-  .vc-chain .flame { font-size: 22px; filter: drop-shadow(0 0 8px rgba(247,140,40,0.6)); }
+  .vc-chain .flame { font-size: var(--fs-lg); filter: drop-shadow(0 0 8px rgba(247,140,40,0.6)); }
   .vc-milestone {
-    margin-top: 6px; font-size: 12px; color: #f7b84f; font-weight: 600;
+    margin-top: 6px; font-size: var(--fs-sm); color: var(--yellow); font-weight: 600;
     opacity: 0; animation: vcFade 0.4s ease 1.0s forwards;
   }
 
   /* Rank — сигнатурний елемент: золоте кільце з позицією */
   .vc-rank {
     margin-top: 26px; width: 100%; max-width: 340px;
-    border: 1px solid var(--border); border-radius: 16px;
-    background: var(--surface);
+    border: 1px solid var(--line); border-radius: var(--r);
+    background: var(--bg-card);
     padding: 18px 20px;
     opacity: 0; transform: translateY(14px);
     animation: vcUp 0.55s ease 1.25s forwards;
@@ -270,37 +254,37 @@
   .vc-rank-row { display: flex; align-items: center; justify-content: space-between; }
   .vc-rank-pos { font-size: 30px; font-weight: 800; color: var(--text);
     font-variant-numeric: tabular-nums; }
-  .vc-rank-pos .hash { color: #f7b84f; font-size: 0.7em; }
-  .vc-rank-meta { text-align: right; font-size: 12px; color: var(--text2); line-height: 1.5; }
+  .vc-rank-pos .hash { color: var(--yellow); font-size: 0.7em; }
+  .vc-rank-meta { text-align: right; font-size: var(--fs-sm); color: var(--text2); line-height: 1.5; }
   .vc-delta { color: var(--green); font-weight: 700; }
   .vc-gap {
-    margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border);
-    font-size: 13px; color: var(--text); text-align: left;
+    margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line);
+    font-size: var(--fs); color: var(--text); text-align: left;
   }
-  .vc-gap b { color: var(--accent); font-variant-numeric: tabular-nums; }
+  .vc-gap b { color: var(--purple); font-variant-numeric: tabular-nums; }
   .vc-gap-bar {
-    margin-top: 8px; height: 6px; border-radius: 3px;
-    background: var(--surface2); overflow: hidden;
+    margin-top: 8px; height: 6px; border-radius: var(--r-sm);
+    background: var(--bg-card2); overflow: hidden;
   }
   .vc-gap-fill {
-    height: 100%; border-radius: 3px;
-    background: linear-gradient(90deg, var(--accent), var(--green));
+    height: 100%; border-radius: var(--r-sm);
+    background: linear-gradient(90deg, var(--purple), var(--green));
     width: 0%; transition: width 0.9s ease 1.6s;
   }
-  .vc-top { color: #f7b84f; font-weight: 700; font-size: 14px; }
+  .vc-top { color: var(--yellow); font-weight: 700; font-size: var(--fs); }
 
   .vc-btn {
     margin-top: 28px; width: 100%; max-width: 340px;
-    padding: 15px; border: none; border-radius: 14px;
-    background: var(--accent); color: #fff;
-    font-size: 15px; font-weight: 700; cursor: pointer;
+    padding: 15px; border: none; border-radius: var(--r);
+    background: var(--purple); color: #fff;
+    font-size: var(--fs); font-weight: 700; cursor: pointer;
     opacity: 0; animation: vcFade 0.4s ease 1.5s forwards;
     transition: transform 0.1s, background 0.15s;
   }
   .vc-btn:active { transform: scale(0.97); }
   .vc-skip {
     margin-top: 12px; background: none; border: none; color: var(--text3);
-    font-size: 13px; cursor: pointer;
+    font-size: var(--fs); cursor: pointer;
     opacity: 0; animation: vcFade 0.4s ease 1.6s forwards;
   }
 
@@ -477,12 +461,12 @@ const UID = tg?.initDataUnsafe?.user?.id || 0;
 const USER_LEVEL = 'intermediate';
 
 const CATEGORIES = [
-  { id: 'chainy',  label: '🤖 Chainy',          color: '#7c6ef7', bg: '#12102a', chainy: true },
-  { id: 'daily',   label: '🏙️ Щоденне життя',   color: '#3ecf8e', bg: '#0f2820' },
-  { id: 'travel',  label: '✈️ Подорожі',        color: '#f59e0b', bg: '#2a1f0a' },
-  { id: 'basics',  label: '💬 Спілкування',     color: '#4f8ef7', bg: '#1a2340' },
-  { id: 'work',    label: '💼 Робота',           color: '#a78bfa', bg: '#1e1a30' },
-  { id: 'move',    label: '🌍 Переїзд',          color: '#fb7185', bg: '#2a1020' },
+  { id: 'chainy',  label: '🤖 Chainy',          color: 'var(--purple)', bg: 'var(--purple-bg)', chainy: true },
+  { id: 'daily',   label: '🏙️ Щоденне життя',   color: 'var(--green)', bg: 'var(--green-bg)' },
+  { id: 'travel',  label: '✈️ Подорожі',        color: 'var(--orange)', bg: 'var(--purple-bg)' },
+  { id: 'basics',  label: '💬 Спілкування',     color: 'var(--blue)', bg: 'var(--purple-bg)' },
+  { id: 'work',    label: '💼 Робота',           color: 'var(--purple)', bg: 'var(--purple-bg)' },
+  { id: 'move',    label: '🌍 Переїзд',          color: 'var(--red)', bg: 'var(--red)' },
 ];
 
 // Chainy — аватар SVG (людина з ланцюжком)
@@ -789,13 +773,13 @@ function renderScenarios() {
   if (currentCat === 'chainy') {
     list.innerHTML = `
       <div style="display:flex;flex-direction:column;align-items:center;padding:24px 16px;gap:16px">
-        <div style="width:120px;height:120px;background:#12102a;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 0 40px rgba(124,110,247,.4)">
+        <div style="width:120px;height:120px;background:var(--purple-bg);border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 0 40px rgba(124,110,247,.4)">
           <img src="https://discoveritschool-hub.github.io/speakchain-app/chainy.png" alt="Chainy" style="width:90px;height:90px;object-fit:contain">
         </div>
         <div style="text-align:center">
-          <div style="font-size:22px;font-weight:700;letter-spacing:-.3px;color:#f0f0f0">Chainy</div>
-          <div style="font-size:14px;color:#a78bfa;margin-top:2px;font-weight:500">Your AI voice assistant</div>
-          <div style="font-size:13px;color:#888;margin-top:10px;line-height:1.6;max-width:260px">
+          <div style="font-size:var(--fs-lg);font-weight:700;letter-spacing:-.3px;color:var(--text)">Chainy</div>
+          <div style="font-size:var(--fs);color:var(--purple);margin-top:2px;font-weight:500">Your AI voice assistant</div>
+          <div style="font-size:var(--fs);color:var(--text2);margin-top:10px;line-height:1.6;max-width:260px">
             Просто поговори — про що хочеш.<br>
             Chainy слухає, цікавиться і підтримує<br>
             будь-яку розмову 💬
@@ -803,20 +787,20 @@ function renderScenarios() {
         </div>
         <div style="display:flex;gap:12px;margin-top:4px">
           <div style="text-align:center">
-            <div style="font-size:18px">🎙</div>
-            <div style="font-size:11px;color:#888;margin-top:2px">Голос</div>
+            <div style="font-size:var(--fs-md)">🎙</div>
+            <div style="font-size:var(--fs-xs);color:var(--text2);margin-top:2px">Голос</div>
           </div>
           <div style="text-align:center">
-            <div style="font-size:18px">💬</div>
-            <div style="font-size:11px;color:#888;margin-top:2px">Текст</div>
+            <div style="font-size:var(--fs-md)">💬</div>
+            <div style="font-size:var(--fs-xs);color:var(--text2);margin-top:2px">Текст</div>
           </div>
           <div style="text-align:center">
-            <div style="font-size:18px">🌍</div>
-            <div style="font-size:11px;color:#888;margin-top:2px">Будь-яка тема</div>
+            <div style="font-size:var(--fs-md)">🌍</div>
+            <div style="font-size:var(--fs-xs);color:var(--text2);margin-top:2px">Будь-яка тема</div>
           </div>
         </div>
         <button onclick="startChainyChat()"
-          style="margin-top:8px;padding:14px 40px;border-radius:24px;background:linear-gradient(135deg,#7c6ef7,#a78bfa);border:none;color:#fff;font-size:16px;font-weight:700;cursor:pointer;letter-spacing:-.2px;box-shadow:0 4px 20px rgba(124,110,247,.4)">
+          style="margin-top:8px;padding:14px 40px;border-radius:var(--r-lg);background:linear-gradient(135deg,var(--purple),var(--purple));border:none;color:#fff;font-size:var(--fs-md);font-weight:700;cursor:pointer;letter-spacing:-.2px;box-shadow:0 4px 20px rgba(124,110,247,.4)">
           Привіт, Chainy! 👋
         </button>
       </div>`;
@@ -843,7 +827,7 @@ function renderScenarios() {
   list.innerHTML = filtered.map(({ s, i }) =>
     `<div class="scenario-card" onclick="openScenario('${currentCat}', ${i})">
       <div class="sc-photo" id="sc-photo-${currentCat}-${i}">
-        <span style="font-size:32px">${s.emoji}</span>
+        <span style="font-size:var(--fs-xl)">${s.emoji}</span>
       </div>
       <div class="sc-body">
         <div class="sc-title">${s.title}</div>
@@ -855,7 +839,7 @@ function renderScenarios() {
     fetchPixabayImage(s.title).then(url => {
       if (!url) return;
       const el = document.getElementById(`sc-photo-${currentCat}-${i}`);
-      if (el) el.innerHTML = `<img src="${url}" alt="${s.title}" onerror="this.parentNode.innerHTML='<span style=font-size:32px>${s.emoji}</span>'">`;
+      if (el) el.innerHTML = `<img src="${url}" alt="${s.title}" onerror="this.parentNode.innerHTML='<span style=font-size:var(--fs-xl)>${s.emoji}</span>'">`;
     });
   });
 }
@@ -898,7 +882,7 @@ function startChainyChat() {
   // Аватар Chainy — SVG персонаж
   const avatarEl = document.getElementById('chat-avatar');
   avatarEl.innerHTML = CHAINY_AVATAR_SVG;
-  avatarEl.style.background = '#12102a';
+  avatarEl.style.background = 'var(--purple-bg)';
   avatarEl.style.borderRadius = '50%';
   avatarEl.style.padding = '2px';
   avatarEl.style.width = '38px';
@@ -965,7 +949,7 @@ function startMySituation() {
   msgs.innerHTML = '';
   const avatarEl = document.getElementById('chat-avatar');
   avatarEl.textContent = '⭐';
-  avatarEl.style.background = '#12102a';
+  avatarEl.style.background = 'var(--purple-bg)';
   document.getElementById('chat-name').textContent = currentScenario.title;
   updateCounter();
   showScreen('s-chat');
@@ -1011,10 +995,10 @@ async function openScenario(catId, idx) {
       <div class="detail-hero-back" onclick="showScreen('s-home')">
         <svg viewBox="0 0 24 24" stroke-width="2.5" style="width:18px;height:18px;stroke:#fff;fill:none"><polyline points="15 18 9 12 15 6"></polyline></svg>
       </div>
-      <div class="detail-hero-cat" id="detail-cat-badge" style="position:absolute;top:12px;right:12px;font-size:11px;padding:4px 10px;border-radius:12px;font-weight:600;backdrop-filter:blur(8px);background:${cat.bg};color:${cat.color};border:1px solid ${cat.color}40">${cat.label}</div>
+      <div class="detail-hero-cat" id="detail-cat-badge" style="position:absolute;top:12px;right:12px;font-size:var(--fs-xs);padding:4px 10px;border-radius:var(--r);font-weight:600;backdrop-filter:blur(8px);background:${cat.bg};color:${cat.color};border:1px solid ${cat.color}40">${cat.label}</div>
       <div class="detail-hero-title" style="position:absolute;bottom:14px;left:16px;right:16px">
-        <h2 style="font-size:20px;font-weight:700;color:#fff;letter-spacing:-0.3px">${s.title}</h2>
-        <p style="font-size:13px;color:rgba(255,255,255,0.65);margin-top:3px">${s.sub}</p>
+        <h2 style="font-size:var(--fs-lg);font-weight:700;color:#fff;letter-spacing:-0.3px">${s.title}</h2>
+        <p style="font-size:var(--fs);color:rgba(255,255,255,0.65);margin-top:3px">${s.sub}</p>
       </div>`;
   } else {
     document.getElementById('detail-emoji').textContent = s.emoji;
@@ -1093,7 +1077,7 @@ function submitCustomVideo() {
   if (!inp) return;
   const vid = extractYouTubeId(inp.value);
   if (!vid) {
-    inp.style.borderColor = '#e5484d';
+    inp.style.borderColor = 'var(--red)';
     inp.placeholder = 'Не схоже на YouTube-посилання — встав ще раз';
     inp.value = '';
     return;
@@ -1161,7 +1145,7 @@ function startChat() {
   const role = ROLES.find(r => r.id === selectedRole);
 
   document.getElementById('chat-avatar').textContent = currentScenario.emoji;
-  document.getElementById('chat-avatar').style.background = cat?.bg || '#1a1a1a';
+  document.getElementById('chat-avatar').style.background = cat?.bg || 'var(--bg-card)';
   document.getElementById('chat-name').textContent = currentScenario.title;
   updateCounter();
 
@@ -1376,7 +1360,7 @@ function showTrialCTA() {
   wrap.style.cssText = 'display:flex;justify-content:center;padding:12px 16px;';
   const btn = document.createElement('button');
   btn.textContent = '🚀 Приєднатися до тріалу';
-  btn.style.cssText = 'padding:12px 24px;border-radius:24px;border:none;background:linear-gradient(135deg,#7c6ef7,#a78bfa);color:#fff;font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 4px 16px rgba(124,110,247,.35);';
+  btn.style.cssText = 'padding:12px 24px;border-radius:var(--r-lg);border:none;background:linear-gradient(135deg,var(--purple),var(--purple));color:#fff;font-size:var(--fs);font-weight:700;cursor:pointer;box-shadow:0 4px 16px rgba(124,110,247,.35);';
   btn.onclick = goToTrial;
   wrap.appendChild(btn);
   chat.appendChild(wrap);
@@ -1669,7 +1653,7 @@ function startVideoChat(topic, mode, summary) {
   msgs.innerHTML = '';
   const avatarEl = document.getElementById('chat-avatar');
   avatarEl.innerHTML = CHAINY_AVATAR_SVG;
-  avatarEl.style.background = '#12102a';
+  avatarEl.style.background = 'var(--purple-bg)';
   document.getElementById('chat-name').textContent = 'Chainy';
   updateCounter();
   showScreen('s-chat');
@@ -1718,10 +1702,10 @@ function showVideoChoice(topic, vid) {
   ov.id = 'video-choice';
   ov.style.cssText = 'position:fixed;inset:0;z-index:1500;background:rgba(0,0,0,0.7);backdrop-filter:blur(6px);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;';
   ov.innerHTML =
-    '<div style="font-size:15px;color:var(--text2);margin-bottom:4px">🎬 ' + (topic||'') + '</div>' +
-    '<div style="font-size:20px;font-weight:700;color:var(--text);margin-bottom:24px">Як хочеш потренувати?</div>' +
-    '<button id="vc-retell" style="width:100%;max-width:320px;padding:16px;margin-bottom:12px;border:none;border-radius:14px;background:var(--accent);color:#fff;font-size:15px;font-weight:700;cursor:pointer">🗣 Переказати відео</button>' +
-    '<button id="vc-discuss" style="width:100%;max-width:320px;padding:16px;border:1px solid var(--border);border-radius:14px;background:var(--surface);color:var(--text);font-size:15px;font-weight:600;cursor:pointer">💬 Обговорити тему</button>';
+    '<div style="font-size:var(--fs);color:var(--text2);margin-bottom:4px">🎬 ' + (topic||'') + '</div>' +
+    '<div style="font-size:var(--fs-lg);font-weight:700;color:var(--text);margin-bottom:24px">Як хочеш потренувати?</div>' +
+    '<button id="vc-retell" style="width:100%;max-width:320px;padding:16px;margin-bottom:12px;border:none;border-radius:var(--r);background:var(--purple);color:#fff;font-size:var(--fs);font-weight:700;cursor:pointer">🗣 Переказати відео</button>' +
+    '<button id="vc-discuss" style="width:100%;max-width:320px;padding:16px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg-card);color:var(--text);font-size:var(--fs);font-weight:600;cursor:pointer">💬 Обговорити тему</button>';
   document.body.appendChild(ov);
   document.getElementById('vc-retell').onclick = () => { ov.remove(); startVideoChat(topic, 'retell', videoSummaryState.summary); };
   document.getElementById('vc-discuss').onclick = () => { ov.remove(); startVideoChat(topic, 'discuss', videoSummaryState.summary); };

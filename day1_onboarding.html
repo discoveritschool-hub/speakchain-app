@@ -1,17 +1,12 @@
 <!DOCTYPE html>
 <html lang="uk">
 <head>
+  <link rel="stylesheet" href="/static/tokens.css">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Знайомство — SpeakChain</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
-  :root{
-    --bg:#0d0d14; --bg2:#16161f; --bg3:#1e1e2a;
-    --purple:#7c6ef7; --purple2:#a78bfa;
-    --green:#5ad8a6; --text:#eaeaf5; --text2:#8888a8; --text3:#5a5a72;
-    --border:rgba(255,255,255,0.07);
-  }
   *{margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
   body{background:var(--bg); color:var(--text);
     font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',Roboto,sans-serif;
@@ -19,32 +14,32 @@
   .wrap{max-width:460px; margin:0 auto; padding:16px 16px 110px; min-height:100vh;}
 
   .top{display:flex; align-items:center; gap:12px; padding:8px 0 16px;}
-  .back{font-size:22px; color:var(--text2); background:var(--bg2); border:1px solid var(--border);
+  .back{font-size:var(--fs-lg); color:var(--text2); background:var(--bg-card); border:1px solid var(--line);
     width:36px; height:36px; border-radius:50%; cursor:pointer; flex-shrink:0;
     display:flex; align-items:center; justify-content:center; line-height:1; transition:opacity .2s, transform .06s;}
   .back:active{transform:scale(.94);}
   .back:disabled{opacity:.3; cursor:default;}
-  .bar{flex:1; height:8px; background:var(--bg3); border-radius:10px; overflow:hidden;}
+  .bar{flex:1; height:8px; background:var(--bg-card2); border-radius:var(--r); overflow:hidden;}
   .bar>i{display:block; height:100%; width:0%;
-    background:linear-gradient(90deg,var(--purple),var(--purple2)); border-radius:10px;
+    background:linear-gradient(90deg,var(--purple),var(--purple-dark)); border-radius:var(--r);
     transition:width .35s cubic-bezier(.4,0,.2,1);}
-  .step-count{font-size:12px; color:var(--text2); font-weight:600; flex-shrink:0; min-width:34px; text-align:right;}
+  .step-count{font-size:var(--fs-sm); color:var(--text2); font-weight:600; flex-shrink:0; min-width:34px; text-align:right;}
 
   h1{font-size:21px; font-weight:700; letter-spacing:-.3px; margin:4px 0 6px; text-align:center;}
-  .sub{text-align:center; color:var(--text2); font-size:14px; margin:0 auto 18px; max-width:340px; line-height:1.45;}
+  .sub{text-align:center; color:var(--text2); font-size:var(--fs); margin:0 auto 18px; max-width:340px; line-height:1.45;}
   .phase-wrap{text-align:center;}
-  .phase-tag{display:inline-block; font-size:11px; font-weight:700; color:var(--purple2);
+  .phase-tag{display:inline-block; font-size:var(--fs-xs); font-weight:700; color:var(--purple-dark);
     background:rgba(124,110,247,.12); border:1px solid rgba(124,110,247,.3);
-    padding:3px 11px; border-radius:20px; letter-spacing:.4px; margin-bottom:8px;}
+    padding:3px 11px; border-radius:var(--r-lg); letter-spacing:.4px; margin-bottom:8px;}
 
   .choices{display:flex; flex-direction:column; gap:10px;}
-  .choice{display:flex; align-items:center; gap:12px; background:var(--bg2);
-    border:1.5px solid var(--border); border-radius:14px; padding:16px;
-    cursor:pointer; transition:all .15s; user-select:none; font-size:16px; font-weight:600;}
+  .choice{display:flex; align-items:center; gap:12px; background:var(--bg-card);
+    border:1.5px solid var(--line); border-radius:var(--r); padding:16px;
+    cursor:pointer; transition:all .15s; user-select:none; font-size:var(--fs-md); font-weight:600;}
   .choice:active{transform:scale(.99);}
   .choice.on{border-color:var(--purple); background:rgba(124,110,247,.14);}
   .choice .mk{margin-left:auto; width:22px; height:22px; flex-shrink:0;
-    border:2px solid var(--bg3); display:grid; place-items:center; transition:all .15s;}
+    border:2px solid var(--bg-card2); display:grid; place-items:center; transition:all .15s;}
   .choice.single .mk{border-radius:50%;}
   .choice.multi .mk{border-radius:7px;}
   .choice.on .mk{background:var(--purple); border-color:var(--purple);}
@@ -53,16 +48,16 @@
 
   .cta-bar{position:fixed; left:0; right:0; bottom:0; padding:14px 16px 22px;
     background:linear-gradient(180deg,rgba(13,13,20,0),var(--bg) 34%); max-width:460px; margin:0 auto;}
-  .cta{width:100%; border:none; border-radius:12px; padding:16px; font-size:16px; font-weight:600;
+  .cta{width:100%; border:none; border-radius:var(--r); padding:16px; font-size:var(--fs-md); font-weight:600;
     color:#fff; background:var(--purple); cursor:pointer; transition:transform .08s, opacity .2s;}
   .cta:active{transform:translateY(1px);}
   .cta:disabled{opacity:.4; cursor:default;}
-  .hint{text-align:center; color:var(--text3); font-size:12px; margin:14px 0 0;}
+  .hint{text-align:center; color:var(--text3); font-size:var(--fs-sm); margin:14px 0 0;}
   .other-wrap{margin-top:12px;}
   .other-input{
-    width:100%; background:var(--bg2); border:1.5px solid var(--border);
-    border-radius:14px; padding:14px 16px; color:var(--text);
-    font-family:inherit; font-size:15px; line-height:1.4; resize:none;
+    width:100%; background:var(--bg-card); border:1.5px solid var(--line);
+    border-radius:var(--r); padding:14px 16px; color:var(--text);
+    font-family:inherit; font-size:var(--fs); line-height:1.4; resize:none;
     transition:border-color .15s;
   }
   .other-input:focus{outline:none; border-color:var(--purple);}
@@ -71,8 +66,8 @@
   .done{display:none; text-align:center; animation:fade .5s ease;}
   @keyframes fade{from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:none;}}
   .done .ic{font-size:52px; margin:20px 0 8px;}
-  .done h1{font-size:22px;}
-  .done p{color:var(--text2); font-size:15px; margin:8px auto 0; max-width:320px; line-height:1.5;}
+  .done h1{font-size:var(--fs-lg);}
+  .done p{color:var(--text2); font-size:var(--fs); margin:8px auto 0; max-width:320px; line-height:1.5;}
 </style>
 </head>
 <body>

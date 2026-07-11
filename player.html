@@ -1,18 +1,13 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <link rel="stylesheet" href="/static/tokens.css">
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
   <title>SpeakChain Player</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
     * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-    :root {
-      --purple:#7c6ef7; --green:#5ad8a6; --orange:#f7a35c;
-      --red:#f76e6e;    --bg:#0d0d14;    --bg2:#16161f;
-      --bg3:#1e1e2e;    --text:#e8e8f0;  --text2:#8888a8;
-      --border:rgba(255,255,255,0.07);
-    }
     body {
       background:var(--bg); min-height:100vh;
       display:flex; flex-direction:column;
@@ -36,7 +31,7 @@
       width:64px; height:64px; border-radius:50%;
       background:rgba(124,110,247,0.85);
       display:flex; align-items:center; justify-content:center;
-      font-size:28px; padding-left:4px;
+      font-size:var(--fs-xl); padding-left:4px;
       box-shadow:0 0 32px rgba(124,110,247,0.5);
     }
     #video-fallback {
@@ -46,9 +41,9 @@
     }
     #video-fallback.show { display:flex; }
     .open-yt-btn {
-      padding:12px 24px; border-radius:24px; border:none;
+      padding:12px 24px; border-radius:var(--r-lg); border:none;
       background:var(--red); color:#fff;
-      font-size:15px; font-weight:700; cursor:pointer; text-decoration:none;
+      font-size:var(--fs); font-weight:700; cursor:pointer; text-decoration:none;
     }
 
     /* ── Subtitle overlay ── */
@@ -63,50 +58,50 @@
     }
     #transcript-overlay.show { opacity:1; }
     #transcript-text {
-      font-size:15px; font-weight:600; color:#fff; text-align:center; line-height:1.5;
+      font-size:var(--fs); font-weight:600; color:#fff; text-align:center; line-height:1.5;
       text-shadow:0 1px 6px rgba(0,0,0,0.9); transition:opacity 0.2s; max-width:100%;
     }
     /* fade керується через style.opacity в syncCaptions */
 
     /* ── Session bar ── */
     #session-bar {
-      background:var(--bg2); padding:8px 16px;
+      background:var(--bg-card); padding:8px 16px;
       display:flex; align-items:center; justify-content:space-between;
-      border-bottom:0.5px solid var(--border);
+      border-bottom:0.5px solid var(--line);
     }
     .session-time-wrap { display:flex; align-items:center; gap:8px; }
-    #session-time { font-size:13px; font-weight:700; color:var(--green); }
-    #session-timer-label { font-size:11px; color:var(--text2); font-weight:600; }
+    #session-time { font-size:var(--fs); font-weight:700; color:var(--green); }
+    #session-timer-label { font-size:var(--fs-xs); color:var(--text2); font-weight:600; }
     #finish-btn {
-      padding:6px 14px; border-radius:20px; border:none;
-      background:linear-gradient(135deg,var(--purple),#9b8dfb);
-      color:#fff; font-size:12px; font-weight:700; cursor:pointer;
+      padding:6px 14px; border-radius:var(--r-lg); border:none;
+      background:linear-gradient(135deg,var(--purple),var(--purple));
+      color:#fff; font-size:var(--fs-sm); font-weight:700; cursor:pointer;
     }
 
     /* ── Inactivity warning ── */
     #inactivity-warn {
       display:none; background:rgba(247,163,92,0.15);
-      border:1px solid var(--orange); border-radius:10px;
+      border:1px solid var(--orange); border-radius:var(--r);
       padding:10px 14px; margin:0 16px;
-      font-size:13px; color:var(--orange); text-align:center;
+      font-size:var(--fs); color:var(--orange); text-align:center;
     }
     #inactivity-warn.show { display:block; }
 
     /* ── Journey strip ── */
     .journey-strip {
-      padding:10px 16px 8px; background:var(--bg2);
-      border-bottom:0.5px solid var(--border);
+      padding:10px 16px 8px; background:var(--bg-card);
+      border-bottom:0.5px solid var(--line);
     }
     .journey-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
-    .journey-level { font-size:12px; font-weight:700; color:var(--purple); }
-    .journey-goal  { font-size:11px; color:var(--orange); font-weight:600; }
+    .journey-level { font-size:var(--fs-sm); font-weight:700; color:var(--purple); }
+    .journey-goal  { font-size:var(--fs-xs); color:var(--orange); font-weight:600; }
     .journey-track {
       position:relative; height:7px;
-      background:rgba(255,255,255,0.07); border-radius:8px; overflow:visible; margin-bottom:6px;
+      background:rgba(255,255,255,0.07); border-radius:var(--r-sm); overflow:visible; margin-bottom:6px;
     }
     .journey-fill {
-      height:100%; border-radius:8px;
-      background:linear-gradient(90deg,#5ad8a6,#7c6ef7);
+      height:100%; border-radius:var(--r-sm);
+      background:linear-gradient(90deg,var(--green),var(--purple));
       position:relative; transition:width 0.8s cubic-bezier(.4,0,.2,1);
     }
     .journey-thumb {
@@ -114,23 +109,23 @@
       width:16px; height:16px; border-radius:50%; background:#fff;
       border:2.5px solid var(--purple); box-shadow:0 0 8px rgba(124,110,247,0.7);
     }
-    .journey-c2 { position:absolute; right:0; top:50%; transform:translateY(-50%); font-size:14px; }
+    .journey-c2 { position:absolute; right:0; top:50%; transform:translateY(-50%); font-size:var(--fs); }
     .journey-marks { display:flex; justify-content:space-between; }
-    .journey-mark { font-size:9px; font-weight:700; color:var(--text2); }
+    .journey-mark { font-size:var(--fs-xs); font-weight:700; color:var(--text2); }
     .journey-mark.done    { color:var(--green); }
     .journey-mark.current { color:var(--purple); }
     .journey-mark.goal    { color:var(--orange); }
 
     /* ── Panel ── */
     .shadow-panel {
-      background:var(--bg2); border-top:0.5px solid var(--border);
+      background:var(--bg-card); border-top:0.5px solid var(--line);
       padding:14px 16px; display:flex; flex-direction:column; gap:14px;
     }
     .panel-label {
-      font-size:10px; font-weight:700; letter-spacing:0.08em;
+      font-size:var(--fs-xs); font-weight:700; letter-spacing:0.08em;
       color:var(--text2); text-transform:uppercase; margin-bottom:8px;
     }
-    .divider { height:0.5px; background:var(--border); margin:0 -16px; }
+    .divider { height:0.5px; background:var(--line); margin:0 -16px; }
 
     /* ── Loop status row ── */
     .loop-status {
@@ -138,8 +133,8 @@
     }
     .loop-status.show { display:flex; }
     .loop-timer-badge {
-      font-size:12px; font-weight:700; color:var(--green);
-      background:rgba(90,216,166,0.15); border-radius:20px;
+      font-size:var(--fs-sm); font-weight:700; color:var(--green);
+      background:rgba(90,216,166,0.15); border-radius:var(--r-lg);
       padding:4px 10px; animation:pulse-green 1.5s infinite;
     }
     @keyframes pulse-green {
@@ -147,69 +142,69 @@
       50%    { box-shadow:0 0 0 6px rgba(90,216,166,0); }
     }
     .save-loop-inline {
-      padding:6px 12px; border-radius:20px; border:none;
-      background:linear-gradient(135deg,var(--green),#3dc99a);
-      color:#0d1a14; font-size:12px; font-weight:700; cursor:pointer;
+      padding:6px 12px; border-radius:var(--r-lg); border:none;
+      background:linear-gradient(135deg,var(--green),var(--green));
+      color:var(--green-bg); font-size:var(--fs-sm); font-weight:700; cursor:pointer;
     }
 
     /* ── Loop / Повтор ── */
     .loop-row { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
     .loop-time {
-      font-size:11px; color:var(--green); font-weight:600;
-      background:rgba(90,216,166,0.1); border-radius:6px; padding:4px 8px; min-width:44px; text-align:center;
+      font-size:var(--fs-xs); color:var(--green); font-weight:600;
+      background:rgba(90,216,166,0.1); border-radius:var(--r-sm); padding:4px 8px; min-width:44px; text-align:center;
     }
-    .loop-time.empty { color:var(--text2); background:var(--bg3); }
+    .loop-time.empty { color:var(--text2); background:var(--bg-card2); }
     .icon-btn {
-      padding:7px 12px; border-radius:20px; border:1.5px solid var(--border);
-      background:var(--bg3); color:var(--text); font-size:12px; font-weight:600; cursor:pointer;
+      padding:7px 12px; border-radius:var(--r-lg); border:1.5px solid var(--line);
+      background:var(--bg-card2); color:var(--text); font-size:var(--fs-sm); font-weight:600; cursor:pointer;
     }
     .icon-btn.loop-active { border-color:var(--green); color:var(--green); background:rgba(90,216,166,0.12); }
     .icon-btn.danger { color:var(--red); border-color:rgba(247,110,110,0.3); }
 
     /* ── Record ── */
     .record-btn {
-      width:100%; padding:14px; border-radius:14px; border:none;
-      font-size:15px; font-weight:700; cursor:pointer;
+      width:100%; padding:14px; border-radius:var(--r); border:none;
+      font-size:var(--fs); font-weight:700; cursor:pointer;
       display:flex; align-items:center; justify-content:center; gap:8px;
       transition:all 0.2s; -webkit-appearance:none;
     }
     .record-btn.idle {
-      background:linear-gradient(135deg,var(--purple),#9b8dfb);
+      background:linear-gradient(135deg,var(--purple),var(--purple));
       color:#fff; box-shadow:0 4px 16px rgba(124,110,247,0.35);
     }
     .record-btn.recording {
-      background:linear-gradient(135deg,var(--red),#f7a35c);
+      background:linear-gradient(135deg,var(--red),var(--orange));
       color:#fff; animation:pulse 1.2s infinite;
     }
     .record-btn.has-audio {
-      background:var(--bg3); color:var(--text2); border:1.5px solid var(--border);
+      background:var(--bg-card2); color:var(--text2); border:1.5px solid var(--line);
     }
     @keyframes pulse {
       0%,100% { box-shadow:0 4px 16px rgba(247,110,110,0.35); }
       50%      { box-shadow:0 4px 28px rgba(247,110,110,0.6); }
     }
-    .rec-timer { text-align:center; font-size:12px; color:var(--red); font-weight:600; display:none; }
+    .rec-timer { text-align:center; font-size:var(--fs-sm); color:var(--red); font-weight:600; display:none; }
     .rec-timer.visible { display:block; }
-    .mic-error { font-size:12px; color:var(--orange); text-align:center; display:none; }
+    .mic-error { font-size:var(--fs-sm); color:var(--orange); text-align:center; display:none; }
     .mic-error.visible { display:block; }
 
     /* ── Waveform ── */
     #waveform-wrap {
       display:none; width:100%; height:56px;
-      background:var(--bg3); border-radius:12px; overflow:hidden; position:relative;
+      background:var(--bg-card2); border-radius:var(--r); overflow:hidden; position:relative;
     }
     #waveform-wrap.visible { display:block; }
     #waveform { width:100%; height:100%; display:block; }
     .rec-pulse { position:absolute; top:8px; left:10px; width:8px; height:8px; border-radius:50%; background:var(--red); animation:blink 1s infinite; }
-    .rec-time  { position:absolute; top:5px; right:10px; font-size:10px; color:var(--text2); font-weight:600; }
+    .rec-time  { position:absolute; top:5px; right:10px; font-size:var(--fs-xs); color:var(--text2); font-weight:600; }
     @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
 
     /* ── Action buttons (after recording) ── */
     .action-row { display:flex; gap:8px; }
     .action-btn {
-      flex:1; padding:10px; border-radius:12px;
-      border:1.5px solid var(--border); background:var(--bg3);
-      color:var(--text); font-size:13px; font-weight:600; cursor:pointer;
+      flex:1; padding:10px; border-radius:var(--r);
+      border:1.5px solid var(--line); background:var(--bg-card2);
+      color:var(--text); font-size:var(--fs); font-weight:600; cursor:pointer;
       display:flex; align-items:center; justify-content:center; gap:5px;
       transition: border-color 0.15s, color 0.15s, background 0.15s;
     }
@@ -225,9 +220,9 @@
     }
 
     .record-again-btn {
-      width:100%; padding:9px; border-radius:12px;
-      border:1.5px solid var(--border); background:var(--bg3);
-      color:var(--text2); font-size:13px; font-weight:600; cursor:pointer;
+      width:100%; padding:9px; border-radius:var(--r);
+      border:1.5px solid var(--line); background:var(--bg-card2);
+      color:var(--text2); font-size:var(--fs); font-weight:600; cursor:pointer;
       display:none;
     }
     .record-again-btn.show { display:block; }
@@ -238,24 +233,24 @@
     }
     #playback-bar-wrap.show { display:flex; }
     #playback-bar {
-      width:100%; height:4px; background:var(--bg3);
-      border-radius:4px; overflow:hidden; cursor:pointer;
+      width:100%; height:4px; background:var(--bg-card2);
+      border-radius:var(--r-sm); overflow:hidden; cursor:pointer;
     }
     #playback-fill {
       height:100%; width:0%;
-      background:linear-gradient(90deg,var(--orange),#f7c35c);
-      border-radius:4px; transition:width 0.1s linear;
+      background:linear-gradient(90deg,var(--orange),var(--yellow));
+      border-radius:var(--r-sm); transition:width 0.1s linear;
     }
     .playback-times {
       display:flex; justify-content:space-between;
-      font-size:10px; color:var(--text2); font-weight:600;
+      font-size:var(--fs-xs); color:var(--text2); font-weight:600;
     }
 
     /* ── Save loop button ── */
     .save-loop-btn {
-      width:100%; padding:10px; border-radius:12px; border:none;
-      background:linear-gradient(135deg,var(--green),#3dc99a);
-      color:#0d1a14; font-size:13px; font-weight:700; cursor:pointer;
+      width:100%; padding:10px; border-radius:var(--r); border:none;
+      background:linear-gradient(135deg,var(--green),var(--green));
+      color:var(--green-bg); font-size:var(--fs); font-weight:700; cursor:pointer;
       margin-top:8px; display:none;
     }
     .save-loop-btn.show { display:block; }
@@ -264,9 +259,9 @@
     .toast {
       position:fixed; bottom:28px; left:50%;
       transform:translateX(-50%) translateY(20px);
-      background:var(--bg3); border:1px solid var(--border);
-      color:var(--text); font-size:13px; font-weight:600;
-      padding:10px 20px; border-radius:24px;
+      background:var(--bg-card2); border:1px solid var(--line);
+      color:var(--text); font-size:var(--fs); font-weight:600;
+      padding:10px 20px; border-radius:var(--r-lg);
       opacity:0; transition:all 0.25s; pointer-events:none;
       box-shadow:0 4px 24px rgba(0,0,0,0.4); white-space:nowrap; z-index:100;
     }
@@ -281,7 +276,7 @@
   <div id="play-overlay"><div class="play-circle">▶</div></div>
   <div id="transcript-overlay"><div id="transcript-text"></div></div>
   <div id="video-fallback">
-    <div style="color:var(--text2);font-size:14px">YouTube не завантажився</div>
+    <div style="color:var(--text2);font-size:var(--fs)">YouTube не завантажився</div>
     <a id="yt-link" class="open-yt-btn" target="_blank">▶ Відкрити на YouTube</a>
   </div>
 </div>
@@ -298,7 +293,7 @@
 <!-- Inactivity warning -->
 <div id="inactivity-warn">
   ⚠️ Ти не активний вже 2 хвилини. Сесія закриється через <span id="warn-countdown">60</span> сек.
-  <br><button onclick="resetInactivity()" style="margin-top:6px;padding:4px 12px;border-radius:10px;border:none;background:var(--orange);color:#fff;font-size:12px;cursor:pointer">Продовжити</button>
+  <br><button onclick="resetInactivity()" style="margin-top:6px;padding:4px 12px;border-radius:var(--r);border:none;background:var(--orange);color:#fff;font-size:var(--fs-sm);cursor:pointer">Продовжити</button>
 </div>
 
 <!-- Journey strip -->
@@ -375,6 +370,16 @@
 <div class="toast" id="toast"></div>
 
 <script>
+/* canvas не розуміє var() — читаємо реальний колір із tokens.css */
+const _cssVarCache={};
+function cssVar(name){
+  if(!_cssVarCache[name]){
+    _cssVarCache[name]=getComputedStyle(document.documentElement)
+      .getPropertyValue(name).trim() || '#7c6ef7';
+  }
+  return _cssVarCache[name];
+}
+
 // ── Telegram guard ──
 const TG = (typeof Telegram !== 'undefined' && Telegram.WebApp) ? Telegram.WebApp : null;
 if (TG) { try { TG.ready(); TG.expand(); } catch(e){} }
@@ -688,7 +693,7 @@ function drawWaveform() {
   for (let i=0;i<count;i++){
     const val=data[i*step]/255, barH=Math.max(3,val*h*0.9), x=i*(barW+gap), y=(h-barH)/2;
     const grad=ctx.createLinearGradient(0,y+barH,0,y);
-    grad.addColorStop(0,"#5ad8a6"); grad.addColorStop(1,"#7c6ef7");
+    grad.addColorStop(0,cssVar("--green")); grad.addColorStop(1,cssVar("--purple"));
     ctx.fillStyle=grad;
     ctx.beginPath(); ctx.roundRect(x,y,barW,barH,2); ctx.fill();
   }
@@ -971,7 +976,7 @@ if (dataRaw){
     ];
     items.forEach(it => {
       const sp = document.createElement("span");
-      sp.style.cssText = "font-size:10px;color:var(--text2);font-weight:600;";
+      sp.style.cssText = "font-size:var(--fs-xs);color:var(--text2);font-weight:600;";
       sp.textContent = `${it.icon} ${it.val}${it.label?" "+it.label:""}`;
       statsEl.appendChild(sp);
     });

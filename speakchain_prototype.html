@@ -1,0 +1,1038 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <link rel="stylesheet" href="/static/tokens.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SpeakChain — інтерактивний прототип</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  body{background:var(--bg);color:var(--text);
+    font-family:'Segoe UI',system-ui,-apple-system,sans-serif;line-height:1.5;
+    display:flex;flex-direction:column;align-items:center;padding:20px 12px 50px;min-height:100vh}
+  .hint{font-size:var(--fs);color:var(--text2);margin-bottom:14px;text-align:center;max-width:360px}
+  .hint b{color:var(--green)}
+
+  /* phone frame */
+  .phone{width:360px;max-width:100%;height:720px;background:var(--bg);
+    border:1px solid var(--bg-card3);border-radius:var(--r-lg);overflow:hidden;position:relative;
+    display:flex;flex-direction:column;box-shadow:0 10px 40px rgba(0,0,0,.5)}
+
+  /* top bar */
+  .topbar{display:flex;align-items:center;gap:10px;padding:16px 16px 12px;flex-shrink:0}
+  .streak-chip{display:flex;align-items:center;gap:6px;background:var(--purple-bg);
+    padding:6px 12px;border-radius:var(--r-pill);border:0.5px solid var(--purple-bg)}
+  .streak-chip .f{font-size:17px}
+  .streak-chip .n{font-size:var(--fs-md);font-weight:800;color:var(--orange)}
+  .streak-chip .l{font-size:var(--fs-xs);color:var(--text2);opacity:.8}
+  .top-right{margin-left:auto;display:flex;gap:10px;align-items:center}
+  .top-stat{display:flex;align-items:center;gap:5px;font-size:var(--fs);font-weight:700;color:var(--purple)}
+  .top-stat .l{font-size:var(--fs-xs);color:var(--text2);font-weight:400}
+
+  /* scroll area */
+  .scroll{flex:1;overflow-y:auto;scrollbar-width:none;padding:0 16px 16px}
+  .scroll::-webkit-scrollbar{display:none}
+
+  /* hero */
+  .hero{background:linear-gradient(135deg,var(--purple),var(--purple-dark));
+    border-radius:var(--r-lg);padding:20px 18px;margin-bottom:16px;position:relative;overflow:hidden}
+  .hero::after{content:'';position:absolute;right:-30px;top:-30px;width:120px;height:120px;
+    background:rgba(255,255,255,.08);border-radius:50%}
+  .hero .k{font-size:var(--fs-sm);color:var(--purple-text);font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+  .hero .t{font-size:var(--fs-lg);font-weight:800;color:#fff;margin:4px 0 2px}
+  .hero .s{font-size:var(--fs);color:var(--purple-text)}
+  .hero .go{margin-top:14px;background:#fff;color:var(--purple-dark);border:none;
+    padding:12px 0;width:100%;border-radius:var(--r-pill);font-size:var(--fs);font-weight:800;cursor:pointer;
+    transition:transform .1s}
+  .hero .go:active{transform:scale(.97)}
+
+  /* chain vertical */
+  .sec-h{display:flex;align-items:center;justify-content:space-between;margin:18px 2px 12px}
+  .sec-h .ti{font-size:var(--fs);font-weight:700}
+  .sec-h .meta{font-size:var(--fs-sm);color:var(--text2)}
+  .chain{display:flex;flex-direction:column;align-items:center;position:relative;padding:4px 0}
+  .link{display:flex;align-items:center;gap:14px;width:100%;padding:2px 0;position:relative}
+  .link .dot{width:46px;height:46px;border-radius:var(--r);flex-shrink:0;display:flex;
+    align-items:center;justify-content:center;font-size:var(--fs-lg);position:relative;z-index:2;transition:transform .1s}
+  .link .dot .badge{position:absolute;right:-4px;bottom:-4px;width:19px;height:19px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;font-size:var(--fs-xs);font-weight:800;
+    border:2.5px solid var(--bg);z-index:3}
+  .link .dot.done{background:var(--green-bg);border:1.5px solid var(--green)}
+  .link .dot.done .badge{background:var(--green);color:var(--green-bg)}
+  .link .dot.now{background:var(--purple-bg);border:1.5px solid var(--purple);animation:pulse 2s infinite}
+  .link .dot.now .badge{background:var(--purple);color:#fff}
+  .link .dot.lock{background:var(--bg-card2);border:1.5px solid var(--line);filter:grayscale(.7);opacity:.65}
+  .link .dot.lock .badge{background:var(--bg-card3);color:var(--text2);border-color:var(--bg)}
+  @keyframes pulse{0%,100%{box-shadow:0 0 0 4px var(--purple-bg)}50%{box-shadow:0 0 0 8px var(--purple-bg)}}
+  .link .lbl{font-size:var(--fs)}
+  .link .lbl b{font-weight:700}
+  .link .lbl small{display:block;font-size:var(--fs-xs);color:var(--text2)}
+  .link.locked .lbl b{color:var(--text2);font-weight:600}
+  .connector{position:absolute;left:22px;top:46px;width:3px;height:12px;background:var(--line);z-index:1;border-radius:2px}
+  .connector.fill{background:var(--green)}
+
+  /* action tiles */
+  .tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px}
+  .tile{background:var(--bg-card);border:0.5px solid var(--line);border-radius:var(--r);
+    padding:14px 12px;cursor:pointer;transition:transform .1s;text-align:left}
+  .tile:active{transform:scale(.97)}
+  .tile .ic{font-size:var(--fs-lg);display:block;margin-bottom:8px}
+  .tile .t{font-size:var(--fs);font-weight:700}
+  .tile .s{font-size:var(--fs-xs);color:var(--text2);margin-top:2px}
+
+  /* generic other-screen */
+  .placeholder{padding:30px 16px;text-align:center;color:var(--text2)}
+  .placeholder .big{font-size:40px;margin-bottom:12px}
+  .placeholder h3{font-size:17px;color:var(--text);margin-bottom:6px}
+  .placeholder p{font-size:var(--fs);line-height:1.6}
+  .lb-row{display:flex;align-items:center;gap:12px;background:var(--bg-card);
+    border:0.5px solid var(--line);border-radius:var(--r);padding:11px 14px;margin-bottom:8px}
+  .lb-row .rank{width:26px;font-size:var(--fs);font-weight:800;color:var(--text2);text-align:center}
+  .lb-row .rank.gold{color:var(--gold)}
+  .lb-row .av{width:34px;height:34px;border-radius:50%;background:var(--purple-bg);
+    display:flex;align-items:center;justify-content:center;font-size:var(--fs);font-weight:700;color:var(--purple)}
+  .lb-row .nm{font-size:var(--fs);font-weight:600;flex:1}
+  .lb-row .xp{font-size:var(--fs);font-weight:700;color:var(--green)}
+
+  /* виклик другу + мережа */
+  .challenge-card{background:linear-gradient(135deg,var(--purple),var(--purple-dark));border-radius:var(--r);
+    padding:16px;margin-bottom:10px;cursor:pointer;transition:transform .1s}
+  .challenge-card:active{transform:scale(.98)}
+  .challenge-card .t{font-size:var(--fs);font-weight:800;color:#fff}
+  .challenge-card .s{font-size:var(--fs-sm);color:var(--purple-text);margin-top:3px}
+  .net-item{display:flex;align-items:center;gap:12px;background:var(--bg-card);
+    border:0.5px solid var(--line);border-radius:var(--r);padding:12px 14px;margin-bottom:8px;cursor:pointer}
+  .net-item:active{background:var(--bg-card2)}
+  .net-item .ic{font-size:var(--fs-lg);width:24px;text-align:center}
+  .net-item .body{flex:1}
+  .net-item .body .t{font-size:var(--fs);font-weight:600}
+  .net-item .body .s{font-size:var(--fs-xs);color:var(--text2)}
+  .net-item .bonus{font-size:var(--fs-sm);font-weight:700;color:var(--green);white-space:nowrap}
+  .net-item .ch{color:var(--text2);font-size:var(--fs-md)}
+
+  /* доступ / план */
+  .plan-card{background:var(--bg-card);border:0.5px solid var(--line);border-radius:var(--r);
+    padding:16px;margin-bottom:10px}
+  .plan-card .lab{font-size:var(--fs-sm);color:var(--text2);margin-bottom:8px}
+  .access-bar{height:7px;background:var(--bg-card3);border-radius:var(--r-pill);position:relative;overflow:hidden;margin-bottom:6px}
+  .access-bar i{position:absolute;left:0;top:0;height:100%;width:57%;
+    background:linear-gradient(90deg,var(--purple),var(--green));border-radius:var(--r-pill)}
+  .feat{display:flex;align-items:center;gap:10px;padding:9px 0;font-size:var(--fs);border-top:0.5px solid var(--line)}
+  .feat .dot{color:var(--green);font-size:var(--fs)}
+  .feat .dot.lock{color:var(--text2)}
+  .plan-btn{background:linear-gradient(135deg,var(--purple),var(--purple-dark));color:#fff;border:none;
+    width:100%;padding:14px 0;border-radius:var(--r-pill);font-size:var(--fs);font-weight:800;cursor:pointer;margin-top:4px}
+
+  /* Chainy — чіпи + пошук + сітка */
+  .chips{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding:2px 0 4px;margin-bottom:10px}
+  .chips::-webkit-scrollbar{display:none}
+  .chip{flex-shrink:0;background:var(--bg-card2);border:0.5px solid var(--line);color:var(--text2);
+    padding:7px 14px;border-radius:var(--r-pill);font-size:var(--fs);font-weight:600;cursor:pointer;white-space:nowrap;transition:all .15s}
+  .chip.on{background:var(--purple-bg);border-color:var(--purple);color:var(--purple-text)}
+  .search{width:100%;background:var(--bg-card2);border:0.5px solid var(--line);border-radius:var(--r-pill);
+    padding:10px 16px;color:var(--text);font-size:var(--fs);margin-bottom:12px;outline:none}
+  .search::placeholder{color:var(--text2)}
+  .scen-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+  .scen{background:var(--bg-card);border:0.5px solid var(--line);border-radius:var(--r);
+    padding:12px 11px;cursor:pointer;transition:transform .1s,border-color .15s}
+  .scen:active{transform:scale(.97)}
+  .scen:hover{border-color:var(--purple)}
+  .scen .e{font-size:var(--fs-xl);display:block;margin-bottom:6px}
+  .scen .t{font-size:var(--fs);font-weight:700;line-height:1.25}
+  .scen .s{font-size:var(--fs-xs);color:var(--text2);margin-top:3px}
+  .style-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+  .style-pill{background:var(--bg-card2);border:0.5px solid var(--line);border-radius:var(--r-pill);
+    padding:6px 12px;font-size:var(--fs-sm);color:var(--text2);cursor:pointer}
+  .style-pill.on{background:var(--green-bg);border-color:var(--green);color:var(--green)}
+
+  /* Прогрес — рівні + теми + лексика */
+  .lvl-line{position:relative;margin:6px 4px 16px;padding-top:4px}
+  .lvl-track2{position:absolute;left:5%;right:5%;top:12px;height:3px;background:var(--bg-card3);border-radius:99px}
+  .lvl-track2 i{position:absolute;left:0;top:0;height:100%;background:linear-gradient(90deg,var(--green),var(--purple));border-radius:99px}
+  .lvl-dots{position:relative;display:flex;justify-content:space-between}
+  .lvl-dot{display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;flex:1}
+  .lvl-dot .pt{width:14px;height:14px;border-radius:50%;background:var(--bg-card3);border:2px solid var(--bg);z-index:2;transition:all .15s}
+  .lvl-dot.done .pt{background:var(--green)}
+  .lvl-dot.on .pt{background:var(--purple);box-shadow:0 0 0 4px var(--purple-bg);width:16px;height:16px}
+  .lvl-dot .lb{font-size:var(--fs-sm);font-weight:800;color:var(--text2)}
+  .lvl-dot.done .lb{color:var(--green)}
+  .lvl-dot.on .lb{color:var(--purple-text)}
+  .lvl-dot .st{font-size:var(--fs-xs);color:var(--text2)}
+  .lvl{flex-shrink:0;min-width:52px;text-align:center;background:var(--bg-card2);border:0.5px solid var(--line);
+    color:var(--text2);padding:8px 0;border-radius:var(--r-sm);font-size:var(--fs);font-weight:800;cursor:pointer;transition:all .15s}
+  .lvl.on{background:var(--purple);border-color:var(--purple);color:#fff}
+  .lvl.done{color:var(--green);border-color:var(--green-bg)}
+  .lvl small{display:block;font-size:var(--fs-xs);font-weight:600;opacity:.7}
+  .vocab-card{background:var(--bg-card);border:0.5px solid var(--line);border-radius:var(--r);padding:14px 16px;margin-bottom:14px}
+  .vocab-card .top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
+  .vocab-card .n{font-size:var(--fs-lg);font-weight:800;color:var(--green)}
+  .vocab-card .lab{font-size:var(--fs-sm);color:var(--text2)}
+  .vocab2{background:var(--bg-card);border:0.5px solid var(--line);border-radius:var(--r);padding:14px 16px;margin-bottom:14px}
+  .vocab2 .key-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:7px}
+  .vocab2 .key-name{font-size:var(--fs);font-weight:700}
+  .vocab2 .key-name small{font-size:var(--fs-xs);font-weight:400;color:var(--text2);margin-left:4px}
+  .vocab2 .key-pct{font-size:var(--fs);font-weight:800;color:var(--purple)}
+  .vocab2 .gap{font-size:var(--fs-xs);color:var(--text2);margin-top:6px}
+  .vocab2 .active-row{display:flex;justify-content:space-between;align-items:center;
+    margin-top:12px;padding-top:12px;border-top:0.5px solid var(--line)}
+  .vocab2 .active-name{font-size:var(--fs);font-weight:700}
+  .vocab2 .active-name small{display:block;font-size:var(--fs-xs);font-weight:400;color:var(--text2);margin-top:1px}
+  .vocab2 .active-num{font-size:var(--fs-xl);font-weight:800;color:var(--green);text-align:right}
+  .vocab2 .active-num .delta{display:block;font-size:var(--fs-xs);font-weight:600;color:var(--green)}
+
+  /* оверлей теми: 4 кроки */
+  .step{display:flex;align-items:center;gap:12px;border-radius:var(--r);padding:13px 14px;margin-bottom:8px;
+    border:0.5px solid var(--line);background:var(--bg-card2)}
+  .step .si{width:36px;height:36px;border-radius:var(--r);flex-shrink:0;display:flex;align-items:center;
+    justify-content:center;font-size:var(--fs-md);background:var(--bg-card3)}
+  .step.done .si{background:var(--green-bg)}
+  .step.next{background:var(--purple-bg);border-color:var(--purple)}
+  .step.next .si{background:var(--purple);}
+  .step.locked{opacity:.5}
+  .step .body{flex:1;min-width:0}
+  .step .t{font-size:var(--fs);font-weight:700}
+  .step .s{font-size:var(--fs-xs);color:var(--text2);margin-top:1px}
+  .step .st{font-size:var(--fs-md);flex-shrink:0;font-weight:800}
+  .step.done .st{color:var(--green)}
+  .step.next .st{color:var(--purple-text)}
+  .step.locked .st{color:var(--text2)}
+  /* таблиця правил (як Голіцинський) */
+  .rule-table{background:var(--bg-card2);border:0.5px solid var(--line);border-radius:var(--r);
+    overflow:hidden;margin:4px 0 10px}
+  .rule-table .rr{display:flex;font-size:var(--fs-sm)}
+  .rule-table .rr+.rr{border-top:0.5px solid var(--line)}
+  .rule-table .rr .rl{flex:0 0 34%;padding:9px 12px;color:var(--text2);background:var(--bg-card);font-weight:600}
+  .rule-table .rr .rv{flex:1;padding:9px 12px;font-family:ui-monospace,monospace}
+  .rule-table .rr.head .rl,.rule-table .rr.head .rv{background:var(--purple-bg);color:var(--purple-text);font-weight:700;font-family:inherit}
+  .topic{display:flex;align-items:center;gap:10px;padding:11px 12px;background:var(--bg-card);
+    border:0.5px solid var(--line);border-radius:var(--r);margin-bottom:7px;cursor:pointer}
+  .topic:active{background:var(--bg-card2)}
+  .topic .nm{font-size:var(--fs);font-weight:600;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .topic .tr{width:60px;height:5px;background:var(--bg-card3);border-radius:var(--r-sm);overflow:hidden;flex-shrink:0}
+  .topic .tr i{display:block;height:100%;border-radius:var(--r-sm)}
+  .topic .pct{font-size:var(--fs-xs);font-weight:700;width:32px;text-align:right;flex-shrink:0}
+  .g-green .tr i,.g-green.pct{background:var(--green)} .g-green.pct{color:var(--green);background:none}
+  .g-yellow .tr i{background:var(--yellow)} .g-yellow.pct{color:var(--yellow)}
+  .g-red .tr i{background:var(--red)} .g-red.pct{color:var(--red)}
+  .g-gray .tr i{background:var(--bg-card3)} .g-gray.pct{color:var(--text2)}
+
+  /* оверлеї */
+  .overlay{position:absolute;inset:0;background:rgba(8,8,12,.82);z-index:50;display:none;
+    align-items:flex-end;backdrop-filter:blur(2px)}
+  .overlay.on{display:flex}
+  .sheet{width:100%;background:var(--bg-card);border-top-left-radius:22px;border-top-right-radius:22px;
+    padding:20px 18px 26px;border-top:0.5px solid var(--line)}
+  .sheet .grip{width:38px;height:4px;background:var(--line);border-radius:2px;margin:0 auto 16px}
+  .sheet h3{font-size:var(--fs-md);font-weight:800;margin-bottom:6px}
+  .sheet p{font-size:var(--fs);color:var(--text2);margin-bottom:14px;line-height:1.5}
+  .sheet textarea,.sheet input.vid{width:100%;background:var(--bg-card2);border:0.5px solid var(--line);
+    border-radius:var(--r);padding:13px 14px;color:var(--text);font-size:var(--fs);outline:none;font-family:inherit;resize:none}
+  .sheet textarea:focus,.sheet input.vid:focus{border-color:var(--purple)}
+  .sheet .go{margin-top:14px;width:100%;background:linear-gradient(135deg,var(--purple),var(--purple-dark));color:#fff;
+    border:none;padding:14px 0;border-radius:var(--r-pill);font-size:var(--fs);font-weight:800;cursor:pointer}
+  .sheet .ex{font-size:var(--fs-sm);color:var(--text2);margin-top:10px;line-height:1.6}
+  .sheet .ex b{color:var(--purple-text)}
+
+  /* YouTube значок */
+  .yt{display:inline-flex;align-items:center;justify-content:center;width:30px;height:21px;
+    background:#ff0000;border-radius:var(--r-sm);vertical-align:middle}
+  .yt::after{content:'';border-style:solid;border-width:5px 0 5px 8px;border-color:transparent transparent transparent #fff;margin-left:1px}
+  .dot .yt{width:26px;height:18px}
+
+  /* Мережа: ваші ланцюжки */
+  .friend-chain{display:flex;align-items:center;gap:12px;background:var(--bg-card);
+    border:0.5px solid var(--line);border-radius:var(--r);padding:12px 14px;margin-bottom:8px}
+  .friend-chain .av{width:38px;height:38px;border-radius:50%;background:var(--purple-bg);flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;font-size:var(--fs);font-weight:800;color:var(--purple)}
+  .friend-chain .info{flex:1;min-width:0}
+  .friend-chain .nm{font-size:var(--fs);font-weight:700}
+  .friend-chain .rl{font-size:var(--fs-xs);color:var(--text2)}
+  .mini-links{display:flex;gap:3px;flex-shrink:0}
+  .mini-links .ml{width:11px;height:11px;border-radius:var(--r-sm);background:var(--bg-card3)}
+  .mini-links .ml.on{background:var(--purple)}
+  .friend-chain .cnt{font-size:var(--fs);font-weight:800;color:var(--purple);width:16px;text-align:right;flex-shrink:0}
+
+  /* пара плиток виклику */
+  .pair{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:6px}
+  .pair-tile{border-radius:var(--r);padding:15px 13px;cursor:pointer;transition:transform .1s;border:0.5px solid var(--line)}
+  .pair-tile:active{transform:scale(.97)}
+  .pair-tile.accent{background:var(--purple-bg);border-color:var(--purple)}
+  .pair-tile .ic{font-size:var(--fs-lg);display:block;margin-bottom:8px}
+  .pair-tile .t{font-size:var(--fs);font-weight:700}
+  .pair-tile .s{font-size:var(--fs-xs);color:var(--text2);margin-top:2px}
+  .pair-tile.accent .t{color:var(--purple-text)} .pair-tile.accent .s{color:var(--purple-text)}
+
+  /* Speaking Partners — чат у Telegram */
+  .partner-chat{display:flex;align-items:center;gap:12px;background:var(--bg-card);
+    border:0.5px solid var(--line);border-radius:var(--r);padding:13px 14px;margin-bottom:8px}
+  .partner-chat .av2{width:42px;height:42px;border-radius:50%;background:var(--purple-bg);flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;font-size:var(--fs);font-weight:800;color:var(--purple-text)}
+  .partner-chat .body{flex:1;min-width:0}
+  .partner-chat .nm{font-size:var(--fs);font-weight:700}
+  .partner-chat .rl{font-size:var(--fs-xs);color:var(--text2);margin-top:1px}
+  .partner-chat .tg-btn{display:flex;align-items:center;gap:6px;background:var(--telegram);color:#fff;
+    border:none;border-radius:99px;padding:8px 14px;font-size:var(--fs-sm);font-weight:800;cursor:pointer;flex-shrink:0}
+  .partner-note{background:var(--purple-bg);border:0.5px dashed var(--purple);border-radius:var(--r);
+    padding:11px 14px;font-size:11.5px;color:var(--purple-text);line-height:1.5}
+
+  /* дуельна стрічка */
+  .score{display:flex;align-items:center;justify-content:space-between;background:var(--bg-card);
+    border:0.5px solid var(--line);border-radius:var(--r);padding:14px 18px;margin-bottom:12px}
+  .score .sd{text-align:center;flex:1}
+  .score .sn{font-size:var(--fs-xl);font-weight:800;color:var(--purple)}
+  .score .sd.them .sn{color:var(--text2)}
+  .score .sl{font-size:var(--fs-xs);color:var(--text2);margin-top:1px}
+  .score .vs{font-size:var(--fs-xs);color:var(--text2);letter-spacing:1px}
+  .duel{background:var(--bg-card);border:0.5px solid var(--line);border-radius:var(--r);
+    padding:12px 14px;margin-bottom:8px}
+  .duel.win{border-left:3px solid var(--green)}
+  .duel.lose{border-left:3px solid var(--line)}
+  .duel .dh{display:flex;justify-content:space-between;align-items:center;margin-bottom:9px}
+  .duel .ph{font-size:var(--fs);font-weight:700}
+  .duel .dt{font-size:var(--fs-xs);color:var(--text2);flex-shrink:0;margin-left:8px}
+  .duel .plays{display:flex;gap:8px}
+  .play-chip{flex:1;display:flex;align-items:center;gap:7px;background:var(--bg-card2);
+    border:0.5px solid var(--line);border-radius:var(--r-sm);padding:8px 10px;cursor:pointer;min-width:0}
+  .play-chip:active{background:var(--bg-card3)}
+  .play-chip.best{background:var(--purple-bg);border-color:var(--purple)}
+  .play-chip .pi{font-size:var(--fs-sm);flex-shrink:0}
+  .play-chip .pl{font-size:var(--fs-xs);color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .play-chip.best .pl{color:var(--purple-text)}
+  .duel .verdict{font-size:var(--fs-xs);margin-top:8px;font-weight:600}
+  .duel.win .verdict{color:var(--green)}
+  .duel.lose .verdict{color:var(--text2)}
+  .waiting{background:var(--purple-bg);border:0.5px solid var(--orange);border-radius:var(--r);
+    padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+  .waiting .wt{font-size:var(--fs-sm);font-weight:700;color:var(--orange)}
+  .waiting .wp{font-size:var(--fs-xs);color:var(--gold);margin-top:1px}
+  .waiting .wb{background:var(--orange);color:var(--purple-bg);border:none;border-radius:99px;
+    padding:8px 14px;font-size:var(--fs-xs);font-weight:800;cursor:pointer;flex-shrink:0}
+  .duel-actions{display:flex;gap:8px;margin-top:12px}
+  .duel-actions button{flex:1;border:none;border-radius:99px;padding:12px 0;font-size:var(--fs);font-weight:800;cursor:pointer}
+  .duel-actions .throw{background:linear-gradient(135deg,var(--purple),var(--purple-dark));color:#fff}
+  .duel-actions .tg{background:var(--telegram);color:#fff}
+
+  /* бонуси за мережу */
+  .bonus-row{display:flex;align-items:center;gap:12px;background:var(--bg-card);
+    border:0.5px solid var(--line);border-radius:var(--r);padding:13px 14px;margin-bottom:8px}
+  .bonus-row .txt{flex:1}
+  .bonus-row .bt{font-size:var(--fs);font-weight:700}
+  .bonus-row .bs{font-size:var(--fs-xs);color:var(--text2);margin-top:2px}
+  .bonus-row .rew{font-size:var(--fs-lg);flex-shrink:0}
+
+  /* рейтинг: періоди + категорії */
+  .period-pills{display:flex;gap:6px;margin-bottom:10px}
+  .period-pill{flex:1;text-align:center;background:var(--bg-card2);border:0.5px solid var(--line);
+    color:var(--text2);padding:8px 0;border-radius:var(--r-pill);font-size:var(--fs);font-weight:600;cursor:pointer}
+  .period-pill.on{background:var(--purple-bg);border-color:var(--purple);color:var(--purple-text)}
+  .cat-tabs{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:2px 0;margin-bottom:12px}
+  .cat-tabs::-webkit-scrollbar{display:none}
+
+  /* обгортка з градієнтом і стрілками для гортання */
+  .scroller{position:relative}
+  .scroller::after{content:'';position:absolute;right:0;top:0;bottom:0;width:44px;
+    background:linear-gradient(90deg,transparent,var(--bg) 70%);pointer-events:none;z-index:2;
+    opacity:1;transition:opacity .2s}
+  .scroller.at-end::after{opacity:0}
+  .scroller::before{content:'';position:absolute;left:0;top:0;bottom:0;width:32px;
+    background:linear-gradient(270deg,transparent,var(--bg) 70%);pointer-events:none;z-index:2;
+    opacity:0;transition:opacity .2s}
+  .scroller.scrolled::before{opacity:1}
+  .sc-arrow{position:absolute;top:50%;transform:translateY(-50%);z-index:5;
+    width:26px;height:26px;border-radius:50%;background:var(--bg-card2);border:0.5px solid var(--line);
+    color:var(--text);display:flex;align-items:center;justify-content:center;
+    font-size:var(--fs);font-weight:800;cursor:pointer;transition:opacity .2s;padding:0;line-height:1;
+    box-shadow:0 0 8px rgba(0,0,0,.6)}
+  .sc-arrow:active{background:var(--bg-card3)}
+  .sc-arrow.right{right:2px}
+  .sc-arrow.left{left:2px;opacity:0;pointer-events:none}
+  .scroller.scrolled .sc-arrow.left{opacity:1;pointer-events:auto}
+  .scroller.at-end .sc-arrow.right{opacity:0;pointer-events:none}
+  .cat-tab{flex-shrink:0;background:var(--bg-card2);border:0.5px solid var(--line);color:var(--text2);
+    padding:6px 11px;border-radius:var(--r-pill);font-size:var(--fs-sm);font-weight:600;cursor:pointer;white-space:nowrap}
+  .cat-tab.on{background:var(--purple-bg);border-color:var(--purple);color:var(--purple-text)}
+
+  /* досягнення / бейджі */
+  .ach-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:6px}
+  .ach{aspect-ratio:1;background:var(--bg-card);border:0.5px solid var(--line);border-radius:var(--r);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:4px}
+  .ach.got{background:var(--purple-bg);border-color:var(--purple)}
+  .ach.lock{opacity:.4;filter:grayscale(1)}
+  .ach .e{font-size:var(--fs-lg)}
+  .ach .n{font-size:var(--fs-xs);color:var(--text2);text-align:center;line-height:1.1}
+  .ach.got .n{color:var(--purple-text)}
+  .xp-summary{display:flex;gap:10px;margin-bottom:14px}
+  .xp-box{flex:1;background:var(--bg-card);border:0.5px solid var(--line);border-radius:var(--r);padding:12px;text-align:center}
+  .xp-box .v{font-size:var(--fs-lg);font-weight:800;color:var(--purple)}
+  .xp-box .l{font-size:var(--fs-xs);color:var(--text2);margin-top:2px}
+  .unsub{text-align:center;font-size:var(--fs-xs);color:var(--text2);text-decoration:underline;
+    cursor:pointer;margin-top:10px;padding:6px}
+  .premium-banner{background:linear-gradient(135deg,var(--gold),var(--gold));border-radius:var(--r);
+    padding:14px 16px;margin-bottom:8px;display:flex;align-items:center;gap:12px;cursor:pointer}
+  .premium-banner .ic{font-size:var(--fs-lg)}
+  .premium-banner .t{font-size:var(--fs);font-weight:800;color:var(--purple-bg)}
+  .premium-banner .s{font-size:var(--fs-xs);color:var(--purple-bg)}
+
+  /* екран Слухати */
+  .now-playing{background:linear-gradient(135deg,var(--purple),var(--purple-dark));border-radius:var(--r);
+    padding:16px;margin-bottom:12px;color:#fff}
+  .now-playing .lbl{font-size:var(--fs-xs);color:var(--purple-text);text-transform:uppercase;letter-spacing:.5px}
+  .now-playing .ttl{font-size:var(--fs-md);font-weight:800;margin:4px 0 2px}
+  .now-playing .meta{font-size:var(--fs-sm);color:var(--purple-text)}
+  .np-controls{display:flex;align-items:center;gap:16px;margin-top:14px}
+  .np-controls .play{width:46px;height:46px;border-radius:50%;background:#fff;color:var(--purple-dark);
+    display:flex;align-items:center;justify-content:center;font-size:var(--fs-lg);border:none;cursor:pointer;flex-shrink:0}
+  .np-bar{flex:1;height:5px;background:rgba(255,255,255,.25);border-radius:99px;position:relative}
+  .np-bar i{position:absolute;left:0;top:0;height:100%;width:38%;background:#fff;border-radius:99px}
+  .np-time{font-size:var(--fs-xs);color:var(--purple-text);flex-shrink:0}
+  .mode-row{display:flex;gap:8px;margin-bottom:14px}
+  .mode-card{flex:1;background:var(--bg-card);border:0.5px solid var(--line);border-radius:var(--r);
+    padding:12px;cursor:pointer;transition:all .15s}
+  .mode-card.on{background:var(--purple-bg);border-color:var(--purple)}
+  .mode-card .e{font-size:var(--fs-lg);display:block;margin-bottom:6px}
+  .mode-card .t{font-size:var(--fs);font-weight:700}
+  .mode-card.on .t{color:var(--purple-text)}
+  .mode-card .s{font-size:var(--fs-xs);color:var(--text2);margin-top:2px}
+  .pod{display:flex;align-items:center;gap:12px;background:var(--bg-card);border:0.5px solid var(--line);
+    border-radius:var(--r);padding:11px 13px;margin-bottom:8px;cursor:pointer}
+  .pod:active{background:var(--bg-card2)}
+  .pod .co{width:42px;height:42px;border-radius:var(--r-sm);flex-shrink:0;display:flex;align-items:center;
+    justify-content:center;font-size:var(--fs-lg);background:var(--bg-card3)}
+  .pod .body{flex:1;min-width:0}
+  .pod .nm{font-size:var(--fs);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pod .dt{font-size:var(--fs-xs);color:var(--text2)}
+  .pod .lvl-tag{font-size:var(--fs-xs);font-weight:700;padding:2px 7px;border-radius:99px;flex-shrink:0}
+  .pod .lvl-tag.a{background:var(--green-bg);color:var(--green)}
+  .pod .lvl-tag.b{background:var(--purple-bg);color:var(--purple-text)}
+  .instr-card{background:var(--bg-card);border:0.5px solid var(--line);border-radius:var(--r);
+    padding:14px 16px;margin-bottom:8px;font-size:12.5px;color:var(--text2);line-height:1.6}
+  .instr-card b{color:var(--text)}
+  .instr-note{background:var(--purple-bg);border:0.5px dashed var(--purple);border-radius:var(--r);
+    padding:12px 14px;font-size:11.5px;color:var(--purple-text);line-height:1.5;margin-bottom:8px}
+
+  /* стрічка вхідних на головному */
+  .inbox-hd{display:flex;align-items:center;gap:8px;margin:14px 0 8px}
+  .inbox-hd .ti{font-size:var(--fs);font-weight:800}
+  .inbox-hd .badge{background:var(--red);color:#fff;font-size:var(--fs-xs);font-weight:800;
+    min-width:18px;height:18px;border-radius:99px;display:flex;align-items:center;justify-content:center;padding:0 5px}
+  .incoming{display:flex;align-items:center;gap:12px;border-radius:var(--r);
+    padding:13px 14px;margin-bottom:8px;cursor:pointer;transition:transform .1s}
+  .incoming:active{transform:scale(.985)}
+  .incoming.phrase{background:linear-gradient(135deg,var(--purple),var(--purple-dark))}
+  .incoming.chall{background:var(--bg-card);border:0.5px solid var(--line)}
+  .incoming .av{width:38px;height:38px;border-radius:50%;flex-shrink:0;display:flex;
+    align-items:center;justify-content:center;font-size:17px}
+  .incoming.phrase .av{background:rgba(255,255,255,.2)}
+  .incoming.chall .av{background:var(--purple-bg);font-size:var(--fs);font-weight:800;color:var(--purple-text)}
+  .incoming .body{flex:1;min-width:0}
+  .incoming .t{font-size:var(--fs);font-weight:700}
+  .incoming.phrase .t{color:#fff}
+  .incoming .s{font-size:var(--fs-xs);margin-top:1px}
+  .incoming.phrase .s{color:var(--purple-text)}
+  .incoming.chall .s{color:var(--text2)}
+  .incoming .cta{font-size:var(--fs-xs);font-weight:800;padding:6px 12px;border-radius:99px;flex-shrink:0}
+  .incoming.phrase .cta{background:#fff;color:var(--purple-dark)}
+  .incoming.chall .cta{background:var(--purple);color:#fff}
+
+  /* компактна шапка профілю */
+  .prof-head{display:flex;align-items:center;gap:14px;margin:8px 0 16px}
+  .prof-head .av{width:52px;height:52px;border-radius:50%;background:var(--purple-bg);flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;font-size:var(--fs-lg);font-weight:800;color:var(--purple-text)}
+  .prof-head .nm{font-size:17px;font-weight:800}
+  .prof-head .sub{font-size:var(--fs-sm);color:var(--text2);margin-top:2px}
+  /* згрупований список-меню (плитки-рядки) */
+  .menu-group{display:flex;flex-direction:column;background:var(--bg-card);border:0.5px solid var(--line);
+    border-radius:var(--r);overflow:hidden;margin-bottom:8px}
+  .menu-group .mi{display:flex;align-items:center;gap:12px;padding:13px 14px;cursor:pointer;transition:background .12s}
+  .menu-group .mi:active{background:var(--bg-card2)}
+  .menu-group .mi+.mi{border-top:0.5px solid var(--line)}
+  .menu-group .mi .ic{font-size:19px;width:24px;text-align:center;flex-shrink:0}
+  .menu-group .mi .body{flex:1;min-width:0}
+  .menu-group .mi .t{font-size:var(--fs);font-weight:600}
+  .menu-group .mi .s{font-size:var(--fs-xs);color:var(--text2)}
+  .menu-group .mi .ch{color:var(--text2);font-size:var(--fs-md);flex-shrink:0}
+
+  /* bottom nav */
+  .nav{display:flex;flex-shrink:0;border-top:0.5px solid var(--line);background:var(--bg-card);
+    padding:8px 4px 10px}
+  .nav button{flex:1;background:none;border:none;cursor:pointer;display:flex;
+    flex-direction:column;align-items:center;gap:3px;padding:4px 0;color:var(--text2);transition:color .15s}
+  .nav button.on{color:var(--purple)}
+  .nav button .ic{font-size:21px;line-height:1}
+  .nav button .lbl{font-size:var(--fs-xs);font-weight:600}
+  .nav button .ic{font-size:21px}
+  .nav button{padding:6px 2px}
+
+  .screen{display:none}
+  .screen.on{display:block}
+  .why{max-width:360px;margin-top:20px;font-size:12.5px;color:var(--text2);line-height:1.65}
+  .why b{color:var(--text)}
+</style>
+</head>
+<body>
+  <div class="hint">Клацай <b>нижню навігацію</b> — Дім · Chainy · Прогрес · Друзі · Профіль. Кожна функція отримала свій екран, головний більше не тісний.</div>
+
+  <div class="phone">
+    <!-- TOP BAR (persistent) -->
+    <div class="topbar">
+      <div class="streak-chip"><span class="f">🔥</span><span class="n">4</span><span class="l">дні</span></div>
+      <div class="top-right">
+        <div class="top-stat">⚡ 340<span class="l">XP</span></div>
+      </div>
+    </div>
+
+    <div class="scroll" id="scroll">
+
+      <!-- ===== ДІМ ===== -->
+      <div class="screen on" id="s-home">
+        <div class="hero">
+          <div class="k">Урок дня</div>
+          <div class="t">Speak. 30 секунд.</div>
+          <div class="s">Повтори фразу голосом — get your Chain</div>
+          <button class="go">Почати →</button>
+        </div>
+
+        <div class="inbox-hd"><span class="ti">📬 Тобі прийшло</span><span class="badge">2</span></div>
+        <div class="incoming phrase">
+          <div class="av"><span class="yt"></span></div>
+          <div class="body"><div class="t">Фраза дня від Соломії</div><div class="s">«Could you say that again?» · день 4/7</div></div>
+          <span class="cta">Сказати →</span>
+        </div>
+        <div class="incoming chall">
+          <div class="av">МП</div>
+          <div class="body"><div class="t">Максим кинув тобі виклик</div><div class="s">хто краще повторить фразу</div></div>
+          <span class="cta">Прийняти</span>
+        </div>
+
+        <div class="sec-h"><span class="ti">Твій ланцюжок — не розривай</span><span class="meta">4 / 7</span></div>
+        <div class="chain">
+          <div class="link"><div class="dot done"><span class="yt"></span><span class="badge">✓</span></div><div class="lbl"><b>Перегляд відео</b><small>завершено</small></div><div class="connector fill"></div></div>
+          <div class="link"><div class="dot done">🗣<span class="badge">✓</span></div><div class="lbl"><b>Shadowing</b><small>завершено</small></div><div class="connector fill"></div></div>
+          <div class="link"><div class="dot done">📚<span class="badge">✓</span></div><div class="lbl"><b>Тренування слів</b><small>завершено</small></div><div class="connector fill"></div></div>
+          <div class="link"><div class="dot now">💬<span class="badge">▸</span></div><div class="lbl"><b>Розмова з Chainy</b><small>ти тут — зроби зараз</small></div><div class="connector"></div></div>
+          <div class="link locked"><div class="dot lock">🎥<span class="badge">🔒</span></div><div class="lbl"><b>Запис відео</b></div><div class="connector"></div></div>
+          <div class="link locked"><div class="dot lock">🤝<span class="badge">🔒</span></div><div class="lbl"><b>Кинути другу</b></div><div class="connector"></div></div>
+          <div class="link locked"><div class="dot lock">🏁<span class="badge">🔒</span></div><div class="lbl"><b>Підсумок дня</b></div></div>
+        </div>
+
+        <div class="sec-h"><span class="ti">Швидкі дії</span></div>
+        <div class="tiles">
+          <div class="tile"><span class="ic"><span class="yt"></span></span><div class="t">Плеєр</div><div class="s">відео + shadowing</div></div>
+          <div class="tile" onclick="goListen()"><span class="ic">🎧</span><div class="t">Слухати</div><div class="s">підкасти + фон</div></div>
+          <div class="tile"><span class="ic">📚</span><div class="t">Словник</div><div class="s">12 фраз на повтор</div></div>
+          <div class="tile"><span class="ic">👋</span><div class="t">Запросити друга</div><div class="s">+бонус обом</div></div>
+        </div>
+      </div>
+
+      <!-- ===== CHAINY ===== -->
+      <div class="screen" id="s-buddy">
+        <div class="challenge-card" style="margin-top:8px">
+          <div class="t">🗣 Обери ситуацію — і говори</div>
+          <div class="s">177 реальних сцен. Chainy грає співрозмовника й м'яко виправляє. Кожна розмова — ланка.</div>
+        </div>
+
+        <div class="net-item" style="border-color:var(--purple);background:var(--purple-bg)" onclick="openMy()">
+          <span class="ic">✨</span><div class="body"><div class="t" style="color:var(--purple-text)">Моя ситуація</div><div class="s" style="color:var(--purple-text)">опиши свою — Chainy зіграє співрозмовника</div></div><span class="ch" style="color:var(--purple-text)">›</span>
+        </div>
+        <div class="net-item" onclick="openVid()">
+          <span class="ic"><span class="yt"></span></span><div class="body"><div class="t">Своє відео з YouTube</div><div class="s">встав лінк — розберемо разом</div></div><span class="ch">›</span>
+        </div>
+
+        <div class="scroller" id="sc1">
+          <div class="chips">
+            <span class="chip on">Усі 177</span>
+            <span class="chip">🏙️ Щоденне</span>
+            <span class="chip">✈️ Подорожі</span>
+            <span class="chip">💬 Спілкування</span>
+            <span class="chip">💼 Робота</span>
+            <span class="chip">🌍 Переїзд</span>
+          </div>
+          <button class="sc-arrow left">‹</button>
+          <button class="sc-arrow right">›</button>
+        </div>
+        <input class="search" placeholder="🔍 Шукати серед 177 ситуацій…" />
+
+        <div class="menu-group">
+          <div class="mi"><span class="ic">💕</span><div class="body"><div class="t">Перше побачення</div><div class="s">питання, флірт, природно</div></div><span class="ch">›</span></div>
+          <div class="mi"><span class="ic">💼</span><div class="body"><div class="t">Співбесіда</div><div class="s">розкажи про себе</div></div><span class="ch">›</span></div>
+          <div class="mi"><span class="ic">✈️</span><div class="body"><div class="t">В аеропорту</div><div class="s">реєстрація, паспортний контроль</div></div><span class="ch">›</span></div>
+          <div class="mi"><span class="ic">🏥</span><div class="body"><div class="t">У лікаря</div><div class="s">симптоми, діагноз</div></div><span class="ch">›</span></div>
+          <div class="mi"><span class="ic">😤</span><div class="body"><div class="t">Сварка з сусідом</div><div class="s">ввічливо, але твердо</div></div><span class="ch">›</span></div>
+          <div class="mi"><span class="ic">🏡</span><div class="body"><div class="t">Оренда житла</div><div class="s">умови, договір</div></div><span class="ch">›</span></div>
+        </div>
+        <div style="text-align:center;font-size:var(--fs-sm);color:var(--purple);font-weight:600;margin-top:10px;cursor:pointer">Показати всі 177 →</div>
+
+        <div class="sec-h"><span class="ti">Стиль Chainy</span></div>
+        <div class="style-row">
+          <span class="style-pill on">Friendly</span>
+          <span class="style-pill">Строгий вчитель</span>
+          <span class="style-pill">Native speaker</span>
+          <span class="style-pill">Терплячий</span>
+        </div>
+
+        <div class="sec-h"><span class="ti">Живий співрозмовник</span><span class="meta">Premium</span></div>
+        <div class="incoming chall" style="cursor:pointer" onclick="openBuddy()">
+          <div class="av" style="background:var(--purple-bg);color:var(--orange);font-size:17px">👥</div>
+          <div class="body"><div class="t">Speaking Buddy — жива людина</div><div class="s">знайти партнера за рівнем та інтересами</div></div>
+          <span class="cta" style="background:var(--orange);color:var(--purple-bg)">Знайти</span>
+        </div>
+      </div>
+
+      <!-- ===== ПРОГРЕС ===== -->
+      <div class="screen" id="s-prog">
+        <div class="hero" style="background:linear-gradient(135deg,var(--purple-dark),var(--purple))">
+          <div class="k">Твій рівень</div>
+          <div class="t" style="font-size:var(--fs-xl)">A2 <span style="font-size:var(--fs);font-weight:400;opacity:.85">→ прямуєш до B1</span></div>
+          <div class="s">22% шляху A1 → C2</div>
+        </div>
+
+        <div class="sec-h"><span class="ti">Шлях A1 → C2</span><span class="meta">торкнись рівня</span></div>
+        <div class="lvl-line" id="lvl-switch">
+          <div class="lvl-track2"><i id="lvl-fill" style="width:20%"></i></div>
+          <div class="lvl-dots">
+            <div class="lvl-dot done" data-lvl="A1"><span class="pt"></span><span class="lb">A1</span><span class="st">пройдено</span></div>
+            <div class="lvl-dot on" data-lvl="A2"><span class="pt"></span><span class="lb">A2</span><span class="st">тут</span></div>
+            <div class="lvl-dot" data-lvl="B1"><span class="pt"></span><span class="lb">B1</span><span class="st">далі</span></div>
+            <div class="lvl-dot" data-lvl="B2"><span class="pt"></span><span class="lb">B2</span><span class="st">далі</span></div>
+            <div class="lvl-dot" data-lvl="C1"><span class="pt"></span><span class="lb">C1</span><span class="st">далі</span></div>
+            <div class="lvl-dot" data-lvl="C2"><span class="pt"></span><span class="lb">C2</span><span class="st">ціль</span></div>
+          </div>
+        </div>
+
+        <div class="vocab2" id="vocab2">
+          <div class="key-top">
+            <div class="key-name">📖 Ключова лексика <span id="vk-lvl">A2</span><small id="vk-count">312/898 ключових слів</small></div>
+            <div class="key-pct" id="vk-pct">35%</div>
+          </div>
+          <div class="access-bar"><i id="vk-bar" style="width:35%"></i></div>
+          <div class="gap" id="vk-gap">ще 586 до цілі рівня</div>
+          <div class="active-row">
+            <div class="active-name">📚 Активний словник <span id="va-lvl">A2</span><small>усі слова рівня, що ти знаєш</small></div>
+            <div class="active-num"><span id="va-num">1 240</span><span class="delta" id="va-delta">↑ +48 за тиждень</span></div>
+          </div>
+        </div>
+
+        <div class="sec-h"><span class="ti" id="lvl-title">Граматика рівня A2</span><span class="meta" id="lvl-count"></span></div>
+        <div id="topics-render"></div>
+      </div>
+
+      <!-- ===== ДРУЗІ (мережа повністю) ===== -->
+      <div class="screen" id="s-social">
+        <div class="sec-h" style="margin-top:8px"><span class="ti">Спільні ланцюжки</span></div>
+        <div class="friend-chain">
+          <div class="av">К</div>
+          <div class="info"><div class="nm">Кузьмук</div><div class="rl">я</div></div>
+          <div class="mini-links"><span class="ml on"></span><span class="ml"></span><span class="ml"></span><span class="ml"></span><span class="ml"></span><span class="ml"></span><span class="ml"></span></div>
+          <div class="cnt">1</div>
+        </div>
+        <div class="friend-chain">
+          <div class="av" style="background:var(--purple-bg);color:var(--orange)">🏆</div>
+          <div class="info"><div class="nm">Топ гравець</div><div class="rl">лідер тижня</div></div>
+          <div class="mini-links"><span class="ml on"></span><span class="ml on"></span><span class="ml"></span><span class="ml"></span><span class="ml"></span><span class="ml"></span><span class="ml"></span></div>
+          <div class="cnt">2</div>
+        </div>
+
+        <div class="sec-h"><span class="ti">Speaking Challenge</span></div>
+        <div class="pair">
+          <div class="pair-tile accent"><span class="ic">🎙️</span><div class="t">Кинути виклик</div><div class="s">надіслати фразу</div></div>
+          <div class="pair-tile"><span class="ic">🔗</span><div class="t">Зміцнити ланцюжок</div><div class="s">запросити друга</div></div>
+        </div>
+
+        <div class="sec-h"><span class="ti">Speaking Partners</span></div>
+        <div class="partner-chat" style="cursor:pointer" onclick="openDuel()">
+          <div class="av2">МП</div>
+          <div class="body"><div class="nm">Максим</div><div class="rl">рахунок 3:2 · 1 виклик чекає</div></div>
+          <button class="tg-btn" onclick="event.stopPropagation()">✈️ Чат</button>
+        </div>
+        <div class="partner-note">💬 Тисни на партнера — побачиш вашу дуельну історію. Або йдіть у чат Telegram: там зручно кидати одне одному відео й голосові.</div>
+
+        <div class="sec-h"><span class="ti">Рейтинг</span></div>
+        <div class="menu-group" style="margin-bottom:8px">
+          <div class="mi" onclick="openRating()"><span class="ic">🏆</span><div class="body"><div class="t">Таблиця лідерів</div><div class="s">твоє місце · 3 з тижня</div></div><span class="ch">›</span></div>
+        </div>
+
+        <div class="sec-h"><span class="ti">Бонуси за мережу</span></div>
+        <div class="bonus-row"><div class="txt"><div class="bt">Друг зробив 1-у ланку</div><div class="bs">обидва отримують +20% XP × 7 днів</div></div><span class="rew">⚡</span></div>
+        <div class="bonus-row"><div class="txt"><div class="bt">Обидва зробили урок сьогодні</div><div class="bs">Speaking Sync — +25 XP кожному</div></div><span class="rew">🔗</span></div>
+        <div class="bonus-row"><div class="txt"><div class="bt">Speaking Partners бейдж</div><div class="bs">після першого спільного виклику</div></div><span class="rew">🎖️</span></div>
+      </div>
+
+      <!-- ===== СЛУХАТИ ===== -->
+      <div class="screen" id="s-listen">
+        <div class="now-playing">
+          <div class="lbl">Зараз грає</div>
+          <div class="ttl">Everyday English · Small Talk</div>
+          <div class="meta">BBC Learning · рівень A2–B1 · 12 хв</div>
+          <div class="np-controls">
+            <button class="play">▶</button>
+            <div class="np-bar"><i></i></div>
+            <div class="np-time">4:32</div>
+          </div>
+        </div>
+
+        <div class="mode-row">
+          <div class="mode-card on"><span class="e">🎧</span><div class="t">Активне</div><div class="s">з транскриптом</div></div>
+          <div class="mode-card"><span class="e">🌙</span><div class="t">Фонове / нічне</div><div class="s">купай вухо</div></div>
+        </div>
+        <div class="instr-note">🌙 Фоновий режим: увімкни й займайся своїм — мова звучить тлом. Навіть слухання рахує маленьку ланку, щоб не рвати ланцюг у важкий день.</div>
+
+        <div class="sec-h"><span class="ti">Плейлисти за рівнем</span></div>
+        <div class="pod"><div class="co">☕</div><div class="body"><div class="nm">Everyday small talk</div><div class="dt">повільно, чітко · 20 епізодів</div></div><span class="lvl-tag a">A2</span></div>
+        <div class="pod"><div class="co">🗞️</div><div class="body"><div class="nm">News in slow English</div><div class="dt">новини простою мовою</div></div><span class="lvl-tag a">A2</span></div>
+        <div class="pod"><div class="co">🎬</div><div class="body"><div class="nm">Real dialogues from films</div><div class="dt">живі діалоги, сленг</div></div><span class="lvl-tag b">B1</span></div>
+        <div class="pod"><div class="co">🎙️</div><div class="body"><div class="nm">TED talks — short</div><div class="dt">ідеї + природна мова</div></div><span class="lvl-tag b">B1</span></div>
+
+        <div class="sec-h"><span class="ti">Як слухати правильно</span></div>
+        <div class="instr-card">
+          <b>Місце для твоєї інструкції.</b> Тут буде прописаний текст «що і де слухати» — рекомендації за рівнем, час дня, скільки хвилин, які джерела. Щойно даси текст — вставлю сюди дослівно.
+        </div>
+      </div>
+
+      <!-- ===== ПРОФІЛЬ ===== -->
+      <div class="screen" id="s-profile">
+        <div class="prof-head">
+          <div class="av">К</div>
+          <div><div class="nm">Кузьмук</div><div class="sub">рівень A2 · 340 XP · 4 дні поспіль</div></div>
+        </div>
+
+        <div class="sec-h"><span class="ti">Досягнення</span><span class="meta">3 з 8 бейджів</span></div>
+        <div class="ach-grid" style="grid-template-columns:repeat(4,1fr)">
+          <div class="ach got"><span class="e">🏅</span><span class="n">Partner</span></div>
+          <div class="ach got"><span class="e">🔥</span><span class="n">Стрік 3</span></div>
+          <div class="ach got"><span class="e">🎬</span><span class="n">Відео</span></div>
+          <div class="ach" style="background:var(--bg-card2);cursor:pointer"><span class="e" style="color:var(--purple)">+5</span><span class="n">ще</span></div>
+        </div>
+
+        <div class="sec-h"><span class="ti">Навчання</span></div>
+        <div class="menu-group">
+          <div class="mi"><span class="ic"><span class="yt"></span></span><div class="body"><div class="t">Мої відео</div><div class="s">бібліотека за назвою YouTube</div></div><span class="ch">›</span></div>
+          <div class="mi"><span class="ic">💬</span><div class="body"><div class="t">Картотека фраз</div><div class="s">збережені · SRS-повтор</div></div><span class="ch">›</span></div>
+          <div class="mi"><span class="ic">📊</span><div class="body"><div class="t">Мій прогрес</div><div class="s">рівень, теми, лексика</div></div><span class="ch">›</span></div>
+        </div>
+
+        <div class="sec-h"><span class="ti">Спільнота</span></div>
+        <div class="premium-banner"><span class="ic">👑</span><div><div class="t">Преміум-група</div><div class="s">закритий чат для Premium</div></div></div>
+        <div class="menu-group">
+          <div class="mi"><span class="ic">💬</span><div class="body"><div class="t">Community SpeakChain</div><div class="s">відкритий чат — питання, підтримка</div></div><span class="ch">›</span></div>
+        </div>
+
+        <div class="sec-h"><span class="ti">Мій план</span></div>
+        <div class="plan-card">
+          <div class="lab">Пробний доступ · 4 / 7 ланок</div>
+          <div class="access-bar"><i></i></div>
+          <div class="feat"><span class="dot">✓</span>Урок дня, ланцюжок, рейтинг</div>
+          <div class="feat"><span class="dot lock">🔒</span>Chainy без ліміту, преміум-група</div>
+        </div>
+        <button class="plan-btn">Обрати план →</button>
+
+        <div class="menu-group" style="margin-top:12px">
+          <div class="mi"><span class="ic">⚙️</span><div class="body"><div class="t">Налаштування</div></div><span class="ch">›</span></div>
+          <div class="mi" onclick="openUnsub()"><span class="ic">💳</span><div class="body"><div class="t">Керувати підпискою</div></div><span class="ch">›</span></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- BOTTOM NAV -->
+    <div class="nav">
+      <button class="on" data-s="s-home"><span class="ic">📅</span><span class="lbl">Сьогодні</span></button>
+      <button data-s="s-buddy"><span class="ic">🗣</span><span class="lbl">Chainy</span></button>
+      <button data-s="s-prog"><span class="ic">📊</span><span class="lbl">Прогрес</span></button>
+      <button data-s="s-social"><span class="ic">👥</span><span class="lbl">Друзі</span></button>
+      <button data-s="s-profile"><span class="ic">👤</span><span class="lbl">Профіль</span></button>
+    </div>
+
+    <!-- overlay: моя ситуація -->
+    <div class="overlay" id="ov-my" onclick="if(event.target===this)closeOv()">
+      <div class="sheet">
+        <div class="grip"></div>
+        <h3>✨ Моя ситуація</h3>
+        <p>Опиши, де тобі треба заговорити англійською — Chainy зіграє співрозмовника й проведе розмову саме про це.</p>
+        <textarea rows="3" placeholder="Напр.: завтра дзвінок із замовником про дедлайн проєкту…"></textarea>
+        <div class="ex"><b>Chainy зіграє:</b> клієнта, колегу, офіціанта, прикордонника — будь-кого з твого опису.</div>
+        <button class="go" onclick="closeOv()">Почати розмову →</button>
+      </div>
+    </div>
+
+    <!-- overlay: своє відео -->
+    <div class="overlay" id="ov-vid" onclick="if(event.target===this)closeOv()">
+      <div class="sheet">
+        <div class="grip"></div>
+        <h3><span class="yt" style="margin-right:6px"></span>Своє відео з YouTube</h3>
+        <p>Встав посилання на будь-яке відео — розберемо фрази, потренуємо shadowing і поговоримо про зміст.</p>
+        <input class="vid" placeholder="https://youtube.com/watch?v=…" />
+        <button class="go" onclick="closeOv()">Розібрати відео →</button>
+      </div>
+    </div>
+    <!-- overlay: підписка -->
+    <div class="overlay" id="ov-unsub" onclick="if(event.target===this)closeOv()">
+      <div class="sheet">
+        <div class="grip"></div>
+        <h3>Керування підпискою</h3>
+        <p>Твій план: Пробний доступ. Тут можна змінити або скасувати підписку в будь-який момент.</p>
+        <button class="go" onclick="closeOv()">Змінити план</button>
+        <div class="unsub" style="margin-top:14px" onclick="closeOv()">Скасувати підписку</div>
+      </div>
+    </div>
+    <!-- overlay: рейтинг -->
+    <div class="overlay" id="ov-rating" onclick="if(event.target===this)closeOv()">
+      <div class="sheet" style="max-height:82vh;overflow-y:auto">
+        <div class="grip"></div>
+        <h3 style="margin-bottom:12px">Таблиця лідерів</h3>
+        <div class="period-pills">
+          <div class="period-pill on">Тиждень</div>
+          <div class="period-pill">Місяць</div>
+          <div class="period-pill">Весь час</div>
+        </div>
+        <div class="scroller" id="sc2">
+          <div class="cat-tabs">
+            <span class="cat-tab on">🔗 Ланцюжок</span>
+            <span class="cat-tab">⚡ XP</span>
+            <span class="cat-tab">🔥 Стрік</span>
+            <span class="cat-tab">🚀 Стрибок</span>
+            <span class="cat-tab">📊 Постійність</span>
+          </div>
+          <button class="sc-arrow left">‹</button>
+          <button class="sc-arrow right">›</button>
+        </div>
+        <div class="lb-row"><div class="rank gold">1</div><div class="av">ОК</div><div class="nm">Олена</div><div class="xp">890</div></div>
+        <div class="lb-row"><div class="rank">2</div><div class="av">МП</div><div class="nm">Максим</div><div class="xp">720</div></div>
+        <div class="lb-row" style="border-color:var(--purple)"><div class="rank">3</div><div class="av">ТИ</div><div class="nm">Ти</div><div class="xp">340</div></div>
+        <div class="lb-row"><div class="rank">4</div><div class="av">ІВ</div><div class="nm">Ірина</div><div class="xp">310</div></div>
+        <div class="lb-row"><div class="rank">5</div><div class="av">АД</div><div class="nm">Андрій</div><div class="xp">280</div></div>
+      </div>
+    </div>
+    <!-- overlay: тема граматики (4 кроки) -->
+    <div class="overlay" id="ov-topic" onclick="if(event.target===this)closeOv()">
+      <div class="sheet" style="max-height:86vh;overflow-y:auto">
+        <div class="grip"></div>
+        <h3 id="topic-title" style="margin-bottom:4px">Present Simple</h3>
+        <p id="topic-sub" style="margin-bottom:14px">Опрацюй тему за 4 кроки — від відео до живої розмови.</p>
+        <div id="topic-steps"></div>
+        <div class="sec-h"><span class="ti">Таблиця правил</span></div>
+        <div id="topic-table"></div>
+      </div>
+    </div>
+    <!-- overlay: живий партнер -->
+    <div class="overlay" id="ov-buddy" onclick="if(event.target===this)closeOv()">
+      <div class="sheet" style="max-height:86vh;overflow-y:auto">
+        <div class="grip"></div>
+        <h3 style="margin-bottom:4px">👥 Знайти Speaking Buddy</h3>
+        <p style="margin-bottom:14px">Жива розмовна практика з іншим учнем — доберемо за рівнем і спільними інтересами.</p>
+        <div style="font-size:var(--fs-sm);font-weight:700;margin-bottom:8px">Твій рівень</div>
+        <div class="style-row" style="margin-bottom:14px">
+          <span class="style-pill">A1–A2</span>
+          <span class="style-pill on">A2–B1</span>
+          <span class="style-pill">B1–B2</span>
+          <span class="style-pill">C1+</span>
+        </div>
+        <div style="font-size:var(--fs-sm);font-weight:700;margin-bottom:8px">Інтереси</div>
+        <div class="style-row" data-multi="1" style="margin-bottom:16px">
+          <span class="style-pill on">Подорожі</span>
+          <span class="style-pill on">Кіно</span>
+          <span class="style-pill">Робота / IT</span>
+          <span class="style-pill">Спорт</span>
+          <span class="style-pill">Музика</span>
+        </div>
+        <button class="go" onclick="closeOv()">Підібрати партнера →</button>
+        <div class="ex" style="text-align:center">Доступно на плані Premium</div>
+      </div>
+    </div>
+    <!-- overlay: дуельна стрічка -->
+    <div class="overlay" id="ov-duel" onclick="if(event.target===this)closeOv()">
+      <div class="sheet" style="max-height:88vh;overflow-y:auto">
+        <div class="grip"></div>
+        <h3 style="margin-bottom:4px">Ти · Максим</h3>
+        <p style="margin-bottom:14px">Ваша історія викликів — хто влучніше сказав фразу.</p>
+
+        <div class="score">
+          <div class="sd"><div class="sn">3</div><div class="sl">ти</div></div>
+          <div class="vs">— рахунок —</div>
+          <div class="sd them"><div class="sn">2</div><div class="sl">Максим</div></div>
+        </div>
+
+        <div class="waiting">
+          <div><div class="wt">Максим чекає на відповідь</div><div class="wp">«Where have you been?»</div></div>
+          <button class="wb">🎙 Відповісти</button>
+        </div>
+
+        <div class="duel win">
+          <div class="dh"><span class="ph">«Could you say that again?»</span><span class="dt">сьогодні</span></div>
+          <div class="plays">
+            <div class="play-chip best"><span class="pi">▶</span><span class="pl">твій запис · 0:04</span></div>
+            <div class="play-chip"><span class="pi">▶</span><span class="pl">Максим · 0:05</span></div>
+          </div>
+          <div class="verdict">Ти влучніше — +1</div>
+        </div>
+
+        <div class="duel lose">
+          <div class="dh"><span class="ph">«I'd rather stay home»</span><span class="dt">вчора</span></div>
+          <div class="plays">
+            <div class="play-chip"><span class="pi">▶</span><span class="pl">твій запис · 0:06</span></div>
+            <div class="play-chip best"><span class="pi">▶</span><span class="pl">Максим · 0:04</span></div>
+          </div>
+          <div class="verdict">Максим влучніше — +1 йому</div>
+        </div>
+
+        <div class="duel win">
+          <div class="dh"><span class="ph">«It's up to you»</span><span class="dt">3 дні тому</span></div>
+          <div class="plays">
+            <div class="play-chip best"><span class="pi">▶</span><span class="pl">твій запис · 0:03</span></div>
+            <div class="play-chip"><span class="pi">▶</span><span class="pl">Максим · 0:04</span></div>
+          </div>
+          <div class="verdict">Ти влучніше — +1</div>
+        </div>
+
+        <div class="duel-actions">
+          <button class="throw" onclick="closeOv()">🎙 Кинути виклик</button>
+          <button class="tg" onclick="closeOv()">✈️ Чат</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="why">
+    <b>Що взято у великих гравців:</b><br>
+    • <b>Ланцюжок відпущено вертикально</b> — видно всі 7 ланок і де ти зараз (пульсуюча). Це «стежка», як роблять топові застосунки, а не худа смужка.<br>
+    • <b>Стрік — герой</b>, живий 🔥 угорі, завжди на очах.<br>
+    • <b>Мережа й рейтинги пішли на вкладку «Друзі»</b> — головний екран перестав тіснитись, нічого не зникло.<br>
+    • <b>«Доступ» став частиною «Профілю»</b> — 4 вкладки замість плутанини зверху.<br>
+    • <b>Плитки дій лишились</b> знизу головного, як ти хотіла.
+  </div>
+
+  <script>
+    function openMy(){document.getElementById('ov-my').classList.add('on')}
+    function openVid(){document.getElementById('ov-vid').classList.add('on')}
+    function openUnsub(){document.getElementById('ov-unsub').classList.add('on')}
+    function openRating(){
+      document.getElementById('ov-rating').classList.add('on');
+      setTimeout(()=>refreshScrollers(document.getElementById('ov-rating')),80);
+    }
+    function openBuddy(){document.getElementById('ov-buddy').classList.add('on')}
+    function openDuel(){document.getElementById('ov-duel').classList.add('on')}
+    function goListen(){
+      document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
+      document.getElementById('s-listen').classList.add('on');
+      document.getElementById('scroll').scrollTop=0;
+    }
+    function openTopic(name,pct){
+      document.getElementById('topic-title').textContent=name;
+      document.getElementById('topic-sub').textContent = pct>=75?'Ти впевнено володієш темою — повтори для закріплення.':pct>0?'Тему почато. Продовж з наступного кроку.':'Нова тема — почни з відео-уроку.';
+      const steps=[
+        ['📺','Подивись відео-урок','реальний приклад мовлення'],
+        ['📖','Прочитай таблицю правил вголос','структура і формула'],
+        ['🗣','Проговори 30 речень','ствердження, заперечення, питання'],
+        ['💬','Закріпи в Chainy','використай у живій розмові']
+      ];
+      const nDone = pct>=75?4:pct>=45?2:pct>0?1:0;
+      document.getElementById('topic-steps').innerHTML=steps.map((s,i)=>{
+        const cls = i<nDone?'done':i===nDone?'next':'locked';
+        const st = i<nDone?'✓':'→';
+        return `<div class="step ${cls}"><div class="si">${s[0]}</div><div class="body"><div class="t">${s[1]}</div><div class="s">${s[2]}</div></div><span class="st">${st}</span></div>`;
+      }).join('');
+      document.getElementById('topic-table').innerHTML=
+        `<div class="rule-table">
+          <div class="rr head"><div class="rl">Форма</div><div class="rv">Приклад</div></div>
+          <div class="rr"><div class="rl">Ствердження</div><div class="rv">I work / She works</div></div>
+          <div class="rr"><div class="rl">Заперечення</div><div class="rv">I don't work / She doesn't work</div></div>
+          <div class="rr"><div class="rl">Питання</div><div class="rv">Do you work? / Does she work?</div></div>
+        </div>`;
+      document.getElementById('ov-topic').classList.add('on');
+    }
+    function closeOv(){document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('on'))}
+    document.querySelectorAll('.period-pill').forEach(p=>p.addEventListener('click',()=>{
+      document.querySelectorAll('.period-pill').forEach(x=>x.classList.remove('on'));p.classList.add('on')}));
+    document.querySelectorAll('.cat-tab').forEach(c=>c.addEventListener('click',()=>{
+      document.querySelectorAll('.cat-tab').forEach(x=>x.classList.remove('on'));c.classList.add('on')}));
+    document.querySelectorAll('.chip').forEach(c=>c.addEventListener('click',()=>{
+      document.querySelectorAll('.chip').forEach(x=>x.classList.remove('on'));c.classList.add('on')}));
+    document.querySelectorAll('.lvl').forEach(l=>l.addEventListener('click',()=>{
+      document.querySelectorAll('.lvl').forEach(x=>x.classList.remove('on'));l.classList.add('on')}));
+    document.querySelectorAll('.style-pill').forEach(s=>s.addEventListener('click',()=>{
+      const box=s.closest('.style-row');
+      if(box && box.dataset.multi==='1'){ s.classList.toggle('on'); }
+      else if(box){ box.querySelectorAll('.style-pill').forEach(x=>x.classList.remove('on')); s.classList.add('on'); }
+    }));
+
+    const TOPICS={
+      A1:{done:true,items:[['The ABC, spelling',100],['The Numbers',100],['a / an',100],['Countable nouns',95],['Present Simple',98],['Present Continuous',92],['Stative verbs',88],['Imperative',100],['Possessive \x27s',90],['In / on / at — time',85],['Comparatives',82],['Zero Conditional',80],['Modals: can/must',86],['Going to',84],['Question Tags',78]]},
+      A2:{here:true,items:[['Past Simple',94],['Future Simple (will)',88],['The (definite article)',81],['Uncountable nouns',62],['Few, little, much, many',55],['Adverbs of frequency',33],['First Conditional',0],['Used to',0],['Present Perfect (intro)',0],['Prepositions of place',0],['Object pronouns',0],['So / such',0]]},
+      B1:{items:[['Present Perfect',0],['Present Perfect Continuous',0],['Past Continuous',0],['Passive Voice',0],['Second Conditional',0],['Enough and too',0],['Because / Because of',0],['Despite / In spite of',0],['As soon as / As long as',0],['Gerund + V',0],['Infinitive + V',0],['Would rather',0],['Be / Get used to',0],['Either…or / Neither…nor',0],['Modals: advanced',0],['Reported Speech',0]]},
+      B2:{items:[['Past Perfect',0],['Past Perfect Continuous',0],['Future Perfect',0],['Future Continuous',0],['Future Perfect Continuous',0],['Third Conditional',0],['Mixed Conditionals',0],['Wish / If only',0],['Causative (have sth done)',0],['Relative clauses',0],['Participle clauses',0],['Emphasis (do/does)',0],['Inversion (basic)',0],['Articles: advanced',0]]},
+      C1:{items:[['He is said to',0],['Complex Subject',0],['Prepositional Infinitive',0],['Inversion',0],['Cleft Sentences',0]]},
+      C2:{items:[['Stylistic inversion',0],['Nuanced modals',0],['Advanced ellipsis',0],['Rhetoric devices',0],['Discourse cohesion',0],['Irony, understatement',0],['Fronting',0],['Subjunctive (formal)',0],['Hedging',0],['Register shifts',0]]}
+    };
+    function cls(p){return p>=75?'g-green':p>=45?'g-yellow':p>0?'g-red':'g-gray'}
+    const VOCAB={
+      A1:{known:898,target:898,pct:100,gap:0,active:1560,delta:0},
+      A2:{known:312,target:898,pct:35,gap:586,active:1240,delta:48},
+      B1:{known:40,target:1200,pct:3,gap:1160,active:820,delta:22},
+      B2:{known:0,target:1500,pct:0,gap:1500,active:210,delta:0},
+      C1:{known:0,target:1800,pct:0,gap:1800,active:60,delta:0},
+      C2:{known:0,target:2100,pct:0,gap:2100,active:12,delta:0}
+    };
+    function renderVocab(lvl){
+      const v=VOCAB[lvl];
+      document.getElementById('vk-lvl').textContent=lvl;
+      document.getElementById('va-lvl').textContent=lvl;
+      document.getElementById('vk-count').textContent=v.known+'/'+v.target+' ключових слів';
+      document.getElementById('vk-pct').textContent=v.pct+'%';
+      document.getElementById('vk-bar').style.width=v.pct+'%';
+      document.getElementById('vk-gap').textContent=v.gap>0?('ще '+v.gap+' до цілі рівня'):'ціль рівня досягнута ✓';
+      document.getElementById('vk-gap').style.display=v.gap>0?'block':'block';
+      document.getElementById('va-num').textContent=v.active.toLocaleString('uk');
+      const d=document.getElementById('va-delta');
+      d.textContent=v.delta>0?('↑ +'+v.delta+' за тиждень'):'';
+      d.style.display=v.delta>0?'block':'none';
+    }
+    function renderTopics(lvl){
+      const d=TOPICS[lvl];
+      document.getElementById('lvl-title').textContent='Граматика рівня '+lvl;
+      document.getElementById('lvl-count').textContent=d.items.length+' тем';
+      document.getElementById('topics-render').innerHTML=d.items.map(([nm,p])=>
+        `<div class="topic ${cls(p)}" onclick="openTopic('${nm.replace(/'/g,"")}',${p})"><span class="nm">${nm}</span><span class="tr"><i style="width:${p}%"></i></span><span class="pct">${p>0?p+'%':'—'}</span></div>`).join('');
+    }
+    const LVL_ORDER=['A1','A2','B1','B2','C1','C2'];
+    function moveLine(lvl){
+      const i=LVL_ORDER.indexOf(lvl);
+      const pct=(i/(LVL_ORDER.length-1))*100;
+      document.getElementById('lvl-fill').style.width=pct+'%';
+    }
+    document.querySelectorAll('#lvl-switch .lvl-dot').forEach(l=>l.addEventListener('click',()=>{
+      document.querySelectorAll('#lvl-switch .lvl-dot').forEach(x=>x.classList.remove('on'));
+      l.classList.add('on'); renderTopics(l.dataset.lvl); renderVocab(l.dataset.lvl); moveLine(l.dataset.lvl);
+    }));
+    renderTopics('A2'); renderVocab('A2'); moveLine('A2');
+    function initScroller(el){
+      const row=el.querySelector('.chips, .cat-tabs, .style-row');
+      if(!row) return;
+      const L=el.querySelector('.sc-arrow.left'), R=el.querySelector('.sc-arrow.right');
+      function upd(){
+        const max=row.scrollWidth-row.clientWidth;
+        el.classList.toggle('scrolled', row.scrollLeft>4);
+        el.classList.toggle('at-end', max<=4 || row.scrollLeft>=max-4);
+      }
+      if(L && !L.dataset.b){L.dataset.b=1; L.onclick=e=>{e.stopPropagation();row.scrollBy({left:-140,behavior:'smooth'})}}
+      if(R && !R.dataset.b){R.dataset.b=1; R.onclick=e=>{e.stopPropagation();row.scrollBy({left:140,behavior:'smooth'})}}
+      if(!row.dataset.b){row.dataset.b=1; row.addEventListener('scroll',upd)}
+      upd();
+    }
+    function refreshScrollers(root){
+      (root||document).querySelectorAll('.scroller').forEach(initScroller);
+    }
+    setTimeout(()=>refreshScrollers(),100);
+    document.querySelectorAll('.mode-card').forEach(m=>m.addEventListener('click',()=>{
+      document.querySelectorAll('.mode-card').forEach(x=>x.classList.remove('on'));m.classList.add('on')}));
+    document.querySelectorAll('.nav button').forEach(btn=>{
+      btn.addEventListener('click',()=>{
+        document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('on'));
+        btn.classList.add('on');
+        document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
+        document.getElementById(btn.dataset.s).classList.add('on');
+        setTimeout(()=>refreshScrollers(document.getElementById(btn.dataset.s)),30);
+        document.getElementById('scroll').scrollTop=0;
+      });
+    });
+  </script>
+</body>
+</html>

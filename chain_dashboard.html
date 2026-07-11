@@ -1,19 +1,13 @@
 <!DOCTYPE html>
 <html lang="uk">
 <head>
+  <link rel="stylesheet" href="/static/tokens.css">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>SpeakChain · Chain Dashboard</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-:root {
-  --purple:#7c6ef7; --green:#5ad8a6; --orange:#f7a35c;
-  --red:#f76e6e;    --gold:#f5c842;  --blue:#5ab4f7;
-  --bg:#0d0d14;     --bg2:#16161f;   --bg3:#1e1e2a;
-  --bg4:#252535;    --text:#eaeaf5;  --text2:#8888a8;
-  --border:rgba(255,255,255,0.07);
-}
 body {
   background:var(--bg); color:var(--text);
   font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;
@@ -25,12 +19,12 @@ body {
 /* ── Tab bar ── */
 .tab-bar {
   position:sticky; top:0; z-index:30;
-  background:var(--bg); border-bottom:0.5px solid var(--border);
+  background:var(--bg); border-bottom:0.5px solid var(--line);
   display:flex;
 }
 .tab {
   flex:1; padding:13px 4px 11px; text-align:center;
-  font-size:11px; font-weight:600; color:var(--text2);
+  font-size:var(--fs-xs); font-weight:600; color:var(--text2);
   letter-spacing:.03em; cursor:pointer;
   border-bottom:2px solid transparent; transition:color .2s,border-color .2s;
 }
@@ -43,12 +37,12 @@ body {
 /* ── Chain Hero ── */
 .chain-hero {
   padding:20px 16px 16px;
-  background:var(--bg2);
-  border-bottom:0.5px solid var(--border);
+  background:var(--bg-card);
+  border-bottom:0.5px solid var(--line);
   text-align:center;
 }
 .chain-name {
-  font-size:11px; font-weight:700; color:var(--text2);
+  font-size:var(--fs-xs); font-weight:700; color:var(--text2);
   text-transform:uppercase; letter-spacing:.08em; margin-bottom:6px;
 }
 .chain-links-row {
@@ -56,34 +50,34 @@ body {
   gap:4px; margin-bottom:10px; flex-wrap:wrap;
 }
 .chain-link {
-  width:32px; height:32px; border-radius:8px;
+  width:32px; height:32px; border-radius:var(--r-sm);
   display:flex; align-items:center; justify-content:center;
-  font-size:16px; transition:transform .2s;
+  font-size:var(--fs-md); transition:transform .2s;
 }
 .chain-link.done   { background:rgba(124,110,247,.25); }
 .chain-link.today  { background:var(--purple); box-shadow:0 0 12px rgba(124,110,247,.5); transform:scale(1.12); }
-.chain-link.empty  { background:var(--bg3); }
+.chain-link.empty  { background:var(--bg-card2); }
 .chain-link.bonus  { background:rgba(245,200,66,.2); }
 .chain-counter {
   font-size:42px; font-weight:700; color:var(--text); line-height:1; margin-bottom:2px;
   letter-spacing:-1px;
 }
-.chain-counter span { font-size:20px; color:var(--text2); font-weight:400; }
+.chain-counter span { font-size:var(--fs-lg); color:var(--text2); font-weight:400; }
 .chain-status {
-  font-size:12px; color:var(--text2); margin-bottom:14px;
+  font-size:var(--fs-sm); color:var(--text2); margin-bottom:14px;
 }
 .chain-status.active { color:var(--green); }
 .chain-status.broken { color:var(--red); }
 .trial-bar-wrap { margin-bottom:6px; }
 .trial-bar-labels {
   display:flex; justify-content:space-between;
-  font-size:10px; color:var(--text2); margin-bottom:4px; font-weight:600;
+  font-size:var(--fs-xs); color:var(--text2); margin-bottom:4px; font-weight:600;
 }
 .trial-bar-track {
-  height:6px; background:var(--bg3); border-radius:6px; overflow:hidden;
+  height:6px; background:var(--bg-card2); border-radius:var(--r-sm); overflow:hidden;
 }
 .trial-bar-fill {
-  height:100%; border-radius:6px;
+  height:100%; border-radius:var(--r-sm);
   background:linear-gradient(90deg,var(--purple),var(--green));
   transition:width .9s cubic-bezier(.4,0,.2,1);
 }
@@ -91,15 +85,15 @@ body {
 /* ── XP strip ── */
 .xp-strip {
   display:flex; align-items:center; justify-content:space-between;
-  padding:10px 16px; background:var(--bg3);
-  border-bottom:0.5px solid var(--border);
+  padding:10px 16px; background:var(--bg-card2);
+  border-bottom:0.5px solid var(--line);
 }
 .xp-left { display:flex; align-items:center; gap:8px; }
-.xp-icon { font-size:20px; }
-.xp-val  { font-size:20px; font-weight:700; color:var(--purple); }
-.xp-label{ font-size:11px; color:var(--text2); margin-top:1px; }
+.xp-icon { font-size:var(--fs-lg); }
+.xp-val  { font-size:var(--fs-lg); font-weight:700; color:var(--purple); }
+.xp-label{ font-size:var(--fs-xs); color:var(--text2); margin-top:1px; }
 .xp-boost {
-  padding:4px 10px; border-radius:20px; font-size:11px; font-weight:700;
+  padding:4px 10px; border-radius:var(--r-lg); font-size:var(--fs-xs); font-weight:700;
   background:rgba(245,200,66,.15); color:var(--gold);
   border:1px solid rgba(245,200,66,.25);
 }
@@ -107,108 +101,108 @@ body {
 /* ── Section ── */
 .section { padding:14px 16px; }
 .section-title {
-  font-size:10px; font-weight:700; color:var(--text2);
+  font-size:var(--fs-xs); font-weight:700; color:var(--text2);
   text-transform:uppercase; letter-spacing:.08em; margin-bottom:10px;
 }
 
 /* ── Action grid ── */
 .action-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
 .action-card {
-  background:var(--bg3); border-radius:14px; padding:14px 12px;
-  border:0.5px solid var(--border); cursor:pointer;
+  background:var(--bg-card2); border-radius:var(--r); padding:14px 12px;
+  border:0.5px solid var(--line); cursor:pointer;
   display:flex; flex-direction:column; gap:6px;
   transition:background .15s, transform .1s;
   -webkit-tap-highlight-color:transparent;
 }
-.action-card:active { transform:scale(.97); background:var(--bg4); }
-.action-icon { font-size:24px; }
-.action-label { font-size:13px; font-weight:600; color:var(--text); line-height:1.3; }
-.action-sub   { font-size:10px; color:var(--text2); }
+.action-card:active { transform:scale(.97); background:var(--bg-card3); }
+.action-icon { font-size:var(--fs-xl); }
+.action-label { font-size:var(--fs); font-weight:600; color:var(--text); line-height:1.3; }
+.action-sub   { font-size:var(--fs-xs); color:var(--text2); }
 
 /* ── Network chains ── */
 .network-card {
-  background:var(--bg3); border-radius:14px; padding:14px;
-  border:0.5px solid var(--border); margin-bottom:8px;
+  background:var(--bg-card2); border-radius:var(--r); padding:14px;
+  border:0.5px solid var(--line); margin-bottom:8px;
 }
 .network-row {
   display:flex; align-items:center; gap:10px; padding:6px 0;
-  border-bottom:0.5px solid var(--border);
+  border-bottom:0.5px solid var(--line);
 }
 .network-row:last-child { border-bottom:none; padding-bottom:0; }
 .network-avatar {
   width:34px; height:34px; border-radius:50%; flex-shrink:0;
   display:flex; align-items:center; justify-content:center;
-  font-size:13px; font-weight:700;
+  font-size:var(--fs); font-weight:700;
 }
 .network-avatar.me     { background:rgba(124,110,247,.2); color:var(--purple); }
 .network-avatar.friend { background:rgba(90,216,166,.2);  color:var(--green); }
 .network-avatar.top    { background:rgba(245,200,66,.2);  color:var(--gold); }
 .network-info { flex:1; min-width:0; }
-.network-name { font-size:13px; font-weight:600; }
-.network-role { font-size:10px; color:var(--text2); margin-top:1px; }
+.network-name { font-size:var(--fs); font-weight:600; }
+.network-role { font-size:var(--fs-xs); color:var(--text2); margin-top:1px; }
 .network-chain-bar {
   display:flex; align-items:center; gap:6px;
 }
 .mini-links { display:flex; gap:2px; }
 .mini-link {
-  width:10px; height:10px; border-radius:3px;
+  width:10px; height:10px; border-radius:var(--r-sm);
 }
 .mini-link.done  { background:var(--purple); }
-.mini-link.empty { background:var(--bg4); }
-.network-num { font-size:12px; font-weight:700; }
+.mini-link.empty { background:var(--bg-card3); }
+.network-num { font-size:var(--fs-sm); font-weight:700; }
 .network-num.me     { color:var(--purple); }
 .network-num.friend { color:var(--green); }
 .network-num.top    { color:var(--gold); }
 .fomo-banner {
-  margin-top:8px; padding:8px 12px; border-radius:10px;
+  margin-top:8px; padding:8px 12px; border-radius:var(--r);
   background:rgba(247,110,110,.1); border:1px solid rgba(247,110,110,.2);
-  font-size:12px; color:var(--red); font-weight:600;
+  font-size:var(--fs-sm); color:var(--red); font-weight:600;
 }
 
 /* ── Leaderboard ── */
 .lb-row {
   display:flex; align-items:center; gap:10px;
-  padding:10px 0; border-bottom:0.5px solid var(--border);
+  padding:10px 0; border-bottom:0.5px solid var(--line);
 }
 .lb-row:last-child { border-bottom:none; }
 .lb-rank {
-  width:24px; font-size:13px; font-weight:700;
+  width:24px; font-size:var(--fs); font-weight:700;
   color:var(--text2); text-align:center; flex-shrink:0;
 }
 .lb-rank.gold   { color:var(--gold); }
-.lb-rank.silver { color:#b0b0c0; }
-.lb-rank.bronze { color:#cd7f32; }
+.lb-rank.silver { color:var(--silver); }
+.lb-rank.bronze { color:var(--bronze); }
 .lb-avatar {
   width:36px; height:36px; border-radius:50%; flex-shrink:0;
-  background:var(--bg4); display:flex; align-items:center; justify-content:center;
-  font-size:13px; font-weight:700; color:var(--purple);
+  background:var(--bg-card3); display:flex; align-items:center; justify-content:center;
+  font-size:var(--fs); font-weight:700; color:var(--purple);
 }
 .lb-avatar.me { background:rgba(124,110,247,.2); border:1.5px solid var(--purple); }
 .lb-info { flex:1; min-width:0; }
-.lb-name { font-size:13px; font-weight:600; }
-.lb-meta { font-size:10px; color:var(--text2); margin-top:2px; }
+.lb-name { font-size:var(--fs); font-weight:600; }
+.lb-meta { font-size:var(--fs-xs); color:var(--text2); margin-top:2px; }
 .lb-score {
-  font-size:15px; font-weight:700; color:var(--purple);
+  font-size:var(--fs); font-weight:700; color:var(--purple);
   text-align:right;
 }
-.lb-score span { font-size:10px; color:var(--text2); font-weight:400; }
+.lb-score span { font-size:var(--fs-xs); color:var(--text2); font-weight:400; }
 
 /* ── Identity banner ── */
 .identity-banner {
   margin:14px 16px 0;
-  padding:12px 14px; border-radius:14px;
+  padding:12px 14px; border-radius:var(--r);
   background:rgba(124,110,247,.1); border:1px solid rgba(124,110,247,.2);
   display:flex; align-items:center; gap:10px;
 }
-.identity-icon { font-size:28px; flex-shrink:0; }
-.identity-title { font-size:13px; font-weight:700; color:var(--purple); }
-.identity-sub   { font-size:11px; color:var(--text2); margin-top:2px; line-height:1.4; }
+.identity-icon { font-size:var(--fs-xl); flex-shrink:0; }
+.identity-title { font-size:var(--fs); font-weight:700; color:var(--purple); }
+.identity-sub   { font-size:var(--fs-xs); color:var(--text2); margin-top:2px; line-height:1.4; }
 
 /* ── CTA button ── */
 .cta-btn {
   width:calc(100% - 32px); margin:12px 16px;
-  padding:15px; border-radius:14px; border:none;
-  font-size:15px; font-weight:700; cursor:pointer;
+  padding:15px; border-radius:var(--r); border:none;
+  font-size:var(--fs); font-weight:700; cursor:pointer;
   transition:transform .1s, opacity .15s;
 }
 .cta-btn:active { transform:scale(.98); }
@@ -220,8 +214,8 @@ body {
   border:1px solid rgba(90,216,166,.25);
 }
 .cta-btn.ghost {
-  background:var(--bg3); color:var(--text2);
-  border:0.5px solid var(--border);
+  background:var(--bg-card2); color:var(--text2);
+  border:0.5px solid var(--line);
 }
 
 /* ── Trial complete paywall ── */
@@ -230,55 +224,55 @@ body {
   display:flex; flex-direction:column; align-items:center; text-align:center; gap:10px;
 }
 .paywall-trophy { font-size:56px; margin-bottom:4px; }
-.paywall-title  { font-size:22px; font-weight:700; letter-spacing:-.5px; }
-.paywall-sub    { font-size:14px; color:var(--text2); line-height:1.5; }
+.paywall-title  { font-size:var(--fs-lg); font-weight:700; letter-spacing:-.5px; }
+.paywall-sub    { font-size:var(--fs); color:var(--text2); line-height:1.5; }
 .paywall-stats  {
   display:grid; grid-template-columns:repeat(3,1fr); gap:8px; width:100%; margin:8px 0;
 }
 .paywall-stat {
-  background:var(--bg3); border-radius:12px; padding:10px 8px;
-  text-align:center; border:0.5px solid var(--border);
+  background:var(--bg-card2); border-radius:var(--r); padding:10px 8px;
+  text-align:center; border:0.5px solid var(--line);
 }
-.paywall-stat-val { font-size:22px; font-weight:700; color:var(--purple); }
-.paywall-stat-lbl { font-size:9px; color:var(--text2); font-weight:700; text-transform:uppercase; letter-spacing:.04em; margin-top:3px; }
+.paywall-stat-val { font-size:var(--fs-lg); font-weight:700; color:var(--purple); }
+.paywall-stat-lbl { font-size:var(--fs-xs); color:var(--text2); font-weight:700; text-transform:uppercase; letter-spacing:.04em; margin-top:3px; }
 .plan-cards { display:flex; flex-direction:column; gap:8px; width:100%; }
 .plan-card {
-  background:var(--bg3); border-radius:14px; padding:14px 16px;
-  border:0.5px solid var(--border); text-align:left;
+  background:var(--bg-card2); border-radius:var(--r); padding:14px 16px;
+  border:0.5px solid var(--line); text-align:left;
   display:flex; align-items:center; gap:12px; cursor:pointer;
   transition:background .15s;
 }
-.plan-card:active { background:var(--bg4); }
+.plan-card:active { background:var(--bg-card3); }
 .plan-card.featured { border-color:rgba(124,110,247,.4); background:rgba(124,110,247,.08); }
-.plan-card-icon { font-size:28px; flex-shrink:0; }
+.plan-card-icon { font-size:var(--fs-xl); flex-shrink:0; }
 .plan-card-info { flex:1; }
-.plan-card-name { font-size:14px; font-weight:700; }
-.plan-card-feats { font-size:11px; color:var(--text2); margin-top:3px; line-height:1.4; }
+.plan-card-name { font-size:var(--fs); font-weight:700; }
+.plan-card-feats { font-size:var(--fs-xs); color:var(--text2); margin-top:3px; line-height:1.4; }
 .plan-card-price {
-  font-size:18px; font-weight:700; color:var(--green);
+  font-size:var(--fs-md); font-weight:700; color:var(--green);
   text-align:right; flex-shrink:0;
 }
-.plan-card-price span { font-size:10px; color:var(--text2); font-weight:400; display:block; }
+.plan-card-price span { font-size:var(--fs-xs); color:var(--text2); font-weight:400; display:block; }
 
 /* ── Divider ── */
-.divider { height:.5px; background:var(--border); margin:0 16px; }
+.divider { height:.5px; background:var(--line); margin:0 16px; }
 
 /* ── Speaking Partner preview ── */
 .buddy-preview {
-  background:var(--bg3); border-radius:14px; border:0.5px solid var(--border);
+  background:var(--bg-card2); border-radius:var(--r); border:0.5px solid var(--line);
   overflow:hidden;
 }
 .buddy-msg {
   padding:10px 14px; display:flex; gap:10px; align-items:flex-start;
 }
-.buddy-msg + .buddy-msg { border-top:.5px solid var(--border); }
+.buddy-msg + .buddy-msg { border-top:.5px solid var(--line); }
 .buddy-bubble-ai {
   background:rgba(124,110,247,.15); border-radius:12px 12px 12px 3px;
-  padding:8px 12px; font-size:13px; color:var(--text); max-width:80%; line-height:1.5;
+  padding:8px 12px; font-size:var(--fs); color:var(--text); max-width:80%; line-height:1.5;
 }
 .buddy-bubble-user {
   background:rgba(90,216,166,.12); border-radius:12px 12px 3px 12px;
-  padding:8px 12px; font-size:13px; color:var(--text); max-width:80%; line-height:1.5;
+  padding:8px 12px; font-size:var(--fs); color:var(--text); max-width:80%; line-height:1.5;
   margin-left:auto;
 }
 .buddy-lock {
@@ -286,7 +280,7 @@ body {
   border-top:.5px solid rgba(245,200,66,.15);
   text-align:center;
 }
-.buddy-lock-text { font-size:12px; color:var(--gold); font-weight:600; }
+.buddy-lock-text { font-size:var(--fs-sm); color:var(--gold); font-weight:600; }
 </style>
 </head>
 <body>
@@ -381,7 +375,7 @@ body {
 
   <!-- Speaking Buddy preview -->
   <div class="section" style="padding-top:0">
-    <div class="section-title">Speaking Buddy <span style="font-size:9px;background:rgba(245,200,66,.15);color:var(--gold);padding:2px 7px;border-radius:10px;font-weight:700;letter-spacing:.03em">PREMIUM</span></div>
+    <div class="section-title">Speaking Buddy <span style="font-size:var(--fs-xs);background:rgba(245,200,66,.15);color:var(--gold);padding:2px 7px;border-radius:var(--r);font-weight:700;letter-spacing:.03em">PREMIUM</span></div>
     <div class="buddy-preview">
       <div class="buddy-msg">
         <div class="buddy-bubble-ai">Tell me about yourself — where are you from and what do you do?</div>
@@ -430,26 +424,26 @@ body {
   <div class="section" style="padding-top:0">
     <div class="section-title">Бонуси за мережу</div>
     <div style="display:flex;flex-direction:column;gap:7px">
-      <div style="background:var(--bg3);border-radius:12px;padding:12px 14px;border:.5px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+      <div style="background:var(--bg-card2);border-radius:var(--r);padding:12px 14px;border:.5px solid var(--line);display:flex;justify-content:space-between;align-items:center">
         <div>
-          <div style="font-size:13px;font-weight:600">Друг зробив 1-у ланку</div>
-          <div style="font-size:11px;color:var(--text2);margin-top:2px">Обидва отримують +20% XP × 7 днів</div>
+          <div style="font-size:var(--fs);font-weight:600">Друг зробив 1-у ланку</div>
+          <div style="font-size:var(--fs-xs);color:var(--text2);margin-top:2px">Обидва отримують +20% XP × 7 днів</div>
         </div>
-        <span style="font-size:20px">⚡️</span>
+        <span style="font-size:var(--fs-lg)">⚡️</span>
       </div>
-      <div style="background:var(--bg3);border-radius:12px;padding:12px 14px;border:.5px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+      <div style="background:var(--bg-card2);border-radius:var(--r);padding:12px 14px;border:.5px solid var(--line);display:flex;justify-content:space-between;align-items:center">
         <div>
-          <div style="font-size:13px;font-weight:600">Обидва зробили урок сьогодні</div>
-          <div style="font-size:11px;color:var(--text2);margin-top:2px">Speaking Sync — +25 XP кожному</div>
+          <div style="font-size:var(--fs);font-weight:600">Обидва зробили урок сьогодні</div>
+          <div style="font-size:var(--fs-xs);color:var(--text2);margin-top:2px">Speaking Sync — +25 XP кожному</div>
         </div>
-        <span style="font-size:20px">🔗</span>
+        <span style="font-size:var(--fs-lg)">🔗</span>
       </div>
-      <div style="background:var(--bg3);border-radius:12px;padding:12px 14px;border:.5px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+      <div style="background:var(--bg-card2);border-radius:var(--r);padding:12px 14px;border:.5px solid var(--line);display:flex;justify-content:space-between;align-items:center">
         <div>
-          <div style="font-size:13px;font-weight:600">Speaking Partners бейдж</div>
-          <div style="font-size:11px;color:var(--text2);margin-top:2px">Після першого спільного виклику</div>
+          <div style="font-size:var(--fs);font-weight:600">Speaking Partners бейдж</div>
+          <div style="font-size:var(--fs-xs);color:var(--text2);margin-top:2px">Після першого спільного виклику</div>
         </div>
-        <span style="font-size:20px">🏅</span>
+        <span style="font-size:var(--fs-lg)">🏅</span>
       </div>
     </div>
   </div>
@@ -469,14 +463,14 @@ body {
 </div>
 
 <style>
-.lb-cat{flex-shrink:0;padding:6px 12px;border-radius:16px;font-size:12px;font-weight:600;border:.5px solid var(--border);background:var(--bg3);color:var(--text2);cursor:pointer;white-space:nowrap;}
+.lb-cat{flex-shrink:0;padding:6px 12px;border-radius:var(--r);font-size:var(--fs-sm);font-weight:600;border:.5px solid var(--line);background:var(--bg-card2);color:var(--text2);cursor:pointer;white-space:nowrap;}
 .lb-cat.on{background:rgba(124,110,247,.18);border-color:rgba(124,110,247,.4);color:var(--purple);}
 /* ── Уніфікована стрілка горизонтального скролу (єдина для всіх мініапів) ── */
 .scroll-hint{position:absolute;top:0;bottom:2px;right:0;display:flex;align-items:center;cursor:pointer;background:linear-gradient(to right,transparent,var(--bg) 45%);padding-left:18px;transition:opacity .2s;}
-.scroll-hint span{width:26px;height:26px;border-radius:50%;background:var(--bg3);border:.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:var(--purple);box-shadow:0 1px 4px rgba(0,0,0,.15);line-height:1;}
+.scroll-hint span{width:26px;height:26px;border-radius:50%;background:var(--bg-card2);border:.5px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:var(--fs-md);font-weight:700;color:var(--purple);box-shadow:0 1px 4px rgba(0,0,0,.15);line-height:1;}
 .scroll-hint.hidden{opacity:0;pointer-events:none;}
-.lb-per{flex:1;padding:6px 4px;border-radius:8px;font-size:11px;font-weight:600;border:.5px solid var(--border);background:var(--bg3);color:var(--text2);cursor:pointer;}
-.lb-per.on{background:var(--bg4);border-color:rgba(255,255,255,.15);color:var(--text);}
+.lb-per{flex:1;padding:6px 4px;border-radius:var(--r-sm);font-size:var(--fs-xs);font-weight:600;border:.5px solid var(--line);background:var(--bg-card2);color:var(--text2);cursor:pointer;}
+.lb-per.on{background:var(--bg-card3);border-color:rgba(255,255,255,.15);color:var(--text);}
 </style>
 
 <!-- ══ TAB 4: UPGRADE ══ -->
@@ -485,37 +479,37 @@ body {
   <div id="upgrade-trial">
     <div class="section" style="padding-bottom:0">
       <div class="section-title">Пробний доступ</div>
-      <div style="background:var(--bg3);border-radius:14px;border:.5px solid var(--border);padding:16px;text-align:center;margin-bottom:12px">
+      <div style="background:var(--bg-card2);border-radius:var(--r);border:.5px solid var(--line);padding:16px;text-align:center;margin-bottom:12px">
         <div style="font-size:36px;margin-bottom:6px">🔗</div>
-        <div style="font-size:20px;font-weight:700" id="upgrade-counter-text">0 з 7 ланок</div>
+        <div style="font-size:var(--fs-lg);font-weight:700" id="upgrade-counter-text">0 з 7 ланок</div>
         <div class="trial-bar-track" style="margin:10px 0 6px">
           <div class="trial-bar-fill" id="upgrade-bar-fill" style="width:0%"></div>
         </div>
-        <div style="font-size:12px;color:var(--text2)" id="upgrade-bar-sub">Залишилось 7 ланок</div>
+        <div style="font-size:var(--fs-sm);color:var(--text2)" id="upgrade-bar-sub">Залишилось 7 ланок</div>
       </div>
     </div>
     <div class="section" style="padding-top:8px">
       <div class="section-title">Що доступно зараз</div>
       <div style="display:flex;flex-direction:column;gap:6px">
-        <div style="background:var(--bg3);border-radius:12px;padding:11px 14px;border:.5px solid var(--border);display:flex;gap:10px;align-items:center">
-          <span style="font-size:20px">🎬</span>
-          <div><div style="font-size:13px;font-weight:600">AI-уроки з відео</div><div style="font-size:11px;color:var(--text2)">Аналіз вимови і граматики</div></div>
-          <span style="margin-left:auto;font-size:11px;color:var(--green);font-weight:700">✓ Активно</span>
+        <div style="background:var(--bg-card2);border-radius:var(--r);padding:11px 14px;border:.5px solid var(--line);display:flex;gap:10px;align-items:center">
+          <span style="font-size:var(--fs-lg)">🎬</span>
+          <div><div style="font-size:var(--fs);font-weight:600">AI-уроки з відео</div><div style="font-size:var(--fs-xs);color:var(--text2)">Аналіз вимови і граматики</div></div>
+          <span style="margin-left:auto;font-size:var(--fs-xs);color:var(--green);font-weight:700">✓ Активно</span>
         </div>
-        <div style="background:var(--bg3);border-radius:12px;padding:11px 14px;border:.5px solid var(--border);display:flex;gap:10px;align-items:center">
-          <span style="font-size:20px">🔗</span>
-          <div><div style="font-size:13px;font-weight:600">Chain ланцюжок</div><div style="font-size:11px;color:var(--text2)">XP і прогрес</div></div>
-          <span style="margin-left:auto;font-size:11px;color:var(--green);font-weight:700">✓ Активно</span>
+        <div style="background:var(--bg-card2);border-radius:var(--r);padding:11px 14px;border:.5px solid var(--line);display:flex;gap:10px;align-items:center">
+          <span style="font-size:var(--fs-lg)">🔗</span>
+          <div><div style="font-size:var(--fs);font-weight:600">Chain ланцюжок</div><div style="font-size:var(--fs-xs);color:var(--text2)">XP і прогрес</div></div>
+          <span style="margin-left:auto;font-size:var(--fs-xs);color:var(--green);font-weight:700">✓ Активно</span>
         </div>
-        <div style="background:var(--bg3);border-radius:12px;padding:11px 14px;border:.5px solid var(--border);display:flex;gap:10px;align-items:center;opacity:.5">
-          <span style="font-size:20px">🎙</span>
-          <div><div style="font-size:13px;font-weight:600">Speaking Buddy</div><div style="font-size:11px;color:var(--text2)">AI-розмова в реальному часі</div></div>
-          <span style="margin-left:auto;font-size:11px;color:var(--gold);font-weight:700">🔒 Premium</span>
+        <div style="background:var(--bg-card2);border-radius:var(--r);padding:11px 14px;border:.5px solid var(--line);display:flex;gap:10px;align-items:center;opacity:.5">
+          <span style="font-size:var(--fs-lg)">🎙</span>
+          <div><div style="font-size:var(--fs);font-weight:600">Speaking Buddy</div><div style="font-size:var(--fs-xs);color:var(--text2)">AI-розмова в реальному часі</div></div>
+          <span style="margin-left:auto;font-size:var(--fs-xs);color:var(--gold);font-weight:700">🔒 Premium</span>
         </div>
-        <div style="background:var(--bg3);border-radius:12px;padding:11px 14px;border:.5px solid var(--border);display:flex;gap:10px;align-items:center;opacity:.5">
-          <span style="font-size:20px">📊</span>
-          <div><div style="font-size:13px;font-weight:600">Gap аналіз</div><div style="font-size:11px;color:var(--text2)">Персональні прогалини</div></div>
-          <span style="margin-left:auto;font-size:11px;color:var(--orange);font-weight:700">🔒 Basic+</span>
+        <div style="background:var(--bg-card2);border-radius:var(--r);padding:11px 14px;border:.5px solid var(--line);display:flex;gap:10px;align-items:center;opacity:.5">
+          <span style="font-size:var(--fs-lg)">📊</span>
+          <div><div style="font-size:var(--fs);font-weight:600">Gap аналіз</div><div style="font-size:var(--fs-xs);color:var(--text2)">Персональні прогалини</div></div>
+          <span style="margin-left:auto;font-size:var(--fs-xs);color:var(--orange);font-weight:700">🔒 Basic+</span>
         </div>
       </div>
     </div>
@@ -528,7 +522,7 @@ body {
       <div class="paywall-title">Пробний завершено!</div>
       <div class="paywall-sub" id="paywall-sub">Ти пройшов далі ніж 80% тих хто починав.</div>
       <div class="paywall-stats" id="paywall-stats"></div>
-      <div style="font-size:13px;color:var(--text2);margin:4px 0 8px;line-height:1.5">
+      <div style="font-size:var(--fs);color:var(--text2);margin:4px 0 8px;line-height:1.5">
         Ти вже побудував основу мовного ланцюжка.<br>
         <strong style="color:var(--text)">Розблокуй продовження.</strong>
       </div>
