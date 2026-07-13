@@ -339,7 +339,7 @@ body{
     <thead>
       <tr>
         <th class="feat-col">Функція</th>
-        <th>Trial</th>
+        <th>Зараз</th>
         <th>Basic</th>
         <th>Premium</th>
       </tr>
@@ -474,17 +474,60 @@ let selectedLink = payLink('basic');
 
 /* ── Fill hero ── */
 function fillHero(){
-  const chain = D.chain_length || 7;
-  const name  = D.my_name || '';
-  if(chain >= 7){
-    document.getElementById('hero-title').textContent = `${name}, пробний завершено!`;
-    document.getElementById('hero-sub').textContent   =
-      `Ти пройшов ${D.done_lessons||0} уроків — і зрозумів як це працює.`;
+  /* ══════════════════════════════════════════════════════════════
+     🔴 БУЛО: рішення ухвалювалось ЗА ДОВЖИНОЮ ЛАНЦЮЖКА:
+              if (chain >= 7) → «пробний завершено!»
+
+     Але ланцюжок ≥ 7 — це НЕ «доступ вичерпано», це просто 7 днів
+     поспіль. Мініап ВГАДУВАВ те, що бот знає точно:
+       • Д6 челенджу, ланцюжок 8 → казав «завершено», хоча доступ Є
+       • кинула на Д3, ланцюжок 3 → казав «розблокуй», ніби новенька
+
+     ТЕПЕР читаємо правду з бота: has_access / in_challenge / challenge_done.
+
+     ТЕРМІНОЛОГІЯ: слова «пробний період» більше немає. Воно обіцяє
+     сутність, якої в продукті НЕ ІСНУЄ (тріалу як такого немає — є
+     челендж), і звучить як відбирання: «у тебе закінчилось».
+     Кажемо про те, що ПОПЕРЕДУ. Людина рухається далі, а не втрачає. */
+
+  const name   = D.my_name || '';
+  const lessons= D.done_lessons || 0;
+  const chain  = D.chain_length || 0;
+
+  const icon = document.getElementById('hero-icon');
+  const ttl  = document.getElementById('hero-title');
+  const sub  = document.getElementById('hero-sub');
+
+  if (D.in_challenge) {
+    /* ЩЕ В ЧЕЛЕНДЖІ — доступ Є. Не лякаємо, а показуємо, що далі. */
+    icon.textContent = '🚀';
+    ttl.textContent  = name ? `${name}, що далі?` : 'Що далі?';
+    sub.textContent  = 'Челендж триває. Подивіться, що відкривається після нього.';
+
+  } else if (D.challenge_done) {
+    /* ЧЕЛЕНДЖ ПОЗАДУ — тут і є момент рішення. Спираємось на зроблене. */
+    icon.textContent = '🏁';
+    ttl.textContent  = name ? `${name}, розблокуйте далі` : 'Розблокуйте далі';
+    sub.textContent  = lessons
+      ? `${lessons} ${plural(lessons,'урок','уроки','уроків')} позаду. Наступний рівень — попереду.`
+      : 'Тиждень позаду. Наступний рівень — попереду.';
+
   } else {
-    document.getElementById('hero-icon').textContent  = '⚡️';
-    document.getElementById('hero-title').textContent = 'Розблокуй повний доступ';
-    document.getElementById('hero-sub').textContent   = 'Продовж навчання без обмежень';
+    /* ЩЕ НЕ ПОЧАЛА — просто показуємо, що є. */
+    icon.textContent = '⚡️';
+    ttl.textContent  = 'Розблокуйте повний доступ';
+    sub.textContent  = 'Щоденні уроки, Chainy без обмежень, жива практика.';
   }
+}
+
+/* Українська множина: 1 урок · 2-4 уроки · 5+ уроків.
+   «5 урок» або «2 уроків» одразу читається як недбалість. */
+function plural(n, one, few, many){
+  const a = Math.abs(n) % 100, b = a % 10;
+  if (a > 10 && a < 20) return many;
+  if (b > 1 && b < 5)   return few;
+  if (b === 1)          return one;
+  return many;
 }
 
 /* ── Stats ── */
