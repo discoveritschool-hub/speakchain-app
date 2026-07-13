@@ -788,21 +788,40 @@ function renderCategories() {
     `<div class="cat-tab ${c.id === currentCat ? 'active' : ''}" 
       onclick="selectCat('${c.id}')" style="${c.id === currentCat ? `background:${c.color};border-color:${c.color}` : ''}">${c.label}</div>`
   ).join('');
-  updateCatScrollHint();
+
+  /* 🔴 БУВ БАГ: updateCatScrollHint() викликався ОДРАЗУ після innerHTML.
+     innerHTML синхронний, а LAYOUT — НІ. У ту мить scrollWidth ще дорівнює
+     clientWidth, умова «є куди гортати» дає false → СТРІЛКИ ХОВАЮТЬСЯ
+     НАЗАВЖДИ. Людина не бачить, що є ще 6 категорій тем.
+
+     Виправлення: чекаємо, поки браузер порахує розміри.
+     rAF×2 — надійніше за setTimeout: перший кадр ставить у чергу,
+     другий гарантує, що layout уже готовий. */
+  requestAnimationFrame(() =>
+    requestAnimationFrame(updateCatScrollHint)
+  );
 }
 
 function scrollCatTabs() {
   const tabs = document.getElementById('cat-tabs');
   if (tabs) tabs.scrollBy({ left: 140, behavior: 'smooth' });
+  setTimeout(updateCatScrollHint, 320);   /* після smooth-скролу */
 }
 
 function updateCatScrollHint() {
+  /* Керує ОБОМА стрілками. Раніше ця функція чіпала тільки праву,
+     а ліву — окремий скрипт унизу файлу. Дві логіки на один елемент
+     билися між собою. Тепер джерело правди одне. */
   const tabs = document.getElementById('cat-tabs');
-  const hint = document.getElementById('cat-scroll-hint');
-  if (!tabs || !hint) return;
-  const atEnd = tabs.scrollLeft + tabs.clientWidth >= tabs.scrollWidth - 4;
-  const scrollable = tabs.scrollWidth > tabs.clientWidth + 4;
-  hint.classList.toggle('show', scrollable && !atEnd);
+  const hintR = document.getElementById('cat-scroll-hint');
+  const hintL = document.getElementById('cat-scroll-hint-l');
+  if (!tabs) return;
+
+  const max = tabs.scrollWidth - tabs.clientWidth;
+  const canScroll = max > 4;
+
+  if (hintR) hintR.classList.toggle('show', canScroll && tabs.scrollLeft < max - 4);
+  if (hintL) hintL.classList.toggle('show', canScroll && tabs.scrollLeft > 4);
 }
 
 function renderScenarios() {
@@ -1973,32 +1992,43 @@ renderScenarios();
 </script>
 
 <script>
-/* ── Стрілки скролера: ‹ зʼявляється, коли є куди гортати назад ── */
+/* ── Стрілки скролера категорій ──────────────────────────────────
+   🔴 ТУТ БУВ ДУБЛЬ. Раніше цей скрипт мав власну функцію sync(), яка
+   робила те саме, що updateCatScrollHint() вище — і вони билися за
+   один елемент. Дві логіки на одну стрілку = непередбачувана поведінка.
+
+   Тепер джерело правди ОДНЕ: updateCatScrollHint(). Тут лишається
+   тільки те, чого там немає: кнопка «‹» і підписка на події.        */
 (function(){
-  function sync(){
-    var t=document.getElementById('cat-tabs');
-    if(!t) return;
-    var hL=document.getElementById('cat-scroll-hint-l');
-    var hR=document.getElementById('cat-scroll-hint');
-    var max=t.scrollWidth-t.clientWidth;
-    if(hL) hL.classList.toggle('show', t.scrollLeft>4);
-    if(hR) hR.classList.toggle('show', t.scrollLeft<max-4 && max>4);
-  }
-  window.__scL=function(id){
-    var t=document.getElementById(id);
-    if(t) t.scrollBy({left:-140, behavior:'smooth'});
-    setTimeout(sync,320);
+  window.__scL = function(id){
+    var t = document.getElementById(id);
+    if (t) t.scrollBy({ left: -140, behavior: 'smooth' });
+    setTimeout(function(){
+      if (window.updateCatScrollHint) window.updateCatScrollHint();
+    }, 320);
   };
+
   function init(){
-    var t=document.getElementById('cat-tabs');
-    if(!t){ setTimeout(init,200); return; }
-    t.addEventListener('scroll', sync, {passive:true});
-    window.addEventListener('resize', sync);
-    /* права стрілка теж має ховатись у кінці */
-    var old=t.onscroll;
-    sync(); setTimeout(sync,400); setTimeout(sync,1200);
+    var t = document.getElementById('cat-tabs');
+    if (!t) { setTimeout(init, 200); return; }
+
+    var upd = function(){
+      if (window.updateCatScrollHint) window.updateCatScrollHint();
+    };
+    t.addEventListener('scroll', upd, { passive: true });
+    window.addEventListener('resize', upd);
+
+    /* Кілька перевірок: шрифти й емодзі вантажаться асинхронно і
+       МІНЯЮТЬ ширину табів уже після першого рендеру. Одна перевірка
+       на старті цього не зловить. */
+    upd();
+    setTimeout(upd, 300);
+    setTimeout(upd, 1000);
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(upd);
+    }
   }
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init);
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();
 })();
 </script>

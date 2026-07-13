@@ -435,7 +435,42 @@ if(!D.my_name){
 }
 
 let selectedPlan = 'basic';
-let selectedLink = D.basic_link || '';
+/* ══════════════════════════════════════════════════════════════
+   🔴 ТУТ БУЛО ЗАМКНЕНЕ КОЛО — ЛЮДИНА НЕ МОГЛА ЗАПЛАТИТИ
+
+   Було: selectedLink = D.basic_link
+   А basic_link — це ENV BASIC_LINK у Railway. Якщо вона НЕ ЗАДАНА
+   (а вона не задана), приходить ПОРОЖНІЙ РЯДОК.
+
+   Далі в pay():
+       if (selectedLink) { TG.openLink(...) }   ← не спрацьовує
+       act('paywall_buy', ...)                  ← а це шлеться ЗАВЖДИ
+
+   Результат: клік не відкриває нічого, але подія летить у бот,
+   бот відповідає — і людину викидає в чат. Бот бачить «хоче купити»
+   → знову пропонує paywall → КОЛО. Заплатити неможливо.
+
+   ТЕПЕР: бекенд генерує посилання САМ (wfp_create_payment_url) і кладе
+   їх у *_pay. ENV більше не потрібні. *_link лишені для сумісності. */
+function payLink(plan){
+  const m = {
+    basic:      [D.basic_pay,    D.basic_link],
+    premium:    [D.prem_pay,     D.prem_link],
+    basic_6m:   [D.basic_6m_pay, D.basic_6m_link],
+    premium_6m: [D.prem_6m_pay,  D.prem_6m_link],
+  }[plan] || [];
+  return (m[0] || m[1] || '').trim();
+}
+
+/* Ціна для показу. НЕ округлюємо: toFixed(0) робив із $19.77 → $20,
+   і ціна на кнопці не збігалася з ціною в чеку. */
+function money(v){
+  const f = parseFloat(v);
+  if (!isFinite(f)) return String(v ?? '');
+  return f === Math.trunc(f) ? String(Math.trunc(f)) : f.toFixed(2);
+}
+
+let selectedLink = payLink('basic');
 
 /* ── Fill hero ── */
 function fillHero(){
@@ -498,8 +533,12 @@ function fillPrices(){
   // Базові ціни (повні) — підставляємо як оригінальні для показу знижки
   // Логіка: affiliate ціна завжди менша за full price
   // Full prices (hardcoded defaults — бот передає affiliate ціну вже зниженою)
-  const FULL_BASIC = 22;
-  const FULL_PREM  = 93;
+  /* 🔴 БУЛИ ЗАШИТІ: FULL_BASIC=22, FULL_PREM=93.
+     Зміните ціну в Railway — а «економія» рахувалася б від СТАРОЇ,
+     і людина бачила б неправдивий відсоток знижки.
+     Тепер джерело правди — бот (D.full_basic / D.full_prem). */
+  const FULL_BASIC = parseFloat(D.full_basic || '22');
+  const FULL_PREM  = parseFloat(D.full_prem  || '93');
 
   if(src === 'blogger' && D.blogger_name){
     document.getElementById('discount-banner').style.display  = 'block';
@@ -513,7 +552,7 @@ function fillPrices(){
 
     // Basic row — основний продукт
     document.getElementById('discount-old-basic').textContent =
-      `$${FULL_BASIC}/міс`;
+      `$${money(FULL_BASIC)}/міс`;
     document.getElementById('discount-new-basic').textContent =
       `$${bp.toFixed(2).replace('.00','')}/міс`;
     document.getElementById('discount-save-basic').textContent =
@@ -560,25 +599,35 @@ function selectPlan(plan){
   if(isPrem){
     btn.className='cta-btn premium';
     btn.textContent=`🌟 Отримати Premium — $${D.prem_price||'93'}/міс`;
-    selectedLink = D.prem_link || '';
+    selectedLink = payLink('premium');
   } else {
     btn.className='cta-btn basic';
     btn.textContent=`⚡️ Отримати Basic — $${D.basic_price||'22'}/міс`;
-    selectedLink = D.basic_link || '';
+    selectedLink = payLink('basic');
   }
 }
 
 /* ── Pay ── */
 function pay(){
-  if(selectedLink){
-    // Якщо є посилання WayForPay — відкриваємо
-    if(TG){
-      TG.openLink(selectedLink);
-    } else {
-      window.open(selectedLink,'_blank');
+  if(!selectedLink){
+    /* 🔴 РАНІШЕ ТУТ БУЛА ТИША. Порожнє посилання → if не спрацьовував,
+       нічого не відкривалось, але act() усе одно летів у бот і викидав
+       людину в чат. Вона думала, що клікнула «не туди».
+       Тепер кажемо ПРАВДУ і не робимо вигляд, що все гаразд. */
+    const b = document.getElementById('cta-btn');
+    if (b) {
+      b.textContent = '⚠️ Оплата тимчасово недоступна';
+      b.style.opacity = '.6';
     }
+    act('paywall_pay_link_missing', {plan:selectedPlan});   /* → в логи бота */
+    return;                                                  /* НЕ шлемо buy */
   }
-  // Завжди надсилаємо подію в бот для аналітики
+
+  if(TG){
+    TG.openLink(selectedLink);
+  } else {
+    window.open(selectedLink,'_blank');
+  }
   act('paywall_buy',{plan:selectedPlan,source:D.source||'landing'});
 }
 
@@ -633,28 +682,37 @@ function update6mDisplay(plan){
   const isPrem  = plan === 'premium';
   const price6m = parseFloat(isPrem ? (D.prem_6m||'0') : (D.basic_6m||'0'));
   const monthly = parseFloat(isPrem ? (D.prem_price||'93') : (D.basic_price||'22'));
-  current6mLink = isPrem ? (D.prem_6m_link||'') : (D.basic_6m_link||'');
+  current6mLink = payLink(isPrem ? 'premium_6m' : 'basic_6m');
 
   const perMonth  = price6m / 6;
   const fullCost  = monthly * 6;
   const savedAmt  = fullCost - price6m;
   const savedPct  = Math.round(savedAmt / fullCost * 100);
 
+  /* 🔴 БУВ БАГ: toFixed(0) → $109.50 показувалось як $110.
+     Ціна на кнопці не збігалася з ціною в чеку. money() не округлює. */
   document.getElementById('6m-price-big').textContent =
-    `$${price6m.toFixed(0)}`;
+    `$${money(price6m)}`;
   document.getElementById('6m-monthly').textContent   =
     `≈ $${perMonth.toFixed(2).replace('.00','')}/міс · Ощадливіше ніж помісячно`;
   document.getElementById('6m-save-badge').textContent=
     savedPct > 0 ? `Економія ${savedPct}%` : '6 місяців';
   document.getElementById('btn-6m').textContent =
-    `🔐 ${isPrem?'Premium':'Basic'} на 6 місяців — $${price6m.toFixed(0)}`;
+    `🔐 ${isPrem?'Premium':'Basic'} на 6 місяців — $${money(price6m)}`;
 }
 
 function pay6m(){
-  if(current6mLink){
-    if(TG) TG.openLink(current6mLink);
-    else window.open(current6mLink,'_blank');
+  if(!current6mLink){
+    const b = document.getElementById('btn-6m');
+    if (b) {
+      b.textContent = '⚠️ Оплата тимчасово недоступна';
+      b.style.opacity = '.6';
+    }
+    act('paywall_pay_link_missing', {plan:current6mPlan});
+    return;
   }
+  if(TG) TG.openLink(current6mLink);
+  else window.open(current6mLink,'_blank');
   act('paywall_buy_6m',{plan:current6mPlan,source:D.source||'landing'});
 }
 
