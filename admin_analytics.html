@@ -1344,6 +1344,7 @@ function renderSummary() {
   const bl  = d.bloggers  || {};
   const rf  = d.refs      || {};
   const cost = d.ai_costs || {};
+  const chy  = d.chainy   || {};
   const bud = d.buddy     || {};
   const fun = d.funnel    || {};
 
@@ -1440,6 +1441,51 @@ function renderSummary() {
       + '«AI зʼїдає» — скільки % ціни йде постачальникам. &gt;100% = збиток.</div>'
       + '<table><tr><th>Тариф</th><th>Юзерів</th><th>Ціна</th><th>AI</th><th>Зʼїдає</th></tr>'
       + prows + '</table></div>';
+
+    /* ═══ 🤖 CHAINY: ХТО САМЕ В МІНУСІ ═══════════════════════════
+       Стоїть ТУТ не випадково. Рух згори вниз:
+         Собівартість → скільки коштує В СЕРЕДНЬОМУ
+         Маржа        → чи прибутковий ТАРИФ
+         Chainy       → ХТО КОНКРЕТНО ламає це середнє     ← ми тут
+       Одна людина може зʼїсти маржу шістнадцяти — і вона ховається
+       саме в середньому. Тому блок відповідає на питання «а хто саме?».  */
+    h += sTitle('🤖 Chainy — хто витрачає',
+      'Ліміт ' + (chy.limit_paid || '—') + '/день. Хто перетнув поріг за 7 днів.');
+
+    h += sRow([
+      sCell('Аномалій', chy.total != null ? chy.total : null, 'за 7 днів'),
+      sCell('🔴 У мінусі', chy.losers != null ? chy.losers : null,
+            'витрати > виручки',
+            chy.losers ? 'var(--red)' : null),
+      sCell('Прогноз втрат', chy.loss_month != null ? '$' + chy.loss_month : null,
+            'за місяць', chy.loss_month ? 'var(--red)' : null),
+    ], 3);
+
+    /* Таблиця видна ЗАВЖДИ — навіть порожня. Так видно, що метрика жива,
+       а не «десь загубилась». */
+    const ctop = chy.top || [];
+    let crows;
+    if (!ctop.length) {
+      crows = '<tr style="opacity:.5"><td colspan="5" style="text-align:center;padding:14px">'
+            + 'Нікого — ліміти тримають ✅</td></tr>';
+    } else {
+      crows = ctop.map(t => {
+        const col = t.loss ? 'var(--red)' : (t.month > 5 ? 'var(--amber)' : 'var(--text2)');
+        const mk  = t.loss ? '🔴' : (t.month > 5 ? '⚠️' : '·');
+        const rv  = t.revenue ? '$' + t.revenue : '—';
+        return '<tr><td>' + mk + ' <code style="font-size:10px">' + t.uid + '</code></td>'
+          + '<td style="font-size:10px">' + t.status + '</td>'
+          + '<td>' + t.max + '</td>'
+          + '<td>' + rv + '</td>'
+          + '<td style="color:' + col + ';font-weight:600">$' + t.month + '</td></tr>';
+      }).join('');
+    }
+    h += '<div class="table-block"><div class="table-title">Топ витрат</div>'
+      + '<div style="font-size:10px;color:var(--text3);margin-bottom:7px">'
+      + '🔴 — зʼїдає більше, ніж платить. «Зʼїсть» — прогноз на місяць, '
+      + 'якщо темп збережеться.</div>'
+      + '<table><tr><th>Хто</th><th>План</th><th>Макс/день</th><th>Платить</th><th>Зʼїсть</th></tr>'
+      + crows + '</table></div>';
   }
 
   /* ── ВОРОНКА ── */
@@ -1532,6 +1578,7 @@ const SKELETON = {
   money: [
     ['💵 Revenue', 'MRR + дельта · дохід за місяць · Basic/Premium · графіки по місяцях · дохід у розрізі блогерів'],
     ['💸 Собівартість AI', 'Claude (за токени) + Whisper (за хвилини аудіо) = реальна собівартість. І МАРЖА по тарифах: скільки % ціни з\'їдає AI. Premium говорить більше → коштує дорожче.'],
+    ['🤖 Chainy — хто витрачає', 'Середнє бреше: одна людина може зʼїсти маржу шістнадцяти й сховатись у ньому. Тут — поіменно. 🔴 = витрачає більше, ніж платить. Ліміт міняється в Railway (CHAINY_LIMIT_PAID). Бот САМ напише в телеграм, якщо хтось у мінусі — чекати не треба.'],
     ['🫙 Воронка підписки', 'Registered → Demo → Trial → Paid. Win-back. A/B нагадувань.'],
     ['📉 Воронка челенджу', 'Крива відвалу день 1→7. Фільтри: всі / від блогера / органіка / демо.'],
     ['⚡️ Дії в продукті', 'Де відвалюються · глибина розмов · які фічі знаходять · кореляції'],

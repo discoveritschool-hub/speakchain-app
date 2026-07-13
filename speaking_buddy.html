@@ -841,8 +841,34 @@ function renderScenarios() {
             <div style="font-size:var(--fs-xs);color:var(--text2);margin-top:2px">Будь-яка тема</div>
           </div>
         </div>
+        <!-- ── РЕЖИМ CHAINY: співрозмовник / учитель ─────────────────
+             Два протилежні промпти на бекенді. Друг НЕ виправляє (щоб
+             людина розговорилась), учитель виправляє КОЖНУ помилку.
+             Дефолт — friend: стара поведінка, нічого не ламається. -->
+        <div style="width:100%;max-width:300px;margin-top:4px">
+          <div style="font-size:var(--fs-xs);color:var(--text2);margin-bottom:8px;text-align:center;font-weight:600;letter-spacing:.3px">
+            ЯК СПІЛКУВАТИСЬ?
+          </div>
+          <div style="display:flex;gap:8px">
+            <button class="chainy-mode-btn active" id="cmode-friend"
+                    onclick="setChainyMode('friend')"
+                    style="flex:1;padding:11px 8px;border-radius:var(--r-sm);border:1px solid var(--purple);background:var(--purple-bg);color:var(--purple);font-size:var(--fs);font-weight:600;cursor:pointer;transition:all .15s;font-family:inherit">
+              💬 Співрозмовник
+            </button>
+            <button class="chainy-mode-btn" id="cmode-teacher"
+                    onclick="setChainyMode('teacher')"
+                    style="flex:1;padding:11px 8px;border-radius:var(--r-sm);border:1px solid var(--line);background:var(--bg-card);color:var(--text2);font-size:var(--fs);font-weight:600;cursor:pointer;transition:all .15s;font-family:inherit">
+              🎓 Вчитель
+            </button>
+          </div>
+          <div id="cmode-hint"
+               style="font-size:var(--fs-xs);color:var(--text2);margin-top:8px;text-align:center;line-height:1.5;min-height:32px">
+            Просто розмова. Chainy слухає й підтримує — не перебиває виправленнями.
+          </div>
+        </div>
+
         <button onclick="startChainyChat()"
-          style="margin-top:8px;padding:14px 40px;border-radius:var(--r-lg);background:linear-gradient(135deg,var(--purple),var(--purple));border:none;color:#fff;font-size:var(--fs-md);font-weight:700;cursor:pointer;letter-spacing:-.2px;box-shadow:0 4px 20px rgba(124,110,247,.4)">
+          style="margin-top:4px;padding:14px 40px;border-radius:var(--r-lg);background:linear-gradient(135deg,var(--purple),var(--purple));border:none;color:#fff;font-size:var(--fs-md);font-weight:700;cursor:pointer;letter-spacing:-.2px;box-shadow:0 4px 20px rgba(124,110,247,.4)">
           Привіт, Chainy! 👋
         </button>
       </div>`;
@@ -901,6 +927,49 @@ function selectCat(id) {
 function onScenarioSearch(val) {
   scenarioQuery = val || '';
   renderScenarios();
+}
+
+// ── РЕЖИМ CHAINY ────────────────────────────────────────────────
+// 'friend'  — співрозмовник (як було). НЕ виправляє: у промпті на бекенді
+//             прямо сказано "You are their friend, not their teacher".
+//             Мета — розговорити, зняти страх помилитись.
+// 'teacher' — учитель. Виправляє КОЖНУ помилку і показує, як правильно.
+//             Але спершу реагує по суті, і лише потім виправляє — інакше
+//             діалог перетворюється на диктант, і людина замовкає.
+//
+// Дефолт 'friend' — стара поведінка. Хто не чіпав перемикач, нічого не
+// помітить. Вибір діє на сесію: хай людина щоразу вирішує, чого хоче.
+let chainyMode = 'friend';
+
+const CHAINY_MODE_HINTS = {
+  friend:  'Просто розмова. Chainy слухає й підтримує — не перебиває виправленнями.',
+  teacher: 'Chainy виправляє кожну помилку і показує, як сказати правильно.'
+};
+
+function setChainyMode(mode) {
+  chainyMode = (mode === 'teacher') ? 'teacher' : 'friend';
+
+  const bF  = document.getElementById('cmode-friend');
+  const bT  = document.getElementById('cmode-teacher');
+  const isT = chainyMode === 'teacher';
+
+  // Стилі пишемо напряму: кнопки згенеровані інлайном разом із карткою,
+  // тому клас .active тут не спрацює.
+  if (bF) {
+    bF.style.borderColor = isT ? 'var(--line)'    : 'var(--purple)';
+    bF.style.background  = isT ? 'var(--bg-card)' : 'var(--purple-bg)';
+    bF.style.color       = isT ? 'var(--text2)'   : 'var(--purple)';
+  }
+  if (bT) {
+    bT.style.borderColor = isT ? 'var(--purple)'    : 'var(--line)';
+    bT.style.background  = isT ? 'var(--purple-bg)' : 'var(--bg-card)';
+    bT.style.color       = isT ? 'var(--purple)'    : 'var(--text2)';
+  }
+
+  const hint = document.getElementById('cmode-hint');
+  if (hint) hint.textContent = CHAINY_MODE_HINTS[chainyMode];
+
+  if (tg?.HapticFeedback) tg.HapticFeedback.selectionChanged();
 }
 
 function startChainyChat() {
@@ -1355,6 +1424,7 @@ async function sendMessage() {
         history:       history.slice(-8),
         init_data:     tg?.initData || '',
         is_chainy:     !!currentScenario.isChainy,
+        chainy_mode:   chainyMode,
         my_situation:  currentScenario.mySituation || null,
         video_practice: currentScenario.videoPractice || null,
       })

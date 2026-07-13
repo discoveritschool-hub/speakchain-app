@@ -175,7 +175,8 @@ body{font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
   </div>
   <div class="section-t">Здоров'я юніт-економіки</div>
   <div class="grid g3">
-    <div class="metric"><div class="lab">Вартість AI / користувач<span class="manual" title="Бот НЕ рахує витрати на токени. Це число вписано вручну як орієнтир. Щоб оживити — треба логувати токени в bot.py.">вписано</span></div><div class="val" data-k="aicost">$0</div><div class="delta flat">Haiku · 20 повід./день · оцінка</div></div>
+    <div class="metric"><div class="lab">Вартість AI / користувач<span class="live-dot" title="Живі дані. ai_costs.py логує токени Claude і хвилини Whisper з кожного виклику. Раніше тут стояло вписане число — але облік УЖЕ працював, просто дашборд про це не знав."></span></div><div class="val" data-k="aicost">$0</div><div class="delta flat" data-k="aicost_d">Claude + Whisper · реальна собівартість</div></div>
+    <div class="metric"><div class="lab">🔴 Хто в мінусі<span class="live-dot" title="Скільки людей витрачають на AI більше, ніж платять. Середня собівартість це ПРИХОВУЄ: одна людина може зʼїсти маржу шістнадцяти й розчинитись у середньому. Поіменно — в Аналітиці → Гроші → Chainy."></span></div><div class="val" data-k="losers">0</div><div class="delta flat" data-k="losers_d">витрати &gt; виручки</div></div>
     <div class="metric"><div class="lab">Середній ланцюжок<span class="live-dot" title="Живі дані з бота"></span></div><div class="val" data-k="chain">0</div><div class="delta flat">днів поспіль</div></div>
     <div class="metric"><div class="lab">Виплати блогерам<span class="live-dot" title="Живі дані. Сума комісій, позначених як виплачені. Синхронізується з Google Sheets (лист Payouts)."></span></div><div class="val" data-k="payout">$0</div><div class="delta flat">25% · синк з Google Sheets</div></div>
   </div>
@@ -376,6 +377,9 @@ body{font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
 </div>
 <script>
 const DATA = {
+  aicost_d: 'Claude + Whisper',
+  losers: '0',
+  losers_d: 'витрати > виручки',
   mrr:"$12,400", mrr_d:"▲ 18% за місяць",
   dau:"640", dau_d:"▲ 9% за тиждень",
   paid:"412", paid_d:"▲ 27 нових",
@@ -462,6 +466,27 @@ async function loadLive(){
        Метрика правильна: сума комісій з paid=True, синкається в Google Sheets. */
     const blg = d.bloggers;
     if(blg && blg.total_paid_out != null) DATA.payout = _fmtMoney(blg.total_paid_out);
+
+    /* ── Собівартість AI: БУЛА «вписана вручну», хоча облік УЖЕ працював.
+       ai_costs.py ловить usage з кожної відповіді Claude і хвилини Whisper.
+       Дані приходили в d.ai_costs — просто ніхто їх сюди не змапив. */
+    const aic = d.ai_costs;
+    if(aic && aic.has_data && aic.per_user != null){
+      DATA.aicost   = '$' + aic.per_user;
+      DATA.aicost_d = 'Claude $' + (aic.claude_per_user ?? '—')
+                    + ' · Whisper $' + (aic.whisper_per_user ?? '—');
+    }
+
+    /* ── Хто в мінусі: середнє БРЕШЕ.
+       Одна людина може зʼїсти маржу шістнадцяти й сховатись у середньому.
+       Тут — тільки ЧИСЛО (сигнал «є проблема»). Поіменно — в Аналітиці. */
+    const chy = d.chainy;
+    if(chy && chy.losers != null){
+      DATA.losers = String(chy.losers);
+      DATA.losers_d = chy.losers
+        ? 'зʼїдять ~$' + (chy.loss_month || 0) + '/міс → Аналітика'
+        : 'усі прибуткові ✅';
+    }
 
     // ── Жива воронка (registered → demo → trial → paid) ──
     const fn = d.funnel || {};
