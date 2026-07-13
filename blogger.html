@@ -248,6 +248,22 @@ body {
 .day-chip.filled { background: rgba(90,216,166,.16); color: var(--green); border-color: rgba(90,216,166,.3); }
 .day-title { font-size: var(--fs); font-weight: var(--fw-md); flex:1; min-width:0; }
 .day-note  { font-size: var(--fs-xs); color: var(--text2); margin-top:2px; }
+.day-topic { font-size: var(--fs-xs); color: var(--text2); margin-top:1px; }
+.code-warn {
+  margin: 0 0 14px; padding: 10px 12px;
+  font-size: var(--fs-xs); line-height: 1.5; color: var(--text2);
+  background: rgba(124,110,247,.07);
+  border: .5px solid rgba(124,110,247,.20);
+  border-radius: 8px;
+}
+.code-warn b { color: var(--text); display:block; margin-bottom:4px; }
+.code-warn i { color: var(--purple); font-style: normal; }
+.day-code  {
+  display:inline-block; margin-top:4px; padding:1px 7px;
+  font-size: var(--fs-xs); font-weight: var(--fw-md);
+  color: var(--purple); background: rgba(124,110,247,.10);
+  border:.5px solid rgba(124,110,247,.22); border-radius: 5px;
+}
 .day-note.ok { color: var(--green); }
 
 /* ══════════ ФОРМИ ══════════ */
@@ -644,6 +660,17 @@ textarea.form-input { resize:vertical; min-height:76px; line-height:1.5; }
 
   <div class="section fold" id="sec-videos">
     <div class="section-title fold-h" onclick="toggleFold(this)">Відео на 7 днів челенджу<span class="fold-arr">›</span></div><div class="fold-b">
+
+    <div class="code-warn">
+      <b>🔑 Кодове слово — вплітайте в СЕРЕДИНУ відео</b>
+      Не в кінець. У різному місці щодня — на початку, в середині, наприкінці.
+      Так людина не перемотає й додивиться все.
+      <br><br>
+      На Дні 1 попередьте: <i>«слово може прозвучати будь-де, я не попереджатиму»</i>.
+      <br>
+      Фраза: <b>From now on I can speak English</b> — 7 слів за 6 днів. На Дні 6 їх ДВА.
+    </div>
+
     <div id="challenge-videos-list"></div>
     <div class="status-line" id="challenge-videos-status">0/7 посилань додано</div>
   </div></div>
@@ -956,16 +983,24 @@ function initials(name) {
   return name.split(/\s+/).map(w => w[0]).join('').toUpperCase().slice(0, 2);
 }
 
-/* ── Відео челенджу (7 днів) ── */
-const CHALLENGE_DAY_TITLES = [
-  'Це не твоя провина',
-  'Ворог — це страх',
-  'Перестань перекладати',
-  'Складні звуки',
-  'Говори живо — покажи себе',
-  'Твоє дзеркало',
-  'Підсумкове слово (фінал)',
+/* ── Відео челенджу (7 днів) ── V7
+   Два шари в кожному дні:
+     problem — яку з 5 причин знімаємо (конструкція тижня)
+     topic   — що людина говорить цього дня (смол-ток по частинах)
+   Блогер має бачити обидва: інакше не зрозуміє, навіщо цей день. */
+const CHALLENGE_DAYS = [
+  { problem: 'Це не Ваша провина',       topic: 'Скоромовки' },
+  { problem: 'Немає живої практики',     topic: 'Про себе — ім\'я, де живу, чим займаюсь' },
+  { problem: 'Немає інтересу',           topic: 'Погода' },
+  { problem: 'Граматика не системна',    topic: 'Хобі + TH + замір + карта' },
+  { problem: 'Не вплетена в життя',      topic: 'Їжа й напої + Chainy + метч' },
+  { problem: 'Немає віри в себе',        topic: 'Фінальне відео + фраза вголос' },
+  { problem: 'Підсумкове слово',         topic: '—' },
 ];
+
+/* Кодові слова: 7 слів за 6 днів. Д6 дає ДВА.
+   ⚠️ Слово вплітається В СЕРЕДИНУ відео, не в кінець — щоб не перемотували. */
+const CODE_WORDS = ['From', 'now', 'on', 'I', 'can', 'speak English', '—'];
 
 function esc(s) {
   return String(s || '').replace(/[&<>"']/g, c =>
@@ -985,7 +1020,12 @@ function renderChallengeVideos() {
       <div class="day-row">
         <div class="day-head">
           <div class="day-chip ${url ? 'filled' : ''}">${url ? '✓' : day}</div>
-          <div class="day-title">День ${day}. ${CHALLENGE_DAY_TITLES[day-1]}</div>
+          <div style="flex:1;min-width:0">
+            <div class="day-title">День ${day}. ${CHALLENGE_DAYS[day-1].problem}</div>
+            <div class="day-topic">${CHALLENGE_DAYS[day-1].topic}</div>
+            ${CODE_WORDS[day-1] !== '—'
+              ? `<div class="day-code">🔑 ${CODE_WORDS[day-1]}</div>` : ''}
+          </div>
         </div>
         <div class="inline-form">
           <input class="form-input" id="cv-input-${day}" value="${esc(url)}" placeholder="https://youtu.be/…">
