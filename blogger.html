@@ -1,546 +1,845 @@
 <!DOCTYPE html>
-<html>
+<html lang="uk">
 <head>
-  <!-- ── Дизайн-токени: два шари ──────────────────────────────────
-       1) inline :root нижче — фундамент. Сторінка НІКОЛИ не побіліє,
-          навіть якщо tokens.css не завантажиться.
-       2) <link> після нього — головний. Перекриває inline і дає
-          класи .sc-card/.sc-btn/.sc-chip. Палітра керується з
-          одного файлу: правиш tokens.css → міняється всюди.
-       ВАЖЛИВО: шлях БЕЗ початкового слеша. Слеш = корінь домену,
-       а сайт живе в підпапці /speakchain-app/ → 404.
-  ─────────────────────────────────────────────────────────────── -->
-  <style>
-  :root {
-    --purple:#7c6ef7; --purple-dark:#5b4bc4; --purple-bg:#241d4d; --purple-text:#c9c2ff;
-    --green:#5ad8a6; --green-bg:#1b3229;
-    --red:#f76e6e; --orange:#f7a35c; --gold:#f5c842; --silver:#b0b0c0;
-    --bronze:#cd7f32; --yellow:#f7c95c; --blue:#5ab4f7; --telegram:#2ea6da;
-    --bg:#0d0d14; --bg-card:#16161f; --bg-card2:#1e1e2a; --bg-card3:#252535;
-    --text:#eaeaf5; --text2:#8888a8; --text3:#5a5a72;
-    --line:#2a2a3a;
-    --r-sm:8px; --r:12px; --r-lg:20px; --r-pill:999px;
-    --fs-xs:11px; --fs-sm:12px; --fs:14px; --fs-md:16px; --fs-lg:20px; --fs-xl:28px;
-    --fw:400; --fw-md:600; --fw-bold:800;
-    --sp-xs:4px; --sp-sm:8px; --sp:12px; --sp-md:16px; --sp-lg:24px;
-    --glow-purple:0 0 0 4px var(--purple-bg);
-    --shadow-sheet:0 -8px 32px rgba(0,0,0,.5);
-    --grad-purple:linear-gradient(135deg,#7c6ef7,#5b4bc4);
-    --grad-progress:linear-gradient(90deg,var(--green),var(--purple));
-    --grad-gold:linear-gradient(135deg,#f5c451,#e0a020);
-    --dur-fast:.12s; --dur:.15s; --ease:cubic-bezier(.4,0,.2,1);
-  }
-  </style>
-  <link rel="stylesheet" href="tokens.css">
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-  <title>SpeakChain — Blogger Dashboard</title>
+  <title>SpeakChain — Панель блогера</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
-    * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-    body {
-      background:var(--bg); min-height:100vh;
-      font-family:-apple-system,BlinkMacSystemFont,sans-serif;
-      color:var(--text);
-      padding-bottom:max(env(safe-area-inset-bottom),20px);
-    }
+/* ═══════════════════════════════════════════════════════════════
+   ДИЗАЙН-ТОКЕНИ — вшиті в файл.
+   Раніше вони тягнулись з /static/tokens.css. Коли той файл не
+   віддавався, усі var(--…) ставали порожні → білий фон, Times New
+   Roman. Тепер панель носить дизайн із собою і не може «зблідніти».
+   Значення один-в-один з index_v2.html.
+   ═══════════════════════════════════════════════════════════════ */
+:root {
+  /* Бренд */
+  --purple:      #7c6ef7;
+  --purple-dark: #5b4bc4;
+  --purple-bg:   #241d4d;
+  --purple-text: #c9c2ff;
+  --green:       #5ad8a6;
+  --green-bg:    #1b3229;
 
-    /* ── Header ── */
-    .header {
-      background:linear-gradient(135deg,var(--purple-bg),var(--bg-card));
-      padding:20px 16px 16px;
-      border-bottom:0.5px solid var(--line);
-      position:relative; overflow:hidden;
-    }
-    .header::before {
-      content:''; position:absolute; top:-40px; right:-40px;
-      width:140px; height:140px; border-radius:50%;
-      background:radial-gradient(circle,rgba(124,110,247,.18) 0%,transparent 70%);
-    }
-    .header-top { display:flex; align-items:center; gap:12px; margin-bottom:14px; }
-    .avatar {
-      width:48px; height:48px; border-radius:50%;
-      background:linear-gradient(135deg,var(--purple),var(--purple));
-      display:flex; align-items:center; justify-content:center;
-      font-size:var(--fs-lg); font-weight:700; color:#fff; flex-shrink:0;
-    }
-    .header-name { font-size:17px; font-weight:700; color:var(--text); }
-    .header-sub  { font-size:var(--fs-sm); color:var(--text2); margin-top:2px; }
-    .badge {
-      padding:3px 10px; border-radius:var(--r-lg); font-size:var(--fs-xs); font-weight:700;
-      background:rgba(124,110,247,.2); color:var(--purple); border:1px solid rgba(124,110,247,.3);
-      margin-left:auto; white-space:nowrap;
-    }
+  /* Статуси */
+  --red:    #f76e6e;
+  --orange: #f7a35c;
+  --gold:   #f5c842;
+  --silver: #b0b0c0;
+  --bronze: #cd7f32;
+  --yellow: #f7c95c;
+  --blue:   #5ab4f7;
 
-    /* ── Stat cards row ── */
-    .stats-row {
-      display:grid; grid-template-columns:repeat(4,1fr); gap:8px;
-    }
-    .stat-card {
-      background:var(--bg-card2); border-radius:var(--r); padding:10px 8px;
-      text-align:center; border:0.5px solid var(--line);
-    }
-    .stat-val  { font-size:var(--fs-lg); font-weight:700; line-height:1; }
-    .stat-label{ font-size:var(--fs-xs); color:var(--text2); margin-top:4px; font-weight:600; text-transform:uppercase; letter-spacing:.04em; }
-    .stat-card.purple .stat-val { color:var(--purple); }
-    .stat-card.green  .stat-val { color:var(--green); }
-    .stat-card.orange .stat-val { color:var(--orange); }
-    .stat-card.gold   .stat-val { color:var(--gold); }
+  /* Поверхні */
+  --bg:       #0d0d14;
+  --bg-card:  #16161f;
+  --bg-card2: #1e1e2a;
+  --bg-card3: #252535;
 
-    /* ── Revenue banner ── */
-    .revenue-banner {
-      background:linear-gradient(135deg,rgba(124,110,247,.15),rgba(90,216,166,.08));
-      border:1px solid rgba(124,110,247,.25); border-radius:var(--r);
-      padding:14px 16px; display:flex; align-items:center; justify-content:space-between;
-    }
-    .revenue-left  { display:flex; flex-direction:column; gap:2px; }
-    .revenue-label { font-size:var(--fs-xs); color:var(--text2); font-weight:600; }
-    .revenue-val   { font-size:var(--fs-xl); font-weight:700; color:var(--green); line-height:1; }
-    .revenue-sub   { font-size:var(--fs-xs); color:var(--text2); }
-    .revenue-icon  { font-size:40px; opacity:.3; }
+  /* Текст */
+  --text:  #eaeaf5;
+  --text2: #8888a8;
+  --text3: #5a5a72;
 
-    /* ── Plan breakdown ── */
-    .plan-row { display:flex; gap:8px; }
-    .plan-pill {
-      flex:1; padding:8px 10px; border-radius:var(--r);
-      display:flex; align-items:center; gap:6px;
-    }
-    .plan-pill.basic   { background:rgba(247,163,92,.12); border:1px solid rgba(247,163,92,.25); }
-    .plan-pill.premium { background:rgba(245,200,66,.12); border:1px solid rgba(245,200,66,.25); }
-    .plan-pill-val     { font-size:var(--fs-md); font-weight:700; }
-    .plan-pill.basic   .plan-pill-val { color:var(--orange); }
-    .plan-pill.premium .plan-pill-val { color:var(--gold); }
-    .plan-pill-info    { display:flex; flex-direction:column; }
-    .plan-pill-name    { font-size:var(--fs-xs); font-weight:700; color:var(--text); }
-    .plan-pill-sub     { font-size:var(--fs-xs); color:var(--text2); }
+  /* Лінії */
+  --line: #2a2a3a;
 
-    /* ── Progress bar ── */
-    .prem-bar-wrap { display:flex; flex-direction:column; gap:4px; }
-    .prem-bar-track {
-      height:6px; background:rgba(255,255,255,.07); border-radius:var(--r-sm); overflow:hidden;
-    }
-    .prem-bar-fill {
-      height:100%; border-radius:var(--r-sm);
-      background:linear-gradient(90deg,var(--orange),var(--gold));
-      transition:width .8s cubic-bezier(.4,0,.2,1);
-    }
-    .prem-bar-labels { display:flex; justify-content:space-between; }
-    .prem-bar-label  { font-size:var(--fs-xs); color:var(--text2); font-weight:600; }
+  /* Радіуси */
+  --r-sm:   8px;
+  --r:      12px;
+  --r-lg:   20px;
+  --r-pill: 999px;
 
-    /* ── Section ── */
-    .section { padding:16px; }
-    .section-title {
-      font-size:var(--fs-xs); font-weight:700; color:var(--text2);
-      text-transform:uppercase; letter-spacing:.08em; margin-bottom:10px;
-    }
+  /* Шрифти */
+  --fs-xs: 11px;
+  --fs-sm: 12px;
+  --fs:    14px;
+  --fs-md: 16px;
+  --fs-lg: 20px;
+  --fs-xl: 28px;
+  --fw:      400;
+  --fw-md:   600;
+  --fw-bold: 800;
 
-    /* ── Student list ── */
-    .student-card {
-      background:var(--bg-card2); border-radius:var(--r); padding:10px 12px;
-      display:flex; align-items:center; gap:10px; margin-bottom:7px;
-      border:0.5px solid var(--line);
-    }
-    .student-avatar {
-      width:36px; height:36px; border-radius:50%; flex-shrink:0;
-      display:flex; align-items:center; justify-content:center;
-      font-size:var(--fs); font-weight:700;
-    }
-    .student-avatar.basic   { background:rgba(247,163,92,.2); color:var(--orange); }
-    .student-avatar.premium { background:rgba(245,200,66,.2); color:var(--gold); }
-    .student-info { flex:1; min-width:0; }
-    .student-name { font-size:var(--fs); font-weight:600; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    .student-meta { font-size:var(--fs-xs); color:var(--text2); margin-top:2px; }
-    .student-right { display:flex; flex-direction:column; align-items:flex-end; gap:3px; }
-    .student-streak { font-size:var(--fs-xs); font-weight:700; color:var(--orange); }
-    .student-lessons{ font-size:var(--fs-xs); color:var(--text2); }
-    .level-badge {
-      padding:2px 7px; border-radius:var(--r-sm); font-size:var(--fs-xs); font-weight:700;
-      background:rgba(124,110,247,.2); color:var(--purple);
-    }
+  /* Відступи */
+  --sp-xs: 4px;
+  --sp-sm: 8px;
+  --sp:    12px;
+  --sp-md: 16px;
+  --sp-lg: 24px;
 
-    /* ── Action buttons ── */
-    .actions { display:flex; flex-direction:column; gap:8px; }
-    .action-btn {
-      width:100%; padding:13px 16px; border-radius:13px; border:none;
-      display:flex; align-items:center; gap:10px; cursor:pointer;
-      font-size:var(--fs); font-weight:600; text-align:left;
-    }
-    .action-btn .icon { font-size:var(--fs-md); width:24px; text-align:center; }
-    .action-btn .label { flex:1; }
-    .action-btn .arr { color:var(--text2); font-size:var(--fs-md); }
-    .action-btn.purple { background:linear-gradient(135deg,rgba(124,110,247,.2),rgba(124,110,247,.1)); color:var(--text); border:1px solid rgba(124,110,247,.25); }
-    .action-btn.green  { background:rgba(90,216,166,.1); color:var(--text); border:1px solid rgba(90,216,166,.2); }
-    .action-btn.orange { background:rgba(247,163,92,.1); color:var(--text); border:1px solid rgba(247,163,92,.2); }
-    .action-btn.red    { background:rgba(247,110,110,.1); color:var(--text); border:1px solid rgba(247,110,110,.2); }
-    .action-btn.neutral{ background:var(--bg-card2); color:var(--text); border:1px solid var(--line); }
+  /* Градієнти */
+  --grad-purple: linear-gradient(135deg, #7c6ef7, #5b4bc4);
+  --grad-gold:   linear-gradient(135deg, #f5c451, #e0a020);
 
-    /* ── Divider ── */
-    .divider { height:0.5px; background:var(--line); margin:0; }
-    .spacer  { height:12px; }
+  /* Анімація */
+  --dur:  .15s;
+  --ease: cubic-bezier(.4, 0, .2, 1);
+}
 
-    /* ── Tabs ── */
-    .tabs {
-      display:flex; gap:4px; padding:10px 16px 0;
-      position:sticky; top:0; z-index:10;
-      background:var(--bg); border-bottom:0.5px solid var(--line);
-    }
-    .tab {
-      flex:1; padding:10px 6px; text-align:center; cursor:pointer;
-      font-size:var(--fs-sm); font-weight:700; color:var(--text2);
-      border-bottom:2px solid transparent; transition:all .15s;
-      white-space:nowrap;
-    }
-    .tab.active { color:var(--purple); border-bottom-color:var(--purple); }
-    .tab-panel { display:none; }
-    .tab-panel.active { display:block; animation:fadeIn .2s; }
-    @keyframes fadeIn { from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:none} }
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
 
-    /* ── Forms ── */
-    .form-card {
-      background:var(--bg-card2); border-radius:var(--r); padding:16px;
-      border:0.5px solid var(--line); margin-bottom:12px;
-    }
-    .form-title { font-size:var(--fs); font-weight:700; margin-bottom:4px; }
-    .form-hint  { font-size:var(--fs-xs); color:var(--text2); margin-bottom:12px; line-height:1.4; }
-    .form-input, .form-textarea {
-      width:100%; background:var(--bg); border:1px solid var(--line);
-      border-radius:var(--r); padding:12px; color:var(--text); font-size:var(--fs);
-      font-family:inherit; resize:none; margin-bottom:12px;
-    }
-    .form-input:focus, .form-textarea:focus { outline:none; border-color:var(--purple); }
-    .form-textarea { min-height:80px; }
-    .form-btn {
-      width:100%; padding:13px; border:none; border-radius:var(--r);
-      font-size:var(--fs); font-weight:700; color:#fff; cursor:pointer;
-      background:linear-gradient(135deg,var(--purple),var(--purple));
-    }
-    .form-btn:active { opacity:.85; }
-    .form-btn.green { background:linear-gradient(135deg,var(--green),var(--green)); color:var(--green-bg); }
-    .form-btn:disabled { opacity:.4; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+  font-size: var(--fs);
+  min-height: 100vh;
+  padding-bottom: max(env(safe-area-inset-bottom), 24px);
+  overflow-x: hidden;
+}
 
-    /* ── Financial journal ── */
-    .fin-hero {
-      background:linear-gradient(135deg,rgba(90,216,166,.15),rgba(124,110,247,.08));
-      border:1px solid rgba(90,216,166,.25);
-      border-radius:var(--r); padding:20px 18px; margin-bottom:12px; text-align:center;
-    }
-    .fin-hero-label { font-size:var(--fs-sm); color:var(--text2); font-weight:600; margin-bottom:6px; }
-    .fin-hero-val { font-size:38px; font-weight:800; color:var(--green); line-height:1; letter-spacing:-.02em; }
-    .fin-hero-next { font-size:var(--fs-sm); color:var(--text2); margin-top:8px; }
-    .fin-hero-next span { color:var(--text); font-weight:600; }
+/* ══════════ ШАПКА ══════════ */
+.header {
+  padding: 18px 16px 14px;
+  background: var(--bg-card);
+  border-bottom: .5px solid var(--line);
+  position: relative;
+  overflow: hidden;
+}
+.header::before {
+  content:''; position:absolute; top:-50px; right:-50px;
+  width:160px; height:160px; border-radius:50%;
+  background: radial-gradient(circle, rgba(124,110,247,.16) 0%, transparent 70%);
+  pointer-events: none;
+}
+.header-top { display:flex; align-items:center; gap:12px; position:relative; }
+.avatar {
+  width:46px; height:46px; border-radius:50%;
+  background: var(--grad-purple);
+  display:flex; align-items:center; justify-content:center;
+  font-size: var(--fs-md); font-weight: var(--fw-bold);
+  color:#fff; flex-shrink:0;
+  box-shadow: 0 4px 16px rgba(124,110,247,.35);
+}
+.header-name  { font-size:17px; font-weight: var(--fw-bold); letter-spacing:-.3px; }
+.header-sub   { font-size: var(--fs-sm); color: var(--text2); margin-top:2px; }
+.badge {
+  margin-left:auto; flex-shrink:0;
+  padding:4px 11px; border-radius: var(--r-pill);
+  font-size: var(--fs-xs); font-weight: var(--fw-bold);
+  background: rgba(124,110,247,.18); color: var(--purple);
+  border: .5px solid rgba(124,110,247,.32);
+  white-space: nowrap;
+}
 
-    .fin-secondary {
-      display:flex; gap:10px; margin-bottom:14px;
-      background:var(--bg-card2); border-radius:var(--r); padding:12px 14px;
-      border:0.5px solid var(--line);
-    }
-    .fin-sec-item { flex:1; display:flex; flex-direction:column; gap:3px; }
-    .fin-sec-item + .fin-sec-item { border-left:1px solid var(--line); padding-left:12px; }
-    .fin-sec-label { font-size:var(--fs-xs); color:var(--text2); }
-    .fin-sec-val { font-size:17px; font-weight:700; }
-    .fin-sec-val.green { color:var(--green); }
+/* ══════════ ВКЛАДКИ ══════════ */
+.tabs-wrap { position: sticky; top:0; z-index:30; background: var(--bg); }
+.tabs {
+  display:flex; background: var(--bg);
+  border-bottom: .5px solid var(--line);
+}
+.tab {
+  flex:1; padding:12px 4px 10px; text-align:center; cursor:pointer;
+  font-size: var(--fs-xs); font-weight: var(--fw-md);
+  color: var(--text2); letter-spacing:.02em;
+  border-bottom: 2px solid transparent;
+  transition: color var(--dur), border-color var(--dur);
+}
+.tab.active { color: var(--purple); border-bottom-color: var(--purple); }
+.tab-emoji { display:block; font-size: var(--fs-md); margin-bottom:2px; line-height:1; }
 
-    .fin-rate-note {
-      font-size:var(--fs-xs); color:var(--text2); text-align:center;
-      padding:8px; margin-bottom:14px;
-      background:var(--bg-card2); border-radius:var(--r-sm); border:0.5px solid var(--line);
-    }
-    .fin-split { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px; }
-    .fin-split-card {
-      background:var(--bg-card2); border-radius:var(--r); padding:14px;
-      border:0.5px solid var(--line);
-    }
-    .fin-split-top { display:flex; align-items:center; gap:6px; margin-bottom:8px; }
-    .fin-split-icon { font-size:var(--fs); }
-    .fin-split-name { font-size:var(--fs-sm); font-weight:600; color:var(--text2); }
-    .fin-split-comm { font-size:var(--fs-lg); font-weight:700; color:var(--green); line-height:1; }
-    .fin-split-breakdown {
-      display:flex; gap:12px; margin-top:8px; font-size:var(--fs-xs); color:var(--text2);
-    }
-    .fin-split-breakdown b { color:var(--text); font-weight:700; }
-    .fin-split-sub  { font-size:var(--fs-xs); color:var(--text2); margin-top:4px; }
+.panel { display:none; animation: fadeIn .2s var(--ease); }
+.panel.active { display:block; }
+@keyframes fadeIn { from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:none;} }
 
-    .fin-status {
-      display:flex; gap:10px; margin-bottom:16px;
-      background:var(--bg-card2); border-radius:var(--r); padding:12px 14px;
-      border:0.5px solid var(--line);
-    }
-    .fin-status-item { flex:1; display:flex; flex-direction:column; gap:3px; }
-    .fin-status-item + .fin-status-item { border-left:1px solid var(--line); padding-left:12px; }
-    .fin-status-label { font-size:var(--fs-xs); color:var(--text2); }
-    .fin-status-val { font-size:var(--fs-md); font-weight:700; }
-    .fin-status-val.green { color:var(--green); }
-    .fin-status-val.gold  { color:var(--gold); }
+/* ══════════ СЕКЦІЇ ══════════ */
+.section { padding: 14px 16px; }
+.section + .section { padding-top: 0; }
+.section-title {
+  font-size: var(--fs-xs); font-weight: var(--fw-bold);
+  color: var(--text2); text-transform: uppercase;
+  letter-spacing:.08em; margin-bottom:10px;
+}
+.divider { height:.5px; background: var(--line); margin: 4px 16px; }
 
-    .fin-journal-title { font-size:var(--fs-sm); font-weight:600; color:var(--text2); margin-bottom:8px; }
-    .journal-row {
-      display:flex; align-items:center; gap:10px; padding:10px 0;
-      border-bottom:0.5px solid var(--line);
-    }
-    .journal-row:last-child { border-bottom:none; }
-    .journal-plan {
-      font-size:var(--fs-xs); font-weight:700; padding:3px 7px; border-radius:var(--r-sm);
-      white-space:nowrap; text-transform:uppercase; letter-spacing:.03em;
-    }
-    .journal-plan.m { background:rgba(124,110,247,.15); color:var(--purple); }
-    .journal-plan.h { background:rgba(245,200,66,.15); color:var(--gold); }
-    .journal-info { flex:1; min-width:0; }
-    .journal-name { font-size:var(--fs); font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    .journal-month { font-size:var(--fs-xs); color:var(--text2); }
-    .journal-comm { font-size:var(--fs); font-weight:700; color:var(--green); text-align:right; }
-    .journal-status { font-size:var(--fs-xs); text-align:right; margin-top:2px; }
-    .journal-status.paid { color:var(--green); }
-    .journal-status.wait { color:var(--gold); }
-  </style>
+/* ══════════ КАРТКИ-ЦИФРИ ══════════ */
+.stats-grid { display:grid; grid-template-columns: repeat(4, 1fr); gap:7px; }
+.stat-card {
+  background: var(--bg-card2); border: .5px solid var(--line);
+  border-radius: var(--r); padding: 12px 6px; text-align:center;
+}
+.stat-val   { font-size: var(--fs-lg); font-weight: var(--fw-bold); line-height:1.1; }
+.stat-label { font-size: var(--fs-xs); color: var(--text2); margin-top:3px; font-weight: var(--fw-md); }
+.stat-card.purple .stat-val { color: var(--purple); }
+.stat-card.green  .stat-val { color: var(--green);  }
+.stat-card.blue   .stat-val { color: var(--blue);   }
+.stat-card.gold   .stat-val { color: var(--gold);   }
+
+/* ══════════ БАНЕР ДОХОДУ ══════════ */
+.revenue-banner {
+  background: linear-gradient(135deg, rgba(90,216,166,.13), rgba(245,200,66,.07));
+  border: .5px solid rgba(90,216,166,.28);
+  border-radius: var(--r); padding: 16px;
+  display:flex; align-items:center; gap:12px;
+  position:relative; overflow:hidden;
+}
+.revenue-banner::before {
+  content:''; position:absolute; top:-24px; right:-24px;
+  width:96px; height:96px; border-radius:50%;
+  background: radial-gradient(circle, rgba(90,216,166,.16) 0%, transparent 70%);
+}
+.revenue-left  { flex:1; min-width:0; position:relative; }
+.revenue-label { font-size: var(--fs-xs); color: var(--text2); font-weight: var(--fw-md); text-transform:uppercase; letter-spacing:.06em; }
+.revenue-val   { display:block; font-size: var(--fs-xl); font-weight: var(--fw-bold); color: var(--green); line-height:1.1; margin:3px 0; letter-spacing:-.5px; }
+.revenue-sub   { font-size: var(--fs-xs); color: var(--text2); }
+.revenue-icon  { font-size:34px; flex-shrink:0; position:relative; }
+
+/* ══════════ СМУЖКА ПЛАНІВ ══════════ */
+.plan-split { background: var(--bg-card2); border:.5px solid var(--line); border-radius: var(--r); padding:14px; }
+.plan-row { display:flex; justify-content:space-between; font-size: var(--fs-sm); margin-bottom:8px; }
+.plan-row b { font-weight: var(--fw-bold); }
+.plan-track { height:7px; background: var(--bg-card3); border-radius: var(--r-sm); overflow:hidden; display:flex; }
+.plan-fill  { height:100%; background: var(--grad-gold); border-radius: var(--r-sm) 0 0 var(--r-sm); transition: width .7s var(--ease); }
+.plan-hint  { font-size: var(--fs-xs); color: var(--text2); margin-top:7px; text-align:right; }
+
+/* ══════════ ТОП-УЧНІ ══════════ */
+.student-row {
+  display:flex; align-items:center; gap:10px;
+  padding:10px 0; border-bottom:.5px solid var(--line);
+}
+.student-row:last-child { border-bottom:none; }
+.student-rank {
+  width:26px; text-align:center; flex-shrink:0;
+  font-size: var(--fs); font-weight: var(--fw-bold); color: var(--text2);
+}
+.student-rank.g1 { color: var(--gold); }
+.student-rank.g2 { color: var(--silver); }
+.student-rank.g3 { color: var(--bronze); }
+.student-av {
+  width:34px; height:34px; border-radius:50%; flex-shrink:0;
+  background: var(--bg-card3); color: var(--purple);
+  display:flex; align-items:center; justify-content:center;
+  font-size: var(--fs-sm); font-weight: var(--fw-bold);
+}
+.student-av.prem { background: rgba(245,200,66,.16); color: var(--gold); }
+.student-info { flex:1; min-width:0; }
+.student-name { font-size: var(--fs); font-weight: var(--fw-md); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.student-meta { font-size: var(--fs-xs); color: var(--text2); margin-top:2px; }
+.student-num  { font-size: var(--fs); font-weight: var(--fw-bold); color: var(--purple); text-align:right; flex-shrink:0; }
+.student-num span { display:block; font-size: var(--fs-xs); color: var(--text2); font-weight: var(--fw); }
+
+/* ══════════ ПРОГРЕС НАПОВНЕННЯ ══════════ */
+.fill-progress {
+  display:flex; align-items:center; gap:10px;
+  background: var(--bg-card2); border:.5px solid var(--line);
+  border-radius: var(--r); padding:12px 14px; margin-bottom:10px;
+}
+.fill-progress.done { border-color: rgba(90,216,166,.3); background: rgba(90,216,166,.06); }
+.fill-icon { font-size: var(--fs-lg); flex-shrink:0; }
+.fill-body { flex:1; min-width:0; }
+.fill-title { font-size: var(--fs); font-weight: var(--fw-md); }
+.fill-sub   { font-size: var(--fs-xs); color: var(--text2); margin-top:2px; }
+.fill-count { font-size: var(--fs); font-weight: var(--fw-bold); color: var(--text2); flex-shrink:0; }
+.fill-count.done { color: var(--green); }
+
+/* ══════════ РЯДКИ ЗАПОВНЕННЯ (дні / фрази) ══════════ */
+.day-row { padding:10px 0; border-bottom:.5px solid var(--line); }
+.day-row:last-child { border-bottom:none; }
+.day-head { display:flex; align-items:center; gap:9px; margin-bottom:7px; }
+.day-chip {
+  width:28px; height:28px; border-radius: var(--r-sm); flex-shrink:0;
+  display:flex; align-items:center; justify-content:center;
+  font-size: var(--fs-sm); font-weight: var(--fw-bold);
+  background: var(--bg-card2); color: var(--text2);
+  border: .5px solid var(--line);
+}
+.day-chip.filled { background: rgba(90,216,166,.16); color: var(--green); border-color: rgba(90,216,166,.3); }
+.day-title { font-size: var(--fs); font-weight: var(--fw-md); flex:1; min-width:0; }
+.day-note  { font-size: var(--fs-xs); color: var(--text2); margin-top:2px; }
+.day-note.ok { color: var(--green); }
+
+/* ══════════ ФОРМИ ══════════ */
+.form-input {
+  width:100%; background: var(--bg-card2);
+  border: .5px solid var(--line); border-radius: var(--r-sm);
+  padding: 11px 13px; font-size: var(--fs);
+  color: var(--text); font-family: inherit; outline:none;
+  transition: border-color var(--dur);
+}
+.form-input:focus { border-color: var(--purple); }
+.form-input::placeholder { color: var(--text3); }
+textarea.form-input { resize:vertical; min-height:76px; line-height:1.5; }
+
+.btn {
+  border:none; border-radius: var(--r-sm); cursor:pointer;
+  font-family: inherit; font-weight: var(--fw-md);
+  transition: transform .1s var(--ease), opacity var(--dur);
+}
+.btn:active { transform: scale(.97); }
+.btn-sm   { padding:9px 14px; font-size: var(--fs-sm); flex-shrink:0; }
+.btn-full { width:100%; padding:14px; font-size: var(--fs); border-radius: var(--r); font-weight: var(--fw-bold); }
+.btn-purple { background: var(--purple); color:#fff; }
+.btn-green  { background: rgba(90,216,166,.14); color: var(--green); border:.5px solid rgba(90,216,166,.3); }
+.btn-ghost  { background: var(--bg-card2); color: var(--purple); border:.5px solid rgba(124,110,247,.35); }
+.inline-form { display:flex; gap:7px; }
+.inline-form .form-input { flex:1; min-width:0; font-size: var(--fs-sm); padding:9px 11px; }
+
+.status-line { font-size: var(--fs-xs); color: var(--text2); margin-top:8px; font-weight: var(--fw-md); }
+.status-line.ok { color: var(--green); }
+
+/* ══════════ КНОПКИ-ДІЇ ══════════ */
+.action-list { display:flex; flex-direction:column; gap:7px; }
+.action-btn {
+  width:100%; display:flex; align-items:center; gap:11px;
+  background: var(--bg-card2); border: .5px solid var(--line);
+  border-radius: var(--r); padding: 13px 14px;
+  cursor:pointer; text-align:left; font-family:inherit;
+  transition: background var(--dur), transform .1s var(--ease);
+}
+.action-btn:active { transform: scale(.98); background: var(--bg-card3); }
+.action-btn .icon  { font-size: var(--fs-lg); flex-shrink:0; width:24px; text-align:center; }
+.action-btn .body  { flex:1; min-width:0; }
+.action-btn .label { font-size: var(--fs); font-weight: var(--fw-md); color: var(--text); }
+.action-btn .desc  { font-size: var(--fs-xs); color: var(--text2); margin-top:2px; }
+.action-btn .arr   { font-size: var(--fs-md); color: var(--text3); flex-shrink:0; }
+.action-btn.accent { border-color: rgba(124,110,247,.3); background: rgba(124,110,247,.07); }
+.action-btn.accent .label { color: var(--purple); }
+
+/* ══════════ ФІНАНСИ ══════════ */
+.fin-grid { display:grid; grid-template-columns: repeat(3,1fr); gap:7px; margin-bottom:10px; }
+.fin-card { background: var(--bg-card2); border:.5px solid var(--line); border-radius: var(--r); padding:12px 8px; text-align:center; }
+.fin-val   { font-size: var(--fs-md); font-weight: var(--fw-bold); }
+.fin-label { font-size: var(--fs-xs); color: var(--text2); margin-top:3px; }
+.fin-card.wait  .fin-val { color: var(--orange); }
+.fin-card.total .fin-val { color: var(--text); }
+.fin-card.paid  .fin-val { color: var(--green); }
+
+.fin-break { background: var(--bg-card2); border:.5px solid var(--line); border-radius: var(--r); padding:13px 14px; }
+.fin-break-row { display:flex; align-items:center; gap:9px; padding:7px 0; }
+.fin-break-row + .fin-break-row { border-top:.5px solid var(--line); }
+.fin-tag {
+  padding:2px 9px; border-radius: var(--r-pill); flex-shrink:0;
+  font-size: var(--fs-xs); font-weight: var(--fw-bold);
+}
+.fin-tag.b { background: rgba(124,110,247,.16); color: var(--purple); }
+.fin-tag.p { background: rgba(245,200,66,.14);  color: var(--gold);   }
+.fin-break-sub { flex:1; font-size: var(--fs-xs); color: var(--text2); }
+.fin-break-val { font-size: var(--fs); font-weight: var(--fw-bold); color: var(--green); }
+
+.journal-row {
+  display:flex; align-items:center; gap:9px;
+  padding:10px 0; border-bottom:.5px solid var(--line);
+}
+.journal-row:last-child { border-bottom:none; }
+.journal-plan {
+  padding:3px 9px; border-radius: var(--r-pill); flex-shrink:0;
+  font-size: var(--fs-xs); font-weight: var(--fw-bold);
+}
+.journal-plan.m { background: rgba(124,110,247,.16); color: var(--purple); }
+.journal-plan.h { background: rgba(245,200,66,.14);  color: var(--gold);   }
+.journal-info  { flex:1; min-width:0; }
+.journal-name  { font-size: var(--fs); font-weight: var(--fw-md); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.journal-month { font-size: var(--fs-xs); color: var(--text2); margin-top:2px; }
+.journal-comm  { font-size: var(--fs); font-weight: var(--fw-bold); color: var(--green); text-align:right; }
+.journal-status{ font-size: var(--fs-xs); text-align:right; margin-top:2px; }
+.journal-status.paid { color: var(--green); }
+.journal-status.wait { color: var(--orange); }
+
+/* ══════════ ПОРОЖНІ СТАНИ ══════════ */
+.empty { text-align:center; padding:28px 16px; color: var(--text2); font-size: var(--fs); }
+.empty-icon { font-size:36px; display:block; margin-bottom:8px; opacity:.6; }
+
+/* ══════════ РОЗКРИВНА СЕКЦІЯ ══════════ */
+.acc {
+  background: var(--bg-card2); border: .5px solid var(--line);
+  border-radius: var(--r); overflow: hidden;
+}
+.acc-head {
+  display:flex; align-items:center; gap:11px;
+  padding: 13px 14px; cursor:pointer; width:100%;
+  background:none; border:none; font-family:inherit; text-align:left;
+  transition: background var(--dur);
+}
+.acc-head:active { background: var(--bg-card3); }
+.acc-head .icon  { font-size: var(--fs-lg); flex-shrink:0; width:24px; text-align:center; }
+.acc-head .body  { flex:1; min-width:0; }
+.acc-head .label { font-size: var(--fs); font-weight: var(--fw-md); color: var(--text); }
+.acc-head .desc  { font-size: var(--fs-xs); color: var(--text2); margin-top:2px; }
+.acc-chev {
+  font-size: var(--fs-md); color: var(--text3); flex-shrink:0;
+  transition: transform .22s var(--ease);
+}
+.acc.open .acc-chev { transform: rotate(90deg); }
+.acc-body { display:none; padding: 0 14px 14px; }
+.acc.open .acc-body { display:block; animation: fadeIn .2s var(--ease); }
+.acc-sep { height:.5px; background: var(--line); margin-bottom:12px; }
+
+/* ══════════ ЗВІТ УСЕРЕДИНІ ══════════ */
+.rep-line {
+  display:flex; justify-content:space-between; align-items:center;
+  padding:8px 0; font-size: var(--fs);
+}
+.rep-line + .rep-line { border-top:.5px solid var(--line); }
+.rep-key { color: var(--text2); }
+.rep-val { font-weight: var(--fw-bold); }
+.rep-val.purple { color: var(--purple); }
+.rep-val.green  { color: var(--green); }
+.rep-val.gold   { color: var(--gold); }
+
+.hint-box {
+  background: var(--bg-card); border:.5px solid var(--line);
+  border-radius: var(--r-sm); padding:11px 13px; margin-top:10px;
+  font-size: var(--fs-xs); color: var(--text2); line-height:1.6;
+}
+.hint-box code { color: var(--purple); font-size: var(--fs-sm); }
+
+/* ══════════ ЧЕРВОНА КНОПКА (YouTube) ══════════ */
+.btn-red {
+  background: #ff0000; color: #fff;
+  box-shadow: 0 4px 14px rgba(255,0,0,.28);
+}
+.btn-red:active { background: #d90000; }
+.btn-red .yt-icon { margin-right: 6px; }
+
+/* ══════════ АНАЛІТИКА КОНТЕНТУ ══════════ */
+.an-block { background: var(--bg-card2); border:.5px solid var(--line); border-radius: var(--r); padding: 13px 14px; }
+.an-block + .an-block { margin-top: 8px; }
+.an-head { display:flex; align-items:center; gap:8px; margin-bottom:10px; }
+.an-icon { font-size: var(--fs-md); }
+.an-title { font-size: var(--fs); font-weight: var(--fw-md); flex:1; }
+.an-total { font-size: var(--fs-xs); color: var(--text2); }
+
+.an-row { display:flex; align-items:center; gap:9px; padding:7px 0; }
+.an-row + .an-row { border-top:.5px solid var(--line); }
+.an-rank {
+  width:20px; flex-shrink:0; text-align:center;
+  font-size: var(--fs-sm); font-weight: var(--fw-bold); color: var(--text3);
+}
+.an-rank.top { color: var(--gold); }
+.an-text {
+  flex:1; min-width:0; font-size: var(--fs-sm); color: var(--text);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.an-bar {
+  width:52px; height:5px; flex-shrink:0;
+  background: var(--bg-card3); border-radius: var(--r-sm); overflow:hidden;
+}
+.an-bar-fill { height:100%; background: var(--purple); border-radius: var(--r-sm); }
+.an-bar-fill.green { background: var(--green); }
+.an-bar-fill.gold  { background: var(--gold); }
+.an-count {
+  width:30px; flex-shrink:0; text-align:right;
+  font-size: var(--fs-sm); font-weight: var(--fw-bold); color: var(--purple);
+}
+.an-count.green { color: var(--green); }
+.an-count.gold  { color: var(--gold); }
+
+/* ══════════ РІВНІ УЧНІВ ══════════ */
+.lvl-row { display:flex; align-items:center; gap:9px; padding:6px 0; }
+.lvl-tag {
+  width:30px; flex-shrink:0; text-align:center;
+  font-size: var(--fs-xs); font-weight: var(--fw-bold);
+  padding:2px 0; border-radius: var(--r-sm);
+  background: var(--bg-card3); color: var(--text2);
+}
+.lvl-tag.a { background: rgba(90,180,247,.15); color: var(--blue); }
+.lvl-tag.b { background: rgba(124,110,247,.15); color: var(--purple); }
+.lvl-tag.c { background: rgba(245,200,66,.14); color: var(--gold); }
+.lvl-track { flex:1; height:7px; background: var(--bg-card3); border-radius: var(--r-sm); overflow:hidden; }
+.lvl-bar { height:100%; border-radius: var(--r-sm); transition: width .6s var(--ease); }
+.lvl-bar.a { background: var(--blue); }
+.lvl-bar.b { background: var(--purple); }
+.lvl-bar.c { background: var(--gold); }
+.lvl-n { width:22px; flex-shrink:0; text-align:right; font-size: var(--fs-sm); font-weight: var(--fw-bold); }
+
+/* ══════════ ТОСТ ══════════ */
+.toast {
+  position: fixed; left:50%; bottom:26px;
+  transform: translateX(-50%) translateY(16px);
+  background: var(--bg-card3); border:.5px solid var(--line);
+  color: var(--text); font-size: var(--fs); font-weight: var(--fw-md);
+  padding:11px 20px; border-radius: var(--r-pill);
+  box-shadow: 0 6px 28px rgba(0,0,0,.5);
+  opacity:0; pointer-events:none; z-index:200;
+  transition: opacity .22s, transform .22s var(--ease);
+  white-space: nowrap; max-width: calc(100vw - 40px);
+}
+.toast.show { opacity:1; transform: translateX(-50%) translateY(0); }
+  
+/* ── ЗГОРТАЙКИ (2 поверхи) ──────────────────────────────
+   Вкладки «Контент» і «Інструменти» були довгими стінами форм.
+   Тепер: заголовок — клік — розкривається вміст.
+   Відкрита завжди ОДНА: інакше сенс згортання зникає. */
+.fold-h{
+  display:flex; align-items:center; justify-content:space-between;
+  cursor:pointer; user-select:none; -webkit-user-select:none;
+  padding:2px 0; transition:color .15s;
+}
+.fold-h:active{ opacity:.6; }
+.fold-arr{
+  font-size:18px; line-height:1; color:var(--text2,#8b8b93);
+  transition:transform .22s cubic-bezier(.4,0,.2,1);
+  flex-shrink:0; margin-left:10px;
+}
+.fold.open .fold-arr{ transform:rotate(90deg); }
+.fold-b{
+  max-height:0; overflow:hidden;
+  transition:max-height .28s cubic-bezier(.4,0,.2,1), opacity .2s;
+  opacity:0;
+}
+.fold.open .fold-b{ max-height:2200px; opacity:1; }
+</style>
 </head>
 <body>
 
-<div id="app">
-  <!-- Header -->
-  <div class="header">
-    <div class="header-top">
-      <div class="avatar" id="avatar-initials">B</div>
-      <div>
-        <div class="header-name" id="header-name">Blogger</div>
-        <div class="header-sub">Партнер SpeakChain</div>
-      </div>
-      <div class="badge">👤 Blogger</div>
+<!-- ══════════ ШАПКА ══════════ -->
+<div class="header">
+  <div class="header-top">
+    <div class="avatar" id="avatar-initials">B</div>
+    <div style="min-width:0">
+      <div class="header-name" id="header-name">@blogger</div>
+      <div class="header-sub" id="header-sub">Панель блогера</div>
     </div>
-    <div class="stats-row">
-      <div class="stat-card purple">
-        <div class="stat-val" id="stat-total">0</div>
-        <div class="stat-label">Студентів</div>
-      </div>
-      <div class="stat-card green">
-        <div class="stat-val" id="stat-active">0</div>
-        <div class="stat-label">Активних</div>
-      </div>
-      <div class="stat-card orange">
-        <div class="stat-val" id="stat-basic">0</div>
-        <div class="stat-label">Basic</div>
-      </div>
-      <div class="stat-card gold">
-        <div class="stat-val" id="stat-premium">0</div>
-        <div class="stat-label">Premium</div>
-      </div>
-    </div>
+    <div class="badge">📣 Блогер</div>
   </div>
+</div>
 
-  <!-- Tabs -->
+<!-- ══════════ ВКЛАДКИ ══════════ -->
+<div class="tabs-wrap">
   <div class="tabs">
-    <div class="tab active" onclick="showTab('overview',this)">📊 Огляд</div>
-    <div class="tab" onclick="showTab('content',this)">🎯 Контент</div>
-    <div class="tab" onclick="showTab('tools',this)">🔧 Інструменти</div>
+    <div class="tab active" onclick="showTab('money', this)">
+      <span class="tab-emoji">📊</span>Огляд
+    </div>
+    <div class="tab" onclick="showTab('content', this)">
+      <span class="tab-emoji">▶️</span>Контент
+    </div>
+    <div class="tab" onclick="showTab('tools', this)">
+      <span class="tab-emoji">🔗</span>Інструменти
+    </div>
+    <div class="tab" onclick="showTab('students', this)">
+      <span class="tab-emoji">👥</span>Учні
+    </div>
   </div>
+</div>
 
-  <!-- ===== TAB: OVERVIEW ===== -->
-  <div class="tab-panel active" id="tab-overview">
+<!-- ═══════════════ 1. МІЙ ДОХІД ═══════════════ -->
+<div class="panel active" id="panel-money">
 
-  <!-- Revenue -->
   <div class="section">
     <div class="revenue-banner">
-      <div class="revenue-left">
+      <span class="revenue-left">
         <span class="revenue-label">Дохід цього місяця</span>
         <span class="revenue-val" id="revenue-val">$0</span>
-        <span class="revenue-sub">25% комісія з кожного студента</span>
-      </div>
+        <span class="revenue-sub" id="fin-rate-note">25% комісія з кожної оплати студента</span>
+      </span>
       <span class="revenue-icon">💰</span>
     </div>
   </div>
 
-  <!-- Plan breakdown -->
-  <div class="section" style="padding-top:0">
-    <div class="section-title">Розподіл планів</div>
-    <div class="plan-row" style="margin-bottom:10px">
-      <div class="plan-pill basic">
-        <span class="plan-pill-val" id="basic-val">0</span>
-        <div class="plan-pill-info">
-          <span class="plan-pill-name">⚡️ Basic</span>
-          <span class="plan-pill-sub">студентів</span>
-        </div>
+  <div class="section">
+    <div class="section-title">Стан виплат</div>
+    <div class="fin-grid">
+      <div class="fin-card wait"><div class="fin-val" id="fin-pending">$0</div><div class="fin-label">Очікує</div></div>
+      <div class="fin-card total"><div class="fin-val" id="fin-total">$0</div><div class="fin-label">Всього</div></div>
+      <div class="fin-card paid"><div class="fin-val" id="fin-paid">$0</div><div class="fin-label">Виплачено</div></div>
+    </div>
+    <div class="status-line">Найближча виплата — <span id="fin-next-payout">до 10</span></div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Звідки дохід</div>
+    <div class="fin-break">
+      <div class="fin-break-row">
+        <span class="fin-tag b">Basic</span>
+        <span class="fin-break-sub"><span id="fin-basic-m">0</span> міс · <span id="fin-basic-6">0</span> піврічних</span>
+        <span class="fin-break-val" id="fin-basic-comm">$0</span>
       </div>
-      <div class="plan-pill premium">
-        <span class="plan-pill-val" id="premium-val">0</span>
-        <div class="plan-pill-info">
-          <span class="plan-pill-name">⭐️ Premium</span>
-          <span class="plan-pill-sub">студентів</span>
-        </div>
+      <div class="fin-break-row">
+        <span class="fin-tag p">Premium</span>
+        <span class="fin-break-sub"><span id="fin-prem-m">0</span> міс · <span id="fin-prem-6">0</span> піврічних</span>
+        <span class="fin-break-val" id="fin-prem-comm">$0</span>
       </div>
     </div>
-    <div class="prem-bar-wrap">
-      <div class="prem-bar-track">
-        <div class="prem-bar-fill" id="prem-bar" style="width:0%"></div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Журнал оплат</div>
+    <div id="journal-list"></div>
+  </div>
+
+  <!-- Детальний звіт — розкривається ТУТ, не в чаті -->
+  <div class="section">
+    <div class="acc" id="acc-income">
+      <button class="acc-head" onclick="toggleAcc('acc-income')">
+        <span class="icon">📊</span>
+        <span class="body">
+          <span class="label">Детальний звіт доходів</span>
+          <span class="desc">Розрахунок комісії по кожному плану</span>
+        </span>
+        <span class="acc-chev">›</span>
+      </button>
+      <div class="acc-body">
+        <div class="acc-sep"></div>
+        <div id="income-report"></div>
       </div>
-      <div class="prem-bar-labels">
-        <span class="prem-bar-label">Basic</span>
-        <span class="prem-bar-label" id="prem-pct">0% Premium</span>
-      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════════════ 2. КОНТЕНТ ═══════════════ -->
+<div class="panel" id="panel-content">
+
+  <div class="section">
+    <div class="section-title">Що заповнено</div>
+    <div class="fill-progress" id="fp-videos" onclick="scrollToId('sec-videos')">
+      <span class="fill-icon">🎬</span>
+      <span class="fill-body">
+        <span class="fill-title">Відео челенджу</span>
+        <span class="fill-sub">7 днів — по одному відео</span>
+      </span>
+      <span class="fill-count" id="fp-videos-count">0/7</span>
+    </div>
+    <div class="fill-progress" id="fp-phrases" onclick="scrollToId('sec-phrases')">
+      <span class="fill-icon">💬</span>
+      <span class="fill-body">
+        <span class="fill-title">Фрази дня</span>
+        <span class="fill-sub">Пн–Нд — одна фраза на день</span>
+      </span>
+      <span class="fill-count" id="fp-phrases-count">0/7</span>
     </div>
   </div>
 
   <div class="divider"></div>
 
-  <!-- Financial journal -->
+  <!-- Що резонує з твоєю аудиторією -->
   <div class="section">
-
-    <!-- ГОЛОВНЕ: доступно до виплати -->
-    <div class="fin-hero">
-      <div class="fin-hero-label">💰 Доступно до виплати</div>
-      <div class="fin-hero-val" id="fin-pending">$0</div>
-      <div class="fin-hero-next">Наступна виплата: <span id="fin-next-payout">до 10</span></div>
-    </div>
-
-    <!-- Другорядне: зароблено / виплачено -->
-    <div class="fin-secondary">
-      <div class="fin-sec-item">
-        <span class="fin-sec-label">Зароблено всього</span>
-        <span class="fin-sec-val" id="fin-total">$0</span>
-      </div>
-      <div class="fin-sec-item">
-        <span class="fin-sec-label">Уже виплачено</span>
-        <span class="fin-sec-val green" id="fin-paid">$0</span>
-      </div>
-    </div>
-
-    <!-- Розбивка за тарифом Basic / Premium -->
-    <div class="fin-split">
-      <div class="fin-split-card">
-        <div class="fin-split-top">
-          <span class="fin-split-icon">⚡️</span>
-          <span class="fin-split-name">Basic</span>
-        </div>
-        <div class="fin-split-comm" id="fin-basic-comm">$0</div>
-        <div class="fin-split-breakdown">
-          <span>🗓 <b id="fin-basic-m">0</b></span>
-          <span>📆 <b id="fin-basic-6">0</b></span>
-        </div>
-      </div>
-      <div class="fin-split-card">
-        <div class="fin-split-top">
-          <span class="fin-split-icon">⭐️</span>
-          <span class="fin-split-name">Premium</span>
-        </div>
-        <div class="fin-split-comm" id="fin-prem-comm">$0</div>
-        <div class="fin-split-breakdown">
-          <span>🗓 <b id="fin-prem-m">0</b></span>
-          <span>📆 <b id="fin-prem-6">0</b></span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Прозорість комісії -->
-    <div class="fin-rate-note" id="fin-rate-note">Комісія 25% з кожної оплати студента</div>
-
-    <!-- Журнал оплат -->
-    <div class="fin-journal-title">Останні оплати</div>
-    <div id="journal-list">
-      <div style="text-align:center;color:var(--text2);font-size:var(--fs);padding:20px">Завантаження…</div>
-    </div>
+    <div class="section-title">Що працює</div>
+    <div id="analytics-content"></div>
   </div>
-  </div><!-- /tab-overview -->
 
-  <!-- ===== TAB: CONTENT ===== -->
-  <div class="tab-panel" id="tab-content">
-    <div class="section">
-      <!-- Відео челенджу (YouTube-посилання, 7 днів) -->
-      <div class="form-card">
-        <div class="form-title">📹 Відео челенджу (YouTube, 7 днів)</div>
-        <div class="form-hint">Завантаж 7 відео за скриптами на свій YouTube у режимі «Доступ за посиланням» (unlisted) — їх не видно в пошуку й на каналі, лише за лінком. Встав сюди посилання по днях. Студенти отримають їх по черзі під час челенджу.</div>
-        <div id="challenge-videos-list"></div>
-        <div id="challenge-videos-status" class="form-hint" style="margin-top:8px;font-weight:600;"></div>
-      </div>
+  <div class="divider"></div>
 
-      <!-- Фрази дня (7 на тиждень) -->
-      <div class="form-card">
-        <div class="form-title">💬 Фрази дня (7 на тиждень)</div>
-        <div class="form-hint">Запиши 7 коротких фраз — по одній на кожен день тижня. Бот публікуватиме по одній щодня у «Плані на сьогодні» твоїх студентів. Ротація не повторюється.</div>
-        <div class="form-hint" style="margin-top:6px;opacity:.85;">💡 Те саме можна зробити швидко в боті: команда <b>/phrase_week</b>, а далі 7 фраз — кожна з нового рядка. Пишуться в те саме місце, що й тут.</div>
-        <div class="form-hint" style="margin-bottom:8px;">
-          🎬 <b>Відео до фрази:</b> надсилаючи фразу боту, встав поруч посилання на YouTube —
-          учні побачать твоє відео разом із фразою.
-        </div>
-        <div id="phrases-list"></div>
-        <div id="phrases-status" class="form-hint" style="margin-top:8px;font-weight:600;"></div>
-      </div>
-
-      <!-- Челендж тижня -->
-      <div class="form-card">
-        <div class="form-title">🏆 Челендж тижня</div>
-        <div class="form-hint">Окреме від питання тижня: спільна тема-виклик для всіх твоїх студентів на тиждень (напр. «Опиши свій ідеальний вихідний»). Можна додати своє відео-завдання нижче.</div>
-        <input class="form-input" id="challenge-input" placeholder="Напр.: Опиши свій ідеальний вихідний" maxlength="200">
-        <div class="form-hint" style="margin-top:8px;">Відео-завдання (необов'язково): запиши коротке відео на YouTube у режимі «Доступ за посиланням» і встав лінк — студенти побачать твоє відео разом із темою.</div>
-        <div id="wc-video-status" class="form-hint" style="margin-bottom:6px;"></div>
-        <input class="form-input" id="wc-video-input" placeholder="https://youtu.be/... (необов'язково)">
-        <button class="form-btn" onclick="submitWeeklyChallenge()">Запустити челендж</button>
-      </div>
-
-      <!-- Питання тижня (відео) -->
-      <div class="form-card">
-        <div class="form-title">🎯 Питання тижня</div>
-        <div class="form-hint">Окреме від челенджу тижня: коротке відео-питання, на яке студенти відповідають голосом у неділю й отримують AI-фідбек. Записується прямо в боті.</div>
-        <button class="form-btn" onclick="sendAction('blogger_weekly_q')">Записати відео-питання</button>
-      </div>
-
-      <!-- Розсилка -->
-      <div class="form-card">
-        <div class="form-title">📢 Розсилка студентам</div>
-        <div class="form-hint">Повідомлення надійде всім твоїм студентам. Використовуй для новин, мотивації, анонсів.</div>
-        <textarea class="form-textarea" id="broadcast-input" placeholder="Текст повідомлення для студентів…" maxlength="1000"></textarea>
-        <button class="form-btn green" onclick="submitForm('blogger_broadcast','broadcast-input')">Розіслати</button>
-      </div>
-    </div>
-  </div><!-- /tab-content -->
-
-  <!-- ===== TAB: TOOLS ===== -->
-  <div class="tab-panel" id="tab-tools">
-    <div class="section">
-    <div class="actions">
-      <button class="action-btn purple" onclick="sendAction('blogger_my_link')">
-        <span class="icon">🔗</span>
-        <span class="label">Моє реферальне посилання</span>
+  <div class="section fold">
+    <div class="section-title fold-h" onclick="toggleFold(this)">Челендж тижня<span class="fold-arr">›</span></div><div class="fold-b">
+    <input class="form-input" id="challenge-input" placeholder="Тема челенджу — напр. «Замов каву англійською»" style="margin-bottom:7px">
+    <input class="form-input" id="wc-video-input" placeholder="Відео до челенджу (YouTube) — необов'язково">
+    <div class="status-line ok" id="wc-video-status"></div>
+    <button class="btn btn-full btn-purple" onclick="submitWeeklyChallenge()" style="margin-top:10px">
+      <span class="yt-icon">▶</span> Запустити челендж
+    </button>
+    <div class="action-list" style="margin-top:8px">
+      <button class="action-btn" onclick="sendAction('blogger_challenge_remind')">
+        <span class="icon">📢</span>
+        <span class="body">
+          <span class="label">Нагадати студентам</span>
+          <span class="desc">Хто ще не почав челендж</span>
+        </span>
         <span class="arr">›</span>
       </button>
-      <button class="action-btn green" onclick="sendAction('blogger_gen_video_link')">
-        <span class="icon">🎬</span>
-        <span class="label">Реф-посилання (відео-запрошення)</span>
-        <span class="arr">›</span>
-      </button>
-      <button class="action-btn red" onclick="sendAction('blogger_live_menu')">
-        <span class="icon">🔴</span>
-        <span class="label">Live заняття</span>
-        <span class="arr">›</span>
-      </button>
-      <button class="action-btn neutral" onclick="sendAction('blogger_feedback_q')">
-        <span class="icon">💬</span>
-        <span class="label">Черга фідбеків</span>
-        <span class="arr">›</span>
-      </button>
-      <button class="action-btn neutral" onclick="sendAction('blogger_income')">
-        <span class="icon">💰</span>
-        <span class="label">Мої доходи</span>
-        <span class="arr">›</span>
-      </button>
-      <button class="action-btn neutral" onclick="sendAction('blogger_full_stats')">
-        <span class="icon">📈</span>
-        <span class="label">Повна статистика</span>
-        <span class="arr">›</span>
-      </button>
-      <button class="action-btn orange" onclick="sendAction('blogger_leaderboard')">
+      <button class="action-btn" onclick="sendAction('blogger_challenge_leaderboard')">
         <span class="icon">🏆</span>
-        <span class="label">Таблиця лідерів</span>
-        <span class="arr">›</span>
-      </button>
-      <button class="action-btn neutral" onclick="sendAction('blogger_ask_admin')">
-        <span class="icon">✉️</span>
-        <span class="label">Написати адміну</span>
+        <span class="body">
+          <span class="label">Таблиця лідерів челенджу</span>
+          <span class="desc">Хто попереду в челенджі</span>
+        </span>
         <span class="arr">›</span>
       </button>
     </div>
+  </div></div>
+
+  <div class="divider"></div>
+
+  <div class="section fold" id="sec-videos">
+    <div class="section-title fold-h" onclick="toggleFold(this)">Відео на 7 днів челенджу<span class="fold-arr">›</span></div><div class="fold-b">
+    <div id="challenge-videos-list"></div>
+    <div class="status-line" id="challenge-videos-status">0/7 посилань додано</div>
+  </div></div>
+
+  <div class="divider"></div>
+
+  <div class="section fold" id="sec-phrases">
+    <div class="section-title fold-h" onclick="toggleFold(this)">Фраза дня · Пн–Нд<span class="fold-arr">›</span></div><div class="fold-b">
+    <div id="phrases-list"></div>
+    <div class="status-line" id="phrases-status">0/7 фраз задано</div>
+  </div></div>
+
+  <div class="divider"></div>
+
+  <div class="section fold">
+    <div class="section-title fold-h" onclick="toggleFold(this)">Зв'язок з учнями<span class="fold-arr">›</span></div><div class="fold-b">
+    <div class="action-list">
+      <button class="action-btn accent" onclick="sendAction('blogger_weekly_q')">
+        <span class="icon">🎥</span>
+        <span class="body">
+          <span class="label">Відео-питання тижня</span>
+          <span class="desc">Записуєш — бот розсилає учням у неділю</span>
+        </span>
+        <span class="arr">›</span>
+      </button>
+      <button class="action-btn" onclick="sendAction('blogger_feedback_q')">
+        <span class="icon">🎙</span>
+        <span class="body">
+          <span class="label">Черга фідбеків</span>
+          <span class="desc">Записи учнів — слухаєш і відповідаєш</span>
+        </span>
+        <span class="arr">›</span>
+      </button>
     </div>
-  </div><!-- /tab-tools -->
+    <div class="hint-box">
+      <b style="color:var(--text)">Черга фідбеків</b> — бот присилає сюди голосові записи учнів
+      із кнопкою «Відповісти». Ти слухаєш і залишаєш свій коментар.<br><br>
+      Голосовий коментар конкретному учню — командою
+      <code>/voice_comment ID</code>, тоді надішли голосове.
+    </div>
+  </div></div>
+
 </div>
 
+<!-- ═══════════════ 3. ІНСТРУМЕНТИ ═══════════════ -->
+<div class="panel" id="panel-tools">
+
+  <div class="section fold">
+    <div class="section-title fold-h" onclick="toggleFold(this)">Залучення<span class="fold-arr">›</span></div><div class="fold-b">
+    <div class="action-list">
+      <button class="action-btn accent" onclick="sendAction('blogger_my_link')">
+        <span class="icon">🔗</span>
+        <span class="body">
+          <span class="label">Моє посилання</span>
+          <span class="desc">YouTube · Instagram · TikTok</span>
+        </span>
+        <span class="arr">›</span>
+      </button>
+      <button class="action-btn" onclick="sendAction('blogger_gen_video_link')">
+        <span class="icon">🎬</span>
+        <span class="body">
+          <span class="label">Посилання на відео</span>
+          <span class="desc">Учень одразу відкриє плеєр</span>
+        </span>
+        <span class="arr">›</span>
+      </button>
+    </div>
+  </div></div>
+
+  <div class="divider"></div>
+
+  <div class="section fold">
+    <div class="section-title fold-h" onclick="toggleFold(this)">Розсилка учням<span class="fold-arr">›</span></div><div class="fold-b">
+    <textarea class="form-input" id="broadcast-input" placeholder="Що написати учням…"></textarea>
+
+    <div class="status-line" id="bc-video-status" style="margin-top:7px"></div>
+    <input class="form-input" id="broadcast-video-url"
+           placeholder="https://youtu.be/… (необов'язково)" style="margin-top:7px">
+    <button class="btn btn-full" onclick="attachBcVideo()" style="margin-top:7px">
+      🎥 Або прикріпити своє відео
+    </button>
+
+    <button class="btn btn-full btn-purple" onclick="submitBroadcast()" style="margin-top:9px">
+      📣 Надіслати
+    </button>
+    <div class="status-line">Бот покаже підтвердження перед відправкою</div>
+  </div></div>
+
+  <div class="divider"></div>
+
+  <!-- Написати адміну — форма прямо тут -->
+  <div class="section fold">
+    <div class="section-title fold-h" onclick="toggleFold(this)">Написати адміну<span class="fold-arr">›</span></div><div class="fold-b">
+    <textarea class="form-input" id="admin-question-input" placeholder="Питання, проблема чи ідея…"></textarea>
+    <button class="btn btn-full btn-ghost" onclick="askAdmin()" style="margin-top:9px">
+      ✉️ Надіслати адміну
+    </button>
+    <div class="status-line">Відповідь прийде в чат бота</div>
+  </div></div>
+
+  <div class="divider"></div>
+
+  <div class="section fold">
+    <div class="section-title fold-h" onclick="toggleFold(this)">Live заняття · Premium<span class="fold-arr">›</span></div><div class="fold-b">
+    <div class="action-list">
+      <button class="action-btn" onclick="sendAction('blogger_live_menu')">
+        <span class="icon">🔴</span>
+        <span class="body">
+          <span class="label">Керування Live</span>
+          <span class="desc">Статус групи · як почати</span>
+        </span>
+        <span class="arr">›</span>
+      </button>
+      <button class="action-btn" onclick="sendAction('blogger_leaderboard')">
+        <span class="icon">🏆</span>
+        <span class="body">
+          <span class="label">Таблиця лідерів</span>
+          <span class="desc">Загальний рейтинг усіх учнів</span>
+        </span>
+        <span class="arr">›</span>
+      </button>
+    </div>
+    <div class="hint-box">
+      Команди Live — у чаті бота:<br>
+      <code>/live_start [тема]</code> — почати заняття<br>
+      <code>/quiz Питання | Варіант1 | Варіант2 | 0</code> — квіз<br>
+      <code>/live_end</code> — завершити<br>
+      <code>/setup_live_group ID</code> — налаштувати групу
+    </div>
+  </div></div>
+
+</div>
+
+<!-- ═══════════════ 4. УЧНІ ═══════════════ -->
+<div class="panel" id="panel-students">
+
+  <div class="section">
+    <div class="section-title">Скільки їх</div>
+    <div class="stats-grid">
+      <div class="stat-card purple"><div class="stat-val" id="stat-total">0</div><div class="stat-label">Всього</div></div>
+      <div class="stat-card green"><div class="stat-val" id="stat-active">0</div><div class="stat-label">Активні</div></div>
+      <div class="stat-card blue"><div class="stat-val" id="stat-basic">0</div><div class="stat-label">Basic</div></div>
+      <div class="stat-card gold"><div class="stat-val" id="stat-premium">0</div><div class="stat-label">Premium</div></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Розподіл планів</div>
+    <div class="plan-split">
+      <div class="plan-row">
+        <span>⚡️ Basic · <b id="basic-val">0</b></span>
+        <span>🌟 Premium · <b id="premium-val">0</b></span>
+      </div>
+      <div class="plan-track"><div class="plan-fill" id="prem-bar" style="width:0%"></div></div>
+      <div class="plan-hint" id="prem-pct">0% Premium</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Рівні учнів</div>
+    <div id="levels-block"></div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Топ учнів</div>
+    <div id="top-students-list"></div>
+  </div>
+
+  <!-- Повна статистика — розкривається ТУТ, не в чаті -->
+  <div class="section">
+    <div class="acc" id="acc-stats">
+      <button class="acc-head" onclick="toggleAcc('acc-stats')">
+        <span class="icon">📈</span>
+        <span class="body">
+          <span class="label">Повна статистика</span>
+          <span class="desc">Усі цифри в одному місці</span>
+        </span>
+        <span class="acc-chev">›</span>
+      </button>
+      <div class="acc-body">
+        <div class="acc-sep"></div>
+        <div id="stats-report"></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
 <script>
+/* ══════════════════════════════════════════════════════════════
+   Логіка. Усі дії (maAction / sendAction / submitForm) лишились
+   один-в-один як були — жоден обробник у bot.py не зачеплено.
+   ══════════════════════════════════════════════════════════════ */
+
 const TG = (typeof Telegram !== 'undefined' && Telegram.WebApp) ? Telegram.WebApp : null;
 if (TG) { try { TG.ready(); TG.expand(); } catch(e){} }
 
@@ -553,8 +852,17 @@ if (dataRaw) {
   try { D = JSON.parse(decodeURIComponent(dataRaw)); } catch(e){}
 }
 
-// ── Уніфікована відправка дії в бот через HTTP (працює при будь-якому
-//    способі відкриття мініапа). sendData лишається як фолбек. ──
+/* ── Тост ── */
+let toastTimer = null;
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+/* ── Уніфікована відправка дії в бот (HTTP, sendData як фолбек) ── */
 async function maAction(action, extra) {
   const body = Object.assign({
     action: action,
@@ -570,7 +878,6 @@ async function maAction(action, extra) {
     });
     ok = res.ok;
   } catch (e) { ok = false; }
-  // Фолбек: якщо HTTP не вдався, а мініап відкрито з reply-keyboard — sendData
   if (!ok && TG && typeof TG.sendData === 'function') {
     try { TG.sendData(JSON.stringify(body)); } catch(e){}
   }
@@ -580,17 +887,57 @@ async function maAction(action, extra) {
   return ok;
 }
 
-function sendAction(cbData) {
-  maAction(cbData);
-}
+function sendAction(cbData) { maAction(cbData); }
 
+/* ── Вкладки ── */
 function showTab(name, el) {
-  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  document.getElementById('tab-' + name).classList.add('active');
+  document.getElementById('panel-' + name).classList.add('active');
   el.classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  if (TG && TG.HapticFeedback) {
+    try { TG.HapticFeedback.selectionChanged(); } catch(e){}
+  }
 }
 
+function scrollToId(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  /* Секції тепер згорнуті. Просто проскролити мало — людина
+     впреться в закритий заголовок. Тому спершу розкриваємо. */
+  if (el.classList.contains('fold')) openFoldById(id);
+  el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+/* ── Розкривні секції (звіти читаються ТУТ, не в чаті) ── */
+function toggleAcc(id) {
+  const box = document.getElementById(id);
+  if (!box) return;
+  box.classList.toggle('open');
+  if (box.classList.contains('open')) {
+    setTimeout(() => box.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 120);
+  }
+  if (TG && TG.HapticFeedback) {
+    try { TG.HapticFeedback.selectionChanged(); } catch(e){}
+  }
+}
+
+/* ── Написати адміну (форма в панелі; дія та сама, що й раніше) ── */
+function askAdmin() {
+  const el  = document.getElementById('admin-question-input');
+  const val = (el.value || '').trim();
+  if (!val) {
+    el.focus();
+    if (TG && TG.HapticFeedback) { try { TG.HapticFeedback.notificationOccurred('error'); } catch(e){} }
+    return;
+  }
+  maAction('blogger_ask_admin', { text: val });
+  el.value = '';
+  toast('✉️ Питання надіслано адміну');
+}
+
+/* ── Форми ── */
 function submitForm(action, inputId) {
   const input = document.getElementById(inputId);
   const val = (input.value || '').trim();
@@ -601,13 +948,15 @@ function submitForm(action, inputId) {
   }
   maAction(action, { text: val });
   input.value = '';
+  toast('✅ Надіслано');
 }
 
 function initials(name) {
   if (!name) return 'B';
-  return name.split(/\s+/).map(w=>w[0]).join('').toUpperCase().slice(0,2);
+  return name.split(/\s+/).map(w => w[0]).join('').toUpperCase().slice(0, 2);
 }
 
+/* ── Відео челенджу (7 днів) ── */
 const CHALLENGE_DAY_TITLES = [
   'Це не твоя провина',
   'Ворог — це страх',
@@ -615,88 +964,435 @@ const CHALLENGE_DAY_TITLES = [
   'Складні звуки',
   'Говори живо — покажи себе',
   'Твоє дзеркало',
-  'Благословення (фінал)',
+  'Підсумкове слово (фінал)',
 ];
+
+function esc(s) {
+  return String(s || '').replace(/[&<>"']/g, c =>
+    ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
 
 function renderChallengeVideos() {
   const wrap = document.getElementById('challenge-videos-list');
   if (!wrap) return;
-  const vids = (D.challenge_videos) || {};   // { "1": {url:"..."} , ... }
-  let done = 0;
-  let html = '';
+  const vids = D.challenge_videos || {};
+  let done = 0, html = '';
+
   for (let day = 1; day <= 7; day++) {
     const url = (vids[day] && vids[day].url) || '';
     if (url) done++;
     html += `
-      <div style="padding:10px 0;border-bottom:.5px solid var(--line);">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
-          <div style="width:26px;height:26px;border-radius:7px;background:${url?'rgba(90,216,166,.15)':'var(--bg-card2)'};display:flex;align-items:center;justify-content:center;font-size:var(--fs-sm);font-weight:700;color:${url?'var(--green)':'var(--text2)'};flex-shrink:0;">${url?'✓':day}</div>
-          <div style="font-size:var(--fs);font-weight:600;color:var(--text);flex:1;">День ${day}. ${CHALLENGE_DAY_TITLES[day-1]}</div>
+      <div class="day-row">
+        <div class="day-head">
+          <div class="day-chip ${url ? 'filled' : ''}">${url ? '✓' : day}</div>
+          <div class="day-title">День ${day}. ${CHALLENGE_DAY_TITLES[day-1]}</div>
         </div>
-        <div style="display:flex;gap:6px;">
-          <input class="form-input" id="cv-input-${day}" value="${url.replace(/"/g,'&quot;')}" placeholder="https://youtu.be/..." style="flex:1;font-size:var(--fs-sm);padding:8px 10px;">
-          <button onclick="saveChallengeVideo(${day})" style="padding:8px 14px;border-radius:var(--r-sm);border:none;background:var(--purple);color:#fff;font-size:var(--fs-sm);font-weight:600;cursor:pointer;flex-shrink:0;">${url?'Оновити':'Зберегти'}</button>
+        <div class="inline-form">
+          <input class="form-input" id="cv-input-${day}" value="${esc(url)}" placeholder="https://youtu.be/…">
+          <button class="btn btn-sm btn-purple" onclick="saveChallengeVideo(${day})">${url ? 'Оновити' : 'Зберегти'}</button>
         </div>
       </div>`;
   }
   wrap.innerHTML = html;
+
   const st = document.getElementById('challenge-videos-status');
   if (st) {
-    if (done === 7) { st.textContent = '✅ 7/7 відео готово — челендж можна запускати'; st.style.color = 'var(--green)'; }
-    else { st.textContent = `${done}/7 посилань додано`; st.style.color = 'var(--text2)'; }
+    st.textContent = done === 7 ? '✅ 7/7 відео готово — челендж можна запускати' : `${done}/7 посилань додано`;
+    st.className = 'status-line' + (done === 7 ? ' ok' : '');
   }
+  updateFillProgress('fp-videos', done, 7);
 }
 
 function saveChallengeVideo(day) {
   const inp = document.getElementById('cv-input-' + day);
   const url = (inp && inp.value || '').trim();
-  if (!url) return;
+  if (!url) { inp && inp.focus(); return; }
   maAction('blogger_set_challenge_video', { day: day, url: url });
+  toast('🎬 Відео дня ' + day + ' збережено');
 }
 
+/* ── Фрази дня (Пн–Нд) ── */
 const WEEKDAYS = ['Пн','Вт','Ср','Чт','Пт','Сб','Нд'];
+
 function renderPhrases() {
   const wrap = document.getElementById('phrases-list');
   if (!wrap) return;
-  const phrases = (D.week_phrases) || {};   // { "1": "text", ... } 1..7
-  const pvids   = (D.week_phrase_videos) || {};   // { "1": "youtubeId", ... }
-  let done = 0;
-  let html = '';
+  const phrases = D.week_phrases || {};
+  const pvids   = D.week_phrase_videos || {};
+  let done = 0, html = '';
+
   for (let i = 1; i <= 7; i++) {
     const val = phrases[i] || '';
     const vid = pvids[i] || '';
     if (val) done++;
+    // Відео зберігається ЗА ФРАЗОЮ — фраза є ключем, за яким ми потім
+    // рахуємо статистику поширення (скільки учнів проговорили саме її).
+    const vurl = vid ? ('https://youtu.be/' + vid) : '';
     html += `
-      <div class="ph-row" style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:.5px solid var(--line);">
-        <div style="width:30px;height:30px;border-radius:var(--r-sm);background:${val?'rgba(90,216,166,.15)':'var(--bg-card2)'};display:flex;align-items:center;justify-content:center;font-size:var(--fs-sm);font-weight:700;color:${val?'var(--green)':'var(--text2)'};flex-shrink:0;">${WEEKDAYS[i-1]}</div>
-        <div style="flex:1;min-width:0;">
-          <div style="font-size:var(--fs-sm);color:${val?'var(--text)':'var(--text2)'};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${val || 'Порожньо'}</div>
-          ${vid
-            ? `<div style="font-size:var(--fs-xs);color:var(--green);margin-top:2px;">🎬 відео додано</div>`
-            : (val ? `<div style="font-size:var(--fs-xs);color:var(--text2);margin-top:2px;">без відео</div>` : '')}
+      <div class="day-row">
+        <div class="day-head">
+          <div class="day-chip ${val ? 'filled' : ''}">${WEEKDAYS[i-1]}</div>
+          <div class="day-title" style="color:${val ? 'var(--text)' : 'var(--text2)'}">
+            ${val ? esc(val) : 'Фраза не задана'}
+            ${vid ? '<span class="day-note ok" style="margin-left:6px">🎬</span>' : ''}
+          </div>
         </div>
-        <button onclick="editPhrase(${i})" style="padding:6px 12px;border-radius:var(--r-sm);border:.5px solid var(--purple);background:${val?'transparent':'rgba(124,110,247,.12)'};color:var(--purple);font-size:var(--fs-sm);font-weight:600;cursor:pointer;flex-shrink:0;">${val?'Змінити':'Задати'}</button>
+        <input class="form-input" id="ph-text-${i}" value="${esc(val)}"
+               placeholder="Фраза дня — напр. «Could you say that again?»"
+               style="margin-bottom:6px">
+        <div class="inline-form">
+          <input class="form-input" id="ph-vid-${i}" value="${esc(vurl)}"
+                 placeholder="Посилання YouTube — youtu.be / watch / shorts (необов'язково)">
+          <button class="btn btn-sm btn-purple" onclick="savePhrase(${i})">${val ? 'Оновити' : 'Зберегти'}</button>
+        </div>
       </div>`;
   }
   wrap.innerHTML = html;
+
   const st = document.getElementById('phrases-status');
   if (st) {
-    if (done === 7) { st.textContent = '✅ 7/7 фраз готово на тиждень'; st.style.color = 'var(--green)'; }
-    else { st.textContent = `${done}/7 фраз задано`; st.style.color = 'var(--text2)'; }
+    st.textContent = done === 7 ? '✅ 7/7 фраз готово на тиждень' : `${done}/7 фраз задано`;
+    st.className = 'status-line' + (done === 7 ? ' ok' : '');
   }
+  updateFillProgress('fp-phrases', done, 7);
 }
 
-function editPhrase(day) {
-  maAction('blogger_set_phrase_day', { day: day });
+/* Зберігає фразу дня + відео до неї одним викликом.
+   Фраза = ключ, за яким бот прив'язує відео і рахує статистику поширення.
+   Раніше кнопка виводила блогера в чат бота — тепер усе в панелі. */
+function savePhrase(day) {
+  const tEl = document.getElementById('ph-text-' + day);
+  const vEl = document.getElementById('ph-vid-' + day);
+  const phrase = (tEl && tEl.value || '').trim();
+  const video  = (vEl && vEl.value || '').trim();
+
+  if (!phrase) {
+    tEl && tEl.focus();
+    if (TG && TG.HapticFeedback) { try { TG.HapticFeedback.notificationOccurred('error'); } catch(e){} }
+    return;
+  }
+
+  // Локально оновлюємо стан, щоб «0/7» і галочки перемалювались одразу
+  D.week_phrases = D.week_phrases || {};
+  D.week_phrases[day] = phrase;
+  D.week_phrase_videos = D.week_phrase_videos || {};
+  if (video) D.week_phrase_videos[day] = video;
+  else       delete D.week_phrase_videos[day];
+
+  maAction('blogger_set_phrase_day', { day: day, phrase: phrase, video_url: video });
+  renderPhrases();
+  toast('💬 Фразу на ' + WEEKDAYS[day-1] + ' збережено');
 }
 
+/* ── Смужка «що заповнено» ── */
+function updateFillProgress(id, done, total) {
+  const box   = document.getElementById(id);
+  const count = document.getElementById(id + '-count');
+  if (!box || !count) return;
+  count.textContent = done + '/' + total;
+  const isDone = done >= total;
+  box.classList.toggle('done', isDone);
+  count.classList.toggle('done', isDone);
+}
+
+/* ── Челендж тижня ── */
 function submitWeeklyChallenge() {
-  const topic = (document.getElementById('challenge-input').value || '').trim();
-  const url = (document.getElementById('wc-video-input').value || '').trim();
-  if (!topic) return;
+  const topicEl = document.getElementById('challenge-input');
+  const topic = (topicEl.value || '').trim();
+  const url   = (document.getElementById('wc-video-input').value || '').trim();
+  if (!topic) {
+    topicEl.focus();
+    if (TG && TG.HapticFeedback) { try { TG.HapticFeedback.notificationOccurred('error'); } catch(e){} }
+    return;
+  }
   maAction('blogger_new_challenge', { text: topic, video_url: url });
+  toast('🎯 Челендж запущено');
 }
 
+/* ── Топ учнів ── */
+function renderTopStudents() {
+  const wrap = document.getElementById('top-students-list');
+  if (!wrap) return;
+  const list = D.top_students || [];
+
+  if (!list.length) {
+    wrap.innerHTML =
+      '<div class="empty"><span class="empty-icon">👥</span>' +
+      'Учнів поки немає.<br>Поділись своїм посиланням — вкладка «Інструменти».</div>';
+    return;
+  }
+
+  wrap.innerHTML = list.map((s, i) => {
+    const rank = i + 1;
+    const rc   = rank === 1 ? 'g1' : rank === 2 ? 'g2' : rank === 3 ? 'g3' : '';
+    const medal= rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : rank;
+    const prem = s.plan === 'premium';
+    const meta = [s.level, prem ? '🌟 Premium' : '⚡️ Basic'].filter(Boolean).join(' · ');
+    return `
+      <div class="student-row">
+        <div class="student-rank ${rc}">${medal}</div>
+        <div class="student-av ${prem ? 'prem' : ''}">${initials(s.name)}</div>
+        <div class="student-info">
+          <div class="student-name">${esc(s.name)}</div>
+          <div class="student-meta">${esc(meta)}</div>
+        </div>
+        <div class="student-num">${s.done || 0}<span>уроків</span></div>
+      </div>`;
+  }).join('');
+}
+
+/* ── Журнал оплат ── */
+const PLAN_LABELS = {
+  basic:      ['Basic',       'm'],
+  premium:    ['Premium',     'm'],
+  basic_6m:   ['Basic 6міс',  'h'],
+  premium_6m: ['Premium 6міс','h'],
+};
+
+function renderJournal(fin) {
+  const jlist   = document.getElementById('journal-list');
+  const journal = fin.journal || [];
+
+  if (!journal.length) {
+    jlist.innerHTML =
+      '<div class="empty"><span class="empty-icon">🧾</span>Оплат поки немає</div>';
+    return;
+  }
+
+  jlist.innerHTML = journal.map(j => {
+    const lbl = PLAN_LABELS[j.plan] || ['—', 'm'];
+    const monthStr = String(j.month || '').replace('-', '/');
+    return `
+      <div class="journal-row">
+        <span class="journal-plan ${lbl[1]}">${lbl[0]}</span>
+        <div class="journal-info">
+          <div class="journal-name">${esc(j.student)}</div>
+          <div class="journal-month">${esc(monthStr)} · оплата $${j.amount}</div>
+        </div>
+        <div>
+          <div class="journal-comm">+$${j.comm}</div>
+          <div class="journal-status ${j.paid ? 'paid' : 'wait'}">${j.paid ? 'виплачено' : 'очікує'}</div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+/* ── Детальний звіт доходів (у панелі) ── */
+function renderIncomeReport(fin) {
+  const box = document.getElementById('income-report');
+  if (!box) return;
+
+  const rb = fin.rate_basic   || 25;
+  const rp = fin.rate_premium || rb;
+  const bm = fin.basic_m_count || 0, b6 = fin.basic_6_count || 0;
+  const pm = fin.prem_m_count  || 0, p6 = fin.prem_6_count  || 0;
+  const payments = bm + b6 + pm + p6;
+  const total    = fin.total_comm || 0;
+  const avg      = payments ? (total / payments) : 0;
+
+  box.innerHTML = `
+    <div class="rep-line"><span class="rep-key">Оплат всього</span><span class="rep-val">${payments}</span></div>
+    <div class="rep-line"><span class="rep-key">Комісія Basic</span><span class="rep-val purple">${rb}%</span></div>
+    <div class="rep-line"><span class="rep-key">Комісія Premium</span><span class="rep-val gold">${rp}%</span></div>
+    <div class="rep-line"><span class="rep-key">Basic · щомісячних</span><span class="rep-val">${bm}</span></div>
+    <div class="rep-line"><span class="rep-key">Basic · піврічних</span><span class="rep-val">${b6}</span></div>
+    <div class="rep-line"><span class="rep-key">Premium · щомісячних</span><span class="rep-val">${pm}</span></div>
+    <div class="rep-line"><span class="rep-key">Premium · піврічних</span><span class="rep-val">${p6}</span></div>
+    <div class="rep-line"><span class="rep-key">З Basic</span><span class="rep-val green">$${fin.basic_comm || 0}</span></div>
+    <div class="rep-line"><span class="rep-key">З Premium</span><span class="rep-val green">$${fin.prem_comm || 0}</span></div>
+    <div class="rep-line"><span class="rep-key">Середня комісія з оплати</span><span class="rep-val">$${avg.toFixed(2)}</span></div>
+    <div class="rep-line"><span class="rep-key">Зароблено всього</span><span class="rep-val green">$${total}</span></div>
+    <div class="rep-line"><span class="rep-key">Вже виплачено</span><span class="rep-val">$${fin.paid_out || 0}</span></div>
+    <div class="rep-line"><span class="rep-key">Очікує виплати</span><span class="rep-val" style="color:var(--orange)">$${fin.pending || 0}</span></div>
+    <div class="hint-box">Комісія рахується з фактичної суми оплати — після будь-яких знижок і він-беків.</div>
+    <button class="btn btn-full btn-ghost" onclick="sendAction('blogger_income')" style="margin-top:10px">
+      📤 Продублювати звіт у чат
+    </button>`;
+}
+
+/* ── Повна статистика (у панелі) ── */
+function renderStatsReport() {
+  const box = document.getElementById('stats-report');
+  if (!box) return;
+
+  const total   = D.total   || 0;
+  const active  = D.active  || 0;
+  const basic   = D.basic   || 0;
+  const premium = D.premium || 0;
+  const list    = D.top_students || [];
+
+  const activePct = total ? Math.round(active / total * 100) : 0;
+  const premPct   = total ? Math.round(premium / total * 100) : 0;
+  const lessons   = list.reduce((a, s) => a + (s.done || 0), 0);
+  const streaks   = list.map(s => s.streak || 0);
+  const bestStr   = streaks.length ? Math.max(...streaks) : 0;
+  const avgLess   = list.length ? Math.round(lessons / list.length) : 0;
+
+  let rows = `
+    <div class="rep-line"><span class="rep-key">Студентів всього</span><span class="rep-val purple">${total}</span></div>
+    <div class="rep-line"><span class="rep-key">Активних</span><span class="rep-val green">${active} · ${activePct}%</span></div>
+    <div class="rep-line"><span class="rep-key">Сплячих</span><span class="rep-val">${Math.max(0, total - active)}</span></div>
+    <div class="rep-line"><span class="rep-key">На Basic</span><span class="rep-val">${basic}</span></div>
+    <div class="rep-line"><span class="rep-key">На Premium</span><span class="rep-val gold">${premium} · ${premPct}%</span></div>
+    <div class="rep-line"><span class="rep-key">Дохід цього місяця</span><span class="rep-val green">$${D.revenue || 0}</span></div>`;
+
+  if (list.length) {
+    rows += `
+    <div class="rep-line"><span class="rep-key">Уроків у топ-${list.length}</span><span class="rep-val">${lessons}</span></div>
+    <div class="rep-line"><span class="rep-key">Середньо уроків</span><span class="rep-val">${avgLess}</span></div>
+    <div class="rep-line"><span class="rep-key">Найдовший стрік</span><span class="rep-val" style="color:var(--orange)">🔥 ${bestStr} дн.</span></div>`;
+  }
+
+  box.innerHTML = rows + `
+    <div class="hint-box">
+      Голосовий коментар учню — команда <code>/voice_comment ID</code> у чаті бота,
+      далі надішли голосове. Воно піде студенту від твого імені.
+    </div>
+    <button class="btn btn-full btn-ghost" onclick="sendAction('blogger_full_stats')" style="margin-top:10px">
+      📤 Продублювати звіт у чат
+    </button>`;
+}
+
+/* ══════════════════════════════════════════════════════════
+   BAE-АНАЛІТИКА — що резонує з аудиторією блогера.
+   Дані приходять з bot.py у D.content_stats (агрегатор
+   _blogger_content_stats). Якщо їх нема — блок не малюємо.
+   ══════════════════════════════════════════════════════════ */
+
+function anRows(items, colorCls) {
+  if (!items || !items.length) return '';
+  const max = Math.max(...items.map(x => x.count || 0), 1);
+  return items.map((x, i) => {
+    const pct = Math.round((x.count || 0) / max * 100);
+    /* Бекенд віддає "name" у всіх корзинах. Старі ключі — як запасний шлях. */
+    const label = esc(x.name || x.phrase || x.title || x.topic || '');
+    return `
+      <div class="an-row">
+        <div class="an-rank ${i === 0 ? 'top' : ''}">${i === 0 ? '🔥' : i + 1}</div>
+        <div class="an-text" title="${label}">${label}</div>
+        <div class="an-bar"><div class="an-bar-fill ${colorCls}" style="width:${pct}%"></div></div>
+        <div class="an-count ${colorCls}">${x.count}</div>
+      </div>`;
+  }).join('');
+}
+
+function renderAnalytics() {
+  const box = document.getElementById('analytics-content');
+  if (!box) return;
+  const st = D.content_stats || {};
+
+  const saved   = st.top_saved   || [];
+  const spoken  = st.top_spoken  || [];
+  const videos  = st.top_videos  || [];
+  const grammar = st.top_grammar || [];
+
+  if (!saved.length && !spoken.length && !videos.length) {
+    box.innerHTML =
+      '<div class="empty"><span class="empty-icon">📊</span>' +
+      'Даних поки немає.<br>Вони з\'являться, коли учні почнуть<br>' +
+      'зберігати фрази й проговорювати їх.</div>';
+    return;
+  }
+
+  let html = '';
+
+  if (spoken.length) {
+    html += `
+      <div class="an-block">
+        <div class="an-head">
+          <span class="an-icon">🗣</span>
+          <span class="an-title">Найбільше повторюють вголос</span>
+          <span class="an-total">${st.spoken_total || 0}</span>
+        </div>
+        ${anRows(spoken, 'green')}
+      </div>`;
+  }
+
+  if (saved.length) {
+    html += `
+      <div class="an-block">
+        <div class="an-head">
+          <span class="an-icon">💎</span>
+          <span class="an-title">Найчастіше зберігають</span>
+          <span class="an-total">${st.saved_total || 0}</span>
+        </div>
+        ${anRows(saved, '')}
+      </div>`;
+  }
+
+  if (videos.length) {
+    html += `
+      <div class="an-block">
+        <div class="an-head">
+          <span class="an-icon">🎬</span>
+          <span class="an-title">Відео, які чіпляють</span>
+        </div>
+        ${anRows(videos, 'gold')}
+      </div>`;
+  }
+
+  if (grammar.length) {
+    html += `
+      <div class="an-block">
+        <div class="an-head">
+          <span class="an-icon">📖</span>
+          <span class="an-title">Граматика, яку ловлять</span>
+        </div>
+        ${anRows(grammar, '')}
+      </div>`;
+  }
+
+  html += `
+    <div class="hint-box">
+      Це те, що <b style="color:var(--text)">реально резонує</b> з твоєю аудиторією.
+      Фраза вгорі списку — тема для наступного відео.
+    </div>`;
+
+  box.innerHTML = html;
+}
+
+/* ── Рівні учнів A1 → C2 ── */
+const LEVEL_ORDER = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
+
+function renderLevels() {
+  const box = document.getElementById('levels-block');
+  if (!box) return;
+
+  const st  = D.content_stats || {};
+  const raw = st.levels || {};
+
+  /* Ключі можуть бути як "A2", так і "Elementary A2" — нормалізуємо */
+  const norm = {};
+  Object.keys(raw).forEach(k => {
+    const m = String(k).toUpperCase().match(/\b([ABC][12])\b/);
+    const key = m ? m[1] : null;
+    if (key) norm[key] = (norm[key] || 0) + raw[k];
+  });
+
+  const total = Object.values(norm).reduce((a, b) => a + b, 0);
+  if (!total) {
+    box.innerHTML =
+      '<div class="empty"><span class="empty-icon">📈</span>Рівні ще не визначені</div>';
+    return;
+  }
+
+  const max = Math.max(...Object.values(norm), 1);
+
+  box.innerHTML = LEVEL_ORDER.map(lvl => {
+    const n   = norm[lvl] || 0;
+    const pct = Math.round(n / max * 100);
+    const cls = lvl[0].toLowerCase();
+    return `
+      <div class="lvl-row">
+        <div class="lvl-tag ${cls}">${lvl}</div>
+        <div class="lvl-track"><div class="lvl-bar ${cls}" style="width:${pct}%"></div></div>
+        <div class="lvl-n" style="color:${n ? 'var(--text)' : 'var(--text3)'}">${n}</div>
+      </div>`;
+  }).join('') + `
+    <div class="status-line">Усього з визначеним рівнем — ${total}</div>`;
+}
+
+/* ── Головне заповнення ── */
 function fill() {
   const name    = D.name    || 'Blogger';
   const total   = D.total   || 0;
@@ -707,76 +1403,131 @@ function fill() {
 
   document.getElementById('avatar-initials').textContent = initials(name);
   document.getElementById('header-name').textContent     = '@' + name;
-  document.getElementById('stat-total').textContent      = total;
-  document.getElementById('stat-active').textContent     = active;
-  document.getElementById('stat-basic').textContent      = basic;
-  document.getElementById('stat-premium').textContent    = premium;
-  document.getElementById('revenue-val').textContent     = '$' + revenue;
-  document.getElementById('basic-val').textContent       = basic;
-  document.getElementById('premium-val').textContent     = premium;
+  document.getElementById('header-sub').textContent      =
+    total ? `${total} ${plural(total, 'учень', 'учні', 'учнів')} · ${active} активн${active === 1 ? 'ий' : 'их'}`
+          : 'Панель блогера';
+
+  document.getElementById('stat-total').textContent   = total;
+  document.getElementById('stat-active').textContent  = active;
+  document.getElementById('stat-basic').textContent   = basic;
+  document.getElementById('stat-premium').textContent = premium;
+  document.getElementById('revenue-val').textContent  = '$' + revenue;
+  document.getElementById('basic-val').textContent    = basic;
+  document.getElementById('premium-val').textContent  = premium;
 
   const premPct = total > 0 ? Math.round(premium / total * 100) : 0;
-  document.getElementById('prem-bar').style.width = premPct + '%';
-  document.getElementById('prem-pct').textContent = premPct + '% Premium';
+  document.getElementById('prem-bar').style.width  = (100 - premPct) + '%';
+  document.getElementById('prem-pct').textContent  = premPct + '% Premium';
 
-  // ── Відео челенджу + Фрази дня ──
+  renderTopStudents();
+  renderLevels();
+  renderAnalytics();
+  renderStatsReport();
   renderChallengeVideos();
   renderPhrases();
-  // Поточне відео челенджу тижня
-  const _wcUrl = (D.weekly_challenge_video) || '';
-  const _wcInput = document.getElementById('wc-video-input');
-  const _wcStatus = document.getElementById('wc-video-status');
-  if (_wcInput && _wcUrl) _wcInput.value = _wcUrl;
-  if (_wcStatus) { _wcStatus.textContent = _wcUrl ? '✅ Відео задано' : ''; _wcStatus.style.color = 'var(--green)'; }
 
-  // ── Financial journal ──
+  /* Відео челенджу тижня */
+  const wcUrl    = D.weekly_challenge_video || '';
+  const wcInput  = document.getElementById('wc-video-input');
+  const wcStatus = document.getElementById('wc-video-status');
+  if (wcInput && wcUrl) wcInput.value = wcUrl;
+  if (wcStatus) wcStatus.textContent = wcUrl ? '✅ Відео задано' : '';
+
+  /* ── Фінанси ── */
   const fin = D.fin || {};
-  document.getElementById('fin-pending').textContent = '$' + (fin.pending || 0);
-  document.getElementById('fin-total').textContent   = '$' + (fin.total_comm || 0);
-  document.getElementById('fin-paid').textContent    = '$' + (fin.paid_out || 0);
+  document.getElementById('fin-pending').textContent     = '$' + (fin.pending    || 0);
+  document.getElementById('fin-total').textContent       = '$' + (fin.total_comm || 0);
+  document.getElementById('fin-paid').textContent        = '$' + (fin.paid_out   || 0);
   document.getElementById('fin-next-payout').textContent = fin.next_payout || 'до 10';
-  document.getElementById('fin-basic-comm').textContent = '$' + (fin.basic_comm || 0);
-  document.getElementById('fin-basic-m').textContent    = (fin.basic_m_count || 0);
-  document.getElementById('fin-basic-6').textContent    = (fin.basic_6_count || 0);
-  document.getElementById('fin-prem-comm').textContent  = '$' + (fin.prem_comm || 0);
-  document.getElementById('fin-prem-m').textContent     = (fin.prem_m_count || 0);
-  document.getElementById('fin-prem-6').textContent     = (fin.prem_6_count || 0);
+  document.getElementById('fin-basic-comm').textContent  = '$' + (fin.basic_comm || 0);
+  document.getElementById('fin-basic-m').textContent     = fin.basic_m_count || 0;
+  document.getElementById('fin-basic-6').textContent     = fin.basic_6_count || 0;
+  document.getElementById('fin-prem-comm').textContent   = '$' + (fin.prem_comm  || 0);
+  document.getElementById('fin-prem-m').textContent      = fin.prem_m_count  || 0;
+  document.getElementById('fin-prem-6').textContent      = fin.prem_6_count  || 0;
+
   if (fin.rate_basic) {
-    const rb = fin.rate_basic, rp = fin.rate_premium || rb;
+    const rb = fin.rate_basic;
+    const rp = fin.rate_premium || rb;
     document.getElementById('fin-rate-note').textContent =
-      (rb === rp) ? `Комісія ${rb}% з кожної оплати студента`
+      (rb === rp) ? `${rb}% комісія з кожної оплати студента`
                   : `Комісія: Basic ${rb}% · Premium ${rp}%`;
   }
 
-  const jlist = document.getElementById('journal-list');
-  const journal = fin.journal || [];
-  const PLAN_LABELS = {
-    basic: ['Basic', 'm'], premium: ['Premium', 'm'],
-    basic_6m: ['Basic 6міс', 'h'], premium_6m: ['Premium 6міс', 'h']
-  };
-  if (!journal.length) {
-    jlist.innerHTML = '<div style="text-align:center;color:var(--text2);font-size:var(--fs);padding:20px 0">Оплат поки немає</div>';
-    return;
-  }
-  jlist.innerHTML = journal.map(j => {
-    const lbl = PLAN_LABELS[j.plan] || ['—','m'];
-    const monthStr = (j.month || '').replace('-', '/');
-    return `
-    <div class="journal-row">
-      <span class="journal-plan ${lbl[1]}">${lbl[0]}</span>
-      <div class="journal-info">
-        <div class="journal-name">${j.student}</div>
-        <div class="journal-month">${monthStr} · оплата $${j.amount}</div>
-      </div>
-      <div>
-        <div class="journal-comm">+$${j.comm}</div>
-        <div class="journal-status ${j.paid?'paid':'wait'}">${j.paid?'виплачено':'очікує'}</div>
-      </div>
-    </div>`;
-  }).join('');
+  /* Журнал — ОСТАННІМ. У старій версії тут стояв return посеред fill(),
+     через що все після нього не виконувалось. Винесено в окрему функцію. */
+  renderJournal(fin);
+  renderIncomeReport(fin);
+}
+
+function plural(n, one, few, many) {
+  const a = Math.abs(n) % 100, b = a % 10;
+  if (a > 10 && a < 20) return many;
+  if (b > 1 && b < 5)   return few;
+  if (b === 1)          return one;
+  return many;
 }
 
 fill();
+
+/* ── ЗГОРТАЙКИ ──────────────────────────────────────────
+   Одна відкрита за раз. Клік по відкритій — закриває.
+   scrollToId() з блоку «Що заповнено» тепер не просто скролить,
+   а й РОЗКРИВАЄ цільову секцію — інакше людина клікала б і
+   впиралась у закритий заголовок. */
+function toggleFold(h){
+  const sec = h.closest('.fold');
+  if(!sec) return;
+  const wasOpen = sec.classList.contains('open');
+  /* закриваємо всі в цій же вкладці */
+  const panel = sec.closest('.panel') || document;
+  panel.querySelectorAll('.fold.open').forEach(f=>f.classList.remove('open'));
+  if(!wasOpen){
+    sec.classList.add('open');
+    /* підводимо заголовок під верх, щоб вміст було видно */
+    setTimeout(()=>{ try{
+      h.scrollIntoView({behavior:'smooth', block:'start'});
+    }catch(e){} }, 60);
+  }
+}
+
+/* Розкрити секцію на вимогу (для навігації «Що заповнено») */
+function openFoldById(id){
+  const sec = document.getElementById(id);
+  if(!sec || !sec.classList.contains('fold')) return false;
+  const panel = sec.closest('.panel') || document;
+  panel.querySelectorAll('.fold.open').forEach(f=>f.classList.remove('open'));
+  sec.classList.add('open');
+  return true;
+}
+
+
+/* ── РОЗСИЛКА З ВІДЕО ────────────────────────────────────
+   Два шляхи, на вибір блогера:
+     1) YouTube-лінк — вставив у поле, пішов у текст
+     2) Своє відео/кружечок — панель не вміє завантажувати файли,
+        тому просимо бота: він чекає відео в чаті і ловить його.
+   Текст зберігається в обох випадках. */
+function submitBroadcast(){
+  const el = document.getElementById('broadcast-input');
+  const txt = (el && el.value || '').trim();
+  if(!txt){
+    if(el) el.focus();
+    return;
+  }
+  const u = document.getElementById('broadcast-video-url');
+  const url = (u && u.value || '').trim();
+  maAction('blogger_broadcast', { text: txt, video_url: url });
+}
+
+function attachBcVideo(){
+  const el = document.getElementById('broadcast-input');
+  const txt = (el && el.value || '').trim();
+  /* Текст летить разом із запитом — інакше блогер напише текст,
+     піде записувати відео, і текст загубиться при закритті панелі. */
+  maAction('blogger_bc_attach_video', { text: txt });
+}
+
 </script>
 </body>
 </html>
