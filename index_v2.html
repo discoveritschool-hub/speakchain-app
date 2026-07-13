@@ -1400,7 +1400,21 @@ async function mountApp(id,host,pk){
   wr.style.cssText='height:100%;overflow:hidden';
   wr.innerHTML=APPS[id].html; sh.appendChild(wr);
 
-  const q=Object.keys(d).length?'?d='+encodeURIComponent(JSON.stringify(d)):'';
+  /* Мініап читає свій context із location.search (відео-практика, чек-ін).
+     Оболонка підміняє search на '?d=…' — тож ЗОВНІШНІ параметри треба
+     прокинути сюди, інакше ?context=video до мініапа не дійде і він
+     стартує без відео. Мовчазна поломка — саме те, що ловимо. */
+  let q='';
+  try{
+    const out=new URLSearchParams();
+    if(Object.keys(d).length) out.set('d', JSON.stringify(d));
+    const inc=new URLSearchParams(location.search);
+    inc.forEach((v,k)=>{ if(k!=='s' && k!=='d') out.set(k,v); });
+    const s=out.toString();
+    q = s ? '?'+s : '';
+  }catch(e){
+    q = Object.keys(d).length?'?d='+encodeURIComponent(JSON.stringify(d)):'';
+  }
   const fL=new Proxy(window.location,{get(t,p){if(p==='search')return q;
     const v=t[p];return typeof v==='function'?v.bind(t):v;}});
   const fW=new Proxy(window,{
@@ -1531,7 +1545,24 @@ $$('.overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)closeOv
 
 try{TG&&TG.ready();TG&&TG.expand();}catch(e){}
 setMode('active');
-go('s-home');
+
+/* ══ ВХІД НА КОНКРЕТНИЙ ЕКРАН ══
+   Кнопки в чаті раніше вели на окремі .html (speaking_buddy.html і т.д.).
+   Ті файли прибрано → кнопки давали 404, а «Open» працював.
+   Тепер бот шле сюди ?s=s-buddy (або start_param=s-buddy з deep-link),
+   і ми відкриваємо потрібний екран замість «Сьогодні».
+   Невідомий ключ ігноруємо — тоді поводимось як раніше. */
+const START = (function(){
+  try{
+    const q = new URLSearchParams(location.search).get('s');
+    if(q) return q;
+    const sp = TG?.initDataUnsafe?.start_param || '';
+    if(sp.indexOf('s-') === 0) return sp;   /* лише наші ключі, не ref_… */
+  }catch(e){}
+  return '';
+})();
+
+go(TABS.indexOf(START) >= 0 ? START : 's-home');
 setTimeout(scWatchAll,300);
 window.addEventListener('resize',scWatchAll);
 
