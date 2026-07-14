@@ -2073,8 +2073,13 @@ renderScenarios();
       const strk = (document.getElementById('vc-chain-txt')?.textContent || '').trim();
       const txt  = 'Щойно говорила англійською в SpeakChain 🎙\n'
                  + xp + ' XP · ' + strk + '\n\nСпробуй і ти:';
-      const link = (typeof SHARE_LINK !== 'undefined' && SHARE_LINK)
-                 ? SHARE_LINK : 'https://t.me/SpeakChainBot';
+      /* 🔴 БУЛО: голий SHARE_LINK. У Shadow DOM оболонки код іде через
+         new Function(...) — `window` там Proxy, і голе ім'я шукається в
+         лексичній області, де його НЕМАЄ. typeof давав undefined, шер
+         падав на дефолт БЕЗ реф-коду. Читаємо через window явно. */
+      const link = (typeof window !== 'undefined' && window.SHARE_LINK)
+                 ? window.SHARE_LINK
+                 : 'https://t.me/SpeakChain_bot';
       const url  = 'https://t.me/share/url?url=' + encodeURIComponent(link)
                  + '&text=' + encodeURIComponent(txt);
       if (tg?.openTelegramLink) tg.openTelegramLink(url);
