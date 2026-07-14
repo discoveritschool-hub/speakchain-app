@@ -1445,7 +1445,8 @@ async function mountApp(id,host,pk){
       +'showScreen:typeof showScreen!=="undefined"?showScreen:0,'
       +'openTopic:typeof openTopic!=="undefined"?openTopic:0,'
       +'resetInactivity:typeof resetInactivity!=="undefined"?resetInactivity:0,'
-      +'clearInactivityTimers:typeof clearInactivityTimers!=="undefined"?clearInactivityTimers:0});}catch(e){}'
+      +'clearInactivityTimers:typeof clearInactivityTimers!=="undefined"?clearInactivityTimers:0,'
+      +'endSession:typeof endSession!=="undefined"?endSession:0});}catch(e){}'
     )(fD,fW,fL,box);
   }catch(e){ console.warn('['+id+']',e.message); }
   mounted[id]=box;
@@ -1478,8 +1479,26 @@ function goBack(){
   try{ TG?.close(); }catch(e){}
 }
 
+/* ══ ЗАКРИТТЯ СЕСІЇ CHAINY ══
+   У standalone-файлі сесію закривав `pagehide` / `visibilitychange`.
+   В оболонці мініап живе в Shadow DOM ТІЄЇ САМОЇ сторінки — тож при
+   переході на іншу вкладку жодна з цих подій не стріляє.
+   Наслідок: /buddy_session_end не викликався НІКОЛИ → XP, ланка
+   й картка перемоги не нараховувались.
+   Тут ловимо вихід із s-buddy руками. endSession() усередині мініапа
+   має власний захист `beaconSent` — подвійного нарахування не буде. */
+function leaveBuddy(){
+  try{
+    const b = mounted['s-buddy'];
+    if(b && typeof b.endSession === 'function') b.endSession();
+    if(b && typeof b.clearInactivityTimers === 'function') b.clearInactivityTimers();
+  }catch(e){ console.warn('leaveBuddy', e.message); }
+}
+
 async function go(sid, isBack){
   if(sid===CUR && !isBack) return;
+  /* Ідемо ГЕТЬ із Chainy → закриваємо сесію (XP + ланка + картка) */
+  if(CUR==='s-buddy' && sid!=='s-buddy') leaveBuddy();
   if(!isBack && CUR) HIST.push(CUR);
   CUR=sid;
 
@@ -1535,6 +1554,8 @@ try{
 
 /* ══════════ ОВЕРЛЕЇ ══════════ */
 async function openOv(id){
+  /* Оверлей поверх Chainy — людина фактично пішла з чату. Закриваємо сесію. */
+  if(CUR==='s-buddy') leaveBuddy();
   $('#'+id).classList.add('on');
   tgBack(true);
   const M={'ov-vocab':['ov-vocab',null],'ov-invite':['ov-invite','ov-invite']};
@@ -1547,6 +1568,45 @@ function closeOv(){
   tgBack(CUR!=='s-home' || HIST.length>0);
 }
 $$('.overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)closeOv();}));
+
+/* ══ ЗВІТ ПРО ПОМИЛКИ ══
+   /err_fix у боті існує й чекає на звіти — але його НІХТО не кликав.
+   Коли JS у мініапі падає, власниця про це не дізнається ніяк:
+   прод на GitHub Pages, консолі користувача ніхто не бачить.
+   Тепер падіння летить у лог бота. Нічого не пише в базу — діагностика. */
+(function errReport(){
+  let sent = 0;                       /* не більше 3 звітів за сесію — не спамимо */
+  function report(msg, src){
+    if(sent >= 3 || !msg) return;
+    sent++;
+    try{
+      fetch(BOT_API + '/err_fix', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({
+          uid:    UID,
+          error:  String(msg).slice(0, 500),
+          source: (src || CUR || 'shell'),
+        }),
+        keepalive: true,
+      }).catch(()=>{});
+    }catch(e){}
+  }
+  window.addEventListener('error', e=>{
+    report((e.message||'') + ' @ ' + (e.filename||'').split('/').pop() + ':' + (e.lineno||0));
+  });
+  window.addEventListener('unhandledrejection', e=>{
+    report('promise: ' + (e.reason?.message || e.reason || 'unknown'));
+  });
+  window.SC_report = report;          /* мініапи можуть кликати самі */
+})();
+
+/* Страховка: людина закриває мініап цілком (свайп / хрестик Telegram).
+   Тут pagehide СПРАЦЬОВУЄ, бо вивантажується вся сторінка-оболонка. */
+window.addEventListener('pagehide', ()=>{ if(CUR==='s-buddy') leaveBuddy(); });
+document.addEventListener('visibilitychange', ()=>{
+  if(document.visibilityState==='hidden' && CUR==='s-buddy') leaveBuddy();
+});
 
 try{TG&&TG.ready();TG&&TG.expand();}catch(e){}
 setMode('active');
