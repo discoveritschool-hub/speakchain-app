@@ -1,0 +1,44 @@
+# ──────────────────────────────────────────────────────────────
+# Смоук-тести SpeakChain — репозиторій ОБОЛОНКИ (`app`)
+#
+# Перевіряє index_v2.html:
+#   • APPS JSON валідний, JS усіх 8 мініапів парситься
+#   • act() без TG.close()  → додаток не гасне, немає кола
+#   • роутер ПОЗА APPS      → sync.py його не затре
+#   • ін'єкція ПІСЛЯ коду мініапа → JS hoisting враховано
+#   • хости оверлеїв *-host → не зникне хрестик закриття
+#
+# ЯК ПОСТАВИТИ:
+#   1. Скопіюй test_smoke.py у корінь репо `app`
+#   2. Цей файл → .github/workflows/smoke.yml
+#
+# node ОБОВ'ЯЗКОВИЙ — ним перевіряється JS кожного мініапа.
+# ──────────────────────────────────────────────────────────────
+name: smoke
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      # node --check парсить JS кожного з 8 мініапів усередині APPS
+      - name: Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Смоук-тести
+        run: python3 test_smoke.py
