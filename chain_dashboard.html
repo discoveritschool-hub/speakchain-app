@@ -30,6 +30,50 @@
     --grad-gold:linear-gradient(135deg,#f5c451,#e0a020);
     --dur-fast:.12s; --dur:.15s; --ease:cubic-bezier(.4,0,.2,1);
   }
+  
+    /* ══ КАРТКА «ЩО РОБИТИ ЗАРАЗ» ══ */
+    .nudge-card {
+      display:flex; align-items:center; gap:13px;
+      padding:16px; border-radius:var(--r-lg,14px);
+      background:linear-gradient(135deg,rgba(124,110,247,.16),rgba(124,110,247,.06));
+      border:1px solid rgba(124,110,247,.3);
+      cursor:pointer; transition:transform .12s;
+      margin-bottom:10px;
+    }
+    .nudge-card:active { transform:scale(.985); }
+    .nudge-icon { font-size:28px; flex-shrink:0; }
+    .nudge-body { display:flex; flex-direction:column; gap:3px; flex:1; min-width:0; }
+    .nudge-title { font-size:var(--fs,15px); font-weight:650; }
+    .nudge-sub {
+      font-size:var(--fs-sm,13px); color:var(--text2,#8b8b93);
+      line-height:1.4; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+    }
+    .nudge-cta {
+      flex-shrink:0; padding:8px 15px; border-radius:999px;
+      background:var(--purple,#7c6ef7); color:#fff;
+      font-size:var(--fs-sm,13px); font-weight:600;
+    }
+    /* Виконано — гасимо колір, щоб не тиснути на людину, яка вже зробила */
+    .nudge-card.done {
+      background:rgba(255,255,255,.03);
+      border-color:var(--line,#2a2a35);
+    }
+    .nudge-card.done .nudge-cta {
+      background:transparent; color:var(--text2,#8b8b93);
+      border:1px solid var(--line,#2a2a35);
+    }
+
+    /* ══ Запросити друга — другорядний рядок, не плитка ══ */
+    .invite-row {
+      display:flex; align-items:center; gap:10px;
+      padding:12px 14px; border-radius:var(--r,10px);
+      border:1px solid var(--line,#2a2a35);
+      cursor:pointer; transition:background .12s;
+    }
+    .invite-row:active { background:rgba(255,255,255,.04); }
+    .invite-ico { font-size:17px; flex-shrink:0; }
+    .invite-txt { flex:1; font-size:var(--fs-sm,13px); color:var(--text2,#8b8b93); }
+    .invite-arr { color:var(--text2,#8b8b93); flex-shrink:0; }
   </style>
   <link rel="stylesheet" href="tokens.css">
 <meta charset="utf-8">
@@ -378,28 +422,28 @@ body {
 
   <!-- Quick actions -->
   <div class="section">
-    <div class="section-title">Дії</div>
-    <div class="action-grid">
-      <div class="action-card" onclick="act('start_lesson')">
-        <span class="action-icon">🎬</span>
-        <span class="action-label">Почати урок</span>
-        <span class="action-sub">Додай ланку сьогодні</span>
-      </div>
-      <div class="action-card" onclick="act('chain_invite_screen')">
-        <span class="action-icon">🔗</span>
-        <span class="action-label">Запросити друга</span>
-        <span class="action-sub">+бонус для обох</span>
-      </div>
-      <div class="action-card" onclick="act('show_progress')">
-        <span class="action-icon">📊</span>
-        <span class="action-label">Мій прогрес</span>
-        <span class="action-sub">A1 → C2 шлях</span>
-      </div>
-      <div class="action-card" onclick="act('revive_chain')">
-        <span class="action-icon" id="revive-icon">💪</span>
-        <span class="action-label" id="revive-label">Серія завдань</span>
-        <span class="action-sub" id="revive-sub">XP челендж</span>
-      </div>
+    <!-- ══ ОДНА КАРТКА «ЩО РОБИТИ ЗАРАЗ» ══
+         Було 4 плитки: урок / прогрес / запросити / оживити.
+         Дві дублювали екран: урок = кнопка внизу, прогрес = смужка тут же.
+         Але головна біда — не дублювання, а ВИБІР. Втомлена людина
+         бачить чотири однакові плитки, думає, що обрати — і закриває
+         застосунок. Вибір убиває щоденну звичку.
+         Тепер одна пропозиція. Бекенд вирішує яка (nudge.kind). -->
+    <div class="nudge-card" id="nudge-card" onclick="doNudge()">
+      <span class="nudge-icon" id="nudge-icon">🎬</span>
+      <span class="nudge-body">
+        <span class="nudge-title" id="nudge-title">Почати заняття</span>
+        <span class="nudge-sub" id="nudge-sub">Відео + практика — 10 хвилин</span>
+      </span>
+      <span class="nudge-cta" id="nudge-cta">Почати</span>
+    </div>
+
+    <!-- Запросити друга — НЕ дублюється ніде, це зростання.
+         Лишаємо, але другорядним рядком, не плиткою. -->
+    <div class="invite-row" onclick="act('chain_invite_screen')">
+      <span class="invite-ico">🔗</span>
+      <span class="invite-txt">Запросити друга — бонус для обох</span>
+      <span class="invite-arr">›</span>
     </div>
   </div>
 
@@ -616,6 +660,8 @@ function renderChainLinks(len,total){
 
 /* ── Tab 1: Chain ── */
 function fillChain(){
+  renderNudge();          /* картка «що робити зараз» — перше, що бачить око */
+
   const len   = D.chain_length||0;
   const total = D.trial_links||7;
   const status= D.chain_status||'new';
@@ -631,9 +677,11 @@ function fillChain(){
   if(status==='broken'){
     statusEl.textContent='💔 Ланцюжок розірваний — відновити?';
     statusEl.className='chain-status broken';
-    document.getElementById('revive-icon').textContent='🔄';
-    document.getElementById('revive-label').textContent='Відновити';
-    document.getElementById('revive-sub').textContent='Витратити XP';
+    /* Кнопки «Оживити» більше немає — розірваний ланцюжок тепер
+       окремий стан картки «що робити зараз» (nudge.kind='revive').
+       Старі звертання до revive-icon/label/sub прибрано: елементів
+       немає, і getElementById().textContent падав би з TypeError,
+       ламаючи ВЕСЬ екран, а не тільки цю кнопку. */
   } else if(len===0){
     statusEl.textContent='Почни перший урок';
     statusEl.className='chain-status';
@@ -872,6 +920,43 @@ function act(action){
 fillChain();
 fillNetwork();
 fillUpgrade();
+
+/* ══ КАРТКА «ЩО РОБИТИ ЗАРАЗ» ══
+   Бекенд шле d.nudge = {kind, icon, title, sub, cta, url?}.
+   Ми лише малюємо. Логіку «що саме запропонувати» тримає бот —
+   там є весь стан: серія, остання сесія, недогране відео. */
+function renderNudge() {
+  const n = (typeof D !== 'undefined' && D.nudge) ? D.nudge : null;
+  if (!n) return;
+
+  const card = document.getElementById('nudge-card');
+  const set = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
+
+  set('nudge-icon',  n.icon  || '🎬');
+  set('nudge-title', n.title || 'Почати заняття');
+  set('nudge-sub',   n.sub   || '');
+  set('nudge-cta',   n.cta   || 'Почати');
+
+  /* Зроблено сьогодні — гасимо картку. Не женемо далі: похвалити
+     і відпустити чесніше, ніж вимагати ще одне заняття. */
+  if (card) card.classList.toggle('done', n.kind === 'done');
+}
+
+function doNudge() {
+  const n = (typeof D !== 'undefined' && D.nudge) ? D.nudge : null;
+  if (!n) { act('start_lesson'); return; }
+
+  /* Розірваний ланцюжок → відновлення, не урок */
+  if (n.kind === 'revive') { act('revive_chain'); return; }
+
+  /* Недогране відео → одразу в плеєр із ним */
+  if (n.kind === 'resume' && n.url) {
+    act('start_lesson', { video_url: n.url });
+    return;
+  }
+  act('start_lesson');
+}
+
 </script>
 </body>
 </html>
