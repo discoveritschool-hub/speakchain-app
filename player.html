@@ -30,6 +30,60 @@
     --grad-gold:linear-gradient(135deg,#f5c451,#e0a020);
     --dur-fast:.12s; --dur:.15s; --ease:cubic-bezier(.4,0,.2,1);
   }
+  
+    /* ══ ЕКРАН ВСТАВКИ ПОСИЛАННЯ ══ */
+    body { position:relative; min-height:100vh; }
+    #paste-screen {
+      /* absolute, НЕ fixed: у Shadow DOM (оболонка) fixed прив'язується
+         до вікна і перекриває таб-бар — вийти нікуди. absolute тримає
+         екран усередині плеєра. Окремо (standalone) поводиться так само,
+         бо body/html розтягнуті на 100%. */
+      display:none; position:absolute; inset:0; z-index:60;
+      background:var(--bg,#0f0f14);
+      align-items:center; justify-content:center; padding:24px;
+      overflow-y:auto;
+    }
+    #paste-screen.show { display:flex; }
+    .paste-box { width:100%; max-width:420px; }
+    .paste-title {
+      font-size:var(--fs-xl,20px); font-weight:700; margin-bottom:6px;
+    }
+    .paste-sub {
+      font-size:var(--fs-sm,13px); color:var(--text2,#8b8b93);
+      margin-bottom:20px; line-height:1.5;
+    }
+    .paste-input {
+      width:100%; padding:14px 16px; border-radius:var(--r-lg,12px);
+      border:1px solid var(--line,#2a2a35); background:var(--card,#1a1a22);
+      color:var(--text,#fff); font-size:var(--fs,15px); outline:none;
+      transition:border-color .15s;
+    }
+    .paste-input:focus { border-color:var(--purple,#7c6ef7); }
+    .paste-err {
+      font-size:var(--fs-sm,13px); color:#ff6b6b; margin-top:8px;
+      min-height:18px;
+    }
+    .paste-modes { display:flex; flex-direction:column; gap:8px; margin:18px 0; }
+    .pmode {
+      display:flex; align-items:center; gap:12px; text-align:left;
+      padding:13px 14px; border-radius:var(--r-lg,12px);
+      border:1px solid var(--line,#2a2a35); background:var(--card,#1a1a22);
+      color:var(--text,#fff); cursor:pointer; transition:all .15s;
+    }
+    .pmode.active {
+      border-color:var(--purple,#7c6ef7);
+      background:rgba(124,110,247,.12);
+    }
+    .pm-ico { font-size:22px; flex-shrink:0; }
+    .pm-body { display:flex; flex-direction:column; gap:2px; }
+    .pm-name { font-size:var(--fs,15px); font-weight:600; }
+    .pm-desc { font-size:var(--fs-sm,13px); color:var(--text2,#8b8b93); line-height:1.4; }
+    .paste-go {
+      width:100%; padding:15px; border-radius:var(--r-lg,12px); border:none;
+      background:var(--purple,#7c6ef7); color:#fff;
+      font-size:var(--fs,15px); font-weight:600; cursor:pointer;
+    }
+    .paste-go:active { transform:scale(.98); }
   </style>
   <link rel="stylesheet" href="tokens.css">
   <meta charset="utf-8">
@@ -300,6 +354,41 @@
 </head>
 <body>
 
+<!-- ══ ВСТАВКА ПОСИЛАННЯ ══
+     Показується, коли відео не передали (кнопка «Практика по відео»
+     без уроку, або людина прийшла зі своїм відео).
+     Раніше плеєр у такому разі просто падав у помилку. -->
+<div id="paste-screen">
+  <div class="paste-box">
+    <div class="paste-title">🎬 Практика по відео</div>
+    <div class="paste-sub">Встав посилання на YouTube — і працюємо</div>
+
+    <input id="paste-url" class="paste-input"
+           placeholder="https://youtube.com/watch?v=…"
+           autocomplete="off" inputmode="url">
+    <div id="paste-err" class="paste-err"></div>
+
+    <div class="paste-modes">
+      <button class="pmode active" id="pm-active" onclick="setListenMode('active')">
+        <span class="pm-ico">🎯</span>
+        <span class="pm-body">
+          <span class="pm-name">Активно</span>
+          <span class="pm-desc">Повторюю, записую себе, розбираю фрази</span>
+        </span>
+      </button>
+      <button class="pmode" id="pm-passive" onclick="setListenMode('passive')">
+        <span class="pm-ico">🌙</span>
+        <span class="pm-body">
+          <span class="pm-name">Фоново</span>
+          <span class="pm-desc">Просто слухаю — під час прогулянки, справ</span>
+        </span>
+      </button>
+    </div>
+
+    <button class="paste-go" onclick="openPasted()">Почати</button>
+  </div>
+</div>
+
 <!-- Video -->
 <div id="video-wrap">
   <div id="yt-player"></div>
@@ -550,7 +639,23 @@ document.getElementById("play-overlay").addEventListener("click", function(){
   resetInactivity();
 });
 
-if (!videoId) showFallback();
+/* Немає відео → не помилка, а екран вставки.
+   Раніше плеєр тут просто здавався. Тепер людина може прийти
+   зі своїм відео — і це головний вхід для кнопки «Практика по відео». */
+if (!videoId) {
+  document.getElementById('paste-screen')?.classList.add('show');
+  clearTimeout(apiTimeout);
+} else {
+  applyListenMode();
+}
+
+/* Створення плеєра винесено у функцію: після вставки посилання
+   треба стартувати ще раз, а YouTube API готове вже давно. */
+function bootPlayer() {
+  if (!videoId) return;
+  if (typeof YT === 'undefined' || !YT.Player) return;   /* API ще не готове */
+  window.onYouTubeIframeAPIReady();
+}
 
 window.onYouTubeIframeAPIReady = function() {
   if (!videoId) return;
@@ -1017,6 +1122,106 @@ if (dataRaw){
 
 // Субтитри завантажуємо після того як ytPlayer готовий
 // (викликається з onReady callback через невелику затримку)
+
+/* ══ ВСТАВКА ПОСИЛАННЯ + РЕЖИМИ СЛУХАННЯ ══════════════════════
+
+   ЩО БУЛО
+   ───────
+   Плеєр брав відео ТІЛЬКИ з URL (?v=…). Якщо його не передали —
+   падав у помилку. Тобто «прийти зі своїм відео» було неможливо.
+
+   ЩО СТАЛО
+   ────────
+   Немає відео → показуємо екран вставки. Людина кидає лінк,
+   обирає режим — і працює.
+
+   ДВА РЕЖИМИ
+   ──────────
+   🎯 Активно — усе як раніше: петля, запис себе, розбір фраз.
+      Таймер бездіяльності живий: якщо людина відійшла, сесія
+      закриється і не намалює фальшиві години практики.
+
+   🌙 Фоново — слухаю під час прогулянки. Таймер ГЛУШИМО: інакше
+      плеєр закриється через 3 хвилини, бо ніхто не тицяє екран.
+      Це не «читерство»: пасивне слухання — визнаний метод, але
+      воно чесно окремо рахується.
+
+   ЧОМУ ТІЛЬКИ YOUTUBE
+   ───────────────────
+   Shadowing вимагає точної петлі по секундах і читання позиції.
+   YouTube IFrame API це дає. Spotify/Apple такого не дозволяють —
+   їхні вбудовані плеєри не пускають ні до позиції, ні до петлі.
+   Але майже всі подкасти є і на YouTube, часто з субтитрами.      */
+
+let listenMode = 'active';
+
+function setListenMode(m) {
+  listenMode = (m === 'passive') ? 'passive' : 'active';
+  const a = document.getElementById('pm-active');
+  const p = document.getElementById('pm-passive');
+  if (a) a.classList.toggle('active', listenMode === 'active');
+  if (p) p.classList.toggle('active', listenMode === 'passive');
+  if (TG?.HapticFeedback) TG.HapticFeedback.selectionChanged();
+}
+
+/* Витягуємо ID з будь-якого вигляду YouTube-посилання.
+   Люди кидають що завгодно: з ?t=, з &list=, з мобільного,
+   короткий youtu.be, ба навіть просто сам ID. Треба прийняти все. */
+function extractYtId(raw) {
+  const t = (raw || '').trim();
+  if (!t) return null;
+
+  /* Уже голий ID */
+  if (/^[\w-]{11}$/.test(t)) return t;
+
+  const pats = [
+    /[?&]v=([\w-]{11})/,           /* youtube.com/watch?v=ID     */
+    /youtu\.be\/([\w-]{11})/,      /* youtu.be/ID                */
+    /\/embed\/([\w-]{11})/,        /* /embed/ID                  */
+    /\/shorts\/([\w-]{11})/,       /* /shorts/ID                 */
+    /\/live\/([\w-]{11})/,         /* /live/ID                   */
+  ];
+  for (const p of pats) {
+    const m = t.match(p);
+    if (m) return m[1];
+  }
+  return null;
+}
+
+function openPasted() {
+  const inp = document.getElementById('paste-url');
+  const err = document.getElementById('paste-err');
+  const id  = extractYtId(inp?.value);
+
+  if (!id) {
+    if (err) err.textContent = 'Не схоже на посилання YouTube. Спробуй ще раз.';
+    if (TG?.HapticFeedback) TG.HapticFeedback.notificationOccurred('error');
+    return;
+  }
+  if (err) err.textContent = '';
+
+  videoId = id;
+  document.getElementById('paste-screen')?.classList.remove('show');
+
+  applyListenMode();
+  bootPlayer();
+}
+
+/* Глушимо таймер бездіяльності у фоновому режимі.
+   Без цього людина вмикає подкаст, кладе телефон у кишеню — і через
+   3 хвилини плеєр каже «ти ще тут?» і закривається. */
+function applyListenMode() {
+  if (listenMode !== 'passive') return;
+  try {
+    clearInactivityTimers();
+    resetInactivity = function () {};        /* більше не зводиться */
+    const w = document.getElementById('inactivity-warn');
+    if (w) w.style.display = 'none';
+    const b = document.getElementById('btn-loop');
+    if (b) b.style.display = 'none';          /* петля у фоні не потрібна */
+  } catch (e) { console.warn('passive mode', e.message); }
+}
+
 </script>
 </body>
 </html>
