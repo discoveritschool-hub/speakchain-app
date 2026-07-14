@@ -921,14 +921,45 @@ const ini=n=>(n||'?').split(/\s+/).map(w=>w[0]).join('').toUpperCase().slice(0,2
 const plur=(n,a,b,c)=>{const x=Math.abs(n)%100,y=x%10;
   if(x>10&&x<20)return c; if(y>1&&y<5)return b; if(y===1)return a; return c;};
 
+/* ══ v13: ЄДИНИЙ РОУТЕР ДІЙ ══
+   БУЛО: п'ять act(). Чотири в мініапах (fetch → тиша → кнопка МЕРТВА)
+         + одна тут (fetch → TG.close() → бот шле кнопку → кнопка
+         відкриває цей самий додаток назад. КОЛО).
+   СТАЛО: одна act(). Мініапи отримують її ЧЕРЕЗ ІН'ЄКЦІЮ в mountApp —
+         усередині APPS нічого не змінено, тож sync.py нічого не затре.
+   Екран, що ЖИВЕ в оболонці, відкриваємо тут же: рідними go()/openOv()
+   (вони вміють HIST, CUR, leaveBuddy → XP, tgBack → кнопка «назад»). */
+const SHELL_TABS = {
+  buy_basic:         's-profile',
+  buy_premium:       's-profile',
+  paywall_fluent:    's-profile',
+  sc_send_challenge: 's-social',
+  open_buddy:        's-buddy',    /* була МЕРТВА: 0 згадок у боті */
+  show_progress:     's-prog',
+};
+const SHELL_OVERLAYS = {
+  chain_invite_screen: 'ov-invite',
+};
+/* start_lesson · revive_chain · open_diagnostic · paywall_buy · логи — веде БОТ.
+   ТЕХБОРГ: щоб start_lesson відкривав плеєр УСЕРЕДИНІ оболонки, боту треба
+   віддавати videoId у payload (ov-player монтується без payload-ключа). */
+function shellRoute(a){
+  if (SHELL_TABS[a])     { go(SHELL_TABS[a]);         return true; }
+  if (SHELL_OVERLAYS[a]) { openOv(SHELL_OVERLAYS[a]); return true; }
+  return false;
+}
+
 async function act(a,x){
   const body=Object.assign({action:a,uid:UID,init_data:IDT},x||{});
-  try{const r=await fetch(BOT_API+'/miniapp_action',{method:'POST',
-    headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
-    if(r.ok){toast('Готово — дивись у чаті 💬');
-      setTimeout(()=>{try{TG&&TG.close();}catch(e){}},700);return;}}catch(e){}
-  if(TG?.sendData){try{TG.sendData(JSON.stringify(body));return;}catch(e){}}
-  toast('Не вдалося. Спробуй ще раз');
+  /* Боту шлемо У ФОНІ — не тримаємо людину, поки летить fetch */
+  fetch(BOT_API+'/miniapp_action',{method:'POST',
+    headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
+    .catch(()=>{ if(TG?.sendData){try{TG.sendData(JSON.stringify(body));}catch(e){}} });
+
+  if (shellRoute(a)) return true;   /* екран є тут → відкрили, НЕ гасимо */
+
+  toast('Готово — дивись у чаті 💬');  /* решту веде бот. Додаток лишається */
+  return true;
 }
 
 async function load(scr){
@@ -1587,8 +1618,17 @@ async function mountApp(id,host,pk){
   /* Ловимо функції модуля, щоб керувати ним ззовні */
   const box={};
   try{
-    new Function('document','window','location','__box',
-      APPS[id].js+'\n;try{Object.assign(__box,{openScenario:typeof openScenario!=="undefined"?openScenario:0,'
+    /* v13: РОУТЕР ВПОРСКУЄТЬСЯ ПІСЛЯ коду мініапа.
+       ЧОМУ ПІСЛЯ: function declaration hoisting — перемагає ОСТАННЯ.
+       Якби ін'єкція йшла перед APPS[id].js, мініап перекрив би її своєю
+       мертвою maAction, і кнопки лишились би мертвими. Перевірено тестом.
+       ЧОМУ НЕ В APPS: sync.py перезаписує APPS[ключ] зі standalone-файлу
+       і затер би будь-яку правку всередині мініапа. Тут — не затре. */
+    new Function('document','window','location','__box','__act',
+      APPS[id].js
+      +'\n;async function maAction(action, extra){ return __act(action, extra||{}); }'
+      +'\n;async function act(action, extra){ return __act(action, extra||{}); }'
+      +'\n;try{Object.assign(__box,{openScenario:typeof openScenario!=="undefined"?openScenario:0,'
       +'startChainyChat:typeof startChainyChat!=="undefined"?startChainyChat:0,'
       +'openMySituation:typeof openMySituation!=="undefined"?openMySituation:0,'
       +'selectRole:typeof selectRole!=="undefined"?selectRole:0,'
@@ -1597,7 +1637,7 @@ async function mountApp(id,host,pk){
       +'resetInactivity:typeof resetInactivity!=="undefined"?resetInactivity:0,'
       +'clearInactivityTimers:typeof clearInactivityTimers!=="undefined"?clearInactivityTimers:0,'
       +'endSession:typeof endSession!=="undefined"?endSession:0});}catch(e){}'
-    )(fD,fW,fL,box);
+    )(fD,fW,fL,box,act);
   }catch(e){ console.warn('['+id+']',e.message); }
   mounted[id]=box;
   return box;
