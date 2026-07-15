@@ -20,6 +20,39 @@
 body{font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--paper);color:var(--ink);line-height:1.5;-webkit-font-smoothing:antialiased}
 .app{display:flex;min-height:100vh}
 
+/* ---- unit calculator ---- */
+.uc-wrap{display:grid;grid-template-columns:340px 1fr;gap:16px}
+@media(max-width:820px){.uc-wrap{grid-template-columns:1fr}}
+.uc-panel{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow)}
+.uc-h{font-size:12px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:700;margin-bottom:16px}
+.uc-field{margin-bottom:16px}
+.uc-field label{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--ink2);margin-bottom:6px}
+.uc-num{width:88px;text-align:right;padding:5px 8px;border:1px solid var(--line);border-radius:7px;font-size:14px;font-weight:700;color:var(--purple);font-variant-numeric:tabular-nums;background:var(--paper)}
+.uc-num:focus{outline:none;border-color:var(--purple)}
+.uc-field input[type=range]{width:100%;accent-color:var(--purple);height:5px}
+.uc-hint{font-size:11px;color:var(--muted);margin-top:4px}
+.uc-tag-v{font-size:9px;font-weight:700;color:var(--teal);background:var(--teal-soft);border:1px solid #bfe3d5;border-radius:4px;padding:1px 5px;margin-left:auto}
+.uc-tag-a{font-size:9px;font-weight:700;color:var(--amber);background:var(--amber-soft);border:1px solid #f0d9b0;border-radius:4px;padding:1px 5px;margin-left:auto}
+.uc-results{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:520px){.uc-results{grid-template-columns:1fr}}
+.uc-card{border-radius:12px;padding:18px;border:1px solid var(--line)}
+.uc-basic{background:var(--purple-soft);border-color:#ddd6f5}
+.uc-premium{background:var(--teal-soft);border-color:#c5e6db}
+.uc-card h4{font-size:15px;font-weight:750;margin-bottom:14px}
+.uc-basic h4{color:var(--purple)}.uc-premium h4{color:var(--teal)}
+.uc-line{display:flex;justify-content:space-between;font-size:13px;padding:5px 0;color:var(--ink2);font-variant-numeric:tabular-nums}
+.uc-neg span:last-child{color:var(--coral)}
+.uc-sep{border-top:1px solid rgba(45,42,69,.12);margin-top:6px;padding-top:9px}
+.uc-big{font-weight:750;font-size:15px;color:var(--ink)}
+.uc-big span:last-child{font-size:16px}
+.uc-ltv{font-weight:750;font-size:15px}
+.uc-ltv span:last-child{color:var(--green);font-size:17px}
+.uc-pill{display:inline-block;font-size:12px;font-weight:700;padding:3px 10px;border-radius:20px;margin-top:10px}
+.uc-pos{background:var(--green-soft);color:var(--green)}
+.uc-neg-pill{background:#fcebeb;color:#A32D2D}
+.uc-note{margin-top:16px;padding:12px 14px;background:#f4f1ea;border:1px solid #e2dbd0;border-radius:10px;font-size:12px;color:#6b6357;line-height:1.6}
+.uc-note b{color:#3a352d}
+
 /* ---- sidebar ---- */
 .side{width:248px;background:var(--purple-deep);color:#e9e6f5;padding:26px 18px;display:flex;flex-direction:column;gap:6px;position:sticky;top:0;height:100vh}
 .brand{display:flex;align-items:center;gap:10px;margin-bottom:6px;padding:0 6px}
@@ -142,6 +175,7 @@ body{font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
   <button class="nav" onclick="go('diagnostic',this)"><span class="ic">🎯</span><span>Діагностика</span></button>
   <div class="navlabel">Бізнес</div>
   <button class="nav" onclick="go('money',this)"><span class="ic">$</span><span>Гроші</span></button>
+  <button class="nav" onclick="go('unitcalc',this)"><span class="ic">🧮</span><span>Юніт-економіка</span></button>
   <button class="nav" onclick="go('product',this)"><span class="ic">✦</span><span>Продукт</span></button>
   <div class="navlabel">План</div>
   <button class="nav" onclick="go('roadmap',this)"><span class="ic">→</span><span>Дорожня карта</span></button>
@@ -287,6 +321,82 @@ body{font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
     <div class="metric"><div class="lab">Ліміт безкоштовних</div><div class="val" style="font-size:24px">20/день</div><div class="delta flat">контекст 4 повід.</div></div>
   </div>
   <div class="note">Реферальна економіка: студент отримує знижку 15%, блогер — 25% від платежу. Кожне нове відео блогера запускає новий потік у воронку — це й робить її «вічнозеленою».</div>
+</div>
+<div class="panel" id="unitcalc">
+  <div class="head"><div><h2>Юніт-економіка</h2><div class="sub">Прогноз «а що якщо» · крути параметри → бачиш маржу і LTV</div></div><div class="demo-pill">● прогноз, не факт</div></div>
+  <div class="xref" onclick="goAnalytics()"><span>📈</span><span>Це <b>прогноз</b> на припущеннях. Живі цифри доходу й retention — в <b>Аналітиці →</b></span></div>
+
+  <div class="uc-wrap">
+    <div class="uc-panel">
+      <div class="uc-h">Вхідні дані</div>
+
+      <div class="uc-field uc-verified">
+        <label>Ціна Basic, $/міс <span class="uc-tag-v">звірено</span>
+          <input type="number" class="uc-num" id="uc_basic" min="0" max="999" step="0.01" value="19.77"></label>
+        <input type="range" id="uc_basic_r" min="9" max="35" step="0.25" value="19.77">
+        <div class="uc-hint">реф. ціна, р.6343 bot.py</div>
+      </div>
+
+      <div class="uc-field uc-verified">
+        <label>Ціна Premium, $/міс <span class="uc-tag-v">звірено</span>
+          <input type="number" class="uc-num" id="uc_prem" min="0" max="999" step="0.01" value="79.00"></label>
+        <input type="range" id="uc_prem_r" min="29" max="149" step="1" value="79">
+        <div class="uc-hint">реф. ціна, р.6355 bot.py</div>
+      </div>
+
+      <div class="uc-field uc-verified">
+        <label>Комісія блогеру, % <span class="uc-tag-v">звірено</span>
+          <input type="number" class="uc-num" id="uc_comm" min="0" max="90" step="1" value="25"></label>
+        <input type="range" id="uc_comm_r" min="0" max="50" step="1" value="25">
+        <div class="uc-hint">р.3348 · % з кожної оплати · різні блогери — різні ставки</div>
+      </div>
+
+      <div class="uc-field uc-assume">
+        <label>Активність Chainy, обмінів/день <span class="uc-tag-a">припущення</span>
+          <input type="number" class="uc-num" id="uc_act" min="1" max="300" step="1" value="40"></label>
+        <input type="range" id="uc_act_r" min="5" max="300" step="5" value="40">
+        <div class="uc-hint">ліміт 300/день (р.10709). Факт дасть ai_costs.py</div>
+      </div>
+
+      <div class="uc-field uc-assume">
+        <label>Ретеншн, місяців <span class="uc-tag-a">припущення</span>
+          <input type="number" class="uc-num" id="uc_ret" min="1" max="120" step="1" value="8"></label>
+        <input type="range" id="uc_ret_r" min="1" max="60" step="1" value="8">
+        <div class="uc-hint">скільки місяців платить у середньому. Факт — analytics.py</div>
+      </div>
+    </div>
+
+    <div class="uc-panel">
+      <div class="uc-h">Результат на одного платника</div>
+      <div class="uc-results">
+        <div class="uc-card uc-basic">
+          <h4>Basic</h4>
+          <div class="uc-line"><span>Ціна/міс</span><span id="ucb_price">$19.77</span></div>
+          <div class="uc-line uc-neg"><span>− комісія блогеру</span><span id="ucb_comm">−$4.94</span></div>
+          <div class="uc-line uc-neg"><span>− AI/міс</span><span id="ucb_ai">−$4.38</span></div>
+          <div class="uc-line uc-sep uc-big"><span>Чистими/міс</span><span id="ucb_net">$10.45</span></div>
+          <div class="uc-line"><span>× ретеншн</span><span id="ucb_months">8 міс</span></div>
+          <div class="uc-line uc-sep uc-ltv"><span>LTV</span><span id="ucb_ltv">$84</span></div>
+          <div><span class="uc-pill uc-pos" id="ucb_margin">маржа 53%</span></div>
+        </div>
+        <div class="uc-card uc-premium">
+          <h4>Premium</h4>
+          <div class="uc-line"><span>Ціна/міс</span><span id="ucp_price">$79.00</span></div>
+          <div class="uc-line uc-neg"><span>− комісія блогеру</span><span id="ucp_comm">−$19.75</span></div>
+          <div class="uc-line uc-neg"><span>− AI/міс</span><span id="ucp_ai">−$4.38</span></div>
+          <div class="uc-line uc-sep uc-big"><span>Чистими/міс*</span><span id="ucp_net">$54.87</span></div>
+          <div class="uc-line"><span>× ретеншн</span><span id="ucp_months">8 міс</span></div>
+          <div class="uc-line uc-sep uc-ltv"><span>LTV*</span><span id="ucp_ltv">$439</span></div>
+          <div><span class="uc-pill uc-pos" id="ucp_margin">маржа 69%</span></div>
+        </div>
+      </div>
+      <div class="uc-note">
+        <b>Як рахується:</b> комісія блогеру = % з <b>кожної</b> оплати весь час, поки клієнт платить (не разово).
+        Ставку можна змінити: різні блогери на різних %. AI — щомісяця. <b>Premium AI = Basic AI</b> (Chainy не розрізняє плани, 300/день обом).<br>
+        <b>* Premium:</b> «дотик живої людини» окремо не віднято — блогер оплачений тією ж комісією (ефір за свої %, окремої зарплати немає, р.3348). Персональний розбір (C) — доп-тариф-подарунок, не в базі.
+      </div>
+    </div>
+  </div>
 </div>
 <div class="panel" id="product">
   <div class="head"><div><h2>Продукт</h2><div class="sub">Архітектура, мініаппи та масштаб коду</div></div></div>
@@ -640,6 +750,52 @@ function go(id,btn){
   if(id==='onboarding') buildOnboarding();
   if(id==='money') buildBlogger();
 }
+// ── UNIT CALCULATOR ──
+(function(){
+  const HAIKU_IN=1/1e6, HAIKU_OUT=5/1e6, WHISPER=0.006/60;
+  const aiEx = ()=>25*WHISPER + 400*HAIKU_IN + 150*HAIKU_OUT;
+  const fmt =n=>'$'+n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const fmt0=n=>'$'+Math.round(n).toLocaleString('en-US');
+
+  // зв'язок поле-число ↔ повзунок (кожен слухає обох)
+  function link(numId, rngId, dec){
+    const num=document.getElementById(numId), rng=document.getElementById(rngId);
+    if(!num||!rng) return;
+    num.addEventListener('input',()=>{ let v=parseFloat(num.value); if(!isNaN(v)) rng.value=v; calc(); });
+    rng.addEventListener('input',()=>{ num.value=parseFloat(rng.value).toFixed(dec); calc(); });
+  }
+
+  function tier(price, comm, aiMonth, ret, pre){
+    const commM=price*comm, net=price-commM-aiMonth, ltv=net*ret, margin=price?net/price*100:0;
+    document.getElementById(pre+'_price').textContent=fmt(price);
+    document.getElementById(pre+'_comm').textContent='−'+fmt(commM);
+    document.getElementById(pre+'_ai').textContent='−'+fmt(aiMonth);
+    document.getElementById(pre+'_months').textContent=ret+' міс';
+    const netEl=document.getElementById(pre+'_net');
+    netEl.textContent=(net<0?'−':'')+fmt(Math.abs(net));
+    netEl.style.color = net>=0 ? '' : '#A32D2D';
+    const ltvEl=document.getElementById(pre+'_ltv');
+    ltvEl.textContent=fmt0(ltv);
+    ltvEl.style.color = ltv>=0 ? 'var(--green)' : '#A32D2D';
+    const pill=document.getElementById(pre+'_margin');
+    pill.textContent='маржа '+Math.round(margin)+'%';
+    pill.className='uc-pill '+(margin>=0?'uc-pos':'uc-neg-pill');
+  }
+
+  window.calc=function(){
+    const g=id=>parseFloat(document.getElementById(id).value)||0;
+    const basic=g('uc_basic'), prem=g('uc_prem'), comm=g('uc_comm')/100,
+          act=g('uc_act'), ret=g('uc_ret');
+    const aiMonth=aiEx()*act*30;
+    tier(basic, comm, aiMonth, ret, 'ucb');
+    tier(prem,  comm, aiMonth, ret, 'ucp');
+  };
+
+  link('uc_basic','uc_basic_r',2); link('uc_prem','uc_prem_r',2);
+  link('uc_comm','uc_comm_r',0); link('uc_act','uc_act_r',0); link('uc_ret','uc_ret_r',0);
+  calc();
+})();
+
 try { TG?.ready(); TG?.expand(); } catch(_){}
 fillData();
 buildFunnel();
