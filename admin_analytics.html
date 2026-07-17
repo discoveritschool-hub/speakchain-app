@@ -30,8 +30,27 @@ html,body{height:100%;background:var(--bg);color:var(--text);
 .refresh-btn{width:34px;height:34px;border-radius:50%;background:var(--surface);
   border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px}
 
-/* ── Tabs: ОДИН рівень. Було 2 (група → вкладка) = 2 тапи до всього. ── */
-.tabs-wrap{position:relative}
+/* ── Layout: бічна панель зліва + основний контент ──
+   Було: горизонтальний рядок вкладок, який гортався і ховав частину
+   пунктів — незрозуміло, що там ще є. Тепер усі 9 вкладок видно одразу,
+   іконка + коротка підпис, без гортання. */
+.layout{display:flex;height:100vh;overflow:hidden}
+.sidebar{width:64px;flex-shrink:0;background:var(--surface);
+  border-right:1px solid var(--border);display:flex;flex-direction:column;
+  align-items:stretch;padding:8px 0;gap:2px;overflow-y:auto;scrollbar-width:none}
+.sidebar::-webkit-scrollbar{display:none}
+.side-tab{display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:3px;padding:8px 2px;cursor:pointer;color:var(--text2);border-radius:10px;
+  margin:0 6px;transition:all .15s}
+.side-tab .side-ic{font-size:19px;line-height:1}
+.side-tab .side-lbl{font-size:9px;font-weight:600;text-align:center;line-height:1.15;
+  letter-spacing:-.1px}
+.side-tab.active{background:var(--accent);color:#fff}
+.main{flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden}
+
+/* ── Tabs: старий горизонтальний рядок — лишено на випадок відкату,
+   але приховане (display:none), бічна панель тепер основна навігація. ── */
+.tabs-wrap{display:none}
 .tabs{display:flex;gap:0;padding:12px 16px 0;overflow-x:auto;scrollbar-width:none}
 .tabs::-webkit-scrollbar{display:none}
 .tab{flex-shrink:0;padding:7px 14px;border-radius:20px;font-size:12px;font-weight:600;
@@ -46,7 +65,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);
 .tabs-hint-l{left:8px;right:auto}
 
 /* ── Content ── */
-.content{padding:14px 16px 80px;overflow-y:auto;height:calc(100vh - 100px);scrollbar-width:none}
+.content{padding:14px 16px 80px;overflow-y:auto;flex:1;scrollbar-width:none}
 .content::-webkit-scrollbar{display:none}
 .section{display:none}
 .section.active{display:block}
@@ -155,17 +174,6 @@ tr:hover td{background:var(--surface2)}
 </head>
 <body>
 
-<div class="header">
-  <div>
-    <div class="header-title">📈 Analytics</div>
-    <div class="header-sub" id="last-updated">Завантаження...</div>
-  </div>
-  <div style="display:flex;gap:8px">
-    <div class="refresh-btn" onclick="goStrategy()" title="Командний центр: пульс, дорожня карта, принципи">🧭</div>
-    <div class="refresh-btn" onclick="loadData()">↻</div>
-  </div>
-</div>
-
 <!-- TZ Modal -->
 <div id="tz-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:999;align-items:flex-end">
   <div style="background:#0f0f0f;border-top:1px solid rgba(255,255,255,.1);width:100%;max-height:90vh;
@@ -183,13 +191,22 @@ tr:hover td{background:var(--surface2)}
   </div>
 </div>
 
-<div class="tabs-wrap">
-  <div class="tabs" id="tabs-row"></div>
-<div class="tabs-hint tabs-hint-l hidden" id="tabs-hint-l" onclick="scrollTabs('left')">‹</div>
-<div class="tabs-hint" id="tabs-hint-r" onclick="scrollTabs('right')">›</div>
-</div>
+<div class="layout">
+  <div class="sidebar" id="tabs-row"></div>
 
-<div class="content">
+  <div class="main">
+    <div class="header">
+      <div>
+        <div class="header-title">📈 Analytics</div>
+        <div class="header-sub" id="last-updated">Завантаження...</div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <div class="refresh-btn" onclick="goStrategy()" title="Командний центр: пульс, дорожня карта, принципи">🧭</div>
+        <div class="refresh-btn" onclick="loadData()">↻</div>
+      </div>
+    </div>
+
+    <div class="content">
 
   <!-- 📊 ЗВЕДЕННЯ — усе на одному екрані, згори вниз -->
   <div class="section active" id="tab-summary">
@@ -274,6 +291,10 @@ tr:hover td{background:var(--surface2)}
     <div id="cmds-content"></div>
   </div>
 
+    </div>
+  </div>
+</div>
+
 <style>
 .sw-card{background:var(--card,#16161f);border:1px solid var(--line,#2a2a3a);
   border-radius:12px;padding:14px 16px;margin-bottom:10px}
@@ -297,9 +318,11 @@ tr:hover td{background:var(--surface2)}
   font-family:ui-monospace,Menlo,monospace;font-size:12px;color:#c9c2ff}
 </style>
 <style>
-/* Один рівень навігації — 6 вкладок */
-#tabs-row{display:flex;gap:6px;padding:10px 12px 10px;overflow-x:auto;
-  -webkit-overflow-scrolling:touch;scrollbar-width:none;border-bottom:1px solid #2a2a3a}
+/* #tabs-row тепер це бічна панель-піктограм (id вища специфічність за
+   .sidebar, тож перевизначаємо тут під вертикальний вигляд). */
+#tabs-row{display:flex;flex-direction:column;gap:2px;padding:8px 0;
+  overflow-x:visible;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  scrollbar-width:none;border-bottom:none}
 #tabs-row::-webkit-scrollbar{display:none}
 </style>
 <style>
@@ -433,9 +456,18 @@ const OLD_TO_NEW = {
 function renderNav(){
   const tr = document.getElementById('tabs-row');
   if (!tr) return;
-  tr.innerHTML = NAV.map(([id,label]) =>
-    '<div class="tab' + (id === activeTab ? ' active' : '') + '" onclick="switchTab(\'' + id + '\')">'
-    + label + '</div>').join('');
+  tr.innerHTML = NAV.map(([id,label]) => {
+    // label формату "📊 Зведення" — розділяємо іконку й текст,
+    // щоб показати їх окремо: іконка зверху, коротка підпис знизу.
+    const sp  = label.indexOf(' ');
+    const ic  = sp > -1 ? label.slice(0, sp)   : label;
+    const txt = sp > -1 ? label.slice(sp + 1)  : '';
+    return '<div class="side-tab' + (id === activeTab ? ' active' : '') + '" '
+      + 'onclick="switchTab(\'' + id + '\')" title="' + txt + '">'
+      + '<span class="side-ic">' + ic + '</span>'
+      + '<span class="side-lbl">' + txt + '</span>'
+      + '</div>';
+  }).join('');
 }
 
 /* ═══ АКОРДЕОН ═══
@@ -471,6 +503,44 @@ function toggleAcc(id){
   /* Графіки всередині акордеона малюються ТІЛЬКИ коли його відкрили.
      Chart.js не вміє малювати у прихованому блоці — виходить 0x0. */
   if (willOpen) setTimeout(() => drawCharts(activeTab), 60);
+}
+
+/* ═══ РОЗГОРТАННЯ СТУДЕНТІВ БЛОГЕРА (таблиця "Звіт по блогерах") ═══
+   Клік по рядку блогера → показує/ховає рядок зі списком студентів під
+   ним. Той самий принцип, що й /view_blogger NAME у Telegram-боті — той
+   інструмент уже давав список студентів, тепер web-панель показує те саме,
+   не вимагаючи виходити в Telegram. */
+function toggleBloggerRow(idx){
+  const detail = document.getElementById('blogger-detail-' + idx);
+  const arr    = document.getElementById('blogger-arr-' + idx);
+  if (!detail) return;
+  const willOpen = detail.style.display === 'none';
+  detail.style.display = willOpen ? 'table-row' : 'none';
+  if (arr) arr.textContent = willOpen ? '⌄' : '›';
+}
+
+function renderBloggerStudents(students){
+  if (!students.length) {
+    return '<div style="padding:10px 14px;color:var(--text3);font-size:12px">Немає студентів</div>';
+  }
+  const planLabel = {premium:'⭐️ Premium', basic:'⚡️ Basic', trial:'🎁 Тріал', none:'—'};
+  const planColor = {premium:'var(--purple)', basic:'var(--accent)', trial:'var(--amber)', none:'var(--text3)'};
+  return '<table style="margin:0"><tr>'
+    + '<th style="font-size:11px">Студент</th><th style="font-size:11px">UID</th>'
+    + '<th style="font-size:11px">Рівень</th><th style="font-size:11px">Уроків</th>'
+    + '<th style="font-size:11px">Стрік</th><th style="font-size:11px">План</th>'
+    + '<th style="font-size:11px">З дати</th></tr>'
+    + students.map(s => `
+      <tr>
+        <td>${esc(s.name || '?')}</td>
+        <td style="color:var(--text3);font-size:11px">${s.uid}</td>
+        <td>${esc(s.level || '—')}</td>
+        <td>${fmt(s.done_lessons)}</td>
+        <td>🔥${fmt(s.streak)}</td>
+        <td style="color:${planColor[s.plan] || 'var(--text3)'}">${planLabel[s.plan] || s.plan}</td>
+        <td style="color:var(--text3)">${s.registered || '—'}</td>
+      </tr>`).join('')
+    + '</table>';
 }
 
 /* Малюємо навігацію одразу — до завантаження даних */
@@ -3746,21 +3816,27 @@ function renderBloggers() {
   </div>
 
   <div class="table-block">
-    <div class="table-title">Звіт по блогерах (поточний місяць)</div>
+    <div class="table-title">Звіт по блогерах (поточний місяць) — клік на рядок відкриває студентів</div>
     <table>
       <tr>
-        <th>Блогер</th><th>Студентів</th><th>Basic</th><th>Premium</th>
+        <th></th><th>Блогер</th><th>Студентів</th><th>Basic</th><th>Premium</th>
         <th>В тріалі</th><th>Активних</th><th>Нараховано</th>
       </tr>
-      ${(d.blogger_stats || []).map(b => `
-        <tr>
-          <td style="font-weight:600">${b.name}</td>
+      ${(d.blogger_stats || []).map((b, bi) => `
+        <tr onclick="toggleBloggerRow(${bi})" style="cursor:pointer" id="blogger-row-${bi}">
+          <td style="color:var(--text3);width:16px" id="blogger-arr-${bi}">›</td>
+          <td style="font-weight:600">${esc(b.name)}</td>
           <td>${fmt(b.total)}</td>
           <td>${fmt(b.basic)}</td>
           <td>${fmt(b.premium)}</td>
           <td style="color:var(--amber)">${fmt(b.trial)}</td>
           <td style="color:var(--green)">${fmt(b.active)}</td>
           <td style="color:var(--green);font-weight:600">$${b.commission}</td>
+        </tr>
+        <tr id="blogger-detail-${bi}" style="display:none">
+          <td colspan="8" style="padding:0;background:var(--surface1)">
+            ${renderBloggerStudents(b.students || [])}
+          </td>
         </tr>`).join('')}
     </table>
   </div>
