@@ -1914,7 +1914,18 @@ const START = (function(){
   return '';
 })();
 
-go(TABS.indexOf(START) >= 0 ? START : 's-home');
+/* v13.1: START тепер розуміє й ОВЕРЛЕЇ (ov-vocab, ov-invite), не лише
+   5 вкладок з TABS. Раніше нагадування про повторення слів чи запрошення
+   друга не могли вести прямо туди — доводилось відкривати загальну
+   вкладку або лишати старий чат-флоу. ov-player сюди свідомо НЕ входить:
+   він монтується без конкретного відео (техборг, окрема задача). */
+const OVERLAY_START_KEYS = ['ov-vocab', 'ov-invite'];
+if (OVERLAY_START_KEYS.indexOf(START) >= 0) {
+  go('s-home');
+  openOv(START);
+} else {
+  go(TABS.indexOf(START) >= 0 ? START : 's-home');
+}
 setTimeout(scWatchAll,300);
 window.addEventListener('resize',scWatchAll);
 
