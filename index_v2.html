@@ -1536,19 +1536,95 @@ function openCommunity(){
   try{ TG?.openTelegramLink?.(l) || window.open(l); }catch(e){ window.open(l); }
 }
 
+function money(v){
+  const f=parseFloat(v);
+  if(!isFinite(f)) return String(v??'');
+  return f===Math.trunc(f)?String(Math.trunc(f)):f.toFixed(2);
+}
+
+/* 🔴 БУЛО: кнопки «Обрати Basic/Premium» кликали act('buy_basic'), а
+   SHELL_TABS.buy_basic='s-profile' → go('s-profile') просто закривало
+   шторку й показувало вкладку профілю. WayForPay НІКОЛИ не відкривався.
+   Людина тиснула «Обрати Basic» — і нічого не купляла.
+   ТЕПЕР: payPlan() бере готове платіжне посилання з того самого payload
+   (_build_paywall_url уже кладе basic_pay/prem_pay/basic_6m_pay/prem_6m_pay),
+   відкриває WayForPay напряму — так само, як робить мініап APPS['s-profile']. */
+function payPlan(plan){
+  const D=PAYLOAD['s-profile']||{};
+  const m={basic:[D.basic_pay,D.basic_link],premium:[D.prem_pay,D.prem_link],
+    basic_6m:[D.basic_6m_pay,D.basic_6m_link],premium_6m:[D.prem_6m_pay,D.prem_6m_link]}[plan]||[];
+  const link=(m[0]||m[1]||'').trim();
+  if(!link){
+    toast('Оплата тимчасово недоступна — спробуй пізніше');
+    act('paywall_pay_link_missing',{plan});
+    return;
+  }
+  try{ TG?.openLink?.(link) || window.open(link,'_blank'); }catch(e){ window.open(link,'_blank'); }
+  act('paywall_buy',{plan,source:D.source||'landing'});
+}
+
 function renderPlans(){
   const D=PAYLOAD['s-profile']||{};
   const bp=D.basic_price||'22', pp=D.prem_price||'93';
-  $('#pl-box').innerHTML=
-    '<div class="plan-card"><div class="lab">⚡ Basic — $'+bp+'/міс</div>'
-    +'<div class="feat"><span class="dot">✓</span>Безлімітні уроки з відео</div>'
-    +'<div class="feat"><span class="dot">✓</span>Gap-аналіз і звіти прогресу</div>'
-    +'<button class="plan-btn" style="margin-top:10px" onclick="act(\'buy_basic\')">Обрати Basic</button></div>'
-    +'<div class="plan-card" style="border-color:var(--gold)"><div class="lab">🌟 Premium — $'+pp+'/міс</div>'
-    +'<div class="feat"><span class="dot">✓</span>Усе з Basic</div>'
-    +'<div class="feat"><span class="dot">✓</span>Speaking Buddy — жива людина</div>'
-    +'<div class="feat"><span class="dot">✓</span>Закрита преміум-група</div>'
-    +'<button class="plan-btn" style="margin-top:10px;background:linear-gradient(135deg,var(--gold),var(--orange));color:var(--bg)" onclick="act(\'buy_premium\')">Обрати Premium</button></div>';
+  const fb=D.full_basic||bp, fp=D.full_prem||pp;
+  const src=D.source||'';
+
+  let banner='';
+  if(src==='blogger'&&D.blogger_name){
+    const savedB=Math.round((1-parseFloat(bp)/parseFloat(fb))*100);
+    banner='<div class="plan-card" style="border-color:var(--green)">'
+      +'<div class="lab" style="color:var(--green)">🎓 Ціна від викладача @'+esc(D.blogger_name)+'</div>'
+      +'<div style="font-size:var(--fs);display:flex;align-items:center;gap:8px">'
+      +'<span style="text-decoration:line-through;color:var(--text2)">$'+money(fb)+'</span>'
+      +'<span style="color:var(--green);font-weight:800">$'+money(bp)+'/міс</span>'
+      +(savedB>0?'<span style="margin-left:auto;background:var(--green-bg);color:var(--green);padding:2px 8px;border-radius:var(--r-pill);font-size:var(--fs-xs);font-weight:800">−'+savedB+'%</span>':'')
+      +'</div></div>';
+  }else if(src==='friend'){
+    banner='<div class="plan-card" style="border-color:var(--green)">'
+      +'<div class="lab" style="color:var(--green)">🤝 Ціна для друзів — знижка активована</div></div>';
+  }
+
+  const F=t=>'<div class="feat"><span class="dot">✓</span>'+t+'</div>';
+  const basicFeats=[
+    '🎙 Speaking Buddy · Chainy — AI-розмова щодня',
+    '🎬 Shadowing-плеєр з loop і субтитрами',
+    '🤖 AI-фідбек після кожного монологу',
+    '🔍 Gap analysis — твої прогалини після уроку',
+    '📊 Прогрес A1→B2 · Roadmap і статистика',
+    '🎯 Speaking-челенджі та дуелі з друзями',
+    '💬 Картотека фраз · SRS-повторення',
+    '🏆 Leaderboard · Ланцюжок · XP',
+  ].map(F).join('');
+  const premFeats=[
+    '🎬 4 групові живі ефіри щомісяця на YouTube',
+    '🚀 Практика фраз і тем з бота — наживо, разом з іншими',
+    '🔒 Закрита спільнота',
+    '🏅 Сертифікат + Зала слави',
+  ].map(F).join('');
+
+  let sixm='';
+  if(D.basic_6m||D.prem_6m){
+    const bp6=D.basic_6m, pp6=D.prem_6m;
+    const bMon=bp6?(parseFloat(bp6)/6).toFixed(2).replace('.00',''):'';
+    const pMon=pp6?(parseFloat(pp6)/6).toFixed(2).replace('.00',''):'';
+    sixm='<div class="plan-card" style="border-color:var(--gold)">'
+      +'<div class="lab">💡 Оплата за півроку — вигідніше</div>'
+      +(bp6?'<div class="feat"><span class="dot">⚡</span>Basic · 6 міс — $'+money(bp6)+' <span style="color:var(--text2);margin-left:4px">≈$'+bMon+'/міс</span></div>'
+        +'<button class="plan-btn" style="margin-top:6px;background:var(--bg-card2);color:var(--text)" onclick="payPlan(\'basic_6m\')">Обрати Basic 6М</button>':'')
+      +(pp6?'<div class="feat" style="margin-top:8px"><span class="dot">🌟</span>Premium · 6 міс — $'+money(pp6)+' <span style="color:var(--text2);margin-left:4px">≈$'+pMon+'/міс</span></div>'
+        +'<button class="plan-btn" style="margin-top:6px;background:linear-gradient(135deg,var(--gold),var(--orange));color:var(--bg)" onclick="payPlan(\'premium_6m\')">Обрати Premium 6М</button>':'')
+      +'</div>';
+  }
+
+  $('#pl-box').innerHTML=banner
+    +'<div class="plan-card"><div class="lab">⚡ Basic — $'+money(bp)+'/міс</div>'
+    +basicFeats
+    +'<button class="plan-btn" style="margin-top:10px" onclick="payPlan(\'basic\')">Обрати Basic</button></div>'
+    +'<div class="plan-card" style="border-color:var(--gold)"><div class="lab">🌟 Premium — $'+money(pp)+'/міс</div>'
+    +premFeats
+    +'<button class="plan-btn" style="margin-top:10px;background:linear-gradient(135deg,var(--gold),var(--orange));color:var(--bg)" onclick="payPlan(\'premium\')">Обрати Premium</button></div>'
+    +sixm
+    +'<button style="width:100%;margin-top:10px;padding:12px;border-radius:var(--r-pill);border:.5px solid var(--line);background:transparent;color:var(--text2);font-size:var(--fs)" onclick="act(\'paywall_remind_later\')">Нагадати пізніше</button>';
 }
 
 /* Своє відео з YouTube → віддаємо робочому Chainy */
