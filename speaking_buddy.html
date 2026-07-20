@@ -166,19 +166,11 @@
   .voice-toggle { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: var(--fs-md); transition: all .15s; }
   .voice-toggle.active { background: rgba(62,207,142,.15); }
 
-  /* ── Перемикач режиму Chainy: співрозмовник ↔ вчитель ──────────
-     Стоїть у ШАПЦІ ЧАТУ, а не на вкладці вибору теми.
-     Було: у картці Chainy — тобто його бачив лише той, хто зайшов
-     на вкладку «🤖 Chainy». А мініап відкривається на «Щоденне життя»,
-     тому перемикача НІХТО НЕ БАЧИВ.
-     Тепер він там, де людина РОЗМОВЛЯЄ — і його можна перемкнути
-     посеред діалогу («поясни, де я помилилась»).                  */
-  .mode-toggle { width: 32px; height: 32px; border-radius: 50%; display: flex;
-                 align-items: center; justify-content: center; cursor: pointer;
-                 font-size: var(--fs-md); transition: all .15s; flex-shrink: 0; }
-  .mode-toggle.teacher { background: rgba(124,110,247,.18); }
-  .mode-toggle:active  { transform: scale(.92); }
-  .chat-info-status.teacher { color: var(--purple); }
+  /* 20.07 (рішення власниці): перемикач режиму Chainy прибрано —
+     м'яка корекція тепер дефолт скрізь, окрім Strict Teacher (він
+     лишається доступним через наявний role-select, не через кнопку
+     в шапці чату). CSS .mode-toggle/.chat-info-status.teacher/
+     .speakintense видалено разом з кнопкою. */
 
   /* ── Grammar card ── */
   .grammar-card { position: fixed; top: -100px; left: 16px; right: 16px; z-index: 500;
@@ -497,8 +489,6 @@
       <div class="chat-info-name" id="chat-name"></div>
       <div class="chat-info-status">online</div>
     </div>
-    <div class="mode-toggle" id="mode-toggle" onclick="toggleChainyMode()"
-         title="Режим: співрозмовник / вчитель" style="display:none">💬</div>
     <div class="voice-toggle" id="voice-toggle" onclick="toggleVoiceMode()" title="Голосовий режим">🔊</div>
     <div class="chat-counter" id="chat-counter"></div>
     <button class="finish-btn" id="finish-btn" onclick="finishSessionWithCard()" title="Завершити сесію">✓</button>
@@ -807,12 +797,8 @@ function showScreen(id) {
   if (id === 's-home') renderScenarios();
 
   /* Чат відкривається з ЧОТИРЬОХ місць (сценарій, Chainy, відео-практика,
-     «моя ситуація»). Замість правити кожне — перехоплюємо тут, у єдиній
-     точці входу. Так жодне місце не буде забуте, і при додаванні п'ятого
-     воно запрацює саме. */
-  if (id === 's-chat' && typeof applyChainyModeUI === 'function') {
-    applyChainyModeUI();
-  }
+     «моя ситуація»). 20.07: applyChainyModeUI() тут прибрано разом з
+     кнопкою-перемикачем — режим корекції більше не має власного UI-стану. */
 }
 
 function renderCategories() {
@@ -971,83 +957,18 @@ function onScenarioSearch(val) {
 // помітить. Вибір діє на сесію: хай людина щоразу вирішує, чого хоче.
 /* chainyMode прибрано — режим похідний від selectedRole */
 
-const CHAINY_MODE_HINTS = {
-  friend:  'Просто розмова. Chainy слухає й підтримує — не перебиває виправленнями.',
-  teacher: 'Chainy виправляє кожну помилку і показує, як сказати правильно.'
-};
-
-/* ══════════════════════════════════════════════════════════════════
-   ПЕРЕМИКАЧ РЕЖИМУ — В ШАПЦІ ЧАТУ
-
-   🔴 БУЛО: кнопки в картці Chainy (на вкладці «🤖 Chainy»).
-   Мініап відкривається на «Щоденне життя» (currentCat='daily'), тому
-   перемикача НЕ БАЧИВ НІХТО — треба було спершу здогадатись клікнути
-   вкладку Chainy.
-
-   Це помилка проєктування: налаштування розмови сховане там, куди
-   треба дійти ДО розмови. А потрібне воно САМЕ ПІД ЧАС — коли людина
-   раптом хоче «поясни, де я помилилась».
-
-   ТЕПЕР: іконка в шапці чату. Видно завжди. Перемикається посеред
-   діалогу, без втрати історії.                                      */
-
-function applyChainyModeUI() {
-  const btn    = document.getElementById('mode-toggle');
-  const status = document.querySelector('.chat-info-status');
-  const isT = selectedRole === 'strict';
-
-  /* Кнопка тільки для Chainy. У рольових сценаріях режим учителя не
-     має сенсу: там співрозмовник ГРАЄ персонажа (бариста, рекрутер),
-     і виправлення посеред ролі ламає сцену. */
-  const isChainy = !!(currentScenario && currentScenario.isChainy);
-  if (btn) {
-    btn.style.display = isChainy ? 'flex' : 'none';
-    btn.textContent   = isT ? '🎓' : '💬';
-    btn.classList.toggle('teacher', isT);
-    btn.title = isT
-      ? 'Вчитель — виправляє помилки. Торкніться, щоб просто спілкуватись'
-      : 'Співрозмовник — не виправляє. Торкніться, щоб увімкнути вчителя';
-  }
-
-  /* Підпис під іменем — щоб режим було видно, а не лише вгадувати
-     з іконки. Людина має РОЗУМІТИ, з ким говорить. */
-  if (status && isChainy) {
-    status.textContent = isT ? 'вчитель · виправляє помилки' : 'співрозмовник · online';
-    status.classList.toggle('teacher', isT);
-  } else if (status) {
-    status.textContent = 'online';
-    status.classList.remove('teacher');
-  }
-}
-
-/* ── СТИЛЬ КЕРУЄ ВИПРАВЛЕННЯМИ ────────────────────────────
-   Було ДВІ сутності, які робили одне: перемикач 💬/🎓 і стиль
-   мовлення («Strict teacher — виправляє все»). Учениця обирала
-   стиль, а на Chainy він НЕ ДІЯВ — бекенд ішов гілкою chainy_mode.
-
-   Тепер стиль — єдине джерело. `strict` = виправляє. Крапка.
-   chainyMode не зберігаємо: він ПОХІДНИЙ від стилю. Одна правда. */
-function chainyModeFromRole() {
-  return selectedRole === 'strict' ? 'teacher' : 'friend';
-}
-
-/* Перемкнути стиль ПОСЕРЕД розмови.
-   Навіщо: учениця розговорилась, сказала криво — і сама відчула.
-   Саме тоді вона хоче спитати «а як правильно?». Це найцінніша
-   мить у навчанні: питання з'явилось у неї, а не нав'язане.
-   Змусити її закрити чат і почати новий = вбити цю мить. */
-function toggleChainyMode() {
-  selectRole(selectedRole === 'strict' ? 'friendly' : 'strict');
-  applyChainyModeUI();
-
-  /* Кажемо в чат, що змінилось. Інакше людина тисне іконку і не
-     розуміє, чи спрацювало — а наступна відповідь виглядає просто
-     «якось інакше». Повідомлення в стрічці робить зміну очевидною. */
-  addSystemNote(selectedRole === 'strict'
-    ? '🎓 Тепер Chainy виправляє помилки і показує, як сказати правильно'
-    : '💬 Тепер Chainy просто спілкується — без виправлень');
-  if (tg?.HapticFeedback) tg.HapticFeedback.selectionChanged();
-}
+/* 20.07 (рішення власниці): перемикач режиму Chainy в шапці чату
+   прибрано повністю. М'яка недирективна корекція тепер дефолт
+   УСЮДИ (Chainy, рольові сценарії, Моя ситуація, відео-практика),
+   окрім Strict Teacher — той лишається доступним через наявний
+   role-select (той самий, що вже вмикає строгий режим у рольових
+   сценаріях), не через окрему кнопку в чаті.
+   Видалено: CHAINY_MODE_HINTS, applyChainyModeUI(), chainyModeFromRole(),
+   CHAINY_MODE_CYCLE, toggleChainyMode() — увесь цей шар керування
+   режимом більше не потрібен, бекенд сам вирішує за role.
+   НЕ видаляла build_chainy_speakintense_prompt() на бекенді сама
+   (правило проєкту — звіт+питання, не самостійне видалення) —
+   лишився невикористаним, приберемо разом, якщо підтвердите. */
 
 /* Системна нотатка в стрічці чату (не від Chainy, а від застосунку) */
 function addSystemNote(text) {
@@ -1306,8 +1227,6 @@ function selectRole(id) {
   selectedRole = id;
   const sel = document.getElementById('role-select');
   if (sel) sel.value = id;
-  /* Якщо стиль міняють ПОСЕРЕД чату — кнопка має це показати одразу */
-  try { applyChainyModeUI(); } catch (e) {}
 }
 
 // Bug #3: перемикач режиму відео — переказ vs предметне/філософське обговорення.
@@ -1515,10 +1434,10 @@ async function sendMessage() {
         history:       history.slice(-8),
         init_data:     tg?.initData || '',
         is_chainy:     !!currentScenario.isChainy,
-        /* Режим шлемо ТІЛЬКИ для Chainy. У рольових сценаріях його немає
-           (бариста не «виправляє помилки» — він грає бариста), тому не
-           засмічуємо запит полем, яке бекенд однаково проігнорує. */
-        chainy_mode:   currentScenario.isChainy ? chainyModeFromRole() : undefined,
+        /* 20.07: chainy_mode прибрано разом з кнопкою-перемикачем —
+           бекенд тепер сам вирішує режим за `role` (той самий
+           селектор, що й для рольових сценаріїв: strict = Teacher,
+           усе інше = м'яка корекція за замовчуванням). */
         my_situation:  currentScenario.mySituation || null,
         video_practice: currentScenario.videoPractice || null,
       })

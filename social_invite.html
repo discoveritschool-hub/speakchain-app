@@ -283,6 +283,7 @@ body{
   <div class="tab active" onclick="switchTab('invite',this)">🔗 Запросити</div>
   <div class="tab" onclick="switchTab('challenge',this)">🎤 Виклик</div>
   <div class="tab" onclick="switchTab('network',this)">👥 Мережа</div>
+  <div class="tab" onclick="switchTab('room',this)">🎭 Кімната</div>
 </div>
 
 <!-- ══ SCREEN 1: INVITE ══ -->
@@ -480,6 +481,52 @@ body{
     <button class="cta green" onclick="switchTab('challenge', document.querySelectorAll('.tab')[1])" style="margin-top:8px">🎤 Speaking Challenge</button>
   </div>
   <div style="height:16px"></div>
+</div>
+
+<!-- ══ SCREEN 4: DUO ROOM ══ -->
+<div class="screen" id="screen-room">
+
+  <!-- Стан А: вибір сценарію (нема ?room= у посиланні) -->
+  <div id="room-create">
+    <div class="challenge-hero">
+      <div class="challenge-title">Спільна кімната 🎭</div>
+      <div class="challenge-sub">Оберіть сценарій — обидва отримаєте роль і поговорите вживу</div>
+    </div>
+    <div style="padding:0 12px" id="room-scenario-list"></div>
+  </div>
+
+  <!-- Стан Б: жива кімната (є ?room= у посиланні, або щойно створена) -->
+  <div id="room-live" style="display:none">
+    <div class="challenge-hero">
+      <div class="challenge-title" id="room-title">—</div>
+      <div class="challenge-sub" id="room-desc">—</div>
+    </div>
+    <div class="phrase-card" style="border-color:var(--purple)">
+      <div class="phrase-label">Твоя роль</div>
+      <div class="phrase-text" id="room-my-role">—</div>
+    </div>
+
+    <div id="room-messages" style="padding:14px 12px 0;display:flex;flex-direction:column;gap:8px"></div>
+
+    <div style="display:flex;gap:8px;margin:14px 12px 0">
+      <button class="rec-mode-btn active" id="room-mode-voice" onclick="roomSetRecMode('voice')"
+        style="flex:1;padding:8px;border-radius:var(--r);border:1px solid var(--line);background:rgba(124,110,247,.15);color:var(--text);font-size:var(--fs);cursor:pointer">🎙 Голосом</button>
+      <button class="rec-mode-btn" id="room-mode-video" onclick="roomSetRecMode('video')"
+        style="flex:1;padding:8px;border-radius:var(--r);border:1px solid var(--line);background:var(--bg-card);color:var(--text2);font-size:var(--fs);cursor:pointer">📹 Відео</button>
+    </div>
+    <button class="rec-btn record" id="room-rec-btn" onclick="roomToggleRecord()" style="width:calc(100% - 24px);margin:10px 12px 0">🎙 Записати репліку</button>
+    <video id="room-video-preview" muted playsinline
+      style="display:none;width:100%;max-height:220px;border-radius:var(--r);margin:8px 12px 0;background:#000;object-fit:cover"></video>
+    <style>#room-video-preview.show{display:block!important;}</style>
+    <div class="rec-wave" id="room-rec-wave" style="margin:12px 12px 0">
+      <div class="wave-bar" style="height:8px"></div><div class="wave-bar" style="height:12px"></div>
+      <div class="wave-bar" style="height:8px"></div><div class="wave-bar" style="height:20px"></div>
+      <div class="wave-bar" style="height:8px"></div><div class="wave-bar" style="height:16px"></div>
+      <div class="wave-bar" style="height:8px"></div><div class="wave-bar" style="height:10px"></div>
+    </div>
+    <div class="rec-timer" id="room-rec-timer">⏺ 0:00</div>
+    <div style="height:16px"></div>
+  </div>
 </div>
 
 <!-- Toast -->
@@ -839,10 +886,188 @@ function switchTab(name,el){
   document.getElementById('screen-'+name).classList.add('active');
 }
 
+/* ══ DUO ROOM (C-09, 20.07) ══
+   ID сценаріїв мають ЗБІГАТИСЯ з DUO_SCENARIOS у bot.py — це той самий
+   список, назви лише для показу тут, бекенд — єдине джерело правди
+   про сам сценарій (роль/опис не дублюємо на випадок розбіжності). */
+const DUO_SCENARIOS_UI = [
+  {id:'airport_bag',      icon:'🧳', title:'Загублений багаж в аеропорту'},
+  {id:'noisy_neighbor',   icon:'😤', title:'Сусід зверху галасує'},
+  {id:'return_no_receipt',icon:'🧾', title:'Повернення товару без чека'},
+  {id:'emotion_guess',    icon:'🎭', title:'Вгадай емоцію'},
+  {id:'lost_child',       icon:'🧒', title:'Загублена дитина на вокзалі'},
+];
+
+let currentRoomId = null;
+let roomPollTimer = null;
+let roomMediaRecorder=null, roomChunks=[], roomInterval=null, roomSecs=0, roomBlob=null;
+let roomRecMode='voice';
+
+function renderRoomScenarios(){
+  const list = document.getElementById('room-scenario-list');
+  if(!list) return;
+  list.innerHTML = DUO_SCENARIOS_UI.map(s => `
+    <div class="invite-card" style="cursor:pointer" onclick="createRoom('${s.id}')">
+      <div class="invite-row" style="margin-bottom:0">
+        <div class="invite-icon">${s.icon}</div>
+        <div>
+          <div class="invite-title">${s.title}</div>
+          <div class="invite-sub">Запросити ${D.friend_name || 'друга'} →</div>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function createRoom(scenarioId){
+  const partnerUid = D.friend_uid || D.my_uid; // v1: головний друг з D; кілька партнерів — наступна ітерація
+  if(!D.friend_uid){
+    showToast('⚠️ Спершу запросіть друга у вкладці «Запросити»');
+    return;
+  }
+  maAction('duo_room_create', {partner_uid: D.friend_uid, scenario_id: scenarioId});
+  showToast('🎭 Кімнату створено — перевірте чат, лінк надіслано вам і другу');
+}
+
+/* Вхід у живу кімнату — за ?room=ID у посиланні (кнопка з чату) */
+function initRoomFromUrl(){
+  const roomId = params.get('room');
+  if(!roomId) return;
+  currentRoomId = roomId;
+  switchTab('room', document.querySelectorAll('.tab')[3]);
+  document.getElementById('room-create').style.display = 'none';
+  document.getElementById('room-live').style.display = 'block';
+  pollRoomState();
+  roomPollTimer = setInterval(pollRoomState, 2500);
+}
+
+async function pollRoomState(){
+  if(!currentRoomId) return;
+  try{
+    const res = await fetch(`${BOT_API}/duo_room_state?room_id=${encodeURIComponent(currentRoomId)}`);
+    if(!res.ok) return;
+    const d = await res.json();
+    if(!d.ok) return;
+    renderRoomState(d);
+  }catch(e){}
+}
+
+function renderRoomState(d){
+  document.getElementById('room-title').textContent = d.scenario_title || '—';
+  document.getElementById('room-desc').textContent  = d.scenario_desc  || '—';
+  const myUid = String(TG?.initDataUnsafe?.user?.id || D.my_uid || '');
+  const myRole = (myUid === String(d.uid_a)) ? d.role_a_label : d.role_b_label;
+  document.getElementById('room-my-role').textContent = myRole || '—';
+
+  const box = document.getElementById('room-messages');
+  box.innerHTML = (d.messages || []).map(m => {
+    const mine = String(m.sender) === myUid;
+    return `<div style="align-self:${mine?'flex-end':'flex-start'};max-width:82%;
+      background:${mine?'rgba(124,110,247,.15)':'var(--bg-card2)'};
+      border-radius:var(--r);padding:8px 12px">
+      <div style="font-size:var(--fs-xs);color:var(--text2);margin-bottom:3px">
+        ${mine ? 'Ти' : (D.friend_name||'Партнер')} ${m.is_video?'📹':'🎙'}
+      </div>
+      <div style="font-size:var(--fs-sm)">${m.transcript}</div>
+    </div>`;
+  }).join('') || '<div style="text-align:center;color:var(--text2);font-size:var(--fs-sm);padding:20px">Ще нема реплік — почніть перший 🎬</div>';
+  box.scrollTop = box.scrollHeight;
+
+  if(d.status === 'completed'){
+    const btn = document.getElementById('room-rec-btn');
+    if(btn){ btn.className='rec-btn disabled'; btn.textContent='✅ Сценарій завершено'; btn.onclick=null; }
+    if(roomPollTimer){ clearInterval(roomPollTimer); roomPollTimer=null; }
+  }
+}
+
+function roomSetRecMode(mode){
+  if(document.getElementById('room-rec-btn').classList.contains('recording')) return;
+  roomRecMode=mode;
+  const v=document.getElementById('room-mode-voice'), vi=document.getElementById('room-mode-video');
+  const on='rgba(124,110,247,.15)', off='var(--bg-card)';
+  v.style.background = mode==='voice'?on:off;  v.style.color = mode==='voice'?'var(--text)':'var(--text2)';
+  vi.style.background= mode==='video'?on:off;  vi.style.color = mode==='video'?'var(--text)':'var(--text2)';
+  document.getElementById('room-rec-btn').textContent = mode==='video' ? '📹 Записати відео-репліку' : '🎙 Записати репліку';
+}
+
+async function roomToggleRecord(){
+  const btn=document.getElementById('room-rec-btn');
+  if(btn.classList.contains('recording')) roomStopRecord();
+  else await roomStartRecord();
+}
+
+async function roomStartRecord(){
+  try{
+    const wantVideo = roomRecMode==='video';
+    const stream=await navigator.mediaDevices.getUserMedia(
+      wantVideo ? {audio:true, video:{facingMode:'user'}} : {audio:true}
+    );
+    roomMediaRecorder=new MediaRecorder(stream);
+    roomChunks=[];
+    roomMediaRecorder.ondataavailable=e=>{if(e.data.size>0)roomChunks.push(e.data);};
+    roomMediaRecorder.onstop=()=>{
+      roomBlob=new Blob(roomChunks,{type: wantVideo ? 'video/mp4' : 'audio/ogg'});
+      const btn=document.getElementById('room-rec-btn');
+      btn.className='rec-btn submit'; btn.textContent='✅ Надіслати репліку'; btn.onclick=roomSubmitRecord;
+      stream.getTracks().forEach(t=>t.stop());
+      const prev=document.getElementById('room-video-preview');
+      if(prev){ prev.classList.remove('show'); prev.srcObject=null; }
+    };
+    if(wantVideo){
+      const prev=document.getElementById('room-video-preview');
+      if(prev){ prev.srcObject=stream; prev.classList.add('show'); try{ await prev.play(); }catch(e){} }
+    }
+    roomMediaRecorder.start(100);
+    roomSecs=0;
+    document.getElementById('room-rec-btn').className='rec-btn recording';
+    document.getElementById('room-rec-btn').textContent='⏹ Зупинити запис';
+    document.getElementById('room-rec-wave').classList.add('show');
+    document.getElementById('room-rec-timer').classList.add('show');
+    roomInterval=setInterval(()=>{
+      roomSecs++;
+      const m=Math.floor(roomSecs/60), sc=roomSecs%60;
+      document.getElementById('room-rec-timer').textContent=`⏺ ${m}:${sc.toString().padStart(2,'0')}`;
+      if(roomSecs>=60) roomStopRecord();
+    },1000);
+  }catch(e){
+    alert(roomRecMode==='video' ? 'Камера недоступна. Дозволь доступ у налаштуваннях.'
+                                 : 'Мікрофон недоступний. Дозволь доступ в налаштуваннях.');
+  }
+}
+
+function roomStopRecord(){
+  if(roomMediaRecorder&&roomMediaRecorder.state!=='inactive') roomMediaRecorder.stop();
+  clearInterval(roomInterval);
+  document.getElementById('room-rec-wave').classList.remove('show');
+  document.getElementById('room-rec-timer').classList.remove('show');
+}
+
+async function roomSubmitRecord(){
+  if(!roomBlob || !currentRoomId) return;
+  const btn=document.getElementById('room-rec-btn');
+  btn.className='rec-btn disabled'; btn.textContent='⏳ Розпізнаю мову...';
+
+  const isVideo = roomRecMode==='video';
+  const reader=new FileReader();
+  reader.onload=()=>{
+    const b64=reader.result.split(',')[1];
+    const payload={room_id: currentRoomId};
+    if(isVideo) payload.video_b64=b64; else payload.audio_b64=b64;
+    maAction('duo_room_send', payload);
+    showToast(isVideo ? '📹 Репліку надіслано!' : '🎙 Репліку надіслано!');
+    setTimeout(()=>{
+      btn.className='rec-btn record'; roomSetRecMode(roomRecMode);
+      pollRoomState();
+    }, 1500);
+  };
+  reader.readAsDataURL(roomBlob);
+}
+
 /* ══ INIT ══ */
 fillInvite();
 fillChallenge();
 fillNetwork();
+renderRoomScenarios();
+initRoomFromUrl();
 </script>
 </body>
 </html>
