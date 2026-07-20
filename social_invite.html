@@ -284,6 +284,7 @@ body{
   <div class="tab" onclick="switchTab('challenge',this)">🎤 Виклик</div>
   <div class="tab" onclick="switchTab('network',this)">👥 Мережа</div>
   <div class="tab" onclick="switchTab('room',this)">🎭 Кімната</div>
+  <div class="tab" onclick="switchTab('relay',this)">🗣 Плітки</div>
 </div>
 
 <!-- ══ SCREEN 1: INVITE ══ -->
@@ -525,6 +526,60 @@ body{
       <div class="wave-bar" style="height:8px"></div><div class="wave-bar" style="height:10px"></div>
     </div>
     <div class="rec-timer" id="room-rec-timer">⏺ 0:00</div>
+    <div style="height:16px"></div>
+  </div>
+</div>
+
+<!-- ══ SCREEN 5: RELAY «ПЛІТКИ» (C-16/C-17, 21.07) ══ -->
+<div class="screen" id="screen-relay">
+
+  <!-- Стан А: старт нової кімнати (нема ?relay= у посиланні) -->
+  <div id="relay-create">
+    <div class="challenge-hero">
+      <div class="challenge-title">Плітки 🗣</div>
+      <div class="challenge-sub">Запиши коротку фразу чи історію — кожен наступний друг почує лише твою репліку і додасть своє. Ефект «зіпсованого телефону» англійською.</div>
+    </div>
+    <button class="rec-btn record" id="relay-create-btn" onclick="createRelayRoom()"
+      style="width:calc(100% - 24px);margin:14px 12px 0">🗣 Почати нову плітку</button>
+  </div>
+
+  <!-- Стан Б: жива кімната (є ?relay= у посиланні, або щойно створена) -->
+  <div id="relay-live" style="display:none">
+    <div class="challenge-hero">
+      <div class="challenge-title">Плітки 🗣 <span id="relay-link-count" style="font-size:var(--fs-sm);color:var(--text2)"></span></div>
+      <div class="challenge-sub">Ти чуєш лише ОСТАННЮ репліку — не всю історію. Це і є суть гри 🤫</div>
+    </div>
+
+    <div class="phrase-card" style="border-color:var(--purple)" id="relay-last-link-card">
+      <div class="phrase-label">Остання репліка</div>
+      <div class="phrase-text" id="relay-last-transcript">Будь першим — запиши зачин 🎬</div>
+    </div>
+
+    <div id="relay-completed-banner" style="display:none;margin:0 12px;padding:14px;border-radius:var(--r);background:rgba(90,216,166,.12);border:1px solid rgba(90,216,166,.3);text-align:center">
+      <div style="font-size:var(--fs-md);font-weight:700;margin-bottom:4px">✅ Плітка завершена!</div>
+      <div style="font-size:var(--fs-sm);color:var(--text2)">Відео зі всіма ланками надіслано в чат 🎬</div>
+    </div>
+
+    <div style="display:flex;gap:8px;margin:14px 12px 0" id="relay-rec-mode-row">
+      <button class="rec-mode-btn active" id="relay-mode-voice" onclick="relaySetRecMode('voice')"
+        style="flex:1;padding:8px;border-radius:var(--r);border:1px solid var(--line);background:rgba(124,110,247,.15);color:var(--text);font-size:var(--fs);cursor:pointer">🎙 Голосом</button>
+      <button class="rec-mode-btn" id="relay-mode-video" onclick="relaySetRecMode('video')"
+        style="flex:1;padding:8px;border-radius:var(--r);border:1px solid var(--line);background:var(--bg-card);color:var(--text2);font-size:var(--fs);cursor:pointer">📹 Відео</button>
+    </div>
+    <button class="rec-btn record" id="relay-rec-btn" onclick="relayToggleRecord()" style="width:calc(100% - 24px);margin:10px 12px 0">🎙 Записати ланку</button>
+    <video id="relay-video-preview" muted playsinline
+      style="display:none;width:100%;max-height:220px;border-radius:var(--r);margin:8px 12px 0;background:#000;object-fit:cover"></video>
+    <style>#relay-video-preview.show{display:block!important;}</style>
+    <div class="rec-wave" id="relay-rec-wave" style="margin:12px 12px 0">
+      <div class="wave-bar" style="height:8px"></div><div class="wave-bar" style="height:12px"></div>
+      <div class="wave-bar" style="height:8px"></div><div class="wave-bar" style="height:20px"></div>
+      <div class="wave-bar" style="height:8px"></div><div class="wave-bar" style="height:16px"></div>
+      <div class="wave-bar" style="height:8px"></div><div class="wave-bar" style="height:10px"></div>
+    </div>
+    <div class="rec-timer" id="relay-rec-timer">⏺ 0:00</div>
+
+    <button class="rec-btn" id="relay-share-btn" onclick="shareRelayLink()"
+      style="width:calc(100% - 24px);margin:14px 12px 0;background:var(--bg-card);border:1px solid var(--line);color:var(--text)">🔗 Поділитись посиланням</button>
     <div style="height:16px"></div>
   </div>
 </div>
@@ -1062,12 +1117,174 @@ async function roomSubmitRecord(){
   reader.readAsDataURL(roomBlob);
 }
 
+/* ══ RELAY «ПЛІТКИ» (C-16/C-17, 21.07) ══
+   На відміну від duo_room, тут НЕМАЄ фіксованого партнера й немає
+   вибору сценарію — вільна форма, відкрита черга. Головна відмінність
+   у стані: бекенд віддає ЛИШЕ останню ланку (last_transcript), не
+   весь лог — показ повної історії ламає ефект несподіванки. */
+let currentRelayId = null;
+let relayPollTimer = null;
+let relayMediaRecorder=null, relayChunks=[], relayInterval=null, relaySecs=0, relayBlob=null;
+let relayRecMode='voice';
+
+function createRelayRoom(){
+  const btn = document.getElementById('relay-create-btn');
+  btn.disabled = true; btn.textContent = '⏳ Створюю...';
+  maAction('relay_room_create', {});
+  showToast('🗣 Кімнату створено — перевірте чат, там посилання і кнопка входу');
+  setTimeout(()=>{ btn.disabled = false; btn.textContent = '🗣 Почати нову плітку'; }, 2000);
+}
+
+/* Вхід у живу кімнату — за ?relay=ID у посиланні (кнопка з чату) */
+function initRelayFromUrl(){
+  const relayId = params.get('relay');
+  if(!relayId) return;
+  currentRelayId = relayId;
+  switchTab('relay', document.querySelectorAll('.tab')[4]);
+  document.getElementById('relay-create').style.display = 'none';
+  document.getElementById('relay-live').style.display = 'block';
+  maAction('relay_room_join', {room_id: relayId});
+  pollRelayState();
+  relayPollTimer = setInterval(pollRelayState, 2500);
+}
+
+async function pollRelayState(){
+  if(!currentRelayId) return;
+  try{
+    const res = await fetch(`${BOT_API}/relay_room_state?room_id=${encodeURIComponent(currentRelayId)}`);
+    if(!res.ok) return;
+    const d = await res.json();
+    if(!d.ok) return;
+    renderRelayState(d);
+  }catch(e){}
+}
+
+function renderRelayState(d){
+  const countEl = document.getElementById('relay-link-count');
+  countEl.textContent = d.n_links > 0 ? `· ланка ${d.n_links}/${d.link_limit}` : '';
+
+  const transcriptEl = document.getElementById('relay-last-transcript');
+  if(d.last_transcript){
+    const icon = d.last_is_video ? '📹' : '🎙';
+    transcriptEl.textContent = `${icon} "${d.last_transcript}"`;
+  } else {
+    transcriptEl.textContent = 'Будь першим — запиши зачин 🎬';
+  }
+
+  if(d.status === 'completed'){
+    document.getElementById('relay-completed-banner').style.display = 'block';
+    document.getElementById('relay-rec-mode-row').style.display = 'none';
+    const btn = document.getElementById('relay-rec-btn');
+    if(btn){ btn.className='rec-btn disabled'; btn.textContent='✅ Плітка завершена'; btn.onclick=null; }
+    document.getElementById('relay-share-btn').style.display = 'none';
+    if(relayPollTimer){ clearInterval(relayPollTimer); relayPollTimer=null; }
+  } else if(d.status === 'finalizing'){
+    const btn = document.getElementById('relay-rec-btn');
+    if(btn){ btn.className='rec-btn disabled'; btn.textContent='⏳ Склеюємо відео...'; btn.onclick=null; }
+  }
+}
+
+function relaySetRecMode(mode){
+  if(document.getElementById('relay-rec-btn').classList.contains('recording')) return;
+  relayRecMode=mode;
+  const v=document.getElementById('relay-mode-voice'), vi=document.getElementById('relay-mode-video');
+  const on='rgba(124,110,247,.15)', off='var(--bg-card)';
+  v.style.background = mode==='voice'?on:off;  v.style.color = mode==='voice'?'var(--text)':'var(--text2)';
+  vi.style.background= mode==='video'?on:off;  vi.style.color = mode==='video'?'var(--text)':'var(--text2)';
+  document.getElementById('relay-rec-btn').textContent = mode==='video' ? '📹 Записати відео-ланку' : '🎙 Записати ланку';
+}
+
+async function relayToggleRecord(){
+  const btn=document.getElementById('relay-rec-btn');
+  if(btn.classList.contains('recording')) relayStopRecord();
+  else await relayStartRecord();
+}
+
+async function relayStartRecord(){
+  try{
+    const wantVideo = relayRecMode==='video';
+    const stream=await navigator.mediaDevices.getUserMedia(
+      wantVideo ? {audio:true, video:{facingMode:'user'}} : {audio:true}
+    );
+    relayMediaRecorder=new MediaRecorder(stream);
+    relayChunks=[];
+    relayMediaRecorder.ondataavailable=e=>{if(e.data.size>0)relayChunks.push(e.data);};
+    relayMediaRecorder.onstop=()=>{
+      relayBlob=new Blob(relayChunks,{type: wantVideo ? 'video/mp4' : 'audio/ogg'});
+      const btn=document.getElementById('relay-rec-btn');
+      btn.className='rec-btn submit'; btn.textContent='✅ Надіслати ланку'; btn.onclick=relaySubmitRecord;
+      stream.getTracks().forEach(t=>t.stop());
+      const prev=document.getElementById('relay-video-preview');
+      if(prev){ prev.classList.remove('show'); prev.srcObject=null; }
+    };
+    if(wantVideo){
+      const prev=document.getElementById('relay-video-preview');
+      if(prev){ prev.srcObject=stream; prev.classList.add('show'); try{ await prev.play(); }catch(e){} }
+    }
+    relayMediaRecorder.start(100);
+    relaySecs=0;
+    document.getElementById('relay-rec-btn').className='rec-btn recording';
+    document.getElementById('relay-rec-btn').textContent='⏹ Зупинити запис';
+    document.getElementById('relay-rec-wave').classList.add('show');
+    document.getElementById('relay-rec-timer').classList.add('show');
+    relayInterval=setInterval(()=>{
+      relaySecs++;
+      const m=Math.floor(relaySecs/60), sc=relaySecs%60;
+      document.getElementById('relay-rec-timer').textContent=`⏺ ${m}:${sc.toString().padStart(2,'0')}`;
+      if(relaySecs>=60) relayStopRecord();
+    },1000);
+  }catch(e){
+    alert(relayRecMode==='video' ? 'Камера недоступна. Дозволь доступ у налаштуваннях.'
+                                  : 'Мікрофон недоступний. Дозволь доступ в налаштуваннях.');
+  }
+}
+
+function relayStopRecord(){
+  if(relayMediaRecorder&&relayMediaRecorder.state!=='inactive') relayMediaRecorder.stop();
+  clearInterval(relayInterval);
+  document.getElementById('relay-rec-wave').classList.remove('show');
+  document.getElementById('relay-rec-timer').classList.remove('show');
+}
+
+async function relaySubmitRecord(){
+  if(!relayBlob || !currentRelayId) return;
+  const btn=document.getElementById('relay-rec-btn');
+  btn.className='rec-btn disabled'; btn.textContent='⏳ Розпізнаю мову...';
+
+  const isVideo = relayRecMode==='video';
+  const reader=new FileReader();
+  reader.onload=()=>{
+    const b64=reader.result.split(',')[1];
+    const payload={room_id: currentRelayId};
+    if(isVideo) payload.video_b64=b64; else payload.audio_b64=b64;
+    maAction('relay_room_send', payload);
+    showToast(isVideo ? '📹 Ланку надіслано!' : '🎙 Ланку надіслано!');
+    setTimeout(()=>{
+      btn.className='rec-btn record'; relaySetRecMode(relayRecMode);
+      pollRelayState();
+    }, 1500);
+  };
+  reader.readAsDataURL(relayBlob);
+}
+
+function shareRelayLink(){
+  if(!currentRelayId) return;
+  const url = `${window.location.origin}${window.location.pathname}?relay=${encodeURIComponent(currentRelayId)}`;
+  const text = `Приєднуйся до нашої плітки в SpeakChain 🗣 Почуєш лише останню репліку — додай своє! ${url}`;
+  if(TG && typeof TG.switchInlineQuery === 'function'){
+    try{ TG.switchInlineQuery(text, ['users','groups']); return; }catch(e){}
+  }
+  navigator.clipboard?.writeText(url).catch(()=>{});
+  showToast('🔗 Посилання скопійовано!');
+}
+
 /* ══ INIT ══ */
 fillInvite();
 fillChallenge();
 fillNetwork();
 renderRoomScenarios();
 initRoomFromUrl();
+initRelayFromUrl();
 </script>
 </body>
 </html>
