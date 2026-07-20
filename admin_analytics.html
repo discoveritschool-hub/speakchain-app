@@ -2199,7 +2199,12 @@ function renderStudents() {
       </div>`;
     }
     const rows = list.map((c, i) => {
-      const uname = c.username ? '@' + c.username : '';
+      // 20.07, знайдено при само-перевірці: _name(s) на бекенді має
+      // fallback name→username→"—" (bot.py:_build_students_analytics).
+      // Для студентів без імені c.name і c.username збігаються — без
+      // цієї перевірки "ivan_petrov" показувався б двічі: як ім'я і
+      // одразу під ним як @ivan_petrov.
+      const uname = (c.username && c.username !== c.name) ? '@' + c.username : '';
       // 20.07: пошук за іменем SpeakChain, Telegram-юзернеймом і Telegram id —
       // власниця прямо просила, бо часто ідентифікує людину саме за
       // юзернеймом чи id зі скарги/логів, а не за іменем з профілю.
@@ -2490,7 +2495,7 @@ function openStudentCard(key, idx) {
       План: <b style="color:var(--text)">${c.plan}</b><br>
       Джерело: <b style="color:var(--text)">${esc(c.source)}</b><br>
       Останній вхід: <b style="color:var(--text)">${c.last_active||'—'}</b>${c.inactive_days>=0?` (${c.inactive_days} дн. тому)`:''}<br>
-      Переходів рівня: <b style="color:var(--text)">${c.transitions||0}</b>${c.username?`<br>Telegram: <b style="color:var(--text)">@${esc(c.username)}</b>`:''}${c.uid?`<br>ID: <b style="color:var(--text)">${c.uid}</b>`:''}
+      Переходів рівня: <b style="color:var(--text)">${c.transitions||0}</b>${(c.username && c.username !== c.name)?`<br>Telegram: <b style="color:var(--text)">@${esc(c.username)}</b>`:''}${c.uid?`<br>ID: <b style="color:var(--text)">${c.uid}</b>`:''}
     </div>
     ${histBlock}
     ${challengeBlock}
