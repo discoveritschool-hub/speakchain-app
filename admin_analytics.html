@@ -2188,6 +2188,55 @@ function renderStudents() {
     </div>`;
   }
 
+  // 20.07: «Усі студенти» — окремо від problemTable, бо список тут довший
+  // (усі, не тільки проблемні) і потребує пошуку по імені. Клік на рядок —
+  // та сама картка openStudentCard('all', idx), що й в інших таблицях.
+  function allStudentsTable(list) {
+    if (!list || !list.length) {
+      return `<div class="table-block" style="margin-top:14px">
+        <div class="table-title">👥 Усі студенти <span style="font-weight:400;color:var(--text3)">· 0</span></div>
+        <div style="font-size:12px;color:var(--text2);padding:6px 0">Студентів ще немає</div>
+      </div>`;
+    }
+    const rows = list.map((c, i) => {
+      const uname = c.username ? '@' + c.username : '';
+      // 20.07: пошук за іменем SpeakChain, Telegram-юзернеймом і Telegram id —
+      // власниця прямо просила, бо часто ідентифікує людину саме за
+      // юзернеймом чи id зі скарги/логів, а не за іменем з профілю.
+      const searchBlob = [c.name, c.username, c.uid].filter(Boolean).join(' ').toLowerCase();
+      return `
+      <tr class="all-student-row" data-search="${esc(searchBlob)}"
+          onclick="openStudentCard('all', ${i})" style="cursor:pointer">
+        <td>${esc(c.name)}${uname ? `<br><span style="color:var(--text3);font-size:11px">${esc(uname)}</span>` : ''}</td>
+        <td>${c.level}</td>
+        <td>${c.progress}%</td>
+        <td>${c.inactive_days >= 0 ? c.inactive_days + ' дн.' : '—'}</td>
+        <td>${c.plan}</td>
+      </tr>`;
+    }).join('');
+    return `<div class="table-block" style="margin-top:14px">
+      <div class="table-title">👥 Усі студенти <span style="color:var(--text3);font-weight:400">(${list.length})</span></div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:6px">
+        Повний список — навіть ті, хто ні застряг, ні кинув, ні не платить. Тицьни на рядок → картка учня.
+      </div>
+      <input type="text" placeholder="Пошук: ім'я, @юзернейм або Telegram ID…" oninput="filterAllStudents(this.value)"
+        style="width:100%;box-sizing:border-box;padding:8px 10px;border-radius:8px;border:1px solid var(--line,#2a2a3a);
+        background:var(--surface2,#1a1830);color:var(--text);font-size:12px;margin-bottom:8px;outline:none">
+      <table id="all-students-table">
+        <tr><th>Ім'я / @юзернейм</th><th>Рівень</th><th>Прогрес</th><th>Не заходив</th><th>План</th></tr>
+        ${rows}
+      </table>
+    </div>`;
+  }
+
+  function filterAllStudents(q) {
+    const query = (q || '').toLowerCase().trim().replace(/^@/, '');
+    document.querySelectorAll('#all-students-table .all-student-row').forEach(row => {
+      row.style.display = row.dataset.search.includes(query) ? '' : 'none';
+    });
+  }
+  window.filterAllStudents = filterAllStudents;
+
   return `
   <div class="cards">
     <div class="card accent">
@@ -2224,6 +2273,8 @@ function renderStudents() {
   ${avgDaysRows}
 
   ${renderCohortsSection()}
+
+  ${allStudentsTable(d.all)}
 
   ${problemTable('🟡 Застрягли', d.stuck,
     `Прогрес ≤${s.stuck_progress_max}% і не заходили ${s.stuck_inactive_days}+ дн. Тицьни на рядок → картка учня.`,
@@ -2399,6 +2450,31 @@ function openStudentCard(key, idx) {
       ${histRows}
     </table>` : '';
 
+  // 20.07: «Шлях студента» — хронологія подій (events_log), нове зверху.
+  // Раніше картка показувала тільки агреговані цифри (рівень, прогрес,
+  // chain) — жодного погляду на ПОСЛІДОВНІСТЬ кроків. Тепер видно, що і
+  // коли робив студент, без пошуку в сирій БД.
+  const evRows = (c.events_log || []).map(ev => {
+    const meta = ev.m ? ` <span style="color:var(--text3)">${esc(JSON.stringify(ev.m))}</span>` : '';
+    return `<tr><td style="white-space:nowrap;color:var(--text2)">${esc(ev.t||'')}</td>` +
+           `<td>${esc(ev.e||'')}${meta}</td></tr>`;
+  }).join('');
+  const eventsBlock = (c.events_log && c.events_log.length) ? `
+    <div style="font-size:12px;font-weight:600;color:var(--text);margin:14px 0 4px">
+      Шлях студента <span style="color:var(--text3);font-weight:400">(останні ${c.events_log.length})</span>
+    </div>
+    <table style="width:100%;font-size:11px;line-height:1.6">
+      ${evRows}
+    </table>` : `
+    <div style="font-size:12px;color:var(--text3);margin-top:14px">Подій ще немає</div>`;
+
+  // Стан челенджу — той самий текст, що й /challenge_state у чаті,
+  // прямо в картці. null, якщо студент ніколи не торкався челенджу.
+  const challengeBlock = c.challenge_debug ? `
+    <div style="font-size:12px;font-weight:600;color:var(--text);margin:14px 0 4px">Стан челенджу</div>
+    <pre style="font-size:11px;color:var(--text2);white-space:pre-wrap;background:var(--surface2,#1a1830);
+      border-radius:8px;padding:10px 12px;margin:0">${esc(c.challenge_debug)}</pre>` : '';
+
   const html = `
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
       <div style="font-size:16px;font-weight:700;color:var(--text)">${esc(c.name)}</div>
@@ -2414,9 +2490,11 @@ function openStudentCard(key, idx) {
       План: <b style="color:var(--text)">${c.plan}</b><br>
       Джерело: <b style="color:var(--text)">${esc(c.source)}</b><br>
       Останній вхід: <b style="color:var(--text)">${c.last_active||'—'}</b>${c.inactive_days>=0?` (${c.inactive_days} дн. тому)`:''}<br>
-      Переходів рівня: <b style="color:var(--text)">${c.transitions||0}</b>${c.uid?`<br>ID: <b style="color:var(--text)">${c.uid}</b>`:''}
+      Переходів рівня: <b style="color:var(--text)">${c.transitions||0}</b>${c.username?`<br>Telegram: <b style="color:var(--text)">@${esc(c.username)}</b>`:''}${c.uid?`<br>ID: <b style="color:var(--text)">${c.uid}</b>`:''}
     </div>
     ${histBlock}
+    ${challengeBlock}
+    ${eventsBlock}
   `;
   let modal = document.getElementById('student-modal');
   if (!modal) {
