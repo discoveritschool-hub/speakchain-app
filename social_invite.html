@@ -1135,7 +1135,12 @@ function createRelayRoom(){
   setTimeout(()=>{ btn.disabled = false; btn.textContent = '🗣 Почати нову плітку'; }, 2000);
 }
 
-/* Вхід у живу кімнату — за ?relay=ID у посиланні (кнопка з чату) */
+/* Вхід у живу кімнату — за ?relay=ID у посиланні (кнопка з чату).
+   НЕ шлемо повідомлення в чат при відкритті (на відміну від першої
+   версії) — той самий стан уже видно на екрані через pollRelayState,
+   а дія при кожному відкритті/оновленні сторінки спамила б чат
+   ідентичним текстом. duo_room (initRoomFromUrl) так само обходиться
+   без join-дії — тут вирівняно з тим самим патерном. */
 function initRelayFromUrl(){
   const relayId = params.get('relay');
   if(!relayId) return;
@@ -1143,20 +1148,39 @@ function initRelayFromUrl(){
   switchTab('relay', document.querySelectorAll('.tab')[4]);
   document.getElementById('relay-create').style.display = 'none';
   document.getElementById('relay-live').style.display = 'block';
-  maAction('relay_room_join', {room_id: relayId});
   pollRelayState();
   relayPollTimer = setInterval(pollRelayState, 2500);
 }
+
+let relayNotFoundShown = false;
 
 async function pollRelayState(){
   if(!currentRelayId) return;
   try{
     const res = await fetch(`${BOT_API}/relay_room_state?room_id=${encodeURIComponent(currentRelayId)}`);
-    if(!res.ok) return;
+    if(!res.ok){
+      // 404 і подібні: не ковтаємо тихо — інакше людина бачить порожній
+      // "Будь першим" екран і намагається записати ланку в кімнату,
+      // якої вже нема (застаріле посилання, помилка копіювання URL).
+      showRelayNotFound();
+      return;
+    }
     const d = await res.json();
-    if(!d.ok) return;
+    if(!d.ok){ showRelayNotFound(); return; }
     renderRelayState(d);
   }catch(e){}
+}
+
+function showRelayNotFound(){
+  if(relayNotFoundShown) return;   // не спамимо той самий стан щопол-2.5с
+  relayNotFoundShown = true;
+  const transcriptEl = document.getElementById('relay-last-transcript');
+  if(transcriptEl) transcriptEl.textContent = '⚠️ Кімнату не знайдено — можливо, посилання застаріло';
+  document.getElementById('relay-rec-mode-row').style.display = 'none';
+  const btn = document.getElementById('relay-rec-btn');
+  if(btn){ btn.className='rec-btn disabled'; btn.textContent='Кімната недоступна'; btn.onclick=null; }
+  document.getElementById('relay-share-btn').style.display = 'none';
+  if(relayPollTimer){ clearInterval(relayPollTimer); relayPollTimer=null; }
 }
 
 function renderRelayState(d){
