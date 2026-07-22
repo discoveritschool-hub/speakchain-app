@@ -563,6 +563,22 @@
   .nav button .ic{font-size:21px}
   .nav button{padding:6px 2px}
 
+  /* 22.07: непропорційні іконки у fullscreen на широкому екрані.
+     .nav button{flex:1} ділить кнопки на рівні частки ВСЬОЇ ширини —
+     у Telegram-мобільному вʼюпорт і так вузький, тому це не було
+     помітно. У requestFullscreen() на десктопі вʼюпорт розтягується
+     на весь монітор, а сама іконка (21px) лишається тим самим
+     розміром — навколо неї зʼявляється величезний порожній простір,
+     і вона «губиться».
+     Рішення — те саме, що роблять нативні застосунки на десктопі
+     (Slack/Discord/Telegram Desktop): контент лишається вузькою,
+     зручною для сприйняття колонкою по центру, не розтягується на
+     весь широкий екран. */
+  .app{max-width:520px;margin:0 auto;box-shadow:0 0 60px rgba(0,0,0,.35)}
+  @media (min-width:521px){
+    .nav button .ic{font-size:23px}
+  }
+
   .screen{display:none}
   .screen.on{display:block}
   .why{max-width:360px;margin-top:20px;font-size:12.5px;color:var(--text2);line-height:1.65}
