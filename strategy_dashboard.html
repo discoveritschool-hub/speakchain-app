@@ -797,6 +797,8 @@ function go(id,btn){
 })();
 
 try { TG?.ready(); TG?.expand(); } catch(_){}
+// 22.07: повний екран (Bot API 8.0+), безпечно для старих клієнтів
+try { if (typeof TG?.requestFullscreen === 'function') TG.requestFullscreen(); } catch(_){}
 fillData();
 buildFunnel();
 loadLive();

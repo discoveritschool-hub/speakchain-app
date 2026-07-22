@@ -391,6 +391,8 @@ tr:hover td{background:var(--surface2)}
 <script>
 const tg = window.Telegram?.WebApp;
 if (tg) { tg.ready(); tg.expand(); }
+// 22.07: повний екран (Bot API 8.0+), безпечно для старих клієнтів
+if (tg && typeof tg.requestFullscreen === 'function') { try { tg.requestFullscreen(); } catch(e){} }
 
 let charts = {};
 let data = null;

@@ -2248,6 +2248,11 @@ document.addEventListener('visibilitychange', ()=>{
 });
 
 try{TG&&TG.ready();TG&&TG.expand();}catch(e){}
+// 22.07: повний екран (Bot API 8.0+). Прибирає верхню системну панель
+// Telegram — застосунок займає весь екран. try/catch і typeof-перевірка,
+// бо старі клієнти Telegram цей метод ще не підтримують — тоді просто
+// лишається TG.expand() як і було, нічого не ламається.
+try{ if(TG && typeof TG.requestFullscreen==='function') TG.requestFullscreen(); }catch(e){}
 setMode('active');
 
 /* ══ ВХІД НА КОНКРЕТНИЙ ЕКРАН ══
