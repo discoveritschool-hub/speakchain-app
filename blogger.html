@@ -870,31 +870,37 @@ textarea.form-input { resize:vertical; min-height:76px; line-height:1.5; }
 <!-- ═══════════════ 4. УЧНІ ═══════════════ -->
 <div class="panel" id="panel-students">
 
-  <div class="section">
-    <div class="section-title">Скільки їх</div>
-    <div class="stats-grid">
-      <div class="stat-card purple"><div class="stat-val" id="stat-total">0</div><div class="stat-label">Всього</div></div>
-      <div class="stat-card green"><div class="stat-val" id="stat-active">0</div><div class="stat-label">Активні</div></div>
-      <div class="stat-card blue"><div class="stat-val" id="stat-basic">0</div><div class="stat-label">Basic</div></div>
-      <div class="stat-card gold"><div class="stat-val" id="stat-premium">0</div><div class="stat-label">Premium</div></div>
-    </div>
-  </div>
-
-  <div class="section">
-    <div class="section-title">Розподіл планів</div>
-    <div class="plan-split">
-      <div class="plan-row">
-        <span>⚡️ Basic · <b id="basic-val">0</b></span>
-        <span>🌟 Premium · <b id="premium-val">0</b></span>
+  <div class="section fold">
+    <div class="section-title fold-h" onclick="toggleFold(this)">Скільки їх<span class="fold-arr">›</span></div>
+    <div class="fold-b">
+      <div class="stats-grid">
+        <div class="stat-card purple"><div class="stat-val" id="stat-total">0</div><div class="stat-label">Всього</div></div>
+        <div class="stat-card green"><div class="stat-val" id="stat-active">0</div><div class="stat-label">Активні</div></div>
+        <div class="stat-card blue"><div class="stat-val" id="stat-basic">0</div><div class="stat-label">Basic</div></div>
+        <div class="stat-card gold"><div class="stat-val" id="stat-premium">0</div><div class="stat-label">Premium</div></div>
       </div>
-      <div class="plan-track"><div class="plan-fill" id="prem-bar" style="width:0%"></div></div>
-      <div class="plan-hint" id="prem-pct">0% Premium</div>
     </div>
   </div>
 
-  <div class="section">
-    <div class="section-title">Рівні учнів</div>
-    <div id="levels-block"></div>
+  <div class="section fold">
+    <div class="section-title fold-h" onclick="toggleFold(this)">Розподіл планів<span class="fold-arr">›</span></div>
+    <div class="fold-b">
+      <div class="plan-split">
+        <div class="plan-row">
+          <span>⚡️ Basic · <b id="basic-val">0</b></span>
+          <span>🌟 Premium · <b id="premium-val">0</b></span>
+        </div>
+        <div class="plan-track"><div class="plan-fill" id="prem-bar" style="width:0%"></div></div>
+        <div class="plan-hint" id="prem-pct">0% Premium</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section fold">
+    <div class="section-title fold-h" onclick="toggleFold(this)">Рівні учнів<span class="fold-arr">›</span></div>
+    <div class="fold-b">
+      <div id="levels-block"></div>
+    </div>
   </div>
 
   <div class="section fold">
@@ -904,9 +910,11 @@ textarea.form-input { resize:vertical; min-height:76px; line-height:1.5; }
     </div>
   </div>
 
-  <div class="section">
-    <div class="section-title">Топ учнів</div>
-    <div id="top-students-list"></div>
+  <div class="section fold">
+    <div class="section-title fold-h" onclick="toggleFold(this)">Топ учнів<span class="fold-arr">›</span></div>
+    <div class="fold-b">
+      <div id="top-students-list"></div>
+    </div>
   </div>
 
   <!-- Повна статистика — розкривається ТУТ, не в чаті -->
