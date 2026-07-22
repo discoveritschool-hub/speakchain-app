@@ -255,6 +255,13 @@ tr:hover td{background:var(--surface2)}
     </div>
   </div>
 
+  <!-- 🎟️ ЛОТЕРЕЯ — ланки → номерні білети → розіграш поза ботом -->
+  <div class="section" id="tab-lottery">
+    <div id="lottery-content">
+      <div class="loading"><div class="spinner"></div>Завантаження...</div>
+    </div>
+  </div>
+
   <!-- ⚙️ СИСТЕМА — Помилки · Рубильники · Журнал + документація -->
   <div class="section" id="tab-system">
     <div id="system-content">
@@ -441,6 +448,7 @@ const NAV = [
   ['finance',  '🧾 Бухгалтерія'],
   ['partners', '🤝 Блогери'],
   ['content',  '🔥 Контент'],
+  ['lottery',  '🎟️ Лотерея'],
   ['system',   '⚙️ Система'],
   ['cmds',     '⌨️ Команди'],
 ];
@@ -704,6 +712,7 @@ function switchTab(tab) {
   if (tab === 'summary') { renderSummary(); return; }   /* поля видно навіть без даних */
   if (tab === 'finance') { renderFinance(); return; }   /* так само */
   if (tab === 'system')  { renderSystem(); return; }
+  if (tab === 'lottery') { renderLotteryTab(); return; }
   if (tab === 'cmds')    { renderCommands(); return; }
   if (data) renderTab(tab);
 }
@@ -913,6 +922,7 @@ function renderTab(tab) {
   if (tab === 'summary') { renderSummary(); return; }
   if (tab === 'finance') { renderFinance(); return; }
   if (tab === 'system')  { renderSystem(); return; }
+  if (tab === 'lottery') { renderLotteryTab(); return; }
   if (tab === 'cmds')    { renderCommands(); return; }
   const el = document.getElementById(tab + '-content');
   if (!el || !data) return;
@@ -2106,6 +2116,243 @@ function renderCommands() {
         + CMD_T[k].l + '</span>').join('')
     + '</div></div>'
     + body;
+}
+
+/* ═══ 🎟️ ЛОТЕРЕЯ — малюється навіть без даних аналітики ═══
+   Форма "Новий розіграш": весь текст і вибір аудиторії — адмін.
+   Блогер у своєму кабінеті бачить лише 3 поля з відео-посиланнями
+   (Конституція 18.4) — тут навмисно НЕ дублюємо ту логіку. */
+let lotteryBranches = [];
+let lotteryMultiMode = false;
+
+function renderLotteryTab() {
+  const el = document.getElementById('lottery-content');
+  if (!el) return;
+
+  el.innerHTML =
+      acc('lot-current', '🎟️', 'Поточний розіграш', 'Форма нового або статус активного',
+          '<div id="lot-current-body"><div class="loading"><div class="spinner"></div>Завантаження...</div></div>',
+          {open: true})
+    + acc('lot-history', '📜', 'Історія розіграшів', 'Завершені, з посиланнями на записи',
+          '<div id="lot-history-body"></div>');
+
+  loadLotteryState();
+}
+
+async function loadLotteryState() {
+  const body = document.getElementById('lot-current-body');
+  if (!body) return;
+  try {
+    const q = new URLSearchParams({
+      init_data: tg?.initData || '',
+      uid: tg?.initDataUnsafe?.user?.id || 0,
+    });
+    const res = await fetch(BOT_API + '/admin_lottery_export?' + q.toString());
+    if (res.status === 404) {
+      body.innerHTML = renderLotteryForm(null);
+      return;
+    }
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    // 200 означає, що розіграш активний і файл готовий — але сама форма
+    // потребує повних полів розіграшу, не лише списку номерів. На цьому
+    // етапі показуємо форму разом із кнопкою експорту й завершення.
+    body.innerHTML = renderLotteryForm({active: true});
+  } catch (e) {
+    body.innerHTML = renderLotteryForm(null);
+  }
+}
+
+function renderLotteryForm(current) {
+  const isActive = current && current.active;
+  lotteryBranches = lotteryBranches.length ? lotteryBranches : [{branch_id: 'default', label: '', group_name: '', group_chat_id: '', prefix: '', announce_text: '', reminder_texts: ['']}];
+
+  const branchesHtml = lotteryBranches.map((b, i) => `
+    <div class="sw-card" style="margin-top:10px" data-branch-idx="${i}">
+      <div class="sw-doc"><b>Гілка ${i + 1}</b>${lotteryBranches.length > 1 ? ` <span style="cursor:pointer;color:var(--red)" onclick="removeLotteryBranch(${i})">✕ прибрати</span>` : ''}</div>
+      <label style="display:block;font-size:12px;color:var(--text2);margin:8px 0 4px">Назва гілки (напр. «Аудиторія блогера АР»)</label>
+      <input class="form-input lot-branch-label" data-i="${i}" value="${esc(b.label)}" placeholder="Назва гілки">
+      <label style="display:block;font-size:12px;color:var(--text2);margin:8px 0 4px">Префікс білетів (2-4 літери, опційно — інакше спільний)</label>
+      <input class="form-input lot-branch-prefix" data-i="${i}" value="${esc(b.prefix)}" placeholder="AP" style="max-width:120px">
+      <label style="display:block;font-size:12px;color:var(--text2);margin:8px 0 4px">Назва групи для оголошень</label>
+      <input class="form-input lot-branch-groupname" data-i="${i}" value="${esc(b.group_name)}" placeholder="SpeakChain Community">
+      <label style="display:block;font-size:12px;color:var(--text2);margin:8px 0 4px">Chat ID групи</label>
+      <input class="form-input lot-branch-chatid" data-i="${i}" value="${esc(b.group_chat_id)}" placeholder="-1001234567890">
+      <label style="display:block;font-size:12px;color:var(--text2);margin:8px 0 4px">Текст оголошення</label>
+      <textarea class="form-input lot-branch-announce" data-i="${i}" rows="3" placeholder="Текст, який піде в групу цієї гілки">${esc(b.announce_text)}</textarea>
+      <label style="display:block;font-size:12px;color:var(--text2);margin:8px 0 4px">Тексти нагадувань (по одному на рядок)</label>
+      <textarea class="form-input lot-branch-reminders" data-i="${i}" rows="3" placeholder="Кожен рядок — окреме нагадування">${esc((b.reminder_texts || []).join('\\n'))}</textarea>
+    </div>
+  `).join('');
+
+  return `
+    <div style="display:flex;gap:8px;margin-bottom:12px">
+      <button class="btn ${lotteryMultiMode ? '' : 'btn-purple'}" onclick="setLotteryMultiMode(false)" style="flex:1">Одна аудиторія</button>
+      <button class="btn ${lotteryMultiMode ? 'btn-purple' : ''}" onclick="setLotteryMultiMode(true)" style="flex:1">Кілька гілок</button>
+    </div>
+
+    <label style="display:block;font-size:12px;color:var(--text2);margin:8px 0 4px">Аудиторія</label>
+    <select class="form-input" id="lot-audience-type">
+      <option value="all">Уся SpeakChain</option>
+      <option value="bloggers">Вибрані блогери (мультивибір нижче)</option>
+      <option value="organic_only">Тільки органіка</option>
+    </select>
+    <div id="lot-blogger-multiselect" style="margin-top:8px;font-size:12px;color:var(--text2)">
+      Список блогерів підвантажується з /admin_analytics — мультивибір чекбоксами.
+    </div>
+
+    <label style="display:block;font-size:12px;color:var(--text2);margin:14px 0 4px">Приз — назва</label>
+    <input class="form-input" id="lot-prize" placeholder="iPhone 15">
+    <label style="display:block;font-size:12px;color:var(--text2);margin:8px 0 4px">Приз — фото/відео (URL, опційно)</label>
+    <input class="form-input" id="lot-prize-media" placeholder="https://...">
+
+    <label style="display:block;font-size:12px;color:var(--text2);margin:14px 0 4px">Префікс білетів — спільний дефолт</label>
+    <input class="form-input" id="lot-prefix" placeholder="SC" style="max-width:120px">
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px">
+      <div>
+        <label style="display:block;font-size:12px;color:var(--text2);margin-bottom:4px">Старт продажу білетів</label>
+        <input class="form-input" type="date" id="lot-sale-start">
+      </div>
+      <div>
+        <label style="display:block;font-size:12px;color:var(--text2);margin-bottom:4px">Дата оголошення</label>
+        <input class="form-input" type="date" id="lot-announce-date">
+      </div>
+      <div>
+        <label style="display:block;font-size:12px;color:var(--text2);margin-bottom:4px">Дата розіграшу</label>
+        <input class="form-input" type="date" id="lot-draw-date">
+      </div>
+      <div>
+        <label style="display:block;font-size:12px;color:var(--text2);margin-bottom:4px">Дати нагадувань (через кому)</label>
+        <input class="form-input" id="lot-reminder-dates" placeholder="2026-08-15, 2026-08-25">
+      </div>
+    </div>
+
+    <div style="margin-top:16px">
+      <div class="sw-doc" style="margin-bottom:6px"><b>Гілки оголошень</b></div>
+      ${branchesHtml}
+      <button class="btn" style="margin-top:8px" onclick="addLotteryBranch()">+ Додати гілку</button>
+    </div>
+
+    <div style="display:flex;gap:8px;margin-top:18px">
+      <button class="btn btn-purple" style="flex:1" onclick="saveLottery()">Зберегти розіграш</button>
+      ${isActive ? '<button class="btn" style="flex:1" onclick="exportLotteryTickets()">Сформувати список номерів</button>' : ''}
+    </div>
+    ${isActive ? `
+    <div class="sw-card" style="margin-top:14px">
+      <div class="sw-doc" style="margin-bottom:8px"><b>Завершити розіграш</b></div>
+      <label style="display:block;font-size:12px;color:var(--text2);margin-bottom:4px">Посилання на запис розіграшу</label>
+      <input class="form-input" id="lot-recording-url" placeholder="https://youtube.com/watch?v=...">
+      <button class="btn" style="margin-top:8px" onclick="completeLottery()">Позначити завершеним</button>
+    </div>` : ''}
+    <div id="lot-save-result" style="margin-top:10px"></div>
+  `;
+}
+
+function setLotteryMultiMode(on) {
+  lotteryMultiMode = on;
+  if (on && lotteryBranches.length < 2) {
+    lotteryBranches.push({branch_id: 'branch_' + Date.now(), label: '', group_name: '', group_chat_id: '', prefix: '', announce_text: '', reminder_texts: ['']});
+  }
+  const body = document.getElementById('lot-current-body');
+  if (body) body.innerHTML = renderLotteryForm({active: false});
+}
+
+function addLotteryBranch() {
+  lotteryBranches.push({branch_id: 'branch_' + Date.now(), label: '', group_name: '', group_chat_id: '', prefix: '', announce_text: '', reminder_texts: ['']});
+  const body = document.getElementById('lot-current-body');
+  if (body) body.innerHTML = renderLotteryForm({active: false});
+}
+
+function removeLotteryBranch(i) {
+  lotteryBranches.splice(i, 1);
+  const body = document.getElementById('lot-current-body');
+  if (body) body.innerHTML = renderLotteryForm({active: false});
+}
+
+function collectLotteryBranches() {
+  document.querySelectorAll('.lot-branch-label').forEach(inp => { lotteryBranches[+inp.dataset.i].label = inp.value; });
+  document.querySelectorAll('.lot-branch-prefix').forEach(inp => { lotteryBranches[+inp.dataset.i].prefix = inp.value.trim(); });
+  document.querySelectorAll('.lot-branch-groupname').forEach(inp => { lotteryBranches[+inp.dataset.i].group_name = inp.value; });
+  document.querySelectorAll('.lot-branch-chatid').forEach(inp => { lotteryBranches[+inp.dataset.i].group_chat_id = inp.value.trim(); });
+  document.querySelectorAll('.lot-branch-announce').forEach(ta => { lotteryBranches[+ta.dataset.i].announce_text = ta.value; });
+  document.querySelectorAll('.lot-branch-reminders').forEach(ta => { lotteryBranches[+ta.dataset.i].reminder_texts = ta.value.split('\\n').map(s => s.trim()).filter(Boolean); });
+  return lotteryBranches.map(b => ({
+    branch_id: b.branch_id,
+    label: b.label,
+    group_name: b.group_name,
+    group_chat_id: b.group_chat_id ? parseInt(b.group_chat_id, 10) : null,
+    prefix: b.prefix || null,
+    announce_text: b.announce_text,
+    reminder_texts: b.reminder_texts || [],
+  }));
+}
+
+async function saveLottery() {
+  const resultBox = document.getElementById('lot-save-result');
+  const branches = collectLotteryBranches();
+  const audienceType = document.getElementById('lot-audience-type').value;
+  const payload = {
+    init_data: tg?.initData || '',
+    uid: tg?.initDataUnsafe?.user?.id || 0,
+    prefix: document.getElementById('lot-prefix').value.trim() || 'SC',
+    audience: {type: audienceType},
+    prize: document.getElementById('lot-prize').value.trim(),
+    prize_media_url: document.getElementById('lot-prize-media').value.trim() || null,
+    sale_start: document.getElementById('lot-sale-start').value,
+    announce_date: document.getElementById('lot-announce-date').value,
+    draw_date: document.getElementById('lot-draw-date').value,
+    reminder_dates: document.getElementById('lot-reminder-dates').value.split(',').map(s => s.trim()).filter(Boolean),
+    branches: lotteryMultiMode ? branches : [],
+    group_chat_id: (!lotteryMultiMode && branches[0]) ? branches[0].group_chat_id : null,
+    announce_text: (!lotteryMultiMode && branches[0]) ? branches[0].announce_text : '',
+    reminder_texts: (!lotteryMultiMode && branches[0]) ? branches[0].reminder_texts : [],
+  };
+  resultBox.innerHTML = '<div class="loading"><div class="spinner"></div>Зберігаємо...</div>';
+  try {
+    const res = await fetch(BOT_API + '/admin_lottery_save', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(payload),
+    });
+    const r = await res.json();
+    if (!res.ok || r.error) throw new Error(r.error || 'HTTP ' + res.status);
+    resultBox.innerHTML = '<div style="background:rgba(62,207,142,.12);border:1px solid var(--green);border-radius:8px;padding:8px 10px;font-size:12px;color:var(--green)">✅ Розіграш збережено: ' + esc(r.lottery_id) + '</div>';
+    setTimeout(loadLotteryState, 1200);
+  } catch (e) {
+    resultBox.innerHTML = '<div style="background:rgba(239,68,68,.12);border:1px solid var(--red);border-radius:8px;padding:8px 10px;font-size:12px;color:var(--red)">❌ ' + esc(e.message) + '</div>';
+  }
+}
+
+async function exportLotteryTickets() {
+  const q = new URLSearchParams({
+    init_data: tg?.initData || '',
+    uid: tg?.initDataUnsafe?.user?.id || 0,
+  });
+  window.open(BOT_API + '/admin_lottery_export?' + q.toString(), '_blank');
+}
+
+async function completeLottery() {
+  const resultBox = document.getElementById('lot-save-result');
+  const recordingUrl = document.getElementById('lot-recording-url').value.trim();
+  resultBox.innerHTML = '<div class="loading"><div class="spinner"></div>Завершуємо...</div>';
+  try {
+    const res = await fetch(BOT_API + '/admin_lottery_complete', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        init_data: tg?.initData || '',
+        uid: tg?.initDataUnsafe?.user?.id || 0,
+        recording_url: recordingUrl || null,
+      }),
+    });
+    const r = await res.json();
+    if (!res.ok || r.error) throw new Error(r.error || 'HTTP ' + res.status);
+    resultBox.innerHTML = '<div style="background:rgba(62,207,142,.12);border:1px solid var(--green);border-radius:8px;padding:8px 10px;font-size:12px;color:var(--green)">✅ Розіграш завершено</div>';
+    lotteryBranches = [];
+    setTimeout(loadLotteryState, 1200);
+  } catch (e) {
+    resultBox.innerHTML = '<div style="background:rgba(239,68,68,.12);border:1px solid var(--red);border-radius:8px;padding:8px 10px;font-size:12px;color:var(--red)">❌ ' + esc(e.message) + '</div>';
+  }
 }
 
 /* ═══ ⚙️ СИСТЕМА — малюється навіть без даних аналітики ═══ */

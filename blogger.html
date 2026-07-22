@@ -598,6 +598,59 @@ textarea.form-input { resize:vertical; min-height:76px; line-height:1.5; }
 <!-- ═══════════════ 2. КОНТЕНТ ═══════════════ -->
 <div class="panel" id="panel-content">
 
+  <div class="section fold" id="sec-lottery">
+    <div class="section-title fold-h" onclick="toggleFold(this)">
+      🎟️ Лотерея
+      <span id="lottery-status-pill" style="margin-left:auto; margin-right:8px; font-size:11px; font-weight:700; padding:3px 9px; border-radius:20px; background:rgba(124,110,247,.18); color:var(--purple)">завантаження…</span>
+      <span class="fold-arr">›</span>
+    </div>
+    <div class="fold-b">
+
+      <div id="lottery-inactive-notice" style="display:none; font-size:13px; color:var(--ink2,#8888a8); padding:8px 0">
+        Зараз немає активного розіграшу, до якого тебе додано. Коли адмін
+        запустить розіграш і додасть твою аудиторію — тут з'являться поля
+        для відео.
+      </div>
+
+      <div id="lottery-fields" style="display:none">
+        <div class="day-row">
+          <div class="day-title" style="margin-bottom:6px">📢 Відео-оголошення</div>
+          <div class="inline-form">
+            <input class="form-input" id="lot-video-announce" placeholder="https://youtu.be/…">
+            <button class="btn btn-sm btn-purple" onclick="saveLotteryVideo('announce')">Зберегти</button>
+          </div>
+          <div class="status-line" id="lot-announce-status"></div>
+        </div>
+
+        <div class="day-row">
+          <div class="day-title" style="margin-bottom:6px">⏰ Відео-нагадування</div>
+          <div class="inline-form">
+            <input class="form-input" id="lot-video-reminder" placeholder="https://youtu.be/…">
+            <button class="btn btn-sm btn-purple" onclick="saveLotteryVideo('reminder')">Зберегти</button>
+          </div>
+          <div class="status-line" id="lot-reminder-status"></div>
+        </div>
+
+        <div class="day-row">
+          <div class="day-title" style="margin-bottom:6px">🎉 Відео самого розіграшу</div>
+          <div class="inline-form">
+            <input class="form-input" id="lot-video-draw" placeholder="https://youtu.be/… (додається в день розіграшу)">
+            <button class="btn btn-sm btn-purple" onclick="saveLotteryVideo('draw')">Зберегти</button>
+          </div>
+          <div class="status-line" id="lot-draw-status"></div>
+        </div>
+
+        <div style="font-size:12px; color:var(--ink2,#8888a8); margin-top:8px; line-height:1.5">
+          Текст оголошень і те, кому саме вони підуть, визначає адмін.
+          Тут потрібні лише посилання на твої відео.
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
   <div class="section">
     <div class="section-title">Що заповнено</div>
     <div class="fill-progress" id="fp-videos" onclick="scrollToId('sec-videos')">
@@ -1061,6 +1114,48 @@ function saveChallengeVideo(day) {
   toast('🎬 Відео дня ' + day + ' збережено');
 }
 
+/* ── Лотерея: блогер бачить свій розіграш, якщо його додано ── */
+function renderLottery() {
+  const pill = document.getElementById('lottery-status-pill');
+  const notice = document.getElementById('lottery-inactive-notice');
+  const fields = document.getElementById('lottery-fields');
+  if (!pill) return;
+
+  const lot = D.active_lottery_for_blogger;
+  if (!lot) {
+    pill.textContent = 'немає розіграшу';
+    pill.style.background = 'rgba(136,136,168,.15)';
+    pill.style.color = '#8888a8';
+    notice.style.display = 'block';
+    fields.style.display = 'none';
+    return;
+  }
+
+  pill.textContent = lot.prize ? `приз: ${esc(lot.prize)}` : 'активний розіграш';
+  notice.style.display = 'none';
+  fields.style.display = 'block';
+
+  document.getElementById('lot-video-announce').value = lot.branch_video_announce || '';
+  document.getElementById('lot-video-reminder').value = lot.branch_video_reminder || '';
+  document.getElementById('lot-video-draw').value = lot.branch_video_draw || '';
+
+  const setStatus = (id, url) => {
+    const el = document.getElementById(id);
+    if (el) { el.textContent = url ? '✅ додано' : ''; el.className = 'status-line' + (url ? ' ok' : ''); }
+  };
+  setStatus('lot-announce-status', lot.branch_video_announce);
+  setStatus('lot-reminder-status', lot.branch_video_reminder);
+  setStatus('lot-draw-status', lot.branch_video_draw);
+}
+
+function saveLotteryVideo(kind) {
+  const inp = document.getElementById('lot-video-' + kind);
+  const url = (inp && inp.value || '').trim();
+  if (!url) { inp && inp.focus(); return; }
+  maAction('blogger_set_lottery_video', { kind: kind, url: url });
+  toast('🎟️ Відео збережено');
+}
+
 /* ── Фрази дня (Пн–Нд) ── */
 const WEEKDAYS = ['Пн','Вт','Ср','Чт','Пт','Сб','Нд'];
 
@@ -1474,6 +1569,7 @@ function fill() {
   renderAnalytics();
   renderStatsReport();
   renderChallengeVideos();
+  renderLottery();
   renderPhrases();
 
   /* Відео челенджу тижня */
