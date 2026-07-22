@@ -674,9 +674,11 @@ textarea.form-input { resize:vertical; min-height:76px; line-height:1.5; }
   <div class="divider"></div>
 
   <!-- Що резонує з твоєю аудиторією -->
-  <div class="section">
-    <div class="section-title">Що працює</div>
-    <div id="analytics-content"></div>
+  <div class="section fold">
+    <div class="section-title fold-h" onclick="toggleFold(this)">Що працює<span class="fold-arr">›</span></div>
+    <div class="fold-b">
+      <div id="analytics-content"></div>
+    </div>
   </div>
 
   <div class="divider"></div>
@@ -893,6 +895,13 @@ textarea.form-input { resize:vertical; min-height:76px; line-height:1.5; }
   <div class="section">
     <div class="section-title">Рівні учнів</div>
     <div id="levels-block"></div>
+  </div>
+
+  <div class="section fold">
+    <div class="section-title fold-h" onclick="toggleFold(this)">Прогрес аудиторії<span class="fold-arr">›</span></div>
+    <div class="fold-b">
+      <div id="progress-summary-block"></div>
+    </div>
   </div>
 
   <div class="section">
@@ -1499,6 +1508,33 @@ function renderAnalytics() {
 /* ── Рівні учнів A1 → C2 ── */
 const LEVEL_ORDER = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
 
+function renderProgressSummary() {
+  const box = document.getElementById('progress-summary-block');
+  if (!box) return;
+
+  const ps = D.progress_summary || {};
+  if (!ps.count) {
+    box.innerHTML =
+      '<div class="empty"><span class="empty-icon">📊</span>Даних поки немає.<br>З\'являться, коли учні почнуть навчатись.</div>';
+    return;
+  }
+
+  const fmtDays = (d) => d === null || d === undefined ? '—' : d + ' дн.';
+  const fmtNum  = (n) => n === null || n === undefined ? '—' : n;
+
+  box.innerHTML = `
+    <div class="stats-grid">
+      <div class="stat-card purple"><div class="stat-val">${fmtDays(ps.avg_study_days)}</div><div class="stat-label">Середня тривалість навчання</div></div>
+      <div class="stat-card blue"><div class="stat-val">${fmtNum(ps.avg_words)}</div><div class="stat-label">Слів на учня в середньому</div></div>
+      <div class="stat-card green"><div class="stat-val">${fmtNum(ps.level_ups_total)}</div><div class="stat-label">Переходів рівня разом</div></div>
+      <div class="stat-card gold"><div class="stat-val">${fmtNum(ps.referrals_brought)}</div><div class="stat-label">Друзів приведено учнями</div></div>
+    </div>
+    <div style="font-size:11px;color:var(--text2,#8888a8);margin-top:10px;line-height:1.6">
+      ⏱️ Час занять на день — поки не трекається продуктом, дані з'являться пізніше.<br>
+      Показники — середні по всіх ${ps.count} учнях цієї аудиторії.
+    </div>`;
+}
+
 function renderLevels() {
   const box = document.getElementById('levels-block');
   if (!box) return;
@@ -1564,6 +1600,7 @@ function fill() {
   document.getElementById('prem-bar').style.width  = (100 - premPct) + '%';
   document.getElementById('prem-pct').textContent  = premPct + '% Premium';
 
+  renderProgressSummary();
   renderTopStudents();
   renderLevels();
   renderAnalytics();
