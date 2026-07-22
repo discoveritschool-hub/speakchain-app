@@ -571,15 +571,58 @@
 
 /* ═══ під Telegram ═══ */
 html,body{height:100%;overflow:hidden}
+:root{--sc-safe-top:0px;--sc-safe-bottom:0px}
 .app{display:flex;flex-direction:column;height:100vh;height:100dvh;background:var(--bg)}
 .scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;
-  padding-bottom:calc(76px + env(safe-area-inset-bottom))}
+  padding-bottom:calc(76px + var(--sc-safe-bottom))}
 .screen{display:none}
 .screen.on{display:block}
-.nav{flex-shrink:0;padding-bottom:env(safe-area-inset-bottom);z-index:50}
-.topbar{flex-shrink:0;gap:8px}
+.nav{flex-shrink:0;padding-bottom:var(--sc-safe-bottom);z-index:50}
+.topbar{flex-shrink:0;gap:8px;padding-top:var(--sc-safe-top)}
 /* Стрілки скролерів керуються з JS (scSync) — глушимо жорсткі правила прототипу */
 .sc-arrow.left,.sc-arrow.right{opacity:0;pointer-events:none;transition:opacity .2s}
+
+/* ══════════════════════════════════════════════════════════════
+   SKELETON — миттєвий контур інтерфейсу замість порожнього екрана.
+
+   22.07: у месенджері будь-яка затримка сприймається як «зламалось»
+   (White Screen Perception — стандартна проблема Mini Apps, коли
+   JS ще вантажиться, а екран порожній чорний прямокутник). Skeleton
+   малює приблизний силует topbar+hero+navigation ОДРАЗУ, синхронним
+   інлайн-CSS, до того як зайде основний JS. Зникає плавним fade-out,
+   коли setMode('active') і _syncSafeArea() вже відпрацювали.
+   ══════════════════════════════════════════════════════════════ */
+#sc-skeleton{
+  position:fixed; inset:0; z-index:9999;
+  background:var(--bg); display:flex; flex-direction:column;
+  padding-top:var(--sc-safe-top,0px);
+  transition:opacity .25s ease;
+}
+#sc-skeleton.hide{opacity:0; pointer-events:none}
+.sk-topbar{
+  flex-shrink:0; height:52px; display:flex; align-items:center;
+  gap:10px; padding:0 16px; border-bottom:.5px solid var(--line);
+}
+.sk-pill{height:14px; border-radius:7px; background:var(--bg-card2);
+  animation:sk-pulse 1.3s ease-in-out infinite}
+.sk-hero{margin:16px; padding:20px; border-radius:var(--r-lg,14px);
+  background:var(--bg-card); display:flex; flex-direction:column; gap:10px}
+.sk-line{height:12px; border-radius:6px; background:var(--bg-card2);
+  animation:sk-pulse 1.3s ease-in-out infinite}
+.sk-btn{height:44px; border-radius:var(--r,10px); background:var(--bg-card2);
+  margin-top:6px; animation:sk-pulse 1.3s ease-in-out infinite}
+.sk-nav{
+  margin-top:auto; flex-shrink:0; height:58px; display:flex;
+  border-top:.5px solid var(--line);
+  padding-bottom:var(--sc-safe-bottom,0px);
+}
+.sk-nav-item{flex:1; display:flex; align-items:center; justify-content:center}
+.sk-dot{width:22px; height:22px; border-radius:6px; background:var(--bg-card2);
+  animation:sk-pulse 1.3s ease-in-out infinite}
+@keyframes sk-pulse{0%,100%{opacity:.55}50%{opacity:1}}
+@media (prefers-reduced-motion: reduce){
+  .sk-pill,.sk-line,.sk-btn,.sk-dot{animation:none;opacity:.75}
+}
 .tb-arw{background:var(--bg-card2);border:.5px solid var(--line);color:var(--text2);
   width:30px;height:30px;border-radius:50%;font-size:17px;line-height:1;cursor:pointer;
   flex-shrink:0;display:flex;align-items:center;justify-content:center;
@@ -595,8 +638,46 @@ html,body{height:100%;overflow:hidden}
 .lvl-dot{cursor:pointer}
 .topic{cursor:pointer}
 </style>
+<script>
+// 22.07: аварійний запобіжник — якщо основний JS упаде ДО setMode('active')
+// (мережа лягла, помилка в даних тощо), skeleton не має лишитись навічно.
+// 6с — з запасом понад типовий час завантаження, не заважає нормальному
+// шляху (там skeleton і так ховається за долі секунди через rAF-код).
+window.addEventListener('load', function(){
+  setTimeout(function(){
+    var sk = document.getElementById('sc-skeleton');
+    if (sk && !sk.classList.contains('hide')) {
+      sk.classList.add('hide');
+      setTimeout(function(){ try { sk.remove(); } catch(e){} }, 300);
+    }
+  }, 6000);
+});
+</script>
 </head>
 <body>
+
+<!-- SKELETON: показується миттєво, зникає fade-out коли контент готовий -->
+<div id="sc-skeleton" aria-hidden="true">
+  <div class="sk-topbar">
+    <div class="sk-pill" style="width:60px"></div>
+    <div class="sk-pill" style="width:36px;margin-left:auto"></div>
+    <div class="sk-pill" style="width:90px"></div>
+    <div class="sk-pill" style="width:50px;margin-left:auto"></div>
+  </div>
+  <div class="sk-hero">
+    <div class="sk-line" style="width:40%"></div>
+    <div class="sk-line" style="width:70%;height:18px"></div>
+    <div class="sk-line" style="width:55%"></div>
+    <div class="sk-btn"></div>
+  </div>
+  <div class="sk-nav">
+    <div class="sk-nav-item"><div class="sk-dot"></div></div>
+    <div class="sk-nav-item"><div class="sk-dot"></div></div>
+    <div class="sk-nav-item"><div class="sk-dot"></div></div>
+    <div class="sk-nav-item"><div class="sk-dot"></div></div>
+    <div class="sk-nav-item"><div class="sk-dot"></div></div>
+  </div>
+</div>
 
 <div class="app">
 
@@ -2248,12 +2329,74 @@ document.addEventListener('visibilitychange', ()=>{
 });
 
 try{TG&&TG.ready();TG&&TG.expand();}catch(e){}
+// 22.07: колір системного заголовка/фону Telegram синхронізуємо з нашим
+// темним фоном (--bg: #0d0d14). Без цього — короткий, але помітний
+// контрастний «стрибок» кольору в момент до активації fullscreen:
+// системний сірий заголовок Telegram проти темного застосунку.
+// setBackgroundColor теж потрібен — це колір, який Telegram лишає
+// видимим по краях під час перетягування BottomSheet.
+try{
+  if(TG && typeof TG.setHeaderColor==='function')     TG.setHeaderColor('#0d0d14');
+  if(TG && typeof TG.setBackgroundColor==='function')  TG.setBackgroundColor('#0d0d14');
+}catch(e){}
 // 22.07: повний екран (Bot API 8.0+). Прибирає верхню системну панель
 // Telegram — застосунок займає весь екран. try/catch і typeof-перевірка,
 // бо старі клієнти Telegram цей метод ще не підтримують — тоді просто
 // лишається TG.expand() як і було, нічого не ламається.
 try{ if(TG && typeof TG.requestFullscreen==='function') TG.requestFullscreen(); }catch(e){}
+
+// 22.07: safe area в fullscreen — Bot API 8.0+.
+//
+// ⚠️ CSS env(safe-area-inset-*) НЕ ПРАЦЮЄ всередині Telegram Mini Apps
+// (підтверджений баг: github.com/TelegramMessenger/Telegram-iOS/issues/1377).
+// Той env(), що вже був у .scroll/.nav — тихо нічого не робив і раніше;
+// у звичайному режимі це не було критично (Telegram сам займав верх/низ),
+// але в requestFullscreen() застосунок сам відповідає за весь екран —
+// без цього фіксу нижня навігація може напливати на зону жестів телефону,
+// а зверху лишається або порожнеча, або контент під вирізом камери.
+//
+// Рішення: Telegram сам пише актуальні відступи у свої CSS-змінні
+// (--tg-safe-area-inset-top/bottom, --tg-content-safe-area-inset-top/bottom).
+// Підписуємось на їхню зміну (поворот екрана, зміна fullscreen-стану) і
+// прокидуємо в НАШІ змінні, які реально використовує CSS нижче.
+function _syncSafeArea(){
+  try{
+    var r = document.documentElement.style;
+    var css = getComputedStyle(document.documentElement);
+    var top    = css.getPropertyValue('--tg-content-safe-area-inset-top')    || css.getPropertyValue('--tg-safe-area-inset-top')    || '0px';
+    var bottom = css.getPropertyValue('--tg-content-safe-area-inset-bottom') || css.getPropertyValue('--tg-safe-area-inset-bottom') || '0px';
+    r.setProperty('--sc-safe-top', top.trim() || '0px');
+    r.setProperty('--sc-safe-bottom', bottom.trim() || '0px');
+  }catch(e){}
+}
+if(TG){
+  try{
+    if (typeof TG.requestSafeAreaInsets === 'function') TG.requestSafeAreaInsets();
+    if (typeof TG.requestContentSafeAreaInsets === 'function') TG.requestContentSafeAreaInsets();
+    if (typeof TG.onEvent === 'function'){
+      TG.onEvent('safeAreaChanged', _syncSafeArea);
+      TG.onEvent('contentSafeAreaChanged', _syncSafeArea);
+      TG.onEvent('fullscreenChanged', _syncSafeArea);
+    }
+  }catch(e){}
+}
+_syncSafeArea();
 setMode('active');
+
+// 22.07: ховаємо skeleton — реальний контент готовий (setMode відмалював
+// перший екран, _syncSafeArea прочитав відступи). rAF×2, той самий трюк,
+// що вже використовується в оболонці для scroll-hint: перший кадр ставить
+// у чергу, другий гарантує, що layout уже готовий — без цього fade-out
+// міг би зачепити ще не відмальований контент.
+(function _hideSkeleton(){
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    const sk = document.getElementById('sc-skeleton');
+    if (sk) {
+      sk.classList.add('hide');
+      setTimeout(() => { try { sk.remove(); } catch(e){} }, 300);
+    }
+  }));
+})();
 
 /* ══ ВХІД НА КОНКРЕТНИЙ ЕКРАН ══
    Кнопки в чаті раніше вели на окремі .html (speaking_buddy.html і т.д.).
