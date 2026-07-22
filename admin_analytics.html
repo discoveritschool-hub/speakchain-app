@@ -1357,23 +1357,38 @@ function renderFinance() {
   el.innerHTML = h;
 }
 
-/* ── Персональна комісія блогера (23.07) ── */
+/* ── Персональна комісія блогера (23.07, оновлено — форма з вкладки
+   «Блогери» тепер підвантажує ПОТОЧНУ ставку замість порожніх полів,
+   і блогера видно тут навіть без жодної оплати цього місяця, на
+   відміну від таблиці у вкладці «Гроші», яка показує лише тих, хто
+   вже платив. Обидві форми ведуть до тих самих полів/збереження,
+   різняться лише DOM id (звичайна vs "-2" на вкладці «Блогери»). ── */
 let bcCurrentBlogger = null;
-function openBloggerCommissionForm(bloggerName) {
+let bcUseSecondForm  = false;
+function openBloggerCommissionForm(bloggerName, curBasic, curPremium) {
   bcCurrentBlogger = bloggerName;
-  const form = document.getElementById('bc-form');
-  const title = document.getElementById('bc-form-title');
+  bcUseSecondForm  = (curBasic !== undefined);
+  const sfx   = bcUseSecondForm ? '-2' : '';
+  const form  = document.getElementById('bc-form' + sfx);
+  const title = document.getElementById('bc-form-title' + sfx);
+  const basicInput   = document.getElementById('bc-basic' + sfx);
+  const premiumInput = document.getElementById('bc-premium' + sfx);
   if (title) title.textContent = 'Ставка для: ' + bloggerName;
   if (form) form.style.display = 'block';
-  const msg = document.getElementById('bc-msg');
+  // Preload поточного значення — без цього видно порожні поля навіть
+  // якщо ставка вже встановлена, і легко випадково її перезаписати.
+  if (basicInput)   basicInput.value   = (curBasic   !== undefined ? curBasic   : '');
+  if (premiumInput) premiumInput.value = (curPremium !== undefined ? curPremium : '');
+  const msg = document.getElementById('bc-msg' + sfx);
   if (msg) msg.textContent = '';
 }
 
 async function saveBloggerCommission() {
-  const msg = document.getElementById('bc-msg');
+  const sfx = bcUseSecondForm ? '-2' : '';
+  const msg = document.getElementById('bc-msg' + sfx);
   if (!bcCurrentBlogger) return;
-  const basic   = document.getElementById('bc-basic').value;
-  const premium = document.getElementById('bc-premium').value;
+  const basic   = document.getElementById('bc-basic' + sfx).value;
+  const premium = document.getElementById('bc-premium' + sfx).value;
   if (!basic && !premium) {
     if (msg) msg.textContent = 'Заповни хоч одне поле';
     return;
@@ -4310,7 +4325,7 @@ function renderBloggers() {
     <table>
       <tr>
         <th></th><th>Блогер</th><th>Студентів</th><th>Basic</th><th>Premium</th>
-        <th>В тріалі</th><th>Активних</th><th>Нараховано</th>
+        <th>В тріалі</th><th>Активних</th><th>Нараховано</th><th>Ставка</th>
       </tr>
       ${(d.blogger_stats || []).map((b, bi) => `
         <tr onclick="toggleBloggerRow(${bi})" style="cursor:pointer" id="blogger-row-${bi}">
@@ -4322,13 +4337,40 @@ function renderBloggers() {
           <td style="color:var(--amber)">${fmt(b.trial)}</td>
           <td style="color:var(--green)">${fmt(b.active)}</td>
           <td style="color:var(--green);font-weight:600">$${b.commission}</td>
+          <td onclick="event.stopPropagation()">
+            <span style="font-size:11px;color:${b.has_custom_rate ? 'var(--accent)' : 'var(--text3)'};margin-right:6px"
+              title="${b.has_custom_rate ? 'Персональна ставка' : 'Діє глобальний дефолт'}">
+              ${b.rate_basic_pct}%/${b.rate_premium_pct}%${b.has_custom_rate ? ' •' : ''}
+            </span>
+            <button onclick="openBloggerCommissionForm('${esc(b.name)}', ${b.rate_basic_pct}, ${b.rate_premium_pct})"
+              style="background:none;border:1px solid var(--border);border-radius:6px;
+              color:var(--accent);font-size:11px;padding:3px 8px;cursor:pointer">Ставка</button>
+          </td>
         </tr>
         <tr id="blogger-detail-${bi}" style="display:none">
-          <td colspan="8" style="padding:0;background:var(--surface1)">
+          <td colspan="9" style="padding:0;background:var(--surface1)">
             ${renderBloggerStudents(b.students || [])}
           </td>
         </tr>`).join('')}
     </table>
+    <div id="bc-form-bloggers-tab" style="display:none;margin-top:10px;background:var(--surface);
+      border:1px solid var(--border);border-radius:9px;padding:10px 12px">
+      <div id="bc-form-title-2" style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:8px"></div>
+      <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
+        <span style="font-size:11px;color:var(--text2);width:70px">Basic %</span>
+        <input id="bc-basic-2" type="number" step="0.1" style="flex:1;background:var(--surface2);
+          border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:12px;padding:6px 9px">
+      </div>
+      <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px">
+        <span style="font-size:11px;color:var(--text2);width:70px">Premium %</span>
+        <input id="bc-premium-2" type="number" step="0.1" style="flex:1;background:var(--surface2);
+          border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:12px;padding:6px 9px">
+      </div>
+      <button onclick="saveBloggerCommission()" style="width:100%;background:var(--accent);
+        border:none;border-radius:7px;color:#fff;font-size:12px;font-weight:600;padding:8px;cursor:pointer">
+        Зберегти ставку</button>
+      <div id="bc-msg-2" style="font-size:11px;color:var(--text3);margin-top:6px"></div>
+    </div>
   </div>
 
   <div class="table-block">
