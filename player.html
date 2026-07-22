@@ -502,6 +502,8 @@ function cssVar(name){
 // ── Telegram guard ──
 const TG = (typeof Telegram !== 'undefined' && Telegram.WebApp) ? Telegram.WebApp : null;
 if (TG) { try { TG.ready(); TG.expand(); } catch(e){} }
+// 22.07: повний екран (Bot API 8.0+), безпечно для старих клієнтів
+if (TG) { try { if (typeof TG.requestFullscreen === 'function') TG.requestFullscreen(); } catch(e){} }
 
 const params     = new URLSearchParams(window.location.search);
 const startParam = TG?.initDataUnsafe?.start_param || "";

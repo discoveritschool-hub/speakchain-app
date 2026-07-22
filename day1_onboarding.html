@@ -123,6 +123,8 @@
 
 <script>
 try { if (window.Telegram && Telegram.WebApp){ Telegram.WebApp.ready(); Telegram.WebApp.expand(); } } catch(e){}
+// 22.07: повний екран (Bot API 8.0+), безпечно для старих клієнтів
+try { if (window.Telegram && Telegram.WebApp && typeof Telegram.WebApp.requestFullscreen === 'function') Telegram.WebApp.requestFullscreen(); } catch(e){}
 
 // ── Трекінг кроків (воронка drop-off) ──
 // api та uid передані ботом у URL. На кожному екрані шлемо крок —
