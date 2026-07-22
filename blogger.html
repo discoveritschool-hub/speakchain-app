@@ -1529,6 +1529,7 @@ function renderProgressSummary() {
 
   const fmtDays = (d) => d === null || d === undefined ? '—' : d + ' дн.';
   const fmtNum  = (n) => n === null || n === undefined ? '—' : n;
+  const fmtMin  = (n) => n === null || n === undefined ? '—' : n + ' хв/день';
 
   box.innerHTML = `
     <div class="stats-grid">
@@ -1536,9 +1537,10 @@ function renderProgressSummary() {
       <div class="stat-card blue"><div class="stat-val">${fmtNum(ps.avg_words)}</div><div class="stat-label">Слів на учня в середньому</div></div>
       <div class="stat-card green"><div class="stat-val">${fmtNum(ps.level_ups_total)}</div><div class="stat-label">Переходів рівня разом</div></div>
       <div class="stat-card gold"><div class="stat-val">${fmtNum(ps.referrals_brought)}</div><div class="stat-label">Друзів приведено учнями</div></div>
+      <div class="stat-card purple"><div class="stat-val">${fmtMin(ps.daily_minutes)}</div><div class="stat-label">Практика на день (голос+плеєр)</div></div>
     </div>
     <div style="font-size:11px;color:var(--text2,#8888a8);margin-top:10px;line-height:1.6">
-      ⏱️ Час занять на день — поки не трекається продуктом, дані з'являться пізніше.<br>
+      ⏱️ «Практика на день» — середнє за весь час навчання кожного учня (голосові/відео + плеєр), не факт сьогодні. Текстові розмови з Chainy в це число поки не входять.<br>
       Показники — середні по всіх ${ps.count} учнях цієї аудиторії.
     </div>`;
 }

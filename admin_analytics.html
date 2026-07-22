@@ -21,7 +21,7 @@ renderNav();
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;background:var(--bg);color:var(--text);
-  font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif;font-size:14px;overflow-x:hidden}
+  font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sans-serif;font-size:14px;overflow-x:hidden}
 
 /* ── Header ── */
 .header{padding:14px 16px 0;display:flex;align-items:center;justify-content:space-between}
@@ -1251,6 +1251,57 @@ function renderFinance() {
     + 'Стаття може бути сумою АБО відсотком від доходу — заповни одне поле.</div>'
     + '</div>';
 
+  /* ═══ КОМІСІЇ ПО БЛОГЕРАХ (23.07, H-04) ═══
+     Персональна ставка замість однієї глобальної на всіх. Показуємо
+     ЗАВЖДИ секцію (навіть без жодного блогера з оплатами) — правило
+     проєкту "усі поля видно завжди". */
+  const perBlogger = (exp.blogger && exp.blogger.per_blogger) || [];
+  const pbRows = perBlogger.length
+    ? perBlogger.map(b =>
+        '<tr><td>' + esc(b.blogger) + '</td>'
+        + '<td style="text-align:right;color:var(--text3)">' + money(b.revenue) + '</td>'
+        + '<td style="text-align:center">' + b.rate_pct + '%</td>'
+        + '<td style="text-align:right;font-weight:600">' + money(b.commission) + '</td>'
+        + '<td style="text-align:center">'
+        +   '<button onclick="openBloggerCommissionForm(\'' + esc(b.blogger) + '\')" '
+        +   'style="background:none;border:1px solid var(--border);border-radius:6px;'
+        +   'color:var(--accent);font-size:11px;padding:3px 8px;cursor:pointer">Ставка</button>'
+        + '</td></tr>').join('')
+    : '<tr><td colspan="5" style="color:var(--text3);text-align:center;padding:10px 0">'
+      + 'Немає оплат за рефералами блогерів у цьому періоді</td></tr>';
+
+  h += '<div style="font-size:13px;font-weight:700;color:var(--text);margin:16px 0 8px">'
+    + '🤝 Комісії — по блогерах (23.07)</div>'
+    + '<div style="font-size:10px;color:var(--text3);margin-bottom:6px">'
+    + 'Своя ставка кожному блогеру — без неї діє глобальний дефолт '
+    + '(' + esc(exp.blogger.label || '') + ').</div>'
+    + '<div class="table-block"><table>'
+    + '<tr><th>Блогер</th><th style="text-align:right">Дохід (реф.)</th>'
+    + '<th style="text-align:center">Ставка</th><th style="text-align:right">Комісія</th>'
+    + '<th></th></tr>' + pbRows + '</table></div>'
+    + '<div id="bc-form" style="display:none;margin-top:8px;background:var(--surface);'
+    + 'border:1px solid var(--border);border-radius:9px;padding:10px 12px">'
+    + '<div id="bc-form-title" style="font-size:12px;font-weight:600;color:var(--text);'
+    + 'margin-bottom:8px"></div>'
+    + '<div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">'
+    +   '<span style="font-size:11px;color:var(--text2);width:70px">Basic %</span>'
+    +   '<input id="bc-basic" type="number" step="0.1" style="flex:1;'
+    +   'background:var(--surface2);border:1px solid var(--border);border-radius:7px;'
+    +   'color:var(--text);font-size:12px;padding:6px 9px">'
+    + '</div>'
+    + '<div style="display:flex;gap:6px;align-items:center;margin-bottom:8px">'
+    +   '<span style="font-size:11px;color:var(--text2);width:70px">Premium %</span>'
+    +   '<input id="bc-premium" type="number" step="0.1" style="flex:1;'
+    +   'background:var(--surface2);border:1px solid var(--border);border-radius:7px;'
+    +   'color:var(--text);font-size:12px;padding:6px 9px">'
+    + '</div>'
+    + '<button onclick="saveBloggerCommission()" style="width:100%;background:var(--accent);'
+    + 'border:none;border-radius:7px;color:#fff;font-size:12px;font-weight:600;'
+    + 'padding:8px;cursor:pointer">Зберегти ставку</button>'
+    + '<div id="bc-msg" style="font-size:11px;text-align:center;margin-top:6px;'
+    + 'color:var(--text3)"></div>'
+    + '</div>';
+
   /* ═══ ПРИБУТОК ═══ */
   const profit = f ? f.profit : 0;
   const pcol = profit >= 0 ? 'var(--green)' : 'var(--red)';
@@ -1266,6 +1317,37 @@ function renderFinance() {
         : 'маржа —')
     + '</div></div>';
 
+  /* ═══ LTV ПО КОГОРТАХ (23.07, H-03) ═══
+     Фактичний LTV (не прогнозний) — коротко чому в описі секції.
+     ЗАВЖДИ показуємо, навіть якщо когорт ще немає. */
+  const ltvData = data && data.ltv_cohorts;
+  const ltvRows = (ltvData && ltvData.cohorts && ltvData.cohorts.length)
+    ? ltvData.cohorts.map(c =>
+        '<tr><td>' + esc(c.cohort) + '</td>'
+        + '<td style="text-align:center">' + fmt(c.total_users) + '</td>'
+        + '<td style="text-align:center">' + fmt(c.paying_users) + '</td>'
+        + '<td style="text-align:center">' + c.conversion_pct + '%</td>'
+        + '<td style="text-align:right">' + money(c.avg_ltv_all) + '</td>'
+        + '<td style="text-align:right;font-weight:600">' + money(c.avg_ltv_paying) + '</td>'
+        + '</tr>').join('')
+    : '<tr><td colspan="6" style="color:var(--text3);text-align:center;padding:10px 0">'
+      + 'Ще немає когорт із зареєстрованими учнями</td></tr>';
+
+  h += '<div style="font-size:13px;font-weight:700;color:var(--text);margin:18px 0 8px">'
+    + '📈 LTV — по когортах реєстрації (23.07)</div>'
+    + '<div style="font-size:10px;color:var(--text3);margin-bottom:6px">'
+    + 'ФАКТИЧНИЙ LTV (скільки реально заплачено станом на сьогодні), не прогноз. '
+    + 'Когорта = місяць реєстрації учня.'
+    + (ltvData && ltvData.journal_from
+        ? ' Когорти до ' + esc(ltvData.journal_from) + ' занижені — їхні ранні оплати не в журналі.'
+        : '')
+    + '</div>'
+    + '<div class="table-block"><table>'
+    + '<tr><th>Когорта</th><th style="text-align:center">Учнів</th>'
+    + '<th style="text-align:center">Платили</th><th style="text-align:center">Конверсія</th>'
+    + '<th style="text-align:right">LTV/усі</th><th style="text-align:right">LTV/платні</th></tr>'
+    + ltvRows + '</table></div>';
+
   h += '<button onclick="saveFinance()" style="width:100%;margin-top:12px;'
     + 'background:var(--accent);border:none;border-radius:9px;color:#fff;font-size:13px;'
     + 'font-weight:600;padding:11px;cursor:pointer">Зберегти налаштування</button>'
@@ -1273,6 +1355,54 @@ function renderFinance() {
     + 'color:var(--text3)"></div>';
 
   el.innerHTML = h;
+}
+
+/* ── Персональна комісія блогера (23.07) ── */
+let bcCurrentBlogger = null;
+function openBloggerCommissionForm(bloggerName) {
+  bcCurrentBlogger = bloggerName;
+  const form = document.getElementById('bc-form');
+  const title = document.getElementById('bc-form-title');
+  if (title) title.textContent = 'Ставка для: ' + bloggerName;
+  if (form) form.style.display = 'block';
+  const msg = document.getElementById('bc-msg');
+  if (msg) msg.textContent = '';
+}
+
+async function saveBloggerCommission() {
+  const msg = document.getElementById('bc-msg');
+  if (!bcCurrentBlogger) return;
+  const basic   = document.getElementById('bc-basic').value;
+  const premium = document.getElementById('bc-premium').value;
+  if (!basic && !premium) {
+    if (msg) msg.textContent = 'Заповни хоч одне поле';
+    return;
+  }
+  if (msg) msg.textContent = 'Зберігаю...';
+  try {
+    // 23.07: blogger_uid тут — ІМʼЯ блогера (той самий рядок, що в
+    // _payments["blogger"]), не Telegram uid. _registered_bloggers
+    // мапить uid->name, а журнал платежів зберігає лише name — тому
+    // персональна ставка теж ключується по name, узгоджено з тим,
+    // як build_finance групує per_blogger.
+    const res = await fetch('https://speakchain-bot-production.up.railway.app/admin_set_blogger_commission', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        init_data: tg?.initData || '',
+        uid: tg?.initDataUnsafe?.user?.id || 0,
+        blogger_uid: bcCurrentBlogger,
+        basic: basic || null,
+        premium: premium || null,
+      })
+    });
+    const r = await res.json();
+    if (!res.ok || r.error) throw new Error(r.error || 'HTTP ' + res.status);
+    if (msg) msg.textContent = '✅ Збережено';
+    setTimeout(() => loadAnalytics(), 1200);
+  } catch (e) {
+    if (msg) msg.textContent = '❌ ' + e.message;
+  }
 }
 
 /* Додає рядок у налаштування і зберігає */
@@ -2514,40 +2644,49 @@ function renderStudents() {
     </div>
   </div>
 
-  <div class="chart-block">
-    <div class="chart-title">Розподіл учнів по рівнях</div>
-    <div class="chart-wrap"><canvas id="chart-levels"></canvas></div>
-  </div>
+  ${acc('st-levels', '📊', 'Рівні та прогрес', 'Розподіл A1→C2, середній прогрес, середній час на рівні', `
+    <div class="chart-block">
+      <div class="chart-title">Розподіл учнів по рівнях</div>
+      <div class="chart-wrap"><canvas id="chart-levels"></canvas></div>
+    </div>
+    <div class="chart-block">
+      <div class="chart-title">Середній прогрес всередині рівня</div>
+      ${levelRows}
+    </div>
+    ${avgDaysRows}
+  `, {open: true})}
 
-  <div class="chart-block">
-    <div class="chart-title">Середній прогрес всередині рівня</div>
-    ${levelRows}
-  </div>
+  ${acc('st-cohorts', '🧪', 'Когорти', 'Коли зареєструвались і як швидко ростуть', renderCohortsSection())}
 
-  ${avgDaysRows}
+  ${acc('st-all', '👥', 'Усі студенти', `${fmt((d.all||[]).length)} · пошук за іменем, юзернеймом, ID`, allStudentsTable(d.all))}
 
-  ${renderCohortsSection()}
+  ${acc('st-stuck', '🟡', 'Застрягли', `${fmt((d.stuck||[]).length)} · низький прогрес + давно не заходили`,
+    problemTable('🟡 Застрягли', d.stuck,
+      `Прогрес ≤${s.stuck_progress_max}% і не заходили ${s.stuck_inactive_days}+ дн. Тицьни на рядок → картка учня.`,
+      'Ніхто не застряг 🎉', 'stuck'),
+    {badge: (d.stuck||[]).length ? String((d.stuck||[]).length) : null,
+     badgeBg: 'rgba(245,166,35,.15)', badgeFg: 'var(--amber)'})}
 
-  ${allStudentsTable(d.all)}
+  ${acc('st-churned', '🔴', 'Кинули', `${fmt((d.churned||[]).length)} · кандидати на win-back`,
+    problemTable('🔴 Кинули', d.churned,
+      `Не заходили ${s.churn_days}+ днів. Кандидати на win-back.`,
+      'Ніхто не кинув 🎉', 'churned'),
+    {badge: (d.churned||[]).length ? String((d.churned||[]).length) : null,
+     badgeBg: 'rgba(239,68,68,.15)', badgeFg: 'var(--red)'})}
 
-  ${problemTable('🟡 Застрягли', d.stuck,
-    `Прогрес ≤${s.stuck_progress_max}% і не заходили ${s.stuck_inactive_days}+ дн. Тицьни на рядок → картка учня.`,
-    'Ніхто не застряг 🎉', 'stuck')}
+  ${acc('st-unpaid', '💸', 'Не платять', `${fmt((d.unpaid||[]).length)} · тріал завершився, оплати немає`,
+    problemTable('💸 Не платять', d.unpaid,
+      'Тріал завершився, активність була, але немає оплати.',
+      'Всі активні оплатили 🎉', 'unpaid'),
+    {badge: (d.unpaid||[]).length ? String((d.unpaid||[]).length) : null,
+     badgeBg: 'rgba(239,68,68,.15)', badgeFg: 'var(--red)'})}
 
-  ${problemTable('🔴 Кинули', d.churned,
-    `Не заходили ${s.churn_days}+ днів. Кандидати на win-back.`,
-    'Ніхто не кинув 🎉', 'churned')}
+  ${acc('st-progressing', '🟢', 'Рухаються', `${fmt((d.progressing||[]).length)} · хоча б один перехід рівня`,
+    problemTable('🟢 Рухаються', d.progressing,
+      'Мали хоча б один перехід рівня. Історія в картці.',
+      'Ще ніхто не перейшов рівень', 'progressing'))}
 
-  ${problemTable('💸 Не платять', d.unpaid,
-    'Тріал завершився, активність була, але немає оплати.',
-    'Всі активні оплатили 🎉', 'unpaid')}
-
-  ${problemTable('🟢 Рухаються', d.progressing,
-    'Мали хоча б один перехід рівня. Історія в картці.',
-    'Ще ніхто не перейшов рівень', 'progressing')}
-
-  <div class="chart-block" style="margin-top:18px;border:1px solid var(--purple);border-radius:12px;padding:14px">
-    <div class="chart-title">📨 Нагадування проблемним учням</div>
+  ${acc('st-nudges', '📨', 'Нагадування проблемним учням', 'Прев\'ю тексту перед відправкою, нічого не летить само', `
     <div style="font-size:11px;color:var(--text2);margin-bottom:10px">
       Режим прев'ю: бот рахує кому варто нагадати й показує текст. Нічого не надсилається, поки ти не натиснеш «Надіслати». Ліміти: 1 нагадування / 72 год на людину, тихі години 22:00–08:00.
     </div>
@@ -2557,7 +2696,7 @@ function renderStudents() {
         Порахувати сегменти
       </button>
     </div>
-  </div>
+  `)}
   `;
 }
 
@@ -2746,6 +2885,25 @@ function openStudentCard(key, idx) {
       Останній вхід: <b style="color:var(--text)">${c.last_active||'—'}</b>${c.inactive_days>=0?` (${c.inactive_days} дн. тому)`:''}<br>
       Переходів рівня: <b style="color:var(--text)">${c.transitions||0}</b>${(c.username && c.username !== c.name)?`<br>Telegram: <b style="color:var(--text)">@${esc(c.username)}</b>`:''}${c.uid?`<br>ID: <b style="color:var(--text)">${c.uid}</b>`:''}
     </div>
+
+    <div style="font-size:12px;font-weight:600;color:var(--text);margin:14px 0 4px">
+      🕐 Практика — за джерелами (23.07)
+    </div>
+    <div style="font-size:11px;color:var(--text3);margin-bottom:6px">
+      Немає єдиного "часу навчання" — рахуємо чесно, по джерелах. Голос/відео — точна тривалість від Telegram. Плеєр — точний playback з відеоплеєра. Ланцюжок — кількість завершених дій, не хвилини.
+    </div>
+    <div class="cards">
+      <div class="card"><div class="card-label">🎙 Говоріння, хв</div><div class="card-value" style="font-size:16px">${fmt(c.speaking_minutes||0)}</div></div>
+      <div class="card"><div class="card-label">📼 Записів голосу/відео</div><div class="card-value" style="font-size:16px">${fmt(c.speaking_clips||0)}</div></div>
+      <div class="card"><div class="card-label">▶️ Плеєр, хв</div><div class="card-value" style="font-size:16px">${fmt(c.player_minutes||0)}</div></div>
+      <div class="card"><div class="card-label">Σ Практика всього, хв</div><div class="card-value" style="font-size:16px">${fmt(c.practice_minutes_total||0)}</div></div>
+      <div class="card"><div class="card-label">📚 Слів у словнику</div><div class="card-value" style="font-size:16px">${fmt(c.words_count||0)}</div></div>
+    </div>
+    <div style="font-size:12px;color:var(--text2);margin-top:8px">
+      Гілка рефералів: <b style="color:var(--text)">${fmt(c.referrals_count||0)}</b> <span style="color:var(--text3);font-size:11px">(усі покоління — той самий підрахунок, що й переможець марафону монологів)</span><br>
+      LTV: <b style="color:var(--text)">${money(c.ltv||0)}</b>${c.ltv_journal_from ? ` <span style="color:var(--text3);font-size:11px">(журнал платежів з ${esc(c.ltv_journal_from)} — оплати до цієї дати не враховані)</span>` : ''}
+    </div>
+
     ${histBlock}
     ${challengeBlock}
     ${eventsBlock}
