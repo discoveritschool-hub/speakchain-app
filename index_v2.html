@@ -2126,6 +2126,7 @@ async function mountApp(id,host,pk){
       +'selectRole:typeof selectRole!=="undefined"?selectRole:0,'
       +'showScreen:typeof showScreen!=="undefined"?showScreen:0,'
       +'openTopic:typeof openTopic!=="undefined"?openTopic:0,'
+      +'startVideoChat:typeof startVideoChat!=="undefined"?startVideoChat:0,'
       +'resetInactivity:typeof resetInactivity!=="undefined"?resetInactivity:0,'
       +'clearInactivityTimers:typeof clearInactivityTimers!=="undefined"?clearInactivityTimers:0,'
       +'endSession:typeof endSession!=="undefined"?endSession:0});}catch(e){}'
@@ -2297,7 +2298,27 @@ function speakNow(){
   const el = $('#speak-nudge');
   if(el){ el.classList.remove('on'); setTimeout(()=>{ el.style.display='none'; }, 250); }
   HIST.length = 0;
+
+  /* 🔴 БУЛО: go('s-buddy') самотнім — відкривало ЗАГАЛЬНИЙ вибір сценарію.
+     Банер щойно сказав «Обговори «X» з Chainy», людина тиснула кнопку —
+     і потрапляла на порожній екран категорій, де про X немає й натяку.
+     startVideoChat уже вміє відкрити готове обговорення відео
+     (той самий код, що працює для ?context=video&topic=&vid= з плеєра
+     переходу через бота) — просто ніхто не викликав її звідси напряму.
+
+     Тепер: якщо є назва останнього відео — відкриваємо ОДРАЗУ обговорення
+     цього відео. Якщо назви немає (старий бот без last_video_id) —
+     звичайний s-buddy, як було. */
+  const title = (PAYLOAD['s-home']?.last_video_title || '').trim();
   go('s-buddy');
+  if (title) {
+    try {
+      const box = mounted['s-buddy'];
+      if (box && typeof box.startVideoChat === 'function') {
+        box.startVideoChat(title, 'discuss', '');
+      }
+    } catch(e) { console.warn('speakNow startVideoChat', e.message); }
+  }
 }
 function speakLater(){
   const el = $('#speak-nudge');
