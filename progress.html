@@ -681,6 +681,15 @@ function startFirstLesson() {
 }
 
 function goToStep(cmd, topic) {
+  // Крок 2 (Розділ M, об'єднання потоку) — таблиця Голіцинського
+  // ПРЯМО в модалці, без переходу в чат. Раніше йшла окремим
+  // повідомленням через maAction('open_topic_step') → бот →
+  // Telegram-чат — розрив: людина мала перемикатись між додатками.
+  if (cmd === 'topic') {
+    openTopicTable(topic);
+    return;
+  }
+
   // Крок 3 — відкриваємо exercises прямо тут
   if (cmd === 'tutor_me') {
     openExercises(topic);
@@ -705,6 +714,70 @@ function goToStep(cmd, topic) {
       try { Telegram.WebApp.close(); } catch(e){}
     }
   }, 600);
+}
+
+// Розділ M (24.07, об'єднання потоку): таблиця Голіцинського прямо в
+// модалці — той самий вміст, що раніше йшов окремим повідомленням у
+// чат (_send_grammar_explanation). Рендер у той самий #modal-body, де
+// вже показуються 4 кроки-картки (openTopic), одразу над панеллю
+// вправ — кнопка «Далі» веде прямо до openExercises(), без виходу
+// з мініапу і без переходу в Telegram-чат.
+async function openTopicTable(topic) {
+  let panel = document.getElementById('topic-table-panel');
+  if (!panel) {
+    panel = document.createElement('div');
+    panel.id = 'topic-table-panel';
+    panel.className = 'exercises-panel show';
+    document.getElementById('modal-body').appendChild(panel);
+  }
+  panel.classList.add('show');
+  panel.innerHTML = '<div class="ex-sentence" style="color:var(--text2)">Завантажую таблицю...</div>';
+  document.getElementById('modal-body').scrollTo({top: 99999, behavior: 'smooth'});
+
+  let data = null;
+  try {
+    const res = await fetch(API + '/topic_table', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ uid: UID, init_data: INIT_DATA, topic: topic })
+    });
+    data = await res.json();
+  } catch (e) { data = null; }
+
+  if (!data || !data.found) {
+    panel.innerHTML =
+      '<div class="ex-done-banner">' +
+        '<div class="ex-done-title">⚠️ Таблиця для «' + topic + '» поки недоступна окремо</div>' +
+        '<div class="ex-done-sub">Спробуй відео цієї теми 🎬</div>' +
+      '</div>';
+    return;
+  }
+
+  const signalsHtml = (data.signals && data.signals.length)
+    ? '<div class="lvl-hint" style="margin-top:10px">🔑 ' + data.signals.slice(0, 8).join(' · ') + '</div>'
+    : '';
+  const rowsHtml = (data.table || []).map(row => {
+    const icon = row[0] || '';
+    const en   = row[1] || '';
+    const ua   = row[2] || '';
+    return '<div class="ex-sentence" style="text-align:left;min-height:0;padding:12px 16px;margin-bottom:8px;font-size:var(--fs)">' +
+      '<span style="margin-right:8px">' + icon + '</span><code>' + en + '</code>' +
+      (ua ? '<div style="color:var(--text2);font-size:var(--fs-sm);margin-top:4px">' + ua + '</div>' : '') +
+      '</div>';
+  }).join('');
+  const formulaHtml = data.formula
+    ? '<div class="ex-sentence" style="font-family:monospace;background:var(--bg-card2)">📐 ' + data.formula.replace(/\n/g, '<br>') + '</div>'
+    : '';
+
+  panel.innerHTML =
+    '<div class="ex-header"><div class="ex-title">📖 ' + topic + '</div></div>' +
+    (data.ua ? '<div class="lvl-hint">' + data.ua + '</div>' : '') +
+    signalsHtml +
+    '<div style="margin-top:14px">' + rowsHtml + '</div>' +
+    formulaHtml +
+    '<button class="ex-next" style="margin-top:10px" onclick="openExercises(' + JSON.stringify(topic) + ')">Далі → 30 речень</button>';
+
+  if (window.showReward) showReward('table_read_aloud', {topic: topic});
 }
 
 // ══════════════════════════════════════════════════════════════
