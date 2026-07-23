@@ -99,6 +99,18 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 
 .topics-title{font-size:var(--fs-sm);color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin:14px 0 10px}
 
+/* ── Topic gaps block (L-06) — прогалини в темах ── */
+.gap-card{background:var(--bg-card);border-radius:var(--r);padding:14px;margin-bottom:14px;border:1px solid var(--line)}
+.gap-title{font-size:var(--fs);font-weight:700;color:var(--text);margin-bottom:2px;display:flex;align-items:center;gap:6px}
+.gap-hint{font-size:var(--fs-sm);color:var(--text2);margin-bottom:12px;line-height:1.4}
+.gap-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line)}
+.gap-item:first-of-type{border-top:none;padding-top:0}
+.gap-badge{width:26px;height:26px;border-radius:50%;background:rgba(247,163,92,.15);color:var(--orange);font-size:var(--fs-xs);font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.gap-body{flex:1;min-width:0}
+.gap-name{font-size:var(--fs);font-weight:600;color:var(--text)}
+.gap-level{font-size:var(--fs-xs);color:var(--text3);margin-top:1px}
+.gap-empty{font-size:var(--fs-sm);color:var(--text2);text-align:center;padding:8px 0}
+
 /* ── Topic card with colored bar ── */
 .topic{display:flex;align-items:center;gap:10px;padding:12px;background:var(--bg-card);border-radius:var(--r);margin-bottom:8px;border:1px solid var(--line);cursor:pointer;transition:all .15s}
 .topic:active{transform:scale(.98)}
@@ -251,6 +263,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
   <div class="stats-row" id="stats-row"></div>
   <div id="lvl-progress"></div>
   <div id="vocab-progress"></div>
+  <div id="topic-gaps"></div>
   <div class="topics-title">Tutor Me</div>
   <div id="topics-list"></div>
 </div>
@@ -341,6 +354,7 @@ function init() {
   if (!D.level_names)    D.level_names    = DEFAULT_LEVEL_NAMES;
   if (!D.topics_data)    D.topics_data    = {};  // нові дані з grammar_engine
   if (!D.vocab_coverage) D.vocab_coverage = {};  // покриття лексики за рівнями
+  if (!D.topic_gaps)     D.topic_gaps     = [];  // прогалини в темах (L-06)
   if (!D.level)          D.level          = "A1";
   activeLevel = D.level;
   render();
@@ -537,6 +551,8 @@ function renderLevel() {
     vcEl.innerHTML = "";
   }
 
+  renderTopicGaps();
+
   document.getElementById("topics-list").innerHTML = lvlTopics.map((topic, i) => {
     const data = getMastery(topic);
     const warnIcon = data.buddy_errors > 0 ? ' <span class="topic-warn">⚠ ' + data.buddy_errors + ' помилок</span>' : '';
@@ -552,6 +568,42 @@ function renderLevel() {
       '<div class="topic-arr">›</div>' +
     '</div>';
   }).join("");
+}
+
+// ── Прогалини в темах (L-06) ──
+// Показує топ-N найслабших тем (свій рівень + нижчі, фундамент
+// важливіший за швидкість проходження — методичне обґрунтування
+// власниці, Реєстр L-06). Видимо ЗАВЖДИ, навіть при порожньому
+// srs_words (D.topic_gaps=[]) — правило проєкту "усі поля видимі
+// завжди, навіть майбутні/порожні".
+function renderTopicGaps() {
+  const el = document.getElementById("topic-gaps");
+  if (!el) return;
+  const gaps = D.topic_gaps || [];
+
+  if (!gaps.length) {
+    el.innerHTML =
+      '<div class="gap-card">' +
+        '<div class="gap-title">🎯 Прогалини в темах</div>' +
+        '<div class="gap-empty">Ще недостатньо даних — продовжуй практикуватись, і тут з\'являться теми, які варто підтягнути.</div>' +
+      '</div>';
+    return;
+  }
+
+  el.innerHTML =
+    '<div class="gap-card">' +
+      '<div class="gap-title">🎯 Прогалини в темах</div>' +
+      '<div class="gap-hint">Найслабші теми твого рівня і нижче — підтягни їх, щоб впевненіше вести розмову</div>' +
+      gaps.map((g, i) =>
+        '<div class="gap-item">' +
+          '<div class="gap-badge">' + (i + 1) + '</div>' +
+          '<div class="gap-body">' +
+            '<div class="gap-name">' + g.label + '</div>' +
+            '<div class="gap-level">' + g.level + ' · ' + g.known + ' слів засвоєно</div>' +
+          '</div>' +
+        '</div>'
+      ).join("") +
+    '</div>';
 }
 
 function openTopic(topicName) {
