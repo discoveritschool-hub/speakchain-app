@@ -1387,20 +1387,10 @@ function renderFinance() {
     + '<div id="fin-msg" style="font-size:11px;text-align:center;margin-top:7px;'
     + 'color:var(--text3)"></div>';
 
-  /* 23.07: технічна картка масштабування (Реєстр K-10) — дешевий сигнал
-     "чи наближаємось до стелі БД", не аналітика для щоденного погляду.
-     Свідомо скромна, в самому низу, не претендує на окрему вкладку. */
-  const scale = (data && data.db_scale) || {total_keys: null, cold_start_ms: null};
-  h += '<div class="table-block" style="opacity:.75;margin-top:18px">'
-    + '<div class="table-title" style="font-size:11px">⚙️ Технічне — масштабування</div>'
-    + '<div style="font-size:11px;color:var(--text3);line-height:1.6">'
-    +   'Розмір бази (ключів): <b style="color:var(--text2)">' + (scale.total_keys ?? '—') + '</b><br>'
-    +   'Холодний старт бота: <b style="color:var(--text2)">'
-    +     (scale.cold_start_ms != null ? scale.cold_start_ms + ' мс' : 'ще не вимірювався цим процесом')
-    +   '</b><br>'
-    +   'Орієнтир: якщо старт почне помітно зростати (секунди) — сигнал переглянути '
-    +   'архітектуру БД (зараз один запис на всіх юзерів разом).'
-    + '</div></div>';
+  // 23.07: картка масштабування (Реєстр K-10) переїхала у вкладку
+  // «⚙️ Система» → акордеон «Навантаження» — там її канонічне місце
+  // поруч з іншою системною діагностикою («Що зламалось»), з badge
+  // видимим одразу, без розкриття. Тут дублювання прибрано навмисно.
 
   el.innerHTML = h;
 }
@@ -2628,6 +2618,21 @@ function renderSystem() {
   const E = data && data.errors;
   const hot = E ? (E.list || []).filter(x => x.status === 'hot').length : 0;
 
+  /* 23.07: навантаження/масштабування (Реєстр K-10) — та сама логіка
+     градації, що вже застосована для помилок (badge видно ще ДО
+     розкриття акордеона — не ховаємо сигнал критичності всередину).
+     Пороги орієнтовні (нема ще реальних даних для калібрування на
+     цьому проєкті) — 1с/3с холодного старту як типові orientirs для
+     "процес щось вантажить довше нормального", НЕ наукова константа. */
+  const scale = (data && data.db_scale) || {total_keys: null, cold_start_ms: null};
+  const loadLevel = (() => {
+    const ms = scale.cold_start_ms;
+    if (ms == null) return {cl: 'ok', label: null};
+    if (ms > 3000)  return {cl: 'crit', label: '🔴 повільно'};
+    if (ms > 1000)  return {cl: 'warn', label: '🟡 стежити'};
+    return {cl: 'ok', label: null};
+  })();
+
   el.innerHTML =
       acc('a-err', '🚨', 'Що зламалось', 'Бот ловить кожну помилку сам',
           '<p style="color:var(--text2);font-size:12px;margin:0 0 12px">'
@@ -2635,6 +2640,13 @@ function renderSystem() {
           + '<div class="err-sum" id="err-sum"></div><div id="err-list"></div>',
           {open:true, badge: hot ? hot + ' 🔥' : null,
            badgeBg:'rgba(239,68,68,.15)', badgeFg:'var(--red)'})
+    + acc('a-load', '📈', 'Навантаження', 'Розмір бази й швидкість старту бота',
+          renderLoadBody(scale, loadLevel),
+          loadLevel.label
+            ? {badge: loadLevel.label,
+               badgeBg: loadLevel.cl === 'crit' ? 'rgba(239,68,68,.15)' : 'rgba(245,158,11,.15)',
+               badgeFg: loadLevel.cl === 'crit' ? 'var(--red)' : 'var(--amber)'}
+            : {})
     + acc('a-sw', '🎛', 'Рубильники', 'Аварійні вимикачі — вимкни, не чіпаючи код',
           '<p style="color:var(--text2);font-size:12px;margin:0 0 12px">'
           + '<b>Railway → Variables → зміни значення → Redeploy.</b> ~60 секунд.</p>'
@@ -2647,6 +2659,30 @@ function renderSystem() {
   renderErrors();
   renderSwitches();
   renderChanges();
+}
+
+function renderLoadBody(scale, level) {
+  const rows = [
+    {label: 'Розмір бази (записів у сховищі)', val: scale.total_keys ?? '—',
+     note: 'учні + службові дані разом'},
+    {label: 'Швидкість старту бота', val: scale.cold_start_ms != null ? scale.cold_start_ms + ' мс' : '—',
+     note: scale.cold_start_ms == null ? 'ще не вимірювалось з моменту рестарту' : 'час одного холодного читання бази'},
+  ];
+  const statusText = level.cl === 'crit'
+    ? '🔴 Старт помітно повільний — варто попросити переглянути архітектуру бази раніше, ніж пізніше.'
+    : level.cl === 'warn'
+      ? '🟡 Починає сповільнюватись. Ще не критично, але тримати в полі зору.'
+      : '✅ Норма. Уся база зараз в одному записі — це нормально працює для поточної кількості учнів; орієнтир на майбутнє позначено нижче.';
+  return rows.map(r =>
+      '<div style="display:flex;justify-content:space-between;align-items:baseline;'
+      + 'padding:8px 0;border-bottom:1px solid var(--border)">'
+      +   '<div><div style="font-size:13px;color:var(--text)">' + r.label + '</div>'
+      +   '<div style="font-size:11px;color:var(--text3)">' + r.note + '</div></div>'
+      +   '<div style="font-size:15px;font-weight:700;color:var(--text)">' + r.val + '</div>'
+      + '</div>'
+    ).join('')
+    + '<div style="margin-top:12px;padding:10px 12px;background:var(--surface2);'
+    + 'border-radius:8px;font-size:12px;color:var(--text2);line-height:1.6">' + statusText + '</div>';
 }
 
 // ── STUDENTS (Phase 1: трекшн учнів) ────────────────────
