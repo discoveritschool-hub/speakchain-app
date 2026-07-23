@@ -1420,6 +1420,66 @@ async function saveBloggerCommission() {
   }
 }
 
+/* ── Журнал виплат — ручний запис (23.07) ──
+   Окремо від нарахування (_payouts): власниця сама вводить кому,
+   коли, скільки реально перерахувала. Без квитанції — файлового
+   сховища ще немає, зберігає окремо за власним рішенням. */
+function togglePayoutLogForm() {
+  const form = document.getElementById('payout-log-form');
+  if (!form) return;
+  const willShow = form.style.display === 'none';
+  form.style.display = willShow ? 'block' : 'none';
+  if (willShow) {
+    // Дата за замовчуванням — сьогодні, зручніше ніж порожнє поле
+    const dateInput = document.getElementById('pl-date');
+    if (dateInput && !dateInput.value) {
+      dateInput.value = new Date().toISOString().slice(0, 10);
+    }
+  }
+}
+
+async function savePayoutLog() {
+  const msg = document.getElementById('pl-msg');
+  const blogger = document.getElementById('pl-blogger').value.trim();
+  const date     = document.getElementById('pl-date').value;
+  const amount   = document.getElementById('pl-amount').value;
+  const note     = document.getElementById('pl-note').value.trim();
+
+  if (!blogger) {
+    if (msg) msg.textContent = 'Вкажи ім\'я блогера';
+    return;
+  }
+  if (!amount || parseFloat(amount) <= 0) {
+    if (msg) msg.textContent = 'Вкажи суму більшу за 0';
+    return;
+  }
+  if (msg) msg.textContent = 'Зберігаю...';
+  try {
+    const res = await fetch('https://speakchain-bot-production.up.railway.app/admin_log_payout', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        init_data: tg?.initData || '',
+        uid: tg?.initDataUnsafe?.user?.id || 0,
+        blogger: blogger,
+        amount: amount,
+        date: date || null,
+        note: note || null,
+      })
+    });
+    const r = await res.json();
+    if (!res.ok || r.error) throw new Error(r.error || 'HTTP ' + res.status);
+    if (msg) msg.textContent = '✅ Записано';
+    // Очищаємо поля для наступного запису, лишаємо форму відкритою
+    document.getElementById('pl-blogger').value = '';
+    document.getElementById('pl-amount').value = '';
+    document.getElementById('pl-note').value = '';
+    setTimeout(() => loadAnalytics(), 1200);
+  } catch (e) {
+    if (msg) msg.textContent = '❌ ' + e.message;
+  }
+}
+
 /* Додає рядок у налаштування і зберігає */
 function addFinRow(kind) {
   const st = (data && data.finance && data.finance.settings) || {};
@@ -4407,6 +4467,63 @@ function renderBloggers() {
           <td style="color:var(--text2)">${p.paid_date || '—'}</td>
         </tr>`).join('')}
     </table>
+  </div>
+
+  <div class="table-block">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <div class="table-title" style="margin:0">📒 Журнал виплат — коли, кому, скільки</div>
+      <button onclick="togglePayoutLogForm()" style="background:var(--accent);border:none;
+        border-radius:7px;color:#fff;font-size:12px;font-weight:600;padding:7px 12px;cursor:pointer">
+        + Записати виплату</button>
+    </div>
+    <div style="font-size:10px;color:var(--text3);margin-bottom:8px">
+      Ручний запис факту переказу — окремо від автоматичного нарахування вище.
+      Сума й дата вводяться вручну (можуть відрізнятись від нарахованого).
+      Квитанції тут не зберігаються — власниця зберігає їх окремо.
+    </div>
+    <div id="payout-log-form" style="display:none;margin-bottom:12px;background:var(--surface);
+      border:1px solid var(--border);border-radius:9px;padding:10px 12px">
+      <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
+        <span style="font-size:11px;color:var(--text2);width:80px">Блогер</span>
+        <input id="pl-blogger" type="text" placeholder="ім'я блогера" style="flex:1;
+          background:var(--surface2);border:1px solid var(--border);border-radius:7px;
+          color:var(--text);font-size:12px;padding:6px 9px">
+      </div>
+      <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
+        <span style="font-size:11px;color:var(--text2);width:80px">Дата</span>
+        <input id="pl-date" type="date" style="flex:1;background:var(--surface2);
+          border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:12px;padding:6px 9px">
+      </div>
+      <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
+        <span style="font-size:11px;color:var(--text2);width:80px">Сума $</span>
+        <input id="pl-amount" type="number" step="0.01" placeholder="0.00" style="flex:1;
+          background:var(--surface2);border:1px solid var(--border);border-radius:7px;
+          color:var(--text);font-size:12px;padding:6px 9px">
+      </div>
+      <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px">
+        <span style="font-size:11px;color:var(--text2);width:80px">Коментар</span>
+        <input id="pl-note" type="text" placeholder="необов'язково" style="flex:1;
+          background:var(--surface2);border:1px solid var(--border);border-radius:7px;
+          color:var(--text);font-size:12px;padding:6px 9px">
+      </div>
+      <button onclick="savePayoutLog()" style="width:100%;background:var(--accent);
+        border:none;border-radius:7px;color:#fff;font-size:12px;font-weight:600;
+        padding:8px;cursor:pointer">Зберегти запис</button>
+      <div id="pl-msg" style="font-size:11px;color:var(--text3);margin-top:6px"></div>
+    </div>
+    ${(d.payout_log && d.payout_log.length) ? `
+    <table>
+      <tr><th>Дата</th><th>Блогер</th><th>Сума</th><th>Коментар</th></tr>
+      ${d.payout_log.map(p => `
+        <tr>
+          <td style="color:var(--text2)">${esc(p.date)}</td>
+          <td style="font-weight:600">${esc(p.blogger)}</td>
+          <td style="color:var(--green);font-weight:600">$${fmt(p.amount)}</td>
+          <td style="color:var(--text3)">${esc(p.note || '—')}</td>
+        </tr>`).join('')}
+    </table>` : `
+    <div style="color:var(--text3);text-align:center;padding:14px 0;font-size:12px">
+      Записів ще немає — натисніть «+ Записати виплату»</div>`}
   </div>
 
   <div class="table-block" style="border:1px solid var(--amber);border-radius:12px">
