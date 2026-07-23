@@ -1079,7 +1079,7 @@ function renderFinance() {
   /* Порожні заглушки — щоб КОЖНЕ поле відрендерилось навіть без даних */
   const inc = (f && f.income)  || {rows: [], custom: [], total: 0};
   const exp = (f && f.expense) || {
-    blogger:{label:'Блогерам (25%)',amount:0}, tax:{label:'Податок',pct:0,amount:0},
+    blogger:{label:'Блогерам', amount:0, per_blogger:[]}, tax:{label:'Податок',pct:0,amount:0},
     acquiring:{label:'Комісія еквайринга',pct:0,amount:0},
     ai:{label:'AI (Claude + Whisper)',amount:0}, staff:[], custom:[], total:0};
   const st = (f && f.settings) || {};
@@ -1207,13 +1207,46 @@ function renderFinance() {
     + '<td style="text-align:center">' + (c.pct ? c.pct + '%' : '—') + '</td>'
     + '<td style="text-align:right;font-weight:600">' + money(c.amount) + '</td></tr>').join('');
 
+  /* ═══ Акордеон "Блогерам" (23.07) — одна цифра зверху, деталізація
+     по кожному блогеру ховається за розкриттям. НАВІЩО: колонка "%"
+     тут завжди була "—", бо ставка персональна для кожного блогера,
+     єдиного числа немає — акордеон і показує причину, і дає деталі
+     без стіни тексту в головній таблиці. ═══ */
+  const perBloggerExp = (exp.blogger && exp.blogger.per_blogger) || [];
+  const customCount = perBloggerExp.filter(b => b.has_custom_rate).length;
+  const bloggerSummaryNote = perBloggerExp.length
+    ? (customCount
+        ? customCount + ' з ' + perBloggerExp.length + ' — персональна ставка'
+        : 'усі на дефолтній ставці')
+    : 'немає оплат за рефералами в цьому періоді';
+  const bloggerAccordionRows = perBloggerExp.length
+    ? perBloggerExp.map(b =>
+        '<tr style="background:var(--surface1)"><td style="padding-left:24px;font-size:12px">'
+        + esc(b.blogger) + (b.has_custom_rate
+            ? ' <span style="color:var(--accent);font-size:10px">• персональна</span>' : '')
+        + '</td>'
+        + '<td style="text-align:center;font-size:12px">' + b.rate_pct + '%</td>'
+        + '<td style="text-align:right;font-size:12px">' + money(b.commission) + '</td></tr>'
+      ).join('')
+    : '';
+  const bloggerRow =
+    '<tr onclick="toggleFinAccordion(\'fin-acc-blogger\')" style="cursor:pointer">'
+    +   '<td><span id="fin-acc-blogger-arr" style="color:var(--text3);display:inline-block;'
+    +     'width:12px">' + (perBloggerExp.length ? '›' : '') + '</span>' + exp.blogger.label
+    +     '<div style="font-size:10px;color:var(--text3);margin-left:12px">' + bloggerSummaryNote + '</div>'
+    +   '</td>'
+    +   '<td style="text-align:center"><span style="color:var(--text3)">—</span></td>'
+    +   '<td style="text-align:right;font-weight:600">' + money(exp.blogger.amount) + '</td></tr>'
+    + '<tr id="fin-acc-blogger" style="display:none"><td colspan="3" style="padding:0">'
+    +   '<table style="width:100%">' + bloggerAccordionRows + '</table></td></tr>';
+
   h += '<div class="table-block"><table>'
     + '<tr><th>Стаття</th><th style="text-align:center">%</th>'
     + '<th style="text-align:right">Сума</th></tr>'
-    + pctRow(null, exp.blogger.label, null, exp.blogger.amount, 'від доходу за рефералами')
+    + bloggerRow
     + pctRow('fx-tax', 'Податок', exp.tax.pct, exp.tax.amount, 'введи % — порахує само')
     + pctRow('fx-acq', 'Комісія еквайринга', exp.acquiring.pct, exp.acquiring.amount,
-             'WayForPay тощо')
+             'WayForPay — поки єдиний провайдер, деталізація зʼявиться з другим')
     + pctRow(null, exp.ai.label, null, exp.ai.amount, 'з обліку витрат на AI')
     + staffRows + customExpRows
     + '<tr style="border-top:1px solid var(--border-strong)">'
@@ -1354,6 +1387,21 @@ function renderFinance() {
     + '<div id="fin-msg" style="font-size:11px;text-align:center;margin-top:7px;'
     + 'color:var(--text3)"></div>';
 
+  /* 23.07: технічна картка масштабування (Реєстр K-10) — дешевий сигнал
+     "чи наближаємось до стелі БД", не аналітика для щоденного погляду.
+     Свідомо скромна, в самому низу, не претендує на окрему вкладку. */
+  const scale = (data && data.db_scale) || {total_keys: null, cold_start_ms: null};
+  h += '<div class="table-block" style="opacity:.75;margin-top:18px">'
+    + '<div class="table-title" style="font-size:11px">⚙️ Технічне — масштабування</div>'
+    + '<div style="font-size:11px;color:var(--text3);line-height:1.6">'
+    +   'Розмір бази (ключів): <b style="color:var(--text2)">' + (scale.total_keys ?? '—') + '</b><br>'
+    +   'Холодний старт бота: <b style="color:var(--text2)">'
+    +     (scale.cold_start_ms != null ? scale.cold_start_ms + ' мс' : 'ще не вимірювався цим процесом')
+    +   '</b><br>'
+    +   'Орієнтир: якщо старт почне помітно зростати (секунди) — сигнал переглянути '
+    +   'архітектуру БД (зараз один запис на всіх юзерів разом).'
+    + '</div></div>';
+
   el.innerHTML = h;
 }
 
@@ -1424,6 +1472,19 @@ async function saveBloggerCommission() {
    Окремо від нарахування (_payouts): власниця сама вводить кому,
    коли, скільки реально перерахувала. Без квитанції — файлового
    сховища ще немає, зберігає окремо за власним рішенням. */
+/* ── Акордеон у секції "Витрати" (23.07) — розкриває деталізацію
+   по блогерах під підсумковим рядком. Той самий toggle-патерн, що
+   й toggleBloggerRow у вкладці «Блогери», окрема функція — інша
+   секція, інші id. ── */
+function toggleFinAccordion(rowId) {
+  const row = document.getElementById(rowId);
+  const arr = document.getElementById(rowId + '-arr');
+  if (!row) return;
+  const willShow = row.style.display === 'none';
+  row.style.display = willShow ? 'table-row' : 'none';
+  if (arr) arr.textContent = willShow ? '⌄' : '›';
+}
+
 function togglePayoutLogForm() {
   const form = document.getElementById('payout-log-form');
   if (!form) return;
