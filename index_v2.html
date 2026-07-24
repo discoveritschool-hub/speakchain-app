@@ -839,6 +839,7 @@ window.addEventListener('load', function(){
 <div id="topics"></div>
 </div>
     <div class="screen" id="s-social">
+<div id="social-lottery"></div>
 <div class="sec-h" style="margin-top:8px"><span class="ti">Спільні ланцюжки</span></div>
 <div id="chains"></div>
 <div class="sec-h"><span class="ti">Speaking Challenge</span></div>
@@ -1570,6 +1571,8 @@ async function renderSocial(){
   const S=U.slice().sort((a,b)=>(b.chain||0)-(a.chain||0));
   const pos=S.findIndex(u=>u.me)+1;
   $('#lb-my').textContent=pos?('твоє місце · '+pos+' з '+S.length):'подивитись таблицю';
+
+  renderLotteryCard('social-lottery','sl-buy-btn');
   setTimeout(scWatchAll,50);
 }
 
@@ -1827,9 +1830,18 @@ async function renderProfile(){
 
 /* 24.07: лотерея в профілі — раніше була ЛИШЕ на вкладці Друзі, і власниця
    не знайшла її, шукаючи в профілі. Той самий /lottery_status, той самий
-   дизайн картки, просто ще одна точка показу — де людина реально дивиться. */
-async function renderProfileLottery(){
-  const host=$('#profile-lottery');
+   дизайн картки, просто ще одна точка показу — де людина реально дивиться.
+
+   25.07: виявилось навпаки — контейнер лотереї (#lottery-card) фізично був
+   ТІЛЬКИ в HTML екрана s-profile (#profile-lottery), а на s-social (Друзі),
+   де вона мала бути за первинним задумом і за журналом v71, div-а не було
+   взагалі. Кнопки не "не працювали" — їм просто не було куди рендеритись.
+   Замість дублювати всю функцію під другий id — параметризуємо ОДНУ функцію
+   довільним hostId/btnId, кличемо з обох екранів. Той самий баг (лотерея
+   губиться між Друзями і Профілем) більше не може статись, бо джерело
+   правди тепер одне на обидва місця показу. */
+async function renderLotteryCard(hostId, btnId){
+  const host=$('#'+hostId);
   if(!host) return;
   try{
     const res=await fetch(BOT_API+'/lottery_status',{method:'POST',headers:{'Content-Type':'application/json'},
@@ -1847,7 +1859,7 @@ async function renderProfileLottery(){
       +'<div class="lottery-track"><div class="lottery-fill" style="width:'+pct+'%"></div></div>'
       +'<div class="lottery-meta"><span>'+links+' з '+needed+' ланок</span>'
       +'<span>'+(canBuy?'Готово!':(needed-links)+' до квитка')+'</span></div>'
-      +'<button class="lottery-btn" id="pl-buy-btn" '+(canBuy?'':'disabled')+' onclick="buyProfileLottery()">'
+      +'<button class="lottery-btn" id="'+btnId+'" '+(canBuy?'':'disabled')+' onclick="buyLotteryTicket(\''+hostId+'\',\''+btnId+'\')">'
       +(canBuy?'🎟 Отримати квиток':'🔒 Ще недостатньо ланок')+'</button>'
       +(ticketsCount?'<div class="lottery-tickets" onclick="openLotteryTickets()">🎟 Мої квитки ('+ticketsCount+')</div>':'')
       +'</div>';
@@ -1855,18 +1867,23 @@ async function renderProfileLottery(){
     host.innerHTML='';
   }
 }
-async function buyProfileLottery(){
-  const btn=$('#pl-buy-btn');
+async function buyLotteryTicket(hostId, btnId){
+  const btn=$('#'+btnId);
   if(!btn||btn.disabled) return;
   btn.disabled=true; btn.textContent='Отримую…';
   try{
     const res=await fetch(BOT_API+'/lottery_buy_ticket',{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({uid:UID,init_data:IDT})});
     const d=await res.json();
-    if(d.ticket){ if(window.showReward) showReward('lottery_ticket',{ticket:d.ticket}); renderProfileLottery(); }
+    if(d.ticket){ if(window.showReward) showReward('lottery_ticket',{ticket:d.ticket}); renderLotteryCard(hostId,btnId); }
     else { btn.disabled=false; btn.textContent='🎟 Отримати квиток'; }
   }catch(e){ btn.disabled=false; btn.textContent='🎟 Отримати квиток'; }
 }
+/* Стара назва лишена як міст: якщо десь у коді ще лишився виклик
+   renderProfileLottery()/buyProfileLottery() (напр. кеш GitHub Pages
+   під час поступового викочування) — не мовчки ламається, а працює. */
+function renderProfileLottery(){ return renderLotteryCard('profile-lottery','pl-buy-btn'); }
+function buyProfileLottery(){ return buyLotteryTicket('profile-lottery','pl-buy-btn'); }
 
 /* Мої квитки — той самий /lottery_status, що вже живить лотерейну картку
    на Друзях. Простий рендер прямо в оболонці (не Shadow DOM мініап) —
