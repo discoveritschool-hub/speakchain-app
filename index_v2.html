@@ -1769,12 +1769,12 @@ window.SC_flow = flow;
 
 async function openPlayer(url){
   const ov=$('#ov-player'); ov.classList.add('on'); tgBack(true);
-  /* Відео з nudge («Продовжити») — кладемо в URL ДО монтування:
-     мініап читає location.search на старті через Proxy у mountApp().
-     ⚠️ Плеєр чекає YouTube ID (params.get('v')), а бекенд віддає ПОВНЕ
-     посилання. Без витягу ID «Продовжити» відкривало б порожній плеєр. */
+  /* The standalone player runs in its own document. This is deliberate:
+     YouTube's iframe API is unreliable when executed from a dynamically
+     generated Shadow DOM in Telegram WebView. */
+  let vid='';
   if(url){
-    const vid = ytId(url);
+    vid = ytId(url);
     if(vid){
       try{
         const u=new URL(location.href);
@@ -1783,28 +1783,24 @@ async function openPlayer(url){
       }catch(e){}
     }
   }
-  /* Player depends on ?v=. A cached Shadow DOM keeps the videoId from its
-     first mount, so reopening it for another video shows the old/empty
-     player. Recreate only the player host; other modules stay cached. */
-  if(mounted['ov-player']){
-    const oldHost=$('#ov-player-host');
-    const newHost=oldHost.cloneNode(false);
-    oldHost.replaceWith(newHost);
-    delete mounted['ov-player'];
+  if(!vid){
+    try{ vid=new URLSearchParams(location.search).get('v')||''; }catch(e){}
   }
-  const win=await mountApp('ov-player',$('#ov-player-host'),'ov-player');
-  /* Фоновий режим: глушимо 3-хв таймер бездіяльності — інакше вікно
-     закриється саме, поки учениця просто слухає. */
-  if(LMODE==='passive'){
-    try{
-      win.clearInactivityTimers && win.clearInactivityTimers();
-      win.resetInactivity = function(){};      /* більше не зводить таймер */
-      const sh=$('#ov-player-host').shadowRoot;
-      const w=sh.getElementById('inactivity-warn'); if(w) w.style.display='none';
-      const b=sh.getElementById('btn-loop');       if(b) b.style.display='none';
-      toast('🌙 Фоновий режим — таймер вимкнено');
-    }catch(e){ console.warn('passive',e.message); }
-  }
+  const d=await load('ov-player');
+  const playerUrl=new URL('player.html',location.href);
+  if(vid) playerUrl.searchParams.set('v',vid);
+  if(d&&Object.keys(d).length) playerUrl.searchParams.set('d',JSON.stringify(d));
+  if(LMODE) playerUrl.searchParams.set('mode',LMODE);
+
+  const host=$('#ov-player-host');
+  host.innerHTML='';
+  const frame=document.createElement('iframe');
+  frame.title='SpeakChain Player';
+  frame.allow='autoplay; encrypted-media; picture-in-picture; microphone';
+  frame.referrerPolicy='strict-origin-when-cross-origin';
+  frame.style.cssText='width:100%;height:100%;border:0;display:block;background:#0d0d14';
+  frame.src=playerUrl.toString();
+  host.appendChild(frame);
 }
 
 /* ══════════ ПРОФІЛЬ ══════════ */
@@ -2612,6 +2608,11 @@ async function openOv(id){
 }
 function closeOv(){
   const wasPlayer = $('#ov-player')?.classList.contains('on');
+  if(wasPlayer){
+    const frame=$('#ov-player-host iframe');
+    if(frame) frame.src='about:blank'; /* stop audio/video immediately */
+    const host=$('#ov-player-host'); if(host) host.innerHTML='';
+  }
   $$('.overlay').forEach(o=>o.classList.remove('on'));
   tgBack(CUR!=='s-home' || HIST.length>0);
   /* Вийшли з плеєра — пропонуємо ГОВОРИТИ про те, що щойно дивились.
