@@ -165,6 +165,13 @@
   @keyframes micPulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.1)} }
   .voice-toggle { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: var(--fs-md); transition: all .15s; }
   .voice-toggle.active { background: rgba(62,207,142,.15); }
+  .clickable-word { cursor: pointer; border-radius: 4px; transition: background .12s; }
+  .clickable-word:active { background: rgba(124,110,247,.22); }
+  #phrase-save-bar { position: fixed; left: 12px; right: 12px; bottom: calc(14px + env(safe-area-inset-bottom)); z-index: 1600; display: none; align-items: center; gap: 10px; padding: 12px; border: 1px solid var(--line); border-radius: var(--r); background: var(--bg-card); box-shadow: 0 10px 34px rgba(0,0,0,.28); }
+  #phrase-save-bar.show { display: flex; }
+  #phrase-save-text { min-width: 0; flex: 1; color: var(--text); font-size: var(--fs-sm); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #phrase-save-confirm { border: 0; border-radius: var(--r-sm); background: var(--purple); color: #fff; padding: 9px 12px; font-weight: 700; cursor: pointer; }
+  #phrase-save-cancel { border: 0; background: transparent; color: var(--text2); padding: 7px; cursor: pointer; }
 
   /* 20.07 (рішення власниці): перемикач режиму Chainy прибрано —
      м'яка корекція тепер дефолт скрізь, окрім Strict Teacher (він
@@ -487,7 +494,7 @@
     <div class="chat-avatar" id="chat-avatar"></div>
     <div class="chat-info">
       <div class="chat-info-name" id="chat-name"></div>
-      <div class="chat-info-status">online</div>
+      <div class="chat-info-status" id="chat-status">online</div>
     </div>
     <div class="voice-toggle" id="voice-toggle" onclick="toggleVoiceMode()" title="Голосовий режим">🔊</div>
     <div class="chat-counter" id="chat-counter"></div>
@@ -506,6 +513,13 @@
       <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
     </button>
   </div>
+</div>
+
+<!-- Additive Sentence Mining UI. It calls the existing save_phrase action. -->
+<div id="phrase-save-bar" role="dialog" aria-label="Зберегти у словник">
+  <div id="phrase-save-text"></div>
+  <button id="phrase-save-confirm" onclick="confirmPhraseSave()">＋ Словник</button>
+  <button id="phrase-save-cancel" onclick="hidePhraseSave()">✕</button>
 </div>
 
 <script>
@@ -983,6 +997,7 @@ function addSystemNote(text) {
 }
 
 function startChainyChat() {
+  stopRealtimeSession();
   // Відкриваємо чат з Chainy напряму, без екрану деталей
   currentScenario = {
     catId:    'chainy',
@@ -1040,6 +1055,7 @@ function closeMySituation() {
   document.getElementById('ms-overlay').classList.remove('show');
 }
 function startMySituation() {
+  stopRealtimeSession();
   const who   = document.getElementById('ms-who').value.trim();
   const what  = document.getElementById('ms-what').value.trim();
   const focus = document.getElementById('ms-focus').value.trim();
@@ -1258,6 +1274,7 @@ function selectLevel(id) {
 
 function startChat() {
   if (!currentScenario) return;
+  stopRealtimeSession();
   history = [];
   const msgs = document.getElementById('chat-messages');
   msgs.innerHTML = '';
@@ -1340,13 +1357,97 @@ async function goToTrial() {
   }
 }
 
+let pendingPhraseSave = '';
+
+function showPhraseSave(phrase) {
+  pendingPhraseSave = String(phrase || '').replace(/\s+/g, ' ').trim().slice(0, 300);
+  if (pendingPhraseSave.length < 2) return;
+  const button = document.getElementById('phrase-save-confirm');
+  if (button) {
+    button.disabled = false;
+    button.textContent = '＋ Словник';
+  }
+  document.getElementById('phrase-save-text').textContent = `“${pendingPhraseSave}”`;
+  document.getElementById('phrase-save-bar').classList.add('show');
+}
+
+function hidePhraseSave() {
+  pendingPhraseSave = '';
+  document.getElementById('phrase-save-bar')?.classList.remove('show');
+  try { window.getSelection()?.removeAllRanges(); } catch (e) {}
+}
+
+async function confirmPhraseSave() {
+  const phrase = pendingPhraseSave;
+  if (!phrase) return;
+  const btn = document.getElementById('phrase-save-confirm');
+  btn.disabled = true;
+  btn.textContent = 'Зберігаю…';
+  try {
+    const res = await fetch(BOT_API + '/miniapp_action', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        uid: UID,
+        init_data: tg?.initData || '',
+        action: 'save_phrase',
+        phrase,
+        source: 'speaking_buddy_transcript',
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok || data.ok === false) throw new Error('save_failed');
+    btn.textContent = '✓ Збережено';
+    setTimeout(hidePhraseSave, 750);
+  } catch (e) {
+    btn.textContent = 'Спробувати ще';
+    addSystemNote('Не вдалося зберегти фразу. Спробуй ще раз.');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function makeTranscriptClickable(bubble, text) {
+  bubble.classList.add('transcript-bubble');
+  String(text || '').split(/(\b[A-Za-z][A-Za-z'’-]*\b)/g).forEach(part => {
+    if (/^[A-Za-z][A-Za-z'’-]*$/.test(part)) {
+      const word = document.createElement('span');
+      word.className = 'clickable-word';
+      word.textContent = part;
+      word.title = 'Додати слово у словник';
+      word.addEventListener('click', (event) => {
+        const selected = String(window.getSelection?.() || '').trim();
+        if (selected) return;
+        event.stopPropagation();
+        showPhraseSave(part);
+      });
+      bubble.appendChild(word);
+    } else {
+      bubble.appendChild(document.createTextNode(part));
+    }
+  });
+
+  const captureSelection = () => setTimeout(() => {
+    const selection = window.getSelection?.();
+    const phrase = String(selection || '').replace(/\s+/g, ' ').trim();
+    if (!phrase || phrase.length < 2 || phrase.length > 300 || !selection.rangeCount) return;
+    const range = selection.getRangeAt(0);
+    if (bubble.contains(range.commonAncestorContainer)) showPhraseSave(phrase);
+  }, 30);
+  bubble.addEventListener('mouseup', captureSelection);
+  bubble.addEventListener('touchend', captureSelection, { passive: true });
+}
+
 function addMessage(role, text, feedback) {
   const msgs = document.getElementById('chat-messages');
   const div = document.createElement('div');
   div.className = `msg ${role}`;
   const bubble = document.createElement('div');
   bubble.className = 'bubble';
-  bubble.textContent = text;
+  // Keep transcripts as real selectable text. Single words are tappable;
+  // selected multi-word chunks use the same existing save_phrase/SRS path.
+  if (role === 'ai') makeTranscriptClickable(bubble, text);
+  else bubble.textContent = text;
   div.appendChild(bubble);
   if (feedback && feedback.length) {
     const row = document.createElement('div');
@@ -1365,6 +1466,7 @@ function addMessage(role, text, feedback) {
 }
 
 function showTyping() {
+  if (document.getElementById('typing')) return;
   const msgs = document.getElementById('chat-messages');
   const div = document.createElement('div');
   div.className = 'msg ai';
@@ -1398,6 +1500,20 @@ async function sendMessage() {
   input.style.height = 'auto';
   isLoading = true;
   document.getElementById('send-btn').disabled = true;
+
+  // If a Realtime session is already active, typed messages share the same
+  // voice, context and tutor prompt. Otherwise the proven /buddy_chat path
+  // below remains completely unchanged.
+  if (realtimeDc?.readyState === 'open') {
+    showTyping();
+    const sent = await requestRealtimeResponse(text);
+    if (!sent) {
+      removeTyping();
+      isLoading = false;
+      document.getElementById('send-btn').disabled = false;
+    }
+    return;
+  }
 
   // Відео-практика: якщо конспект доступний але ще тягнеться — чекаємо на нього,
   // щоб відповісти вже по змісту (а не по назві). Якщо субтитрів немає
@@ -1504,6 +1620,317 @@ let recognition = null;
 let isListening = false;
 let ttsEnabled = true;
 
+// ── OpenAI Realtime (additive; Web Speech remains the fallback below) ──
+let realtimePc = null;
+let realtimeDc = null;
+let realtimeStream = null;
+let realtimeAudio = null;
+let realtimeConnecting = null;
+let realtimeResponseText = '';
+let realtimeUserText = '';
+let realtimeTurnUserText = '';
+let realtimeRenderedUserItems = new Set();
+let realtimeResponsePending = false;
+let realtimeAnnouncementPending = false;
+let realtimeAvailable = true;
+
+function setVoiceStatus(text) {
+  const el = document.getElementById('chat-status');
+  if (el) el.textContent = text || 'online';
+}
+
+function realtimePayload() {
+  return {
+    uid: UID,
+    init_data: tg?.initData || '',
+    scenario: currentScenario?.title || 'General conversation',
+    scenario_desc: currentScenario?.desc || '',
+    role: selectedRole,
+    level: selectedLevel,
+    is_chainy: !!currentScenario?.isChainy,
+    my_situation: currentScenario?.mySituation || null,
+    video_practice: currentScenario?.videoPractice || null,
+  };
+}
+
+function realtimeSend(event) {
+  if (!realtimeDc || realtimeDc.readyState !== 'open') return false;
+  realtimeDc.send(JSON.stringify(event));
+  return true;
+}
+
+function transcriptFromResponse(response) {
+  try {
+    const parts = [];
+    (response?.output || []).forEach(item => {
+      (item?.content || []).forEach(content => {
+        const value = content?.transcript || content?.text;
+        if (value) parts.push(value);
+      });
+    });
+    return parts.join(' ').trim();
+  } catch (e) {
+    return '';
+  }
+}
+
+async function authorizeRealtimeTurn() {
+  if (realtimeResponsePending) return false;
+  realtimeResponsePending = true;
+  setVoiceStatus('думаю…');
+  try {
+    const res = await fetch(BOT_API + '/buddy_realtime_turn', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        uid: UID,
+        init_data: tg?.initData || '',
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok || data.allowed === false) {
+      realtimeResponsePending = false;
+      stopRealtimeSession();
+      addMessage('ai', data.reply || 'Ліміт розмов на сьогодні завершено.', []);
+      if (data.show_paywall) showTrialCTA();
+      return false;
+    }
+    return true;
+  } catch (e) {
+    realtimeResponsePending = false;
+    setVoiceStatus('помилка зв’язку');
+    return false;
+  }
+}
+
+async function requestRealtimeResponse(textInput = '') {
+  if (!await authorizeRealtimeTurn()) return false;
+  if (textInput) {
+    realtimeTurnUserText = textInput;
+    realtimeSend({
+      type: 'conversation.item.create',
+      item: {
+        type: 'message',
+        role: 'user',
+        content: [{ type: 'input_text', text: textInput }],
+      },
+    });
+  }
+  realtimeResponseText = '';
+  realtimeSend({ type: 'response.create', response: { output_modalities: ['audio'] } });
+  return true;
+}
+
+function renderRealtimeUserTranscript(text, itemId = '') {
+  text = String(text || '').trim();
+  if (!text) return;
+  const marker = itemId || ('text:' + text.toLowerCase());
+  if (realtimeRenderedUserItems.has(marker)) return;
+  // A compatibility event may carry the same transcript under a different
+  // marker. Avoid rendering it twice while preserving genuinely repeated speech.
+  const last = history[history.length - 1];
+  if (!(last?.role === 'user' && last?.content === text)) {
+    addMessage('user', text, []);
+    history.push({ role: 'user', content: text });
+  }
+  realtimeRenderedUserItems.add(marker);
+  realtimeTurnUserText = text;
+}
+
+function syncRealtimeMemory(userText, assistantText) {
+  if (!userText && !assistantText) return;
+  fetch(BOT_API + '/buddy_realtime_memory', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      uid: UID,
+      init_data: tg?.initData || '',
+      user_text: userText || '',
+      assistant_text: assistantText || '',
+      scenario: currentScenario?.title || '',
+    }),
+  }).catch(() => {});
+}
+
+function handleRealtimeEvent(event) {
+  switch (event.type) {
+    case 'session.created':
+    case 'session.updated':
+      setVoiceStatus(isListening ? 'слухаю…' : 'голос готовий');
+      break;
+    case 'input_audio_buffer.speech_started':
+      realtimeUserText = '';
+      setVoiceStatus('слухаю…');
+      removeTyping();
+      break;
+    case 'input_audio_buffer.speech_stopped':
+      showTyping();
+      requestRealtimeResponse();
+      break;
+    case 'conversation.item.input_audio_transcription.delta':
+      realtimeUserText += event.delta || '';
+      break;
+    case 'conversation.item.input_audio_transcription.completed': {
+      const text = String(event.transcript || realtimeUserText || '').trim();
+      renderRealtimeUserTranscript(text, event.item_id || '');
+      realtimeUserText = '';
+      break;
+    }
+    case 'conversation.item.done': {
+      // Compatibility path for Realtime versions that attach the input
+      // transcript to the completed conversation item rather than a
+      // dedicated transcription event.
+      if (event.item?.role === 'user' && !realtimeUserText) {
+        const text = String(event.item?.content?.[0]?.transcript || '').trim();
+        renderRealtimeUserTranscript(text, event.item?.id || '');
+      }
+      break;
+    }
+    case 'response.output_audio_transcript.delta':
+      realtimeResponseText += event.delta || '';
+      break;
+    case 'response.output_audio_transcript.done':
+      realtimeResponseText = String(event.transcript || realtimeResponseText || '').trim();
+      break;
+    case 'response.done': {
+      removeTyping();
+      const text = realtimeResponseText || transcriptFromResponse(event.response);
+      if (realtimeAnnouncementPending) {
+        realtimeAnnouncementPending = false;
+      } else if (text) {
+        msgCount++;
+        sessionMsgCount++;
+        updateCounter();
+        history.push({ role: 'assistant', content: text });
+        addMessage('ai', text, []);
+        syncRealtimeMemory(realtimeTurnUserText, text);
+      }
+      realtimeTurnUserText = '';
+      realtimeResponseText = '';
+      realtimeResponsePending = false;
+      isLoading = false;
+      const send = document.getElementById('send-btn');
+      if (send) send.disabled = false;
+      setVoiceStatus(isListening ? 'слухаю…' : 'голос готовий');
+      break;
+    }
+    case 'error':
+      removeTyping();
+      realtimeResponsePending = false;
+      isLoading = false;
+      setVoiceStatus('помилка голосу');
+      break;
+  }
+}
+
+async function ensureRealtimeSession() {
+  if (!voiceMode || !realtimeAvailable) throw new Error('realtime_disabled');
+  if (realtimePc && realtimeDc?.readyState === 'open') return true;
+  if (realtimeConnecting) return realtimeConnecting;
+
+  realtimeConnecting = (async () => {
+    setVoiceStatus('підключаю голос…');
+    const tokenRes = await fetch(BOT_API + '/buddy_realtime_token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(realtimePayload()),
+    });
+    const tokenData = await tokenRes.json();
+    const ephemeralKey = tokenData.value;
+    if (!tokenRes.ok || !ephemeralKey) throw new Error(tokenData.error || 'no_token');
+
+    const pc = new RTCPeerConnection();
+    const audio = document.createElement('audio');
+    audio.autoplay = true;
+    audio.playsInline = true;
+    pc.ontrack = event => { audio.srcObject = event.streams[0]; };
+
+    const stream = await navigator.mediaDevices.getUserMedia({
+      audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+    });
+    const micTrack = stream.getAudioTracks()[0];
+    micTrack.enabled = false;
+    pc.addTrack(micTrack, stream);
+
+    const dc = pc.createDataChannel('oai-events');
+    dc.addEventListener('message', message => {
+      try { handleRealtimeEvent(JSON.parse(message.data)); } catch (e) {}
+    });
+
+    const opened = new Promise((resolve, reject) => {
+      const timer = setTimeout(() => reject(new Error('data_channel_timeout')), 15000);
+      dc.addEventListener('open', () => { clearTimeout(timer); resolve(true); }, { once: true });
+      dc.addEventListener('error', () => { clearTimeout(timer); reject(new Error('data_channel_error')); }, { once: true });
+    });
+
+    const offer = await pc.createOffer();
+    await pc.setLocalDescription(offer);
+    const sdpRes = await fetch('https://api.openai.com/v1/realtime/calls', {
+      method: 'POST',
+      body: offer.sdp,
+      headers: {
+        Authorization: `Bearer ${ephemeralKey}`,
+        'Content-Type': 'application/sdp',
+      },
+    });
+    if (!sdpRes.ok) throw new Error('sdp_failed');
+    await pc.setRemoteDescription({ type: 'answer', sdp: await sdpRes.text() });
+
+    realtimePc = pc;
+    realtimeDc = dc;
+    realtimeStream = stream;
+    realtimeAudio = audio;
+    await opened;
+    setVoiceStatus('голос готовий');
+    return true;
+  })();
+
+  try {
+    return await realtimeConnecting;
+  } catch (error) {
+    realtimeAvailable = false;
+    stopRealtimeSession();
+    throw error;
+  } finally {
+    realtimeConnecting = null;
+  }
+}
+
+async function startRealtimeListening() {
+  await ensureRealtimeSession();
+  realtimeStream?.getAudioTracks().forEach(track => { track.enabled = true; });
+  isListening = true;
+  const btn = document.getElementById('mic-btn');
+  if (btn) {
+    btn.textContent = '⏹';
+    btn.classList.add('listening');
+  }
+  const input = document.getElementById('chat-input');
+  if (input) input.placeholder = '🎤 Говори — можна робити паузи й перебивати';
+  setVoiceStatus('слухаю…');
+}
+
+function stopRealtimeSession() {
+  realtimeStream?.getTracks().forEach(track => track.stop());
+  try { realtimeDc?.close(); } catch (e) {}
+  try { realtimePc?.close(); } catch (e) {}
+  if (realtimeAudio) {
+    try { realtimeAudio.pause(); } catch (e) {}
+    realtimeAudio.srcObject = null;
+  }
+  realtimePc = realtimeDc = realtimeStream = realtimeAudio = null;
+  realtimeRenderedUserItems = new Set();
+  realtimeTurnUserText = '';
+  realtimeResponsePending = false;
+  isListening = false;
+  const btn = document.getElementById('mic-btn');
+  if (btn) {
+    btn.textContent = '🎤';
+    btn.classList.remove('listening');
+  }
+  setVoiceStatus('online');
+}
+
 // ── TTS ──
 // Очищення тексту для озвучення: прибираємо емодзі, символи,
 // зайві маркери — щоб TTS не читав "smiling face" тощо.
@@ -1554,7 +1981,7 @@ function splitSentences(text) {
     .filter(Boolean);
 }
 
-function speakTTS(text) {
+function speakBrowserTTS(text) {
   if (!ttsEnabled) return;
   const clean = cleanForSpeech(text);
   if (!clean) return;                          // лишились самі емодзі — не озвучуємо
@@ -1573,6 +2000,31 @@ function speakTTS(text) {
     if (voice) utt.voice = voice;
     speechSynthesis.speak(utt);
   });
+}
+
+async function speakRealtimeText(text) {
+  const clean = cleanForSpeech(text);
+  if (!clean) return;
+  await ensureRealtimeSession();
+  realtimeAnnouncementPending = true;
+  realtimeResponseText = '';
+  realtimeSend({
+    type: 'response.create',
+    response: {
+      conversation: 'none',
+      output_modalities: ['audio'],
+      instructions: `Say this greeting exactly once in warm, natural English. Do not add anything: ${JSON.stringify(clean)}`,
+    },
+  });
+}
+
+function speakTTS(text) {
+  if (!ttsEnabled || !voiceMode) return;
+  if (realtimeAvailable) {
+    speakRealtimeText(text).catch(() => speakBrowserTTS(text));
+    return;
+  }
+  speakBrowserTTS(text);
 }
 
 // Ініціалізація голосів
@@ -1670,14 +2122,30 @@ function initRecognition() {
 
 function toggleSpeechInput() {
   if (isListening) {
-    // Ручна зупинка = юзер закінчив, відправляємо що є
-    finalizeSpeech();
+    if (realtimePc) {
+      stopRealtimeSession();
+    } else {
+      // Legacy fallback: ручна зупинка надсилає накопичений текст.
+      finalizeSpeech();
+    }
   } else {
     startListening();
   }
 }
 
-function startListening() {
+async function startListening() {
+  if (voiceMode && realtimeAvailable) {
+    try {
+      await startRealtimeListening();
+      return;
+    } catch (e) {
+      addSystemNote('Не вдалося підключити AI-голос. Увімкнено сумісний голосовий режим.');
+    }
+  }
+  startLegacyListening();
+}
+
+function startLegacyListening() {
   // Зупиняємо TTS поки говорить юзер
   window.speechSynthesis.cancel();
 
@@ -1705,7 +2173,7 @@ function startListening() {
   }
 }
 
-function stopListening() {
+function stopLegacyListening() {
   isListening = false;
   clearSilenceTimer();
   finalTranscript = '';   // страховка: не лишаємо старий транскрипт, який міг би підставитись знову
@@ -1721,6 +2189,11 @@ function stopListening() {
   }
   const input = document.getElementById('chat-input');
   if (input) input.placeholder = 'Пиши або говори англійською...';
+}
+
+function stopListening() {
+  if (realtimePc || realtimeStream) stopRealtimeSession();
+  else stopLegacyListening();
 }
 
 // ── Grammar card ──
@@ -1742,6 +2215,7 @@ function showGrammarCard(card) {
 
 // ── Сповіщення після сесії: при закритті мініаппу шлемо beacon ──
 function endSession() {
+  stopRealtimeSession();
   if (beaconSent) return;
   if (sessionMsgCount < 1) return;   // порожня сесія — не шлемо
   beaconSent = true;
@@ -1764,6 +2238,7 @@ window.addEventListener('pagehide', endSession);
 
 // ── Маршрут «відео → Chainy»: ?context=video&topic=... ──
 function startVideoChat(topic, mode, summary) {
+  stopRealtimeSession();
   const topicTxt = (topic || 'the video you just watched').slice(0, 120);
   currentScenario = {
     catId: 'chainy', idx: 0,
@@ -1887,6 +2362,7 @@ renderScenarios();
       addMessage('ai', 'Скажи хоч кілька фраз — і тоді зможемо підбити підсумок 😊', []);
       return;
     }
+    stopRealtimeSession();
     // шлемо session_end як fetch (щоб бек встиг порахувати), тоді тягнемо victory
     try {
       await fetch(BOT_API + '/buddy_session_end', {
