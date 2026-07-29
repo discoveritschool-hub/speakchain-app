@@ -808,8 +808,8 @@ window.addEventListener('load', function(){
 <div class="daily-card"><div class="daily-flow" id="daily-flow"></div></div>
 <div class="sec-h"><span class="ti">Обери формат</span><span class="meta">можна змінити будь-коли</span></div>
 <div class="tiles">
-  <div class="tile primary" onclick="go('s-listen')"><span class="ic">🎬</span><div class="t">Практика з відео</div><div class="s">слухай · повторюй · зберігай фрази</div></div>
-  <div class="tile primary" onclick="go('s-buddy')"><span class="ic">🗣</span><div class="t">Поговорити з Chainy</div><div class="s">реальна ситуація без страху помилки</div></div>
+  <div class="tile primary" onclick="openPracticeNow()"><span class="ic">🎬</span><div class="t">Практика з відео</div><div class="s">одразу відкрити плеєр</div></div>
+  <div class="tile primary" onclick="openChainyNow()"><span class="ic">🗣</span><div class="t">Поговорити з Chainy</div><div class="s">одразу почати розмову</div></div>
 </div>
 <div id="inbox-wrap" style="display:none">
   <div class="inbox-hd"><span class="ti">📬 Тобі прийшло</span><span class="badge" id="inbox-n">0</span></div>
@@ -1525,6 +1525,18 @@ async function cyLaunch(fn){
   const win=await mountApp('s-buddy', $('#ov-buddy-host'), null);
   try{ fn(win); }catch(e){ console.warn('chainy',e.message); }
   return win;
+}
+
+/* Прямі входи: один тап — одразу робочий інструмент, без проміжного екрана. */
+async function openPracticeNow(){
+  HIST.length=0;
+  await go('s-listen');
+  await openPlayer();
+}
+async function openChainyNow(){
+  HIST.length=0;
+  await go('s-buddy');
+  await cyChat();
 }
 
 /* ══════════ ПРОГРЕС ══════════ */
@@ -2664,10 +2676,15 @@ async function go(sid, isBack){
 
   if(R[sid]) await R[sid]();
 }
-$$('.nav button').forEach(b=>b.addEventListener('click',()=>{
+$$('.nav button').forEach(b=>b.addEventListener('click',async()=>{
   HIST.length=0;              /* тап по вкладці = новий корінь */
   CHD_RETURN_DAY=null;        /* свідома навігація — не «повернення», забуваємо шлях назад */
-  go(b.dataset.s);
+  const sid=b.dataset.s;
+  await go(sid);
+  /* Дві головні практичні кнопки працюють одразу. Після закриття
+     інструмента користувач лишається у відповідному розділі. */
+  if(sid==='s-listen') await openPlayer();
+  if(sid==='s-buddy') await cyChat();
 }));
 
 /* Telegram BackButton — системна кнопка «назад» */
