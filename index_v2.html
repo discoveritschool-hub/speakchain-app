@@ -181,6 +181,31 @@
   .tile .ic{font-size:var(--fs-lg);display:block;margin-bottom:8px}
   .tile .t{font-size:var(--fs);font-weight:700}
   .tile .s{font-size:var(--fs-xs);color:var(--text2);margin-top:2px}
+  .tile.primary{background:linear-gradient(145deg,rgba(124,110,247,.22),rgba(124,110,247,.08));
+    border-color:rgba(124,110,247,.5)}
+  .tile.primary .t{color:var(--purple-text)}
+
+  /* Головна: один короткий навчальний цикл замість 7 кроків,
+     помилково прив'язаних до довжини ланцюжка. */
+  .daily-card{background:var(--bg-card);border:.5px solid var(--line);border-radius:var(--r);
+    padding:14px;margin-bottom:4px}
+  .daily-flow{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .daily-step{min-width:0;text-align:center;padding:10px 5px;border-radius:var(--r-sm);
+    background:var(--bg-card2);border:.5px solid var(--line)}
+  .daily-step .di{font-size:20px;display:block;margin-bottom:5px}
+  .daily-step .dt{display:block;font-size:var(--fs-xs);font-weight:700;color:var(--text2)}
+  .daily-step.done{background:var(--green-bg);border-color:rgba(90,216,166,.35)}
+  .daily-step.done .dt{color:var(--green)}
+  .daily-step.now{background:var(--purple-bg);border-color:var(--purple)}
+  .daily-step.now .dt{color:var(--purple-text)}
+  .habit-chain{display:flex;gap:7px;align-items:center;padding:12px 14px;
+    background:var(--bg-card);border:.5px solid var(--line);border-radius:var(--r)}
+  .habit-day{flex:1;height:10px;border-radius:var(--r-pill);background:var(--bg-card3)}
+  .habit-day.done{background:var(--green)}
+  .habit-day.today{background:var(--purple);box-shadow:0 0 0 3px var(--purple-bg)}
+  .practice-loop{display:flex;align-items:center;justify-content:center;gap:8px;
+    color:var(--text2);font-size:var(--fs-sm);margin:12px 0 2px}
+  .practice-loop b{color:var(--text)}
 
   /* generic other-screen */
   .placeholder{padding:30px 16px;text-align:center;color:var(--text2)}
@@ -607,6 +632,19 @@
   .nav button .lbl{font-size:var(--fs-xs);font-weight:600}
   .nav button .ic{font-size:21px}
   .nav button{padding:6px 2px}
+  .mini-player{display:none;align-items:center;gap:10px;padding:9px 12px;
+    background:var(--bg-card2);border-top:.5px solid var(--line);z-index:55}
+  .mini-player.on{display:flex}
+  .mini-player .mp-ic{width:34px;height:34px;border-radius:var(--r-sm);
+    background:var(--purple-bg);display:flex;align-items:center;justify-content:center;flex:none}
+  .mini-player .mp-body{flex:1;min-width:0;cursor:pointer}
+  .mini-player .mp-title{font-size:var(--fs-sm);font-weight:700;overflow:hidden;
+    text-overflow:ellipsis;white-space:nowrap}
+  .mini-player .mp-sub{font-size:var(--fs-xs);color:var(--text2);margin-top:1px}
+  .mini-player button{background:none;border:none;color:var(--text2);font-size:20px;
+    padding:6px;cursor:pointer}
+  #ov-player .sheet{height:100vh!important;height:100dvh!important;max-height:none!important;
+    border-radius:0!important}
 
   /* 22.07: непропорційні іконки у fullscreen на широкому екрані.
      .nav button{flex:1} ділить кнопки на рівні частки ВСЬОЇ ширини —
@@ -689,7 +727,9 @@ html,body{height:100%;overflow:hidden}
   flex-shrink:0;display:flex;align-items:center;justify-content:center;
   transition:all .15s var(--ease);padding:0}
 .tb-arw:active{transform:scale(.9);background:var(--purple-bg);color:var(--purple-text)}
-.tb-arw:disabled{opacity:.25;pointer-events:none}
+  .tb-arw:disabled{opacity:.25;pointer-events:none}
+  /* Нижня навігація є єдиним способом переходу між основними розділами. */
+  .topbar>.tb-arw{display:none}
 .tb-title{flex:1;text-align:center;font-size:var(--fs-sm);font-weight:700;
   color:var(--text2);letter-spacing:.02em}
 .topbar .top-right{margin-left:0}
@@ -759,30 +799,34 @@ window.addEventListener('load', function(){
   <div class="scroll">
     <div class="screen on" id="s-home">
 <div class="hero">
-  <div class="k" id="hero-k">Урок дня</div>
-  <div class="t" id="hero-t">Speak. 30 секунд.</div>
-  <div class="s" id="hero-s">Повтори фразу голосом — get your Chain</div>
+  <div class="k" id="hero-k">Наступна дія</div>
+  <div class="t" id="hero-t">Почни з короткої практики</div>
+  <div class="s" id="hero-s">Відео, повторення і розмова · приблизно 10 хв</div>
   <button class="go" id="hero-go" onclick="flow()">Почати →</button>
+</div>
+<div class="sec-h"><span class="ti">Сьогодні</span><span class="meta" id="daily-meta">0 із 3</span></div>
+<div class="daily-card"><div class="daily-flow" id="daily-flow"></div></div>
+<div class="sec-h"><span class="ti">Обери формат</span><span class="meta">можна змінити будь-коли</span></div>
+<div class="tiles">
+  <div class="tile primary" onclick="go('s-listen')"><span class="ic">🎬</span><div class="t">Практика з відео</div><div class="s">слухай · повторюй · зберігай фрази</div></div>
+  <div class="tile primary" onclick="go('s-buddy')"><span class="ic">🗣</span><div class="t">Поговорити з Chainy</div><div class="s">реальна ситуація без страху помилки</div></div>
 </div>
 <div id="inbox-wrap" style="display:none">
   <div class="inbox-hd"><span class="ti">📬 Тобі прийшло</span><span class="badge" id="inbox-n">0</span></div>
   <div id="inbox"></div>
 </div>
-<div class="sec-h"><span class="ti">Твій ланцюжок — не розривай</span><span class="meta" id="chain-meta">0 / 7</span></div>
-<div class="chain" id="chain"></div>
-<div class="sec-h"><span class="ti">Швидкі дії</span></div>
+<div class="sec-h"><span class="ti">Твоя звичка</span><span class="meta" id="chain-meta">0 днів</span></div>
+<div class="habit-chain" id="chain"></div>
+<div class="sec-h"><span class="ti">Ще</span></div>
 <div class="tiles">
-  <div class="tile" onclick="go('s-listen')"><span class="ic">🎧</span><div class="t">Слухати</div><div class="s">важкий день — купай вухо</div></div>
   <div class="tile" onclick="openOv('ov-vocab')"><span class="ic">📚</span><div class="t">Словник</div><div class="s">твої збережені фрази</div></div>
   <div class="tile" onclick="act('chain_invite_screen')"><span class="ic">🤝</span><div class="t">Запросити</div><div class="s">друг = міцніший ланцюг</div></div>
-  <!-- Плитку «📊 Прогрес» прибрано: вела на s-prog — ту саму вкладку,
-       що вже стоїть у таб-барі внизу. Дублювання. -->
 </div>
 </div>
     <div class="screen" id="s-buddy">
-<div class="challenge-card" style="margin-top:8px">
-  <div class="t">🗣 Обери ситуацію — і говори</div>
-  <div class="s" id="cy-sub">Реальні сцени. Chainy грає співрозмовника й м'яко виправляє. Кожна розмова — ланка.</div>
+<div class="challenge-card" style="margin-top:8px" onclick="cyChat()">
+  <div class="t">🗣 Почати вільну розмову</div>
+  <div class="s" id="cy-sub">Chainy підтримає розмову й м'яко виправить. Можна почати з одного речення.</div>
 </div>
 <div class="net-item" style="border-color:var(--purple);background:var(--purple-bg)" onclick="cyMy()">
   <span class="ic">✨</span>
@@ -800,6 +844,12 @@ window.addEventListener('load', function(){
   <div class="body"><div class="t">Вільна розмова</div><div class="s">просто поговори — про що хочеш</div></div>
   <span class="ch">›</span>
 </div>
+<div class="net-item" onclick="cyExploreToggle()">
+  <span class="ic">🧭</span>
+  <div class="body"><div class="t">Усі ситуації</div><div class="s">робота, подорожі, знайомства та інше</div></div>
+  <span class="ch" id="cy-explore-ch">›</span>
+</div>
+<div id="cy-explore" style="display:none">
 <div class="scroller" id="sc1">
   <div class="chips" id="cy-cats"></div>
   <button class="sc-arrow left" onclick="scArr('sc1',-1)">‹</button>
@@ -810,6 +860,7 @@ window.addEventListener('load', function(){
 <div id="cy-more" style="text-align:center;font-size:var(--fs-sm);color:var(--purple);font-weight:600;margin-top:10px;cursor:pointer" onclick="cyAll()"></div>
 <div class="sec-h"><span class="ti">Стиль Chainy</span></div>
 <div class="style-row" id="cy-styles"></div>
+</div>
 </div>
     <div class="screen" id="s-prog">
 <div class="hero" style="background:linear-gradient(135deg,var(--purple-dark),var(--purple))">
@@ -863,8 +914,13 @@ window.addEventListener('load', function(){
 <div class="bonus-row"><div class="txt"><div class="bt">Обидва зробили урок сьогодні</div><div class="bs">Speaking Sync — +25 XP кожному</div></div><span class="rew">🔗</span></div>
 <div class="bonus-row"><div class="txt"><div class="bt">Speaking Partners бейдж</div><div class="bs">після першого спільного виклику</div></div><span class="rew">🎖️</span></div>
 </div>
-    <div class="screen" id="s-listen">
-<div class="sec-h" style="margin-top:8px"><span class="ti">Обери режим</span></div>
+<div class="screen" id="s-listen">
+<div class="challenge-card" style="margin-top:8px" onclick="openPlayer()">
+  <div class="t">🎬 Практика з відео</div>
+  <div class="s">Слухай короткий фрагмент, повторюй уголос і одразу застосовуй нові фрази.</div>
+</div>
+<div class="practice-loop"><b>Почуй</b><span>→</span><b>Повтори</b><span>→</span><b>Скажи з Chainy</b></div>
+<div class="sec-h"><span class="ti">Обери режим</span></div>
 <div class="mode-row">
   <div class="mode-card on" id="md-active" onclick="setMode('active')">
     <span class="e">🎧</span><div class="t">Активне</div><div class="s">shadowing · повтор фрази</div>
@@ -880,6 +936,11 @@ window.addEventListener('load', function(){
   <span class="ic" id="pl-ic">🎬</span>
   <div class="t" id="pl-t">Відкрити плеєр</div>
   <div class="s" id="pl-s">YouTube · повтор фрази · запис голосу</div>
+</div>
+<div class="net-item" style="margin:12px 12px 0" onclick="speakNow()">
+  <span class="ic">🗣</span>
+  <div class="body"><div class="t">Застосувати фрази з Chainy</div>
+  <div class="s">розмова продовжить тему останнього відео</div></div><span class="ch">›</span>
 </div>
 <div class="sec-h"><span class="ti">Як слухати правильно</span></div>
 <div class="instr-card">
@@ -928,11 +989,21 @@ window.addEventListener('load', function(){
 </div>
   </div>
 
+  <div class="mini-player" id="mini-player">
+    <div class="mp-ic">🎬</div>
+    <div class="mp-body" onclick="restorePlayer()">
+      <div class="mp-title" id="mini-player-title">Практика триває</div>
+      <div class="mp-sub">Торкнись, щоб повернутися</div>
+    </div>
+    <button onclick="restorePlayer()" aria-label="Розгорнути">⌃</button>
+    <button onclick="stopPlayer()" aria-label="Закрити">×</button>
+  </div>
   <div class="nav">
     <button class="on" data-s="s-home"><span class="ic">📅</span><span class="lbl">Сьогодні</span></button>
+    <button data-s="s-listen"><span class="ic">🎬</span><span class="lbl">Практика</span></button>
     <button data-s="s-buddy"><span class="ic">🗣</span><span class="lbl">Chainy</span></button>
-    <button data-s="s-prog"><span class="ic">📊</span><span class="lbl">Прогрес</span></button>
     <button data-s="s-social"><span class="ic">👥</span><span class="lbl">Друзі</span></button>
+    <button data-s="s-prog"><span class="ic">📊</span><span class="lbl">Прогрес</span></button>
   </div>
 </div>
 
@@ -1024,11 +1095,12 @@ window.addEventListener('load', function(){
   <button class="sn-skip" onclick="speakLater()">Пізніше</button>
 </div>
 <div class="overlay" id="ov-player">
-  <div class="sheet" style="height:92vh;padding:0;overflow:hidden;display:flex;flex-direction:column">
+  <div class="sheet" style="height:100dvh;padding:0;overflow:hidden;display:flex;flex-direction:column">
     <div class="grip" style="margin:10px auto 4px;flex-shrink:0"></div>
     <div style="display:flex;align-items:center;padding:0 16px 8px;flex-shrink:0">
       <h3 style="margin:0;flex:1;font-size:var(--fs-lg)">🎬 Плеєр</h3>
-      <span onclick="closeOv()" style="font-size:26px;color:var(--text2);cursor:pointer;line-height:1;padding:0 4px">×</span>
+      <span onclick="minimizePlayer()" aria-label="Згорнути" style="font-size:26px;color:var(--text2);cursor:pointer;line-height:1;padding:0 8px">⌄</span>
+      <span onclick="stopPlayer()" aria-label="Закрити" style="font-size:26px;color:var(--text2);cursor:pointer;line-height:1;padding:0 4px">×</span>
     </div>
     <div id="ov-player-host" style="flex:1;min-height:0;overflow:hidden"></div>
   </div>
@@ -1308,7 +1380,7 @@ function renderTop(D){
 
 /* Стрілки ‹ › — крок між вкладками */
 const TAB_NAMES={'s-home':'Сьогодні','s-buddy':'Chainy','s-prog':'Прогрес',
-  's-social':'Друзі','s-profile':'Профіль','s-listen':'Слухати'};
+  's-social':'Друзі','s-profile':'Профіль','s-listen':'Практика'};
 function tabStep(d){
   const i=TABS.indexOf(CUR);
   if(i<0){ go('s-home'); return; }
@@ -1326,43 +1398,48 @@ function syncTop(sid){
 }
 
 /* ══════════ СЬОГОДНІ ══════════ */
-const STEPS=[
- {ic:'🎬',t:'Перегляд відео',act:'start_lesson'},
- {ic:'🗣',t:'Shadowing',act:'start_lesson'},
- {ic:'📚',t:'Тренування слів',ov:'ov-vocab'},
- {ic:'💬',t:'Розмова з Chainy',scr:'s-buddy'},
- {ic:'🎥',t:'Запис відео',act:'start_lesson'},
- {ic:'🤝',t:'Кинути другу',act:'chain_invite_screen'},
- {ic:'🏁',t:'Підсумок дня',scr:'s-prog'}];
+const DAILY_STEPS=[
+ {key:'watch',ic:'🎬',t:'Почуй'},
+ {key:'repeat',ic:'🎙',t:'Повтори'},
+ {key:'speak',ic:'🗣',t:'Скажи'}];
 
 async function renderHome(){
   const D=await load('s-home');
   renderTop(D);
   paintNudge(D);           /* одна картка «що робити зараз» — замість вибору */
-  const len=D.chain_length||0, tot=D.trial_links||7;
+  const len=D.chain_length||0;
   const nm=(D.name||'').split(' ')[0];
-  if(D.chain_status==='broken'){
-    $('#hero-t').textContent='Ланцюжок розірвано';
-    $('#hero-s').textContent='Одна фраза — і він знову живий';
-  }else if(!len){
-    $('#hero-t').textContent='Speak. 30 секунд.';
-    $('#hero-s').textContent=(nm?nm+', п':'П')+'овтори фразу голосом — get your Chain';
-  }else{
-    $('#hero-t').textContent='Ланка '+(len+1)+'. Твоя черга.';
-    $('#hero-s').textContent='Не рви те, що вже побудував';
+  /* Старий бекенд без nudge: даємо зрозумілий fallback.
+     Якщо nudge є, paintNudge — єдине джерело тексту й дії hero. */
+  if(!D.nudge){
+    if(D.chain_status==='broken'){
+      $('#hero-t').textContent='Ланцюжок розірвано';
+      $('#hero-s').textContent='Одна коротка практика — і він знову живий';
+    }else if(!len){
+      $('#hero-t').textContent='Почни з короткої практики';
+      $('#hero-s').textContent=(nm?nm+', 10':'10')+' хвилин: почуй, повтори й скажи';
+    }else{
+      $('#hero-t').textContent='Продовжити практику';
+      $('#hero-s').textContent='Наступна маленька дія вже готова';
+    }
   }
-  const dn=Math.min(len,7);
-  $('#chain-meta').textContent=dn+' / '+tot;
-  $('#chain').innerHTML=STEPS.map((s,i)=>{
-    const lk=i>dn, nw=i===dn;
-    const dot=lk?'lock':(nw?'now':'done'), bd=lk?'🔒':(nw?'▸':'✓');
-    const sub=nw?'ти тут — зроби зараз':(i<dn?'завершено':'');
-    const tap=lk?'':' onclick="'+(s.scr?"go('"+s.scr+"')":s.ov?"openOv('"+s.ov+"')":"act('"+s.act+"')")+'"';
-    return '<div class="link'+(lk?' locked':'')+'"'+tap+'>'
-      +'<div class="dot '+dot+'">'+s.ic+'<span class="badge">'+bd+'</span></div>'
-      +'<div class="lbl"><b>'+s.t+'</b>'+(sub?'<small>'+sub+'</small>':'')+'</div>'
-      +(i===6?'':'<div class="connector'+(i<dn?' fill':'')+'"></div>')+'</div>';
+  const dp=D.daily_progress||{};
+  let completed=0, foundNext=false;
+  $('#daily-flow').innerHTML=DAILY_STEPS.map(s=>{
+    const done=!!dp[s.key];
+    if(done) completed++;
+    const now=!done&&!foundNext;
+    if(now) foundNext=true;
+    return '<div class="daily-step '+(done?'done':(now?'now':''))+'">'
+      +'<span class="di">'+(done?'✓':s.ic)+'</span><span class="dt">'+s.t+'</span></div>';
   }).join('');
+  $('#daily-meta').textContent=completed+' із '+DAILY_STEPS.length;
+  const streak=Number(D.streak_days||0);
+  $('#chain-meta').textContent=streak+' '+plur(streak,'день','дні','днів');
+  const habitDone=Math.min(streak,6);
+  $('#chain').innerHTML=Array.from({length:7},(_,i)=>
+    '<span class="habit-day '+(i<habitDone?'done':(i===habitDone?'today':''))+'"></span>'
+  ).join('');
   const it=[];
   if(D.challenge_active_day)it.push({c:'chall',av:'📅',
     t:'День '+D.challenge_active_day+' челенджу чекає',
@@ -1399,7 +1476,7 @@ function cyData(){
 
 function renderBuddy(){
   const d=cyData();
-  $('#cy-sub').textContent=d.all.length+" реальних сцен. Chainy грає співрозмовника й м'яко виправляє. Кожна розмова — ланка.";
+  $('#cy-sub').textContent="Напиши або скажи одне речення — Chainy підтримає розмову й м'яко виправить.";
   $('#cy-q').placeholder='🔍 Шукати серед '+d.all.length+' ситуацій…';
   $('#cy-cats').innerHTML='<span class="chip'+(cyCat==='all'?' on':'')+'" onclick="cySetCat(\'all\')">Усі '+d.all.length+'</span>'
     +d.ct.map(c=>'<span class="chip'+(cyCat===c.id?' on':'')+'" onclick="cySetCat(\''+c.id+'\')">'+c.label+'</span>').join('');
@@ -1430,6 +1507,13 @@ function cySetCat(c){cyCat=c;cyLim=8;renderBuddy();}
 function cySearch(v){cyQ=v;cyLim=8;cyList();}
 function cyAll(){cyLim+=40;cyList();}
 function cySetStyle(s){cyStyle=s;renderBuddy();}
+function cyExploreToggle(){
+  const box=$('#cy-explore'), ch=$('#cy-explore-ch');
+  const open=box.style.display==='none';
+  box.style.display=open?'':'none';
+  if(ch) ch.textContent=open?'⌄':'›';
+  if(open) setTimeout(scWatchAll,50);
+}
 
 /* Тап на сцену → відкриваємо СПРАВЖНІЙ чат (робочий модуль) */
 async function cyOpen(cat,idx){ await cyLaunch(w=>{ w.selectRole(cyStyle); w.openScenario(cat,idx); }); }
@@ -1648,6 +1732,7 @@ async function openDuel(uid){
 
 /* ══════════ СЛУХАТИ ══════════ */
 let LMODE='active';
+function renderPractice(){ setMode(LMODE); }
 function setMode(m){
   LMODE=m;
   $('#md-active').classList.toggle('on',m==='active');
@@ -1757,6 +1842,9 @@ async function flow(nudge){
 
   /* 💔 Ланцюжок розірвано — це дія бота (списує XP), йде через чат */
   if(n.kind === 'revive'){ act('revive_chain'); return; }
+  if(n.kind === 'challenge_start'){ act('challenge_start'); return; }
+  if(n.kind === 'challenge_day'){ openOv('ov-challenge'); return; }
+  if(n.action){ act(n.action); return; }
 
   /* ▶️ Незавершене відео — вертаємо ПРЯМО в нього, без чату */
   if(n.kind === 'resume' && n.url){ openPlayer(n.url); return; }
@@ -1769,6 +1857,11 @@ window.SC_flow = flow;
 
 async function openPlayer(url){
   const ov=$('#ov-player'); ov.classList.add('on'); tgBack(true);
+  const existing=$('#ov-player-host iframe');
+  if(existing){
+    const mp=$('#mini-player'); if(mp)mp.classList.remove('on');
+    return;
+  }
   /* The standalone player runs in its own document. This is deliberate:
      YouTube's iframe API is unreliable when executed from a dynamically
      generated Shadow DOM in Telegram WebView. */
@@ -1801,6 +1894,32 @@ async function openPlayer(url){
   frame.style.cssText='width:100%;height:100%;border:0;display:block;background:#0d0d14';
   frame.src=playerUrl.toString();
   host.appendChild(frame);
+  const mt=$('#mini-player-title');
+  if(mt){
+    const title=(PAYLOAD['s-home']?.last_video_title||'').trim();
+    mt.textContent=title||'Практика триває';
+  }
+}
+
+function minimizePlayer(){
+  const ov=$('#ov-player'), frame=$('#ov-player-host iframe');
+  if(!frame){ closeOv(); return; }
+  ov.classList.remove('on');
+  const mp=$('#mini-player'); if(mp)mp.classList.add('on');
+  tgBack(CUR!=='s-home' || HIST.length>0);
+}
+function restorePlayer(){
+  const frame=$('#ov-player-host iframe');
+  if(!frame){ openPlayer(); return; }
+  $('#ov-player').classList.add('on');
+  const mp=$('#mini-player'); if(mp)mp.classList.remove('on');
+  tgBack(true);
+}
+function stopPlayer(){
+  /* Якщо плеєр згорнутий, тимчасово повертаємо його active-стан,
+     щоб єдина логіка closeOv() зупинила iframe і запропонувала Chainy. */
+  if($('#ov-player-host iframe')) $('#ov-player').classList.add('on');
+  closeOv();
 }
 
 /* ══════════ ПРОФІЛЬ ══════════ */
@@ -2459,8 +2578,8 @@ async function mountApp(id,host,pk){
 
 /* ══════════ НАВІГАЦІЯ ══════════ */
 const R={'s-home':renderHome,'s-buddy':renderBuddy,'s-prog':renderProg,
-         's-social':renderSocial,'s-profile':renderProfile};
-const TABS=['s-home','s-buddy','s-prog','s-social'];   /* s-profile — тепер іконка в шапці, не вкладка */
+         's-social':renderSocial,'s-listen':renderPractice,'s-profile':renderProfile};
+const TABS=['s-home','s-listen','s-buddy','s-social','s-prog'];   /* основні розділи; профіль — у шапці */
 const SCREEN_ALIASES={
   home:'s-home',buddy:'s-buddy',progress:'s-prog',social:'s-social',
   profile:'s-profile',diagnostic:'ov-diagnostic',vocab:'ov-vocab',
@@ -2543,9 +2662,6 @@ async function go(sid, isBack){
   /* «Назад» показуємо скрізь, крім Сьогодні */
   tgBack(sid!=='s-home' || HIST.length>0);
 
-  /* Кнопка «Слухати» — не вкладка, підсвічуємо Сьогодні */
-  if(sid==='s-listen'){ const h=$('.nav button[data-s="s-home"]'); if(h)h.classList.add('on'); }
-
   if(R[sid]) await R[sid]();
 }
 $$('.nav button').forEach(b=>b.addEventListener('click',()=>{
@@ -2612,6 +2728,7 @@ function closeOv(){
     const frame=$('#ov-player-host iframe');
     if(frame) frame.src='about:blank'; /* stop audio/video immediately */
     const host=$('#ov-player-host'); if(host) host.innerHTML='';
+    const mp=$('#mini-player'); if(mp)mp.classList.remove('on');
   }
   $$('.overlay').forEach(o=>o.classList.remove('on'));
   tgBack(CUR!=='s-home' || HIST.length>0);
@@ -2639,7 +2756,7 @@ function offerSpeak(){
   el.style.display = '';
   setTimeout(()=>{ el.classList.add('on'); }, 30);
 }
-function speakNow(){
+async function speakNow(){
   const el = $('#speak-nudge');
   if(el){ el.classList.remove('on'); setTimeout(()=>{ el.style.display='none'; }, 250); }
   HIST.length = 0;
@@ -2655,14 +2772,17 @@ function speakNow(){
      цього відео. Якщо назви немає (старий бот без last_video_id) —
      звичайний s-buddy, як було. */
   const title = (PAYLOAD['s-home']?.last_video_title || '').trim();
-  go('s-buddy');
+  await go('s-buddy');
   if (title) {
     try {
-      const box = mounted['s-buddy'];
-      if (box && typeof box.startVideoChat === 'function') {
-        box.startVideoChat(title, 'discuss', '');
-      }
+      await cyLaunch(box=>{
+        if (box && typeof box.startVideoChat === 'function') {
+          box.startVideoChat(title, 'discuss', '');
+        }
+      });
     } catch(e) { console.warn('speakNow startVideoChat', e.message); }
+  } else {
+    await cyChat();
   }
 }
 function speakLater(){
