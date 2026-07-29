@@ -3600,6 +3600,21 @@ function renderCosts() {
     +   '<div class="card-sub">' + c.active_users + ' активних</div></div>'
     + '</div>';
 
+  const sync = c.provider_sync || {};
+  const rec = c.reconciliation || {};
+  const sourceOk = c.pricing_mode === 'provider_reconciled';
+  const sourceBox = '<div style="margin-top:12px;padding:11px 13px;border-radius:9px;'
+    + 'background:' + (sourceOk ? 'rgba(62,207,142,.08)' : 'rgba(247,169,92,.09)') + ';'
+    + 'border:1px solid ' + (sourceOk ? 'rgba(62,207,142,.25)' : 'rgba(247,169,92,.28)') + ';'
+    + 'font-size:12px;line-height:1.55;color:var(--text2)">'
+    + '<b style="color:' + (sourceOk ? 'var(--green)' : 'var(--amber)') + '">'
+    + (sourceOk ? '✓ Звірено з фактичними рахунками провайдерів'
+                : '⏳ Частина суми ще попередня') + '</b><br>'
+    + 'Anthropic: ' + esc(sync.anthropic?.state || 'не налаштовано')
+    + ' · OpenAI: ' + esc(sync.openai?.state || 'не налаштовано')
+    + ' · розподілено до студентів: $' + Number(rec.allocated_total || 0).toFixed(4)
+    + '</div>';
+
   /* Маржа по тарифах — тут видно, чи Premium не з'їдає сам себе */
   const rows = (c.plans || []).filter(p => p.plan !== 'trial').map(p => {
     const burn = p.burn_pct;
@@ -3663,12 +3678,30 @@ function renderCosts() {
     ? '<div class="chart-block" style="margin-top:14px">'
       + '<div class="chart-title">Витрати за моделями Claude</div>'
       + '<div style="font-size:11px;color:var(--text3);margin-bottom:8px">'
-      + 'Haiku й Opus рахуються за різними вбудованими тарифами. Railway Variables — лише optional override.</div>'
+      + 'Загальна сума звіряється з Cost API провайдера; виклики розподіляються за фактичним використанням.</div>'
       + '<table><tr><th>Модель</th><th>Викликів</th><th>Вартість</th></tr>'
       + modelRows + '</table></div>'
     : '';
 
-  return cards + table + modelTable + featureTable + cache;
+  const studentRows = (c.by_student || []).map(s => '<tr>'
+    + '<td><b>' + esc(s.name || s.uid) + '</b><br><code style="font-size:10px">' + esc(s.uid) + '</code></td>'
+    + '<td>' + esc(s.plan || 'trial') + '</td>'
+    + '<td>' + fmt(s.calls) + '</td>'
+    + '<td>$' + Number(s.claude_cost || 0).toFixed(4) + '</td>'
+    + '<td>$' + Number(s.whisper_cost || 0).toFixed(4) + '</td>'
+    + '<td style="color:var(--amber);font-weight:700">$'
+    + Number(s.total_cost || 0).toFixed(4) + '</td></tr>').join('');
+  const studentTable = studentRows
+    ? '<div class="chart-block" style="margin-top:14px">'
+      + '<div class="chart-title">Собівартість конкретного студента</div>'
+      + '<div style="font-size:11px;color:var(--text3);margin-bottom:8px">'
+      + 'Не середнє: фактичний рахунок розподілено до UID за його власними AI-викликами.</div>'
+      + '<table><tr><th>Студент</th><th>План</th><th>Викликів</th>'
+      + '<th>Claude</th><th>Whisper</th><th>Разом</th></tr>'
+      + studentRows + '</table></div>'
+    : '';
+
+  return cards + sourceBox + table + studentTable + modelTable + featureTable + cache;
 }
 
 function renderRevenue() {
