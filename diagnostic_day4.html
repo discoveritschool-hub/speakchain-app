@@ -65,11 +65,33 @@
   .opt .dot{width:20px; height:20px; border-radius:50%; border:2px solid var(--line);
     flex-shrink:0; transition:all .13s;}
   .opt.sel .dot{border-color:var(--brand); background:var(--brand); box-shadow:inset 0 0 0 3px #fff;}
-  .opt.locked{cursor:default;} .opt.locked:active{transform:none;}
-  .opt.correct{background:#eafaf0; border-color:var(--ok); font-weight:700;}
-  .opt.correct .dot{border-color:var(--ok); background:var(--ok); box-shadow:none;}
-  .opt.wrong{background:#fdecec; border-color:var(--wrong); font-weight:700;}
-  .opt.wrong .dot{border-color:var(--wrong); background:var(--wrong); box-shadow:none;}
+  /* Namespaced feedback states avoid collisions with the app shell. */
+  .qcard .opt.diag-locked{cursor:default; opacity:1 !important;}
+  .qcard .opt.diag-locked:active{transform:none;}
+  .qcard .opt.diag-correct{
+    background:#dcfce7 !important; border-color:#22c55e !important;
+    color:#14532d !important; -webkit-text-fill-color:#14532d !important;
+    font-weight:750; opacity:1 !important;
+  }
+  .qcard .opt.diag-correct > span:not(.dot){
+    color:#14532d !important; -webkit-text-fill-color:#14532d !important;
+    opacity:1 !important;
+  }
+  .qcard .opt.diag-correct .dot{
+    border-color:#16a34a !important; background:#22c55e !important; box-shadow:none;
+  }
+  .qcard .opt.diag-wrong{
+    background:#fee2e2 !important; border-color:#ef4444 !important;
+    color:#7f1d1d !important; -webkit-text-fill-color:#7f1d1d !important;
+    font-weight:750; opacity:1 !important;
+  }
+  .qcard .opt.diag-wrong > span:not(.dot){
+    color:#7f1d1d !important; -webkit-text-fill-color:#7f1d1d !important;
+    opacity:1 !important;
+  }
+  .qcard .opt.diag-wrong .dot{
+    border-color:#dc2626 !important; background:#ef4444 !important; box-shadow:none;
+  }
 
   /* PET-знаки (CSS, без файлів) */
   .sign-stage{display:grid; place-items:center; margin:0 0 18px;}
@@ -497,11 +519,21 @@ function renderChoice(p){
 
   const opts = item.opts.map((o,i)=>{
     let cls="opt";
-    if(locked){ cls+=" locked";
-      if(i===item.correct) cls+=" correct";
-      else if(i===prev.ans) cls+=" wrong";
+    let inlineState="";
+    let inlineText="";
+    if(locked){ cls+=" diag-locked";
+      if(i===item.correct){
+        cls+=" diag-correct";
+        inlineState="background:#dcfce7!important;border-color:#22c55e!important;color:#14532d!important;-webkit-text-fill-color:#14532d!important;opacity:1!important";
+        inlineText="color:#14532d!important;-webkit-text-fill-color:#14532d!important;opacity:1!important";
+      }
+      else if(i===prev.ans){
+        cls+=" diag-wrong";
+        inlineState="background:#fee2e2!important;border-color:#ef4444!important;color:#7f1d1d!important;-webkit-text-fill-color:#7f1d1d!important;opacity:1!important";
+        inlineText="color:#7f1d1d!important;-webkit-text-fill-color:#7f1d1d!important;opacity:1!important";
+      }
     }
-    return `<div class="${cls}" data-i="${i}"><span class="dot"></span><span>${o}</span></div>`;
+    return `<div class="${cls}" data-i="${i}"${inlineState?` style="${inlineState}"`:""}><span class="dot"></span><span${inlineText?` style="${inlineText}"`:""}>${o}</span></div>`;
   }).join("");
 
   stage.innerHTML =
