@@ -968,8 +968,11 @@ function renderTab(tab) {
 
   if (tab === 'content') {
     el.innerHTML =
-        acc('a-cnt', '🔥', 'Що працює', 'Що реально практикують — лічильники',
-            renderContent(), {open:true})
+        acc('a-spk', '🎙', 'Speaking / Social loop',
+            'Перша фраза · стрічка · відповіді · естафети · live',
+            renderSpeakingSocial(), {open:true})
+      + acc('a-cnt', '🔥', 'Що працює', 'Що реально практикують — лічильники',
+            renderContent())
       + acc('a-phr', '💬', 'Фрази', 'Що ЗАЛУЧАЄ — демо-воронка', renderPhraseRanking())
       + acc('a-bud', '🗣', 'Chainy / Buddy', 'Сесії, глибина розмов', renderBuddy())
       + acc('a-sit', '🎁', 'Ситуації', 'Квіз дня 1 → подарунок', renderSituations());
@@ -1685,6 +1688,9 @@ function renderSummary() {
   const chy  = d.chainy   || {};
   const bud = d.buddy     || {};
   const fun = d.funnel    || {};
+  const soc = d.social    || {};
+  const sns = soc.north_star || {};
+  const slp = soc.loop || {};
 
   const n  = v => (v === null || v === undefined) ? null : fmt(v);
   const $  = v => (v === null || v === undefined) ? null : '$' + v;
@@ -1708,6 +1714,22 @@ function renderSummary() {
     sCell('Платних', n(o.paid_users), null, 'var(--green)'),
     sCell('У тріалі', n(o.trial_users), null, 'var(--amber)'),
     sCell('Середній ланцюжок', o.avg_chain != null ? o.avg_chain : null, 'днів поспіль'),
+  ], 2);
+
+  /* ── ГОЛОВНИЙ НАВЧАЛЬНИЙ ЦИКЛ ── */
+  h += sTitle('🎙 Говоріння й соціальна практика',
+    'North Star — не відкриття застосунку, а регулярне говоріння та відповідь живої людини');
+  h += sRow([
+    sCell('Weekly Active Speakers', n(sns.weekly_active_speakers),
+      sns.weekly_speaker_rate != null ? sns.weekly_speaker_rate + '% social-аудиторії' : null,
+      'var(--accent)'),
+    sCell('Хвилин говоріння', sns.active_speaking_minutes != null
+      ? fmt(sns.active_speaking_minutes) : null, 'накопичено'),
+    sCell('Перегляд → відповідь', slp.view_to_response_rate != null
+      ? slp.view_to_response_rate + '%' : null, 'стрічка → запис'),
+    sCell('Відповідей від людей', n(slp.human_replies),
+      slp.response_to_reply_rate != null ? slp.response_to_reply_rate + '% від записів' : null,
+      'var(--green)'),
   ], 2);
 
   /* ── ЗДОРОВʼЯ ── */
@@ -4281,6 +4303,125 @@ function cBars(items, color) {
         <span style="width:38px;text-align:right;font-size:13px;font-weight:600;color:${color};flex-shrink:0">${fmt(x.count)}</span>
       </div>`;
   }).join('');
+}
+
+function renderSpeakingSocial() {
+  const s = data.social || {};
+  const ns = s.north_star || {};
+  const lp = s.loop || {};
+  const cf = s.challenge_funnel || {};
+  const hr = s.human_response || {};
+  const rl = s.relays || {};
+  const lv = s.live || {};
+  const rt = s.retention || {};
+  const cm = s.community || {};
+  const sf = s.safety || {};
+
+  const duration = sec => {
+    if (sec === null || sec === undefined) return '—';
+    if (sec < 60) return Math.round(sec) + ' с';
+    if (sec < 3600) return Math.round(sec / 60) + ' хв';
+    if (sec < 86400) return (sec / 3600).toFixed(1) + ' год';
+    return (sec / 86400).toFixed(1) + ' дн';
+  };
+  const value = v => (v === null || v === undefined) ? '—' : fmt(v);
+  const pct = v => (v === null || v === undefined) ? '—' : v + '%';
+  const stage = (label, count, rate, color) => `
+    <div style="display:grid;grid-template-columns:130px 1fr 58px;align-items:center;gap:9px;margin:9px 0">
+      <div style="font-size:12px;color:var(--text2)">${label}</div>
+      <div style="height:9px;background:var(--surface2);border-radius:6px;overflow:hidden">
+        <div style="height:100%;width:${Math.max(2, Math.min(100, rate || 0))}%;background:${color};border-radius:6px"></div>
+      </div>
+      <div style="font-size:12px;text-align:right;color:var(--text)">${value(count)}</div>
+    </div>`;
+
+  const sentBase = cf.sent || 0;
+  const stagePct = n => sentBase ? Math.round((n || 0) / sentBase * 100) : 0;
+  const sources = cf.sources || {};
+
+  return `
+    <div style="font-size:12px;color:var(--text3);line-height:1.6;margin-bottom:12px">
+      Цей блок показує повний цикл: людина побачила практику → записала відповідь →
+      отримала реакцію живої людини → повернулася говорити знову.
+    </div>
+
+    <div class="cards">
+      <div class="card accent">
+        <div class="card-label">Weekly Active Speakers</div>
+        <div class="card-value" style="color:var(--accent)">${value(ns.weekly_active_speakers)}</div>
+        <div class="card-delta delta-flat">${pct(ns.weekly_speaker_rate)} social-аудиторії</div>
+      </div>
+      <div class="card green">
+        <div class="card-label">Говоріння</div>
+        <div class="card-value" style="color:var(--green)">${value(ns.active_speaking_minutes)}</div>
+        <div class="card-delta delta-flat">хвилин накопичено</div>
+      </div>
+      <div class="card purple">
+        <div class="card-label">До першої фрази</div>
+        <div class="card-value" style="color:var(--purple)">${duration(ns.median_time_to_first_spoken_sec)}</div>
+        <div class="card-delta delta-flat">медіана · середнє ${duration(ns.avg_time_to_first_spoken_sec)}</div>
+      </div>
+      <div class="card amber">
+        <div class="card-label">Людська відповідь</div>
+        <div class="card-value" style="color:var(--amber)">${duration(hr.median_seconds)}</div>
+        <div class="card-delta delta-flat">медіана · ${value(hr.samples)} вимірів</div>
+      </div>
+    </div>
+
+    ${sTitle('Воронка соціальної практики', 'Стрічка → свій запис → відповідь людини')}
+    ${sRow([
+      sCell('Переглядів стрічки', value(lp.feed_views)),
+      sCell('Записаних відповідей', value(lp.recorded_responses),
+        pct(lp.view_to_response_rate) + ' від переглядів'),
+      sCell('Відповідей від людей', value(lp.human_replies),
+        pct(lp.response_to_reply_rate) + ' від записів', 'var(--green)'),
+      sCell('Публічних постів', value(lp.community_posts),
+        value(lp.published_posts) + ' усіх'),
+    ], 2)}
+
+    <div class="table-block" style="margin-top:14px">
+      <div class="table-title">🎯 Челендж з другом: sent → opened → accepted → completed</div>
+      ${stage('Надіслано', cf.sent, 100, 'var(--accent)')}
+      ${stage('Відкрито', cf.opened, stagePct(cf.opened), 'var(--purple)')}
+      ${stage('Прийнято', cf.accepted, stagePct(cf.accepted), 'var(--amber)')}
+      ${stage('Завершено', cf.completed, stagePct(cf.completed), 'var(--green)')}
+      <div style="font-size:11px;color:var(--text3);margin-top:10px">
+        Open ${pct(cf.open_rate)} · Accept ${pct(cf.accept_rate)} · Complete ${pct(cf.completion_rate)}
+        · джерела: від блогера ${value(sources.blogger || 0)},
+        SpeakChain Community ${value(sources.community || 0)}, з другом ${value(sources.friend || 0)}
+      </div>
+    </div>
+
+    ${sTitle('Повернення до говоріння', 'Когортне утримання рахується від першого входу в social-практику')}
+    ${sRow([
+      sCell('Speaking D1', pct((rt.d1 || {}).rate),
+        value((rt.d1 || {}).returned) + ' із ' + value((rt.d1 || {}).eligible)),
+      sCell('Speaking D7', pct((rt.d7 || {}).rate),
+        value((rt.d7 || {}).returned) + ' із ' + value((rt.d7 || {}).eligible)),
+      sCell('Speaking W4', pct((rt.w4 || {}).rate),
+        value((rt.w4 || {}).returned) + ' із ' + value((rt.w4 || {}).eligible)),
+      sCell('Повторні speakers / 7 днів', value(rt.returning_speakers_7d),
+        'сер. ' + value(rt.avg_active_days_7) + ' активних днів'),
+    ], 2)}
+
+    ${sTitle('Механіки, що продовжують сесію', 'Естафети й live match мають вести до наступного speaking-кроку')}
+    ${sRow([
+      sCell('Естафет', value(rl.rooms), value(rl.links) + ' ланок'),
+      sCell('Сер. довжина естафети', value(rl.avg_length), pct(rl.continuation_rate) + ' продовжили'),
+      sCell('Live match стартували', value(lv.started), value(lv.waiting_now) + ' зараз у черзі'),
+      sCell('Live match завершили', value(lv.completed), pct(lv.completion_rate), 'var(--green)'),
+    ], 2)}
+
+    ${sTitle('Спільнота й безпека', 'Публічність лише за opt-in; скарги й блокування видно поруч із ростом')}
+    ${sRow([
+      sCell('Увімкнули профіль', value(cm.profiles_enabled), pct(cm.profile_opt_in_rate) + ' opt-in'),
+      sCell('Видимі профілі', value(cm.public_profiles), value(cm.social_users) + ' social-користувачів'),
+      sCell('Скарги', value(sf.reports), value(sf.report_rate_per_100_posts) + ' на 100 постів',
+        (sf.reports || 0) ? 'var(--amber)' : null),
+      sCell('Блокування', value(sf.blocks), value(sf.blocked_posts) + ' постів зупинено',
+        (sf.blocked_posts || 0) ? 'var(--red)' : null),
+    ], 2)}
+  `;
 }
 
 function renderContent() {

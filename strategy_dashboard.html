@@ -201,6 +201,13 @@ body{font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
     <div class="metric"><div class="lab">Платних підписок<span class="live-dot" title="Живі дані з бота"></span></div><div class="val" data-k="paid">0</div><div class="delta up" data-k="paid_d">—<span class="manual" title="Бот не рахує приріст. Вписано вручну.">вписано</span></div></div>
     <div class="metric"><div class="lab">Конверсія челенджу D6<span class="live-dot" title="Живі дані з бота"></span></div><div class="val" data-k="conv">0%</div><div class="delta flat" data-k="conv_d">—<span class="manual" title="Бот не рахує тренд конверсії. Вписано вручну.">вписано</span></div></div>
   </div>
+  <div class="section-t">Головний навчальний цикл · North Star</div>
+  <div class="grid g4">
+    <div class="metric accent"><div class="lab">Weekly Active Speakers<span class="live-dot" title="Люди, які говорили цього тижня"></span></div><div class="val" data-k="was">0</div><div class="delta up" data-k="was_d">0% social-аудиторії</div></div>
+    <div class="metric"><div class="lab">Хвилин говоріння<span class="live-dot" title="Сумарний зафіксований час голосової практики"></span></div><div class="val" data-k="speak_min">0</div><div class="delta flat">накопичено у практиці</div></div>
+    <div class="metric"><div class="lab">Перегляд → відповідь<span class="live-dot" title="Конверсія перегляду Practice Feed у власний запис"></span></div><div class="val" data-k="view_response">0%</div><div class="delta flat">стрічка → speaking output</div></div>
+    <div class="metric"><div class="lab">До першої фрази<span class="live-dot" title="Медіанний час від входу до першої вимовленої фрази"></span></div><div class="val" data-k="first_phrase">—</div><div class="delta flat">медіанний time-to-value</div></div>
+  </div>
   <div class="section-t">Утримання</div>
   <div class="grid g3">
     <div class="metric"><div class="lab">D1 retention<span class="live-dot" title="Живі дані з бота"></span></div><div class="val" data-k="d1">0%</div><div class="delta up">повертаються наступного дня</div></div>
@@ -214,7 +221,7 @@ body{font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
     <div class="metric"><div class="lab">Середній ланцюжок<span class="live-dot" title="Живі дані з бота"></span></div><div class="val" data-k="chain">0</div><div class="delta flat">днів поспіль</div></div>
     <div class="metric"><div class="lab">Виплати блогерам<span class="live-dot" title="Живі дані. Сума комісій, позначених як виплачені. Синхронізується з Google Sheets (лист Payouts)."></span></div><div class="val" data-k="payout">$0</div><div class="delta flat">25% · синк з Google Sheets</div></div>
   </div>
-  <div class="note">Це демо-каркас. Кожна цифра тягнеться з об'єкта <b>DATA</b> у коді — підстав туди реальні значення зі своєї бази, і дашборд оживе. Метрики згруповані так, як їх читає засновник: спершу гроші й активність, потім утримання, потім здоров'я економіки.</div>
+  <div class="note">Головний продуктовий сигнал — <b>Weekly Active Speakers</b>. Відкриття застосунку саме по собі не є навчальним результатом: перевіряємо, чи людина заговорила, отримала людську відповідь і повернулася до наступного раунду.</div>
 </div>
 <div class="panel" id="funnel">
   <div class="head"><div><h2>Воронка</h2><div class="sub">Шлях від відео блогера до оплати — де втрачаємо людей</div></div>
@@ -222,6 +229,11 @@ body{font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
   <div class="card">
     <div class="funnel" id="funnelbars"></div>
     <div class="note">Кожен рядок — крок воронки. Ширина = скільки людей дійшло. Найбільший провал між кроками показує, де треба покращувати продукт. Демо показує типову форму: основний відвал — на стику «відео → бот» і на оплаті.</div>
+  </div>
+  <div class="section-t">Speaking loop · від перегляду до живої взаємодії</div>
+  <div class="card">
+    <div class="funnel" id="socialfunnelbars"></div>
+    <div class="note">Ця воронка відповідає на головне продуктове питання: чи контент приводить до власного голосу, а власний голос — до відповіді іншої людини. Детальні зрізи челенджів, естафет, live match і безпеки — в Аналітиці → Контент.</div>
   </div>
   <div class="section-t">Порівняння челендж-флоу</div>
   <div class="grid g2">
@@ -495,7 +507,9 @@ const DATA = {
   paid:"412", paid_d:"▲ 27 нових",
   conv:"22%", conv_d:"стабільно",
   d1:"58%", d7:"41%", d30:"34%",
-  aicost:"$0.04", chain:"7.3", payout:"$3,100"
+  aicost:"$0.04", chain:"7.3", payout:"$3,100",
+  was:"0", was_d:"0% social-аудиторії", speak_min:"0",
+  view_response:"0%", first_phrase:"—"
 };
 const FUNNEL = [
   {name:"Перегляд відео блогера", v:100, c:"#D85A30"},
@@ -557,6 +571,8 @@ async function loadLive(){
     if(!res.ok) return;                // 403 (не super admin) → лишаються демо
     const d = await res.json();
     const ov = d.overview || {}, rev = d.revenue, ret = d.retention || {};
+    const social = d.social || {};
+    const sns = social.north_star || {}, slp = social.loop || {};
     if(ov.active_today != null) DATA.dau = String(ov.active_today);
     if(ov.paid_users   != null) DATA.paid = String(ov.paid_users);
     if(ov.avg_chain    != null) DATA.chain = String(ov.avg_chain);
@@ -570,6 +586,14 @@ async function loadLive(){
     if(ov.total_users && ov.paid_users != null){
       DATA.conv = Math.round(ov.paid_users / ov.total_users * 100) + '%';
     }
+    if(sns.weekly_active_speakers != null) DATA.was = String(sns.weekly_active_speakers);
+    if(sns.weekly_speaker_rate != null) DATA.was_d = sns.weekly_speaker_rate + '% social-аудиторії';
+    if(sns.active_speaking_minutes != null) DATA.speak_min = String(sns.active_speaking_minutes);
+    if(slp.view_to_response_rate != null) DATA.view_response = slp.view_to_response_rate + '%';
+    if(sns.median_time_to_first_spoken_sec != null){
+      DATA.first_phrase = _fmtDuration(sns.median_time_to_first_spoken_sec);
+    }
+    LIVE_SOCIAL = social;
     /* БУЛО: rev.total_paid_out — але в revenue такого ключа НЕМА.
        Бот кладе його в bloggers.total_paid_out (bot.py:28106).
        Через це показувалось вписане $3,100 замість реальних виплат.
@@ -620,13 +644,22 @@ async function loadLive(){
 
     fillData();
     buildFunnel();
+    buildSocialFunnel();
     if(d.onboarding){ LIVE_ONB = d.onboarding; buildOnboarding(); }
     if(d.diagnostic){ LIVE_DIAG = d.diagnostic; buildDiagnostic(); }
     if(document.getElementById('money').classList.contains('on')) buildBlogger();
     _setDemoBadge(true);
   }catch(_){ /* лишаються демо-дані, нічого не ламаємо */ }
 }
-let LIVE_FUNNEL = null, LIVE_BLOGGER = null, LIVE_ONB = null, LIVE_DIAG = null;
+let LIVE_FUNNEL = null, LIVE_BLOGGER = null, LIVE_ONB = null, LIVE_DIAG = null, LIVE_SOCIAL = null;
+
+function _fmtDuration(sec){
+  if(sec == null) return '—';
+  if(sec < 60) return Math.round(sec) + ' с';
+  if(sec < 3600) return Math.round(sec / 60) + ' хв';
+  if(sec < 86400) return (sec / 3600).toFixed(1) + ' год';
+  return (sec / 86400).toFixed(1) + ' дн';
+}
 
 function buildOnboarding(){
   const o = LIVE_ONB; if(!o) return;
@@ -728,6 +761,25 @@ function buildFunnel(){
     setTimeout(()=>{ row.querySelector('.fbar').style.width=f.v+'%'; }, 80*i+120);
   });
 }
+function buildSocialFunnel(){
+  const box=document.getElementById('socialfunnelbars'); if(!box) return; box.innerHTML='';
+  const s=LIVE_SOCIAL || {}, lp=s.loop || {};
+  const rows=[
+    {name:'Переглянули Practice Feed', n:lp.feed_views||0, c:'#D85A30'},
+    {name:'Записали свою відповідь', n:lp.recorded_responses||0, c:'#5B4B9E'},
+    {name:'Отримали відповідь людини', n:lp.human_replies||0, c:'#3B6D11'}
+  ];
+  const max=Math.max(...rows.map(x=>x.n),1);
+  rows.forEach((f,i)=>{
+    const width=Math.round(f.n/max*100);
+    const row=document.createElement('div'); row.className='frow';
+    row.innerHTML=`<div class="fname">${f.name}</div>
+      <div class="fbar-wrap"><div class="fbar" style="width:0;background:${f.c}">${width}%</div></div>
+      <div class="fpct">${f.n.toLocaleString('uk-UA')}</div>`;
+    box.appendChild(row);
+    setTimeout(()=>{ row.querySelector('.fbar').style.width=Math.max(width,2)+'%'; },80*i+120);
+  });
+}
 function buildBlogger(){
   const box=document.getElementById('bloggerbars'); if(!box) return; box.innerHTML='';
   const src = LIVE_BLOGGER || BLOGGER;
@@ -746,7 +798,7 @@ function go(id,btn){
   document.querySelectorAll('.nav').forEach(n=>n.classList.remove('on'));
   document.getElementById(id).classList.add('on');
   if(btn) btn.classList.add('on');
-  if(id==='funnel') buildFunnel();
+  if(id==='funnel'){ buildFunnel(); buildSocialFunnel(); }
   if(id==='onboarding') buildOnboarding();
   if(id==='money') buildBlogger();
 }
