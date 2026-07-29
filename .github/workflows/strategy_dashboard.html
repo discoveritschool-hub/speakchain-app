@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SpeakChain — Командний центр</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+:root{
+  --ink:#1b1830; --ink2:#46415f; --muted:#8b86a3;
+  --paper:#f7f5fb; --card:#ffffff; --line:#e7e3f2;
+  --purple:#5B4B9E; --purple-soft:#efecfb; --purple-deep:#2D2A45;
+  --green:#3B6D11; --green-soft:#eef4e4;
+  --coral:#D85A30; --coral-soft:#fbeee7;
+  --teal:#0F6E56; --teal-soft:#e3f4ee;
+  --amber:#854F0B; --amber-soft:#faf0dd;
+  --radius:14px; --shadow:0 1px 2px rgba(45,42,69,.04),0 8px 24px rgba(45,42,69,.06);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--paper);color:var(--ink);line-height:1.5;-webkit-font-smoothing:antialiased}
+.app{display:flex;min-height:100vh}
+
+/* ---- unit calculator ---- */
+.uc-wrap{display:grid;grid-template-columns:340px 1fr;gap:16px}
+@media(max-width:820px){.uc-wrap{grid-template-columns:1fr}}
+.uc-panel{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow)}
+.uc-h{font-size:12px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:700;margin-bottom:16px}
+.uc-field{margin-bottom:16px}
+.uc-field label{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--ink2);margin-bottom:6px}
+.uc-num{width:88px;text-align:right;padding:5px 8px;border:1px solid var(--line);border-radius:7px;font-size:14px;font-weight:700;color:var(--purple);font-variant-numeric:tabular-nums;background:var(--paper)}
+.uc-num:focus{outline:none;border-color:var(--purple)}
+.uc-field input[type=range]{width:100%;accent-color:var(--purple);height:5px}
+.uc-hint{font-size:11px;color:var(--muted);margin-top:4px}
+.uc-tag-v{font-size:9px;font-weight:700;color:var(--teal);background:var(--teal-soft);border:1px solid #bfe3d5;border-radius:4px;padding:1px 5px;margin-left:auto}
+.uc-tag-a{font-size:9px;font-weight:700;color:var(--amber);background:var(--amber-soft);border:1px solid #f0d9b0;border-radius:4px;padding:1px 5px;margin-left:auto}
+.uc-results{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:520px){.uc-results{grid-template-columns:1fr}}
+.uc-card{border-radius:12px;padding:18px;border:1px solid var(--line)}
+.uc-basic{background:var(--purple-soft);border-color:#ddd6f5}
+.uc-premium{background:var(--teal-soft);border-color:#c5e6db}
+.uc-card h4{font-size:15px;font-weight:750;margin-bottom:14px}
+.uc-basic h4{color:var(--purple)}.uc-premium h4{color:var(--teal)}
+.uc-line{display:flex;justify-content:space-between;font-size:13px;padding:5px 0;color:var(--ink2);font-variant-numeric:tabular-nums}
+.uc-neg span:last-child{color:var(--coral)}
+.uc-sep{border-top:1px solid rgba(45,42,69,.12);margin-top:6px;padding-top:9px}
+.uc-big{font-weight:750;font-size:15px;color:var(--ink)}
+.uc-big span:last-child{font-size:16px}
+.uc-ltv{font-weight:750;font-size:15px}
+.uc-ltv span:last-child{color:var(--green);font-size:17px}
+.uc-pill{display:inline-block;font-size:12px;font-weight:700;padding:3px 10px;border-radius:20px;margin-top:10px}
+.uc-pos{background:var(--green-soft);color:var(--green)}
+.uc-neg-pill{background:#fcebeb;color:#A32D2D}
+.uc-note{margin-top:16px;padding:12px 14px;background:#f4f1ea;border:1px solid #e2dbd0;border-radius:10px;font-size:12px;color:#6b6357;line-height:1.6}
+.uc-note b{color:#3a352d}
+
+/* ---- sidebar ---- */
+.side{width:248px;background:var(--purple-deep);color:#e9e6f5;padding:26px 18px;display:flex;flex-direction:column;gap:6px;position:sticky;top:0;height:100vh}
+.brand{display:flex;align-items:center;gap:10px;margin-bottom:6px;padding:0 6px}
+.brand .logo{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,#7F77DD,#3B6D11);display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;font-size:17px}
+.brand h1{font-size:18px;font-weight:700;letter-spacing:-.01em}
+.brand p{font-size:11px;color:#b3adcf;font-weight:500;margin-top:1px}
+.chainline{display:flex;align-items:center;gap:3px;margin:14px 6px 18px;opacity:.5}
+.chainline .dot{width:7px;height:7px;border-radius:50%;background:#7F77DD}
+.chainline .seg{flex:1;height:2px;background:#4a4570;border-radius:2px}
+.navlabel{font-size:10px;text-transform:uppercase;letter-spacing:.09em;color:#8d87b0;padding:8px 8px 4px;font-weight:600}
+.nav{display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:10px;cursor:pointer;font-size:14px;font-weight:500;color:#cbc6e2;transition:all .14s;border:none;background:none;width:100%;text-align:left}
+.nav:hover{background:#3a3559;color:#fff}
+.nav.on{background:#5B4B9E;color:#fff}
+.nav .ic{width:18px;text-align:center;font-size:15px}
+.side .foot{margin-top:auto;font-size:11px;color:#7d77a0;padding:8px;line-height:1.5}
+
+/* ---- main ---- */
+.main{flex:1;padding:30px 38px;max-width:1160px}
+.head{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:26px;gap:20px;flex-wrap:wrap}
+.head h2{font-size:26px;font-weight:750;letter-spacing:-.02em}
+.head .sub{color:var(--muted);font-size:14px;margin-top:3px}
+.xref{display:flex;align-items:center;gap:8px;background:#f4f1ea;border:1px solid #e2dbd0;
+  border-radius:8px;padding:9px 12px;margin-bottom:14px;font-size:12px;color:#6b6357;cursor:pointer;
+  transition:border-color .15s}
+.xref:hover{border-color:#8a7f6d}
+.xref b{color:#3a352d}
+.manual{display:inline-block;font-size:9px;font-weight:700;color:#8a6d2f;background:#fdf3dc;
+  border:1px solid #f0d9b0;border-radius:4px;padding:1px 5px;margin-left:5px;vertical-align:middle;
+  cursor:help;letter-spacing:.02em}
+.live-dot{display:inline-block;width:5px;height:5px;border-radius:50%;background:#5a8a2f;
+  margin-left:5px;vertical-align:middle}
+.demo-pill{font-size:11px;font-weight:600;color:var(--amber);background:var(--amber-soft);padding:5px 11px;border-radius:20px;border:1px solid #f0d9b0}
+
+/* cards */
+.grid{display:grid;gap:16px}
+.g4{grid-template-columns:repeat(4,1fr)}
+.g3{grid-template-columns:repeat(3,1fr)}
+.g2{grid-template-columns:repeat(2,1fr)}
+.metric{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;box-shadow:var(--shadow)}
+.metric .lab{font-size:12.5px;color:var(--muted);font-weight:550;display:flex;align-items:center;gap:6px}
+.metric .val{font-size:30px;font-weight:760;letter-spacing:-.02em;margin-top:7px;color:var(--ink)}
+.metric .delta{font-size:12px;font-weight:600;margin-top:5px}
+.up{color:var(--green)} .down{color:var(--coral)} .flat{color:var(--muted)}
+.metric.accent{background:linear-gradient(135deg,#5B4B9E,#3C3489);border:none;color:#fff}
+.metric.accent .lab{color:#cfc9ec} .metric.accent .val{color:#fff}
+
+.panel{display:none}
+.panel.on{display:block}
+.section-t{font-size:13px;font-weight:650;text-transform:uppercase;letter-spacing:.05em;color:var(--ink2);margin:30px 0 14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:22px 24px;box-shadow:var(--shadow)}
+
+/* funnel bars */
+.funnel{display:flex;flex-direction:column;gap:10px}
+.frow{display:flex;align-items:center;gap:14px}
+.frow .fname{width:210px;font-size:13.5px;font-weight:550;color:var(--ink2);flex-shrink:0}
+.fbar-wrap{flex:1;background:#f0edf8;border-radius:8px;height:34px;position:relative;overflow:hidden}
+.fbar{height:100%;border-radius:8px;display:flex;align-items:center;padding-left:13px;color:#fff;font-size:12.5px;font-weight:650;transition:width 1s cubic-bezier(.2,.8,.2,1)}
+.fpct{width:74px;text-align:right;font-size:13px;font-weight:650;color:var(--ink);flex-shrink:0}
+
+/* tier cards */
+.tier{border:1px solid var(--line);border-radius:var(--radius);padding:22px;background:var(--card);box-shadow:var(--shadow)}
+.tier.feat{border:2px solid var(--purple)}
+.tier .tname{font-size:14px;font-weight:700;display:flex;align-items:center;gap:8px}
+.tier .price{font-size:34px;font-weight:780;letter-spacing:-.02em;margin:10px 0 2px}
+.tier .price small{font-size:15px;font-weight:550;color:var(--muted)}
+.tier .perday{font-size:13px;color:var(--muted);font-weight:550}
+.tier ul{list-style:none;margin-top:15px;display:flex;flex-direction:column;gap:8px}
+.tier li{font-size:13px;color:var(--ink2);display:flex;gap:8px;align-items:flex-start}
+.tier li .chk{color:var(--green);font-weight:700;flex-shrink:0}
+.badge{font-size:10.5px;font-weight:700;color:var(--purple);background:var(--purple-soft);padding:3px 9px;border-radius:20px}
+
+/* bars chart */
+.bars{display:flex;align-items:flex-end;gap:18px;height:200px;padding:10px 6px 0}
+.barcol{flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;height:100%;justify-content:flex-end}
+.bar{width:100%;max-width:64px;border-radius:8px 8px 0 0;transition:height 1s cubic-bezier(.2,.8,.2,1);position:relative}
+.bar .bv{position:absolute;top:-22px;left:0;right:0;text-align:center;font-size:12px;font-weight:650;color:var(--ink)}
+.barlab{font-size:12px;color:var(--muted);font-weight:550;text-align:center}
+
+/* roadmap */
+.road{display:flex;flex-direction:column;gap:11px}
+.ritem{display:flex;gap:14px;align-items:flex-start;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:15px 18px;box-shadow:var(--shadow)}
+.ritem .rdot{width:10px;height:10px;border-radius:50%;margin-top:6px;flex-shrink:0}
+.ritem .rbody{flex:1}
+.ritem .rt{font-size:14px;font-weight:600}
+.ritem .rn{font-size:12.5px;color:var(--muted);margin-top:3px;line-height:1.5}
+.rtag{font-size:10.5px;font-weight:650;padding:3px 9px;border-radius:20px;white-space:nowrap;flex-shrink:0;margin-top:2px}
+.t-hi{background:var(--coral-soft);color:var(--coral)}
+.t-mid{background:var(--amber-soft);color:var(--amber)}
+.t-low{background:var(--teal-soft);color:var(--teal)}
+.t-done{background:var(--green-soft);color:var(--green)}
+
+.legend{display:flex;gap:18px;flex-wrap:wrap;margin-top:8px;font-size:12px;color:var(--muted)}
+.legend span{display:flex;align-items:center;gap:6px}
+.legend .ld{width:9px;height:9px;border-radius:50%}
+
+.note{font-size:12.5px;color:var(--muted);margin-top:14px;line-height:1.6;padding:13px 16px;background:var(--purple-soft);border-radius:10px;border-left:3px solid var(--purple)}
+
+@media(max-width:920px){
+  .side{width:68px;padding:20px 10px}
+  .brand h1,.brand p,.navlabel,.nav span:not(.ic),.side .foot,.chainline{display:none}
+  .nav{justify-content:center;padding:11px}
+  .g4{grid-template-columns:repeat(2,1fr)} .g3{grid-template-columns:1fr} .g2{grid-template-columns:1fr}
+  .main{padding:22px 18px}
+  .frow .fname{width:120px;font-size:12px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+<aside class="side">
+  <div class="brand">
+    <div class="logo">S</div>
+    <div><h1>SpeakChain</h1><p>Командний центр</p></div>
+  </div>
+  <div class="chainline"><span class="dot"></span><span class="seg"></span><span class="dot"></span><span class="seg"></span><span class="dot"></span><span class="seg"></span><span class="dot"></span></div>
+  <div class="navlabel">Огляд</div>
+  <button class="nav on" onclick="go('overview',this)"><span class="ic">◆</span><span>Пульс продукту</span></button>
+  <button class="nav" onclick="go('funnel',this)"><span class="ic">▸</span><span>Воронка</span></button>
+  <button class="nav" onclick="go('onboarding',this)"><span class="ic">👋</span><span>Онбординг</span></button>
+  <button class="nav" onclick="go('diagnostic',this)"><span class="ic">🎯</span><span>Діагностика</span></button>
+  <div class="navlabel">Бізнес</div>
+  <button class="nav" onclick="go('money',this)"><span class="ic">$</span><span>Гроші</span></button>
+  <button class="nav" onclick="go('unitcalc',this)"><span class="ic">🧮</span><span>Юніт-економіка</span></button>
+  <button class="nav" onclick="go('product',this)"><span class="ic">✦</span><span>Продукт</span></button>
+  <div class="navlabel">План</div>
+  <button class="nav" onclick="go('roadmap',this)"><span class="ic">→</span><span>Дорожня карта</span></button>
+  <button class="nav" onclick="go('principles',this)"><span class="ic">◇</span><span>Принципи</span></button>
+  <div class="navlabel">Щоденне</div>
+  <button class="nav" onclick="goAnalytics()" style="border:1px solid #d8cfc0">
+    <span class="ic">📈</span><span>Аналітика →</span></button>
+  <div class="foot">
+    <b>Це стратегічний огляд.</b><br>
+    Деталі, таблиці й учні — в Аналітиці.<br><br>
+    <span style="opacity:.75">Позначка <b>вписано</b> = бот цього ще не рахує.</span>
+  </div>
+</aside>
+<main class="main">
+<div class="panel on" id="overview">
+  <div class="head">
+    <div><h2>Пульс продукту</h2><div class="sub">Жива картина SpeakChain одним поглядом</div></div>
+    <div class="demo-pill">● демо-дані</div>
+  </div>
+  <div class="grid g4">
+    <div class="metric accent"><div class="lab">MRR<span class="live-dot" title="Живі дані з бота"></span></div><div class="val" data-k="mrr">$0</div><div class="delta up" data-k="mrr_d">—</div></div>
+    <div class="metric"><div class="lab">Активних користувачів<span class="live-dot" title="Живі дані з бота"></span></div><div class="val" data-k="dau">0</div><div class="delta up" data-k="dau_d">—<span class="manual" title="Бот не рахує зміну за тиждень. Цю дельту вписано вручну.">вписано</span></div></div>
+    <div class="metric"><div class="lab">Платних підписок<span class="live-dot" title="Живі дані з бота"></span></div><div class="val" data-k="paid">0</div><div class="delta up" data-k="paid_d">—<span class="manual" title="Бот не рахує приріст. Вписано вручну.">вписано</span></div></div>
+    <div class="metric"><div class="lab">Конверсія челенджу D6<span class="live-dot" title="Живі дані з бота"></span></div><div class="val" data-k="conv">0%</div><div class="delta flat" data-k="conv_d">—<span class="manual" title="Бот не рахує тренд конверсії. Вписано вручну.">вписано</span></div></div>
+  </div>
+  <div class="section-t">Головний навчальний цикл · North Star</div>
+  <div class="grid g4">
+    <div class="metric accent"><div class="lab">Weekly Active Speakers<span class="live-dot" title="Люди, які говорили цього тижня"></span></div><div class="val" data-k="was">0</div><div class="delta up" data-k="was_d">0% social-аудиторії</div></div>
+    <div class="metric"><div class="lab">Хвилин говоріння<span class="live-dot" title="Сумарний зафіксований час голосової практики"></span></div><div class="val" data-k="speak_min">0</div><div class="delta flat">накопичено у практиці</div></div>
+    <div class="metric"><div class="lab">Перегляд → відповідь<span class="live-dot" title="Конверсія перегляду Practice Feed у власний запис"></span></div><div class="val" data-k="view_response">0%</div><div class="delta flat">стрічка → speaking output</div></div>
+    <div class="metric"><div class="lab">До першої фрази<span class="live-dot" title="Медіанний час від входу до першої вимовленої фрази"></span></div><div class="val" data-k="first_phrase">—</div><div class="delta flat">медіанний time-to-value</div></div>
+  </div>
+  <div class="section-t">Утримання</div>
+  <div class="grid g3">
+    <div class="metric"><div class="lab">D1 retention<span class="live-dot" title="Живі дані з бота"></span></div><div class="val" data-k="d1">0%</div><div class="delta up">повертаються наступного дня</div></div>
+    <div class="metric"><div class="lab">D7 retention<span class="live-dot" title="Живі дані з бота"></span></div><div class="val" data-k="d7">0%</div><div class="delta up">тримаються тиждень</div></div>
+    <div class="metric"><div class="lab">D30 retention<span class="live-dot" title="Живі дані з бота"></span></div><div class="val" data-k="d30">0%</div><div class="delta up">залишаються місяць</div></div>
+  </div>
+  <div class="section-t">Здоров'я юніт-економіки</div>
+  <div class="grid g3">
+    <div class="metric"><div class="lab">Вартість AI / користувач<span class="live-dot" title="Живі дані. ai_costs.py логує токени Claude і хвилини Whisper з кожного виклику. Раніше тут стояло вписане число — але облік УЖЕ працював, просто дашборд про це не знав."></span></div><div class="val" data-k="aicost">$0</div><div class="delta flat" data-k="aicost_d">Claude + Whisper · реальна собівартість</div></div>
+    <div class="metric"><div class="lab">🔴 Хто в мінусі<span class="live-dot" title="Скільки людей витрачають на AI більше, ніж платять. Середня собівартість це ПРИХОВУЄ: одна людина може зʼїсти маржу шістнадцяти й розчинитись у середньому. Поіменно — в Аналітиці → Гроші → Chainy."></span></div><div class="val" data-k="losers">0</div><div class="delta flat" data-k="losers_d">витрати &gt; виручки</div></div>
+    <div class="metric"><div class="lab">Середній ланцюжок<span class="live-dot" title="Живі дані з бота"></span></div><div class="val" data-k="chain">0</div><div class="delta flat">днів поспіль</div></div>
+    <div class="metric"><div class="lab">Виплати блогерам<span class="live-dot" title="Живі дані. Сума комісій, позначених як виплачені. Синхронізується з Google Sheets (лист Payouts)."></span></div><div class="val" data-k="payout">$0</div><div class="delta flat">25% · синк з Google Sheets</div></div>
+  </div>
+  <div class="note">Головний продуктовий сигнал — <b>Weekly Active Speakers</b>. Відкриття застосунку саме по собі не є навчальним результатом: перевіряємо, чи людина заговорила, отримала людську відповідь і повернулася до наступного раунду.</div>
+</div>
+<div class="panel" id="funnel">
+  <div class="head"><div><h2>Воронка</h2><div class="sub">Шлях від відео блогера до оплати — де втрачаємо людей</div></div>
+  <div class="xref" onclick="goAnalytics()"><span>📈</span><span>Огляд за період. <b>Повна воронка</b> — кроки, win-back, A/B, джерела — в Аналітиці. <b>Відкрити →</b></span></div><div class="demo-pill">● демо-дані</div></div>
+  <div class="card">
+    <div class="funnel" id="funnelbars"></div>
+    <div class="note">Кожен рядок — крок воронки. Ширина = скільки людей дійшло. Найбільший провал між кроками показує, де треба покращувати продукт. Демо показує типову форму: основний відвал — на стику «відео → бот» і на оплаті.</div>
+  </div>
+  <div class="section-t">Speaking loop · від перегляду до живої взаємодії</div>
+  <div class="card">
+    <div class="funnel" id="socialfunnelbars"></div>
+    <div class="note">Ця воронка відповідає на головне продуктове питання: чи контент приводить до власного голосу, а власний голос — до відповіді іншої людини. Детальні зрізи челенджів, естафет, live match і безпеки — в Аналітиці → Контент.</div>
+  </div>
+  <div class="section-t">Порівняння челендж-флоу</div>
+  <div class="grid g2">
+    <div class="card">
+      <div class="tname" style="font-size:15px;margin-bottom:4px">Blogger flow <span class="badge">hard paywall</span></div>
+      <div class="grid g2" style="margin-top:12px">
+        <div class="metric"><div class="lab">Конверсія D6</div><div class="val" style="font-size:24px">20–25%</div></div>
+        <div class="metric"><div class="lab">LTV (3 міс)</div><div class="val" style="font-size:24px">$100–150</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="tname" style="font-size:15px;margin-bottom:4px">Organic flow <span class="badge" style="color:var(--teal);background:var(--teal-soft)">soft lock</span></div>
+      <div class="grid g2" style="margin-top:12px">
+        <div class="metric"><div class="lab">Конверсія D6</div><div class="val" style="font-size:24px">10–15%</div></div>
+        <div class="metric"><div class="lab">LTV (3 міс)</div><div class="val" style="font-size:24px">$60–80</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="panel" id="onboarding">
+  <div class="head"><div><h2>Онбординг Дня 1</h2><div class="sub">Портрет аудиторії + де кидають квіз знайомства</div></div>
+  <div class="xref" onclick="goAnalytics()"><span>📈</span><span>Огляд. <b>Повні дані онбордингу</b> — в Аналітиці. <b>Відкрити →</b></span></div><div class="demo-pill">● демо-дані</div></div>
+  <div class="grid g3">
+    <div class="metric accent"><div class="lab">Відкрили квіз</div><div class="val" data-k="onb_opened">0</div><div class="delta flat">почали знайомство</div></div>
+    <div class="metric"><div class="lab">Завершили</div><div class="val" data-k="onb_completed">0</div><div class="delta up">пройшли до кінця</div></div>
+    <div class="metric"><div class="lab">% завершення</div><div class="val" data-k="onb_rate">0%</div><div class="delta flat">completion rate</div></div>
+  </div>
+  <div class="section-t">Воронка квізу — де кидають</div>
+  <div class="card"><div class="funnel" id="onb_funnelbars"></div>
+    <div class="note">Кожен рядок — екран квізу. Ширина = скільки людей дійшло. Найбільший провал між кроками показує, який екран спростити чи переставити.</div>
+  </div>
+  <div class="section-t">Портрет аудиторії (% від тих, хто завершив)</div>
+  <div class="grid g2" id="onb_dists"></div>
+  <div class="section-t">Голос клієнта — письмові відповіді</div>
+  <div class="grid g2">
+    <div class="card"><div class="lab" style="margin-bottom:8px">Чого бракувало (свої слова)</div><div id="onb_written_missing" style="font-size:13px;line-height:1.7;color:var(--muted)"></div></div>
+    <div class="card"><div class="lab" style="margin-bottom:8px">Очікування (свої слова)</div><div id="onb_written_exp" style="font-size:13px;line-height:1.7;color:var(--muted)"></div></div>
+  </div>
+</div>
+
+<div class="panel" id="diagnostic" style="display:none">
+  <div class="head"><div><h2>Діагностика Дня 4</h2><div class="sub">Рівні аудиторії, прогалини й скільки говорять уголос</div></div><div class="demo-pill">● демо-дані</div></div>
+  <div class="xref" onclick="goAnalytics()"><span>📈</span><span>Огляд. <b>Повна діагностика</b> — рівні, прогалини — в Аналітиці. <b>Відкрити →</b></span></div>
+  <div class="grid g3">
+    <div class="metric accent"><div class="lab">Завершили тест</div><div class="val" data-k="diag_done">0</div><div class="delta flat">пройшли діагностику</div></div>
+    <div class="metric"><div class="lab">Сер. словник</div><div class="val" data-k="diag_words">0</div><div class="delta up">слів (Meara)</div></div>
+    <div class="metric"><div class="lab">Записали монолог</div><div class="val" data-k="diag_speech">0%</div><div class="delta flat">говоріння</div></div>
+  </div>
+  <div class="section-t">Розподіл рівнів (де стартує аудиторія)</div>
+  <div class="card"><div class="funnel" id="diag_levelbars"></div>
+    <div class="note">Скільки людей на кожному рівні CEFR. Показує, під який рівень підлаштовувати контент челенджу насамперед.</div>
+  </div>
+  <div class="section-t">Топ прогалин — що масово провалюють</div>
+  <div class="card"><div id="diag_gaps" style="font-size:13px;line-height:1.9;color:var(--muted)"></div>
+    <div class="note">Найчастіші теми-прогалини на рівні користувачів. Це підказка, які уроки посилити в челенджі.</div>
+  </div>
+</div>
+
+<div class="panel" id="money">
+  <div class="head"><div><h2>Гроші</h2><div class="sub">Тарифи, дохід блогерів та юніт-економіка</div></div>
+  <div class="xref" onclick="goAnalytics()"><span>📈</span><span>Тарифи й юніт-економіка — <b>це рішення</b>. Живі цифри доходу — в Аналітиці. <b>Відкрити →</b></span></div><div class="demo-pill">● демо-дані</div></div>
+  <div class="section-t">Тарифи</div>
+  <div class="grid g2">
+    <div class="tier">
+      <div class="tname">Basic</div>
+      <div class="price">$19.77<small>/міс</small></div>
+      <div class="perday">$0.66 на день · $99 за 6 міс (−25%)</div>
+      <ul>
+        <li><span class="chk">✓</span>ШІ-репетитор та уроки</li>
+        <li><span class="chk">✓</span>Записи мовлення</li>
+        <li><span class="chk">✓</span>Speaking challenge зі спільнотою</li>
+        <li><span class="chk">✓</span>Картотека фраз + інтервальні повторення</li>
+      </ul>
+    </div>
+    <div class="tier feat">
+      <div class="tname">Premium <span class="badge">найпопулярніший</span></div>
+      <div class="price">$79<small>/міс</small></div>
+      <div class="perday">$2.63 на день · $397 за 6 міс (−29%)</div>
+      <ul>
+        <li><span class="chk">✓</span>Усе з Basic, плюс:</li>
+        <li><span class="chk">✓</span>Питання тижня від блогера</li>
+        <li><span class="chk">✓</span>Щотижневий розбір помилок</li>
+        <li><span class="chk">✓</span>Speaking buddy вашого рівня</li>
+        <li><span class="chk">✓</span>Закрита спільнота + сертифікат</li>
+      </ul>
+    </div>
+  </div>
+  <div class="section-t">Дохід блогера на місяць (92% Basic / 8% Premium)</div>
+  <div class="card">
+    <div class="bars" id="bloggerbars"></div>
+    <div class="legend"><span><span class="ld" style="background:var(--purple)"></span>Дохід блогера / місяць при N студентах</span></div>
+  </div>
+  <div class="section-t">Економіка AI на 1000 користувачів</div>
+  <div class="grid g3">
+    <div class="metric"><div class="lab">Вартість обміну (Haiku)</div><div class="val" style="font-size:24px">~$0.0003</div><div class="delta flat">×20 в дешевше за Sonnet</div></div>
+    <div class="metric"><div class="lab">При 20–30% активності</div><div class="val" style="font-size:24px">$36–54</div><div class="delta flat">на місяць на AI</div></div>
+    <div class="metric"><div class="lab">Ліміт безкоштовних</div><div class="val" style="font-size:24px">20/день</div><div class="delta flat">контекст 4 повід.</div></div>
+  </div>
+  <div class="note">Реферальна економіка: студент отримує знижку 15%, блогер — 25% від платежу. Кожне нове відео блогера запускає новий потік у воронку — це й робить її «вічнозеленою».</div>
+</div>
+<div class="panel" id="unitcalc">
+  <div class="head"><div><h2>Юніт-економіка</h2><div class="sub">Прогноз «а що якщо» · крути параметри → бачиш маржу і LTV</div></div><div class="demo-pill">● прогноз, не факт</div></div>
+  <div class="xref" onclick="goAnalytics()"><span>📈</span><span>Це <b>прогноз</b> на припущеннях. Живі цифри доходу й retention — в <b>Аналітиці →</b></span></div>
+
+  <div class="uc-wrap">
+    <div class="uc-panel">
+      <div class="uc-h">Вхідні дані</div>
+
+      <div class="uc-field uc-verified">
+        <label>Ціна Basic, $/міс <span class="uc-tag-v">звірено</span>
+          <input type="number" class="uc-num" id="uc_basic" min="0" max="999" step="0.01" value="19.77"></label>
+        <input type="range" id="uc_basic_r" min="9" max="35" step="0.25" value="19.77">
+        <div class="uc-hint">реф. ціна, р.6343 bot.py</div>
+      </div>
+
+      <div class="uc-field uc-verified">
+        <label>Ціна Premium, $/міс <span class="uc-tag-v">звірено</span>
+          <input type="number" class="uc-num" id="uc_prem" min="0" max="999" step="0.01" value="79.00"></label>
+        <input type="range" id="uc_prem_r" min="29" max="149" step="1" value="79">
+        <div class="uc-hint">реф. ціна, р.6355 bot.py</div>
+      </div>
+
+      <div class="uc-field uc-verified">
+        <label>Комісія блогеру, % <span class="uc-tag-v">звірено</span>
+          <input type="number" class="uc-num" id="uc_comm" min="0" max="90" step="1" value="25"></label>
+        <input type="range" id="uc_comm_r" min="0" max="50" step="1" value="25">
+        <div class="uc-hint">р.3348 · % з кожної оплати · різні блогери — різні ставки</div>
+      </div>
+
+      <div class="uc-field uc-assume">
+        <label>Активність Chainy, обмінів/день <span class="uc-tag-a">припущення</span>
+          <input type="number" class="uc-num" id="uc_act" min="1" max="300" step="1" value="40"></label>
+        <input type="range" id="uc_act_r" min="5" max="300" step="5" value="40">
+        <div class="uc-hint">ліміт 300/день (р.10709). Факт дасть ai_costs.py</div>
+      </div>
+
+      <div class="uc-field uc-assume">
+        <label>Ретеншн, місяців <span class="uc-tag-a">припущення</span>
+          <input type="number" class="uc-num" id="uc_ret" min="1" max="120" step="1" value="8"></label>
+        <input type="range" id="uc_ret_r" min="1" max="60" step="1" value="8">
+        <div class="uc-hint">скільки місяців платить у середньому. Факт — analytics.py</div>
+      </div>
+    </div>
+
+    <div class="uc-panel">
+      <div class="uc-h">Результат на одного платника</div>
+      <div class="uc-results">
+        <div class="uc-card uc-basic">
+          <h4>Basic</h4>
+          <div class="uc-line"><span>Ціна/міс</span><span id="ucb_price">$19.77</span></div>
+          <div class="uc-line uc-neg"><span>− комісія блогеру</span><span id="ucb_comm">−$4.94</span></div>
+          <div class="uc-line uc-neg"><span>− AI/міс</span><span id="ucb_ai">−$4.38</span></div>
+          <div class="uc-line uc-sep uc-big"><span>Чистими/міс</span><span id="ucb_net">$10.45</span></div>
+          <div class="uc-line"><span>× ретеншн</span><span id="ucb_months">8 міс</span></div>
+          <div class="uc-line uc-sep uc-ltv"><span>LTV</span><span id="ucb_ltv">$84</span></div>
+          <div><span class="uc-pill uc-pos" id="ucb_margin">маржа 53%</span></div>
+        </div>
+        <div class="uc-card uc-premium">
+          <h4>Premium</h4>
+          <div class="uc-line"><span>Ціна/міс</span><span id="ucp_price">$79.00</span></div>
+          <div class="uc-line uc-neg"><span>− комісія блогеру</span><span id="ucp_comm">−$19.75</span></div>
+          <div class="uc-line uc-neg"><span>− AI/міс</span><span id="ucp_ai">−$4.38</span></div>
+          <div class="uc-line uc-sep uc-big"><span>Чистими/міс*</span><span id="ucp_net">$54.87</span></div>
+          <div class="uc-line"><span>× ретеншн</span><span id="ucp_months">8 міс</span></div>
+          <div class="uc-line uc-sep uc-ltv"><span>LTV*</span><span id="ucp_ltv">$439</span></div>
+          <div><span class="uc-pill uc-pos" id="ucp_margin">маржа 69%</span></div>
+        </div>
+      </div>
+      <div class="uc-note">
+        <b>Як рахується:</b> комісія блогеру = % з <b>кожної</b> оплати весь час, поки клієнт платить (не разово).
+        Ставку можна змінити: різні блогери на різних %. AI — щомісяця. <b>Premium AI = Basic AI</b> (Chainy не розрізняє плани, 300/день обом).<br>
+        <b>* Premium:</b> «дотик живої людини» окремо не віднято — блогер оплачений тією ж комісією (ефір за свої %, окремої зарплати немає, р.3348). Персональний розбір (C) — доп-тариф-подарунок, не в базі.
+      </div>
+    </div>
+  </div>
+</div>
+<div class="panel" id="product">
+  <div class="head"><div><h2>Продукт</h2><div class="sub">Архітектура, мініаппи та масштаб коду</div></div></div>
+  <div class="grid g4">
+    <div class="metric"><div class="lab">Функцій у боті</div><div class="val">318</div><div class="delta flat">cmd, callback, job, helper</div></div>
+    <div class="metric"><div class="lab">Команд</div><div class="val">55</div><div class="delta flat">зареєстрованих</div></div>
+    <div class="metric"><div class="lab">Граматичних тем</div><div class="val">77</div><div class="delta flat">за Голіцинським</div></div>
+    <div class="metric"><div class="lab">Мініаппів</div><div class="val">9</div><div class="delta flat">у BotFather</div></div>
+  </div>
+  <div class="section-t">Модулі коду</div>
+  <div class="grid g3">
+    <div class="card"><div class="rt" style="font-weight:700">bot.py</div><div class="rn">Ядро: маршрутизація, команди, уроки, хендлери. ~22k рядків.</div></div>
+    <div class="card"><div class="rt" style="font-weight:700">grammar_engine.py</div><div class="rn">77 тем, промпти, mastery й decay, нуджі.</div></div>
+    <div class="card"><div class="rt" style="font-weight:700">static_content.py</div><div class="rn">CEFR-питання, плани уроків, vocab-тести.</div></div>
+    <div class="card"><div class="rt" style="font-weight:700">challenge_content.py</div><div class="rn">Контент і сповіщення 6-денного челенджу.</div></div>
+    <div class="card"><div class="rt" style="font-weight:700">challenge_flow_blogger.py</div><div class="rn">Hard paywall для трафіку від блогерів.</div></div>
+    <div class="card"><div class="rt" style="font-weight:700">challenge_flow_organic.py</div><div class="rn">Soft lock + мікро-тригери для органіки.</div></div>
+  </div>
+  <div class="section-t">Мініаппи</div>
+  <div class="grid g3">
+    <div class="card"><div class="rt">Плеєр відео</div><div class="rn">YouTube-субтитри, прив'язка до дуелі/монологу</div></div>
+    <div class="card"><div class="rt">Speaking Buddy (Chainy)</div><div class="rn">Чат з voice mode: TTS + розпізнавання</div></div>
+    <div class="card"><div class="rt">Vocabulary</div><div class="rn">SRS-картотека, TTS, мікрофон</div></div>
+    <div class="card"><div class="rt">Progress</div><div class="rn">Прогрес-бар, 30 речень з озвучкою</div></div>
+    <div class="card"><div class="rt">Admin Analytics</div><div class="rn">7 вкладок, трекінг кнопок, AI-аналітик</div></div>
+    <div class="card"><div class="rt">Blogger</div><div class="rn">Панель доходів (фінанси ізольовані)</div></div>
+  </div>
+</div>
+<div class="panel" id="roadmap">
+  <div class="head"><div><h2>Дорожня карта</h2><div class="sub">Що готово, що далі — шлях до масштабу 4000+</div></div></div>
+  <div class="legend" style="margin-bottom:18px">
+    <span><span class="ld" style="background:var(--coral)"></span>Високий пріоритет</span>
+    <span><span class="ld" style="background:var(--amber)"></span>Згодом</span>
+    <span><span class="ld" style="background:var(--teal)"></span>Пізніше</span>
+    <span><span class="ld" style="background:var(--green)"></span>Готово</span>
+  </div>
+  <div class="section-t">Інфраструктура для масштабу</div>
+  <div class="road">
+    <div class="ritem"><div class="rdot" style="background:var(--coral)"></div><div class="rbody"><div class="rt">Redis замість in-memory кешу</div><div class="rn">Кеш, що виживає між перезапусками бота</div></div><div class="rtag t-hi">високий</div></div>
+    <div class="ritem"><div class="rdot" style="background:var(--coral)"></div><div class="rbody"><div class="rt">Окремий worker для планових задач</div><div class="rn">26 джоб не повинні блокувати основний процес бота</div></div><div class="rtag t-hi">високий</div></div>
+    <div class="ritem"><div class="rdot" style="background:var(--coral)"></div><div class="rbody"><div class="rt">Черга для Chainy</div><div class="rn">Щоб масове використання не вперлось у rate limits AI</div></div><div class="rtag t-hi">високий</div></div>
+    <div class="ritem"><div class="rdot" style="background:var(--amber)"></div><div class="rbody"><div class="rt">Розбивка bot.py на модулі</div><div class="rn">22k рядків важко підтримувати — свідомо відкладено до завершення фіч</div></div><div class="rtag t-mid">згодом</div></div>
+  </div>
+  <div class="section-t">Продукт для зростання</div>
+  <div class="road">
+    <div class="ritem"><div class="rdot" style="background:var(--coral)"></div><div class="rbody"><div class="rt">Голосовий привіт блогера в боті</div><div class="rn">Найсильніший множник довіри на приземленні</div></div><div class="rtag t-hi">високий</div></div>
+    <div class="ritem"><div class="rdot" style="background:var(--teal)"></div><div class="rbody"><div class="rt">Email-сповіщення</div><div class="rn">Попередження про розрив ланцюжка + тижневий дайджест</div></div><div class="rtag t-low">пізніше</div></div>
+    <div class="ritem"><div class="rdot" style="background:var(--teal)"></div><div class="rbody"><div class="rt">Group chains</div><div class="rn">Спільний ланцюжок групи студентів блогера, груповий XP</div></div><div class="rtag t-low">пізніше</div></div>
+    <div class="ritem"><div class="rdot" style="background:var(--teal)"></div><div class="rbody"><div class="rt">60-сек лендинг-віджет</div><div class="rn">Окремий компонент для зовнішнього лендингу поза Telegram</div></div><div class="rtag t-low">пізніше</div></div>
+  </div>
+  <div class="section-t">Готово та працює</div>
+  <div class="road">
+    <div class="ritem"><div class="rdot" style="background:var(--green)"></div><div class="rbody"><div class="rt">AI Engine · Retention Loop · Monetization</div><div class="rn">Серце продукту повністю готове</div></div><div class="rtag t-done">готово</div></div>
+    <div class="ritem"><div class="rdot" style="background:var(--green)"></div><div class="rbody"><div class="rt">Челендж-флоу (blogger + organic)</div><div class="rn">Подвоєння конверсії проти старого тріалу</div></div><div class="rtag t-done">готово</div></div>
+    <div class="ritem"><div class="rdot" style="background:var(--green)"></div><div class="rbody"><div class="rt">9 мініаппів + Admin Analytics</div><div class="rn">Плеєр, Chainy, словник, прогрес, аналітика, панель блогера</div></div><div class="rtag t-done">готово</div></div>
+  </div>
+  <div class="note">Наступний горизонт: після стабілізації інфраструктури кодова база може стати основою для PWA або застосунку — встановлення на телефон, пуш-сповіщення, охоплення поза Telegram, з тією ж логікою на бекенді.</div>
+</div>
+<div class="panel" id="principles">
+  <div class="head"><div><h2>Принципи</h2><div class="sub">ДНК продукту — рішення, на яких усе тримається</div></div></div>
+  <div class="grid g2">
+    <div class="card"><div class="rt" style="font-size:15px;font-weight:700;color:var(--purple)">Говоріння з першого дня</div><div class="rn" style="font-size:13.5px;margin-top:7px">Людина починає вимовляти фрази в перші хвилини, а не після місяців теорії. Страх говорити прибирається практикою, а не правилами.</div></div>
+    <div class="card"><div class="rt" style="font-size:15px;font-weight:700;color:var(--purple)">Граматика без термінів</div><div class="rn" style="font-size:13.5px;margin-top:7px">Пояснення лише через суть, сигнальні слова й живі приклади. Заборонені слова: tense, auxiliary, predicate. Метод Голіцинського.</div></div>
+    <div class="card"><div class="rt" style="font-size:15px;font-weight:700;color:var(--teal)">Цінність до оплати</div><div class="rn" style="font-size:13.5px;margin-top:7px">Людина заходить прямо в бот через посилання з ID відео — і одразу повторює фразу зі свого ж відео. Результат до оплати, без кроку лендінгу.</div></div>
+    <div class="card"><div class="rt" style="font-size:15px;font-weight:700;color:var(--teal)">Довіра блогера наскрізна</div><div class="rn" style="font-size:13.5px;margin-top:7px">Голос блогера проходить через увесь флоу — від привітання до утримання, а не лише як разове джерело кліку.</div></div>
+    <div class="card"><div class="rt" style="font-size:15px;font-weight:700;color:var(--coral)">Віддавай секрети, продавай реалізацію</div><div class="rn" style="font-size:13.5px;margin-top:7px">За Хормозі: контент безкоштовний, продукт реалізує обіцянку. Воронка показує, що без продукту людина застрягла.</div></div>
+    <div class="card"><div class="rt" style="font-size:15px;font-weight:700;color:var(--coral)">Прогрес видно й він живий</div><div class="rn" style="font-size:13.5px;margin-top:7px">Mastery росте від практики й згасає без неї. Ланцюжок не хочеться розривати — це й тримає щоденну звичку.</div></div>
+    <div class="card"><div class="rt" style="font-size:15px;font-weight:700;color:var(--amber)">Дешевий AI на масштабі</div><div class="rn" style="font-size:13.5px;margin-top:7px">Haiku, ліміти, короткий контекст, rate limiting. Маржа лишається здоровою навіть на Basic.</div></div>
+    <div class="card"><div class="rt" style="font-size:15px;font-weight:700;color:var(--amber)">Студент бачить лише своє</div><div class="rn" style="font-size:13.5px;margin-top:7px">Від студента приховані не лише адмін-функції, а сама видимість ролей dev / admin / блогер. Фінанси бачить тільки super admin.</div></div>
+  </div>
+
+  <div class="section-t">Методи навчання, на яких побудовано продукт</div>
+  <div class="road">
+    <div class="ritem"><div class="rdot" style="background:var(--purple)"></div><div class="rbody"><div class="rt">Shadowing (тіньовий повтор)</div><div class="rn">Перепрошиває вимову й ритм через повтор живого мовлення → плеєр з loop, запис голосу</div></div></div>
+    <div class="ritem"><div class="rdot" style="background:var(--purple)"></div><div class="rbody"><div class="rt">Comprehensible input</div><div class="rn">Засвоєння через зрозумілий контент трохи вище рівня → відео під рівень, субтитри</div></div></div>
+    <div class="ritem"><div class="rdot" style="background:var(--teal)"></div><div class="rbody"><div class="rt">Output / speaking-first</div><div class="rn">Навичка через активне говоріння → монологи, дуелі, говоріння з першого дня</div></div></div>
+    <div class="ritem"><div class="rdot" style="background:var(--teal)"></div><div class="rbody"><div class="rt">AI-фідбек + gap analysis</div><div class="rn">Миттєво показує помилки й прогалини → наступний урок б'є точково по слабких місцях</div></div></div>
+    <div class="ritem"><div class="rdot" style="background:var(--coral)"></div><div class="rbody"><div class="rt">Spaced repetition (SRS)</div><div class="rn">Повтор у момент забування → автокартотека фраз із субтитрів, розумні нагадування</div></div></div>
+    <div class="ritem"><div class="rdot" style="background:var(--coral)"></div><div class="rbody"><div class="rt">Content-based / персоналізація</div><div class="rn">Своя лексика, а не з підручника → студент обирає власні відео за темою</div></div></div>
+    <div class="ritem"><div class="rdot" style="background:var(--amber)"></div><div class="rbody"><div class="rt">Граматика без термінів</div><div class="rn">Знижує страх граматики → метод Голіцинського: суть + сигнальні слова + приклади</div></div></div>
+    <div class="ritem"><div class="rdot" style="background:var(--amber)"></div><div class="rbody"><div class="rt">Прогресія CEFR</div><div class="rn">Карта A1→C2, видно де ти й що далі → 77 тем, XP, mastery, прогрес-бар</div></div></div>
+    <div class="ritem"><div class="rdot" style="background:var(--purple)"></div><div class="rbody"><div class="rt">Peer practice</div><div class="rn">Жива розмова з людиною свого рівня → speaking buddy, підбір партнера</div></div></div>
+    <div class="ritem"><div class="rdot" style="background:var(--teal)"></div><div class="rbody"><div class="rt">Звичка через ланцюжок</div><div class="rn">Постійність важливіша за інтенсивність → chain, daily check-in, 15 хв/день</div></div></div>
+  </div>
+  <div class="note">Кожен інструмент усередині — це конкретний метод під конкретну мету. Разом вони закривають повний цикл: вхід (input) → практика (output) → зворотний зв'язок (feedback) → закріплення (SRS) → звичка (chain).</div>
+</div>
+</main>
+</div>
+<script>
+const DATA = {
+  aicost_d: 'Claude + Whisper',
+  losers: '0',
+  losers_d: 'витрати > виручки',
+  mrr:"$12,400", mrr_d:"▲ 18% за місяць",
+  dau:"640", dau_d:"▲ 9% за тиждень",
+  paid:"412", paid_d:"▲ 27 нових",
+  conv:"22%", conv_d:"стабільно",
+  d1:"58%", d7:"41%", d30:"34%",
+  aicost:"$0.04", chain:"7.3", payout:"$3,100",
+  was:"0", was_d:"0% social-аудиторії", speak_min:"0",
+  view_response:"0%", first_phrase:"—"
+};
+const FUNNEL = [
+  {name:"Перегляд відео блогера", v:100, c:"#D85A30"},
+  {name:"Перехід у бот (/start)", v:46, c:"#D85A30"},
+  {name:"Перший AI-фідбек", v:38, c:"#5B4B9E"},
+  {name:"Завершив челендж D6", v:24, c:"#5B4B9E"},
+  {name:"Оплатив тариф", v:13, c:"#3B6D11"}
+];
+const BLOGGER = [
+  {lab:"100", v:612, max:24499},
+  {lab:"500", v:3062, max:24499},
+  {lab:"1 000", v:6125, max:24499},
+  {lab:"4 000", v:24499, max:24499}
+];
+
+function fillData(){
+  document.querySelectorAll('[data-k]').forEach(el=>{
+    const k=el.getAttribute('data-k'); if(DATA[k]!==undefined) el.textContent=DATA[k];
+  });
+}
+
+// ── Живі дані з бота (endpoint /admin_analytics) ──
+const TG = window.Telegram?.WebApp;
+function _apiBase(){
+  // бот передає api в URL (?api=...), як для інших мініаппів; інакше пробуємо start_param
+  const p = new URLSearchParams(window.location.search);
+  let base = p.get('api') || '';
+  try { const sp = TG?.initDataUnsafe?.start_param || ''; if(!base && sp.startsWith('http')) base = sp; } catch(_){}
+  return base.replace(/\/+$/,'');
+}
+/* ── Перехід в Аналітику. Зберігаємо ?api=, вона його теж читає. ── */
+function goAnalytics(){
+  /* Абсолютний URL — у Telegram WebApp відносний шлях дає 404 */
+  const p   = new URLSearchParams(location.search);
+  const api = p.get('api') || '';
+  const dir = location.href.split('?')[0].split('#')[0].replace(/[^/]*$/, '');
+  location.href = dir + 'admin_analytics.html' + (api ? '?api=' + encodeURIComponent(api) : '');
+}
+function _fmtMoney(n){ return '$' + Math.round(n).toLocaleString('en-US'); }
+function _setDemoBadge(live){
+  document.querySelectorAll('.demo-pill').forEach(el=>{
+    el.textContent = live ? '● живі дані' : '● демо-дані';
+    el.style.color = live ? 'var(--green)' : 'var(--amber)';
+    el.style.background = live ? 'var(--green-soft)' : 'var(--amber-soft)';
+    el.style.borderColor = live ? '#bcd89a' : '#f0d9b0';
+  });
+}
+async function loadLive(){
+  const base = _apiBase();
+  const initData = TG?.initData || '';
+  const uid = TG?.initDataUnsafe?.user?.id || 0;
+  if(!base || !uid) return;            // не в Telegram або немає api — лишаються демо-дані
+  try{
+    const res = await fetch(base + '/admin_analytics', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ init_data: initData, uid }),
+      signal: AbortSignal.timeout(8000)
+    });
+    if(!res.ok) return;                // 403 (не super admin) → лишаються демо
+    const d = await res.json();
+    const ov = d.overview || {}, rev = d.revenue, ret = d.retention || {};
+    const social = d.social || {};
+    const sns = social.north_star || {}, slp = social.loop || {};
+    if(ov.active_today != null) DATA.dau = String(ov.active_today);
+    if(ov.paid_users   != null) DATA.paid = String(ov.paid_users);
+    if(ov.avg_chain    != null) DATA.chain = String(ov.avg_chain);
+    if(ret.d1  != null) DATA.d1  = Math.round(ret.d1)  + '%';
+    if(ret.d7  != null) DATA.d7  = Math.round(ret.d7)  + '%';
+    if(ret.d30 != null) DATA.d30 = Math.round(ret.d30) + '%';
+    if(rev){                            // фінанси бачить тільки super admin
+      if(rev.mrr != null)       DATA.mrr = _fmtMoney(rev.mrr);
+      if(rev.mrr_delta != null) DATA.mrr_d = (rev.mrr_delta>=0?'▲ ':'▼ ') + Math.abs(Math.round(rev.mrr_delta)) + '% за місяць';
+    }
+    if(ov.total_users && ov.paid_users != null){
+      DATA.conv = Math.round(ov.paid_users / ov.total_users * 100) + '%';
+    }
+    if(sns.weekly_active_speakers != null) DATA.was = String(sns.weekly_active_speakers);
+    if(sns.weekly_speaker_rate != null) DATA.was_d = sns.weekly_speaker_rate + '% social-аудиторії';
+    if(sns.active_speaking_minutes != null) DATA.speak_min = String(sns.active_speaking_minutes);
+    if(slp.view_to_response_rate != null) DATA.view_response = slp.view_to_response_rate + '%';
+    if(sns.median_time_to_first_spoken_sec != null){
+      DATA.first_phrase = _fmtDuration(sns.median_time_to_first_spoken_sec);
+    }
+    LIVE_SOCIAL = social;
+    /* БУЛО: rev.total_paid_out — але в revenue такого ключа НЕМА.
+       Бот кладе його в bloggers.total_paid_out (bot.py:28106).
+       Через це показувалось вписане $3,100 замість реальних виплат.
+       Метрика правильна: сума комісій з paid=True, синкається в Google Sheets. */
+    const blg = d.bloggers;
+    if(blg && blg.total_paid_out != null) DATA.payout = _fmtMoney(blg.total_paid_out);
+
+    /* ── Собівартість AI: БУЛА «вписана вручну», хоча облік УЖЕ працював.
+       ai_costs.py ловить usage з кожної відповіді Claude і хвилини Whisper.
+       Дані приходили в d.ai_costs — просто ніхто їх сюди не змапив. */
+    const aic = d.ai_costs;
+    if(aic && aic.has_data && aic.per_user != null){
+      DATA.aicost   = '$' + aic.per_user;
+      DATA.aicost_d = 'Claude $' + (aic.claude_per_user ?? '—')
+                    + ' · Whisper $' + (aic.whisper_per_user ?? '—');
+    }
+
+    /* ── Хто в мінусі: середнє БРЕШЕ.
+       Одна людина може зʼїсти маржу шістнадцяти й сховатись у середньому.
+       Тут — тільки ЧИСЛО (сигнал «є проблема»). Поіменно — в Аналітиці. */
+    const chy = d.chainy;
+    if(chy && chy.losers != null){
+      DATA.losers = String(chy.losers);
+      DATA.losers_d = chy.losers
+        ? 'зʼїдять ~$' + (chy.loss_month || 0) + '/міс → Аналітика'
+        : 'усі прибуткові ✅';
+    }
+
+    // ── Жива воронка (registered → demo → trial → paid) ──
+    const fn = d.funnel || {};
+    const reg = fn.registered || ov.total_users || 0;
+    if(reg > 0){
+      const pc = n => Math.round((n||0) / reg * 100);
+      LIVE_FUNNEL = [
+        {name:"Зареєструвались", v:100, c:"#D85A30"},
+        {name:"Demo (проба Chainy)", v:pc(fn.demo), c:"#D85A30"},
+        {name:"Trial (7 днів)", v:pc(fn.trial), c:"#5B4B9E"},
+        {name:"Оплатили тариф", v:pc(fn.paid), c:"#3B6D11"},
+      ];
+    }
+
+    // ── Живі доходи блогерів (топ за доходом) ──
+    if(rev && Array.isArray(rev.bloggers) && rev.bloggers.length){
+      const top = rev.bloggers.slice().sort((a,b)=>(b.revenue||0)-(a.revenue||0)).slice(0,5);
+      const mx = Math.max(...top.map(b=>b.revenue||0), 1);
+      LIVE_BLOGGER = top.map(b=>({lab:(b.name||'?'), v:Math.round(b.revenue||0), max:mx}));
+    }
+
+    fillData();
+    buildFunnel();
+    buildSocialFunnel();
+    if(d.onboarding){ LIVE_ONB = d.onboarding; buildOnboarding(); }
+    if(d.diagnostic){ LIVE_DIAG = d.diagnostic; buildDiagnostic(); }
+    if(document.getElementById('money').classList.contains('on')) buildBlogger();
+    _setDemoBadge(true);
+  }catch(_){ /* лишаються демо-дані, нічого не ламаємо */ }
+}
+let LIVE_FUNNEL = null, LIVE_BLOGGER = null, LIVE_ONB = null, LIVE_DIAG = null, LIVE_SOCIAL = null;
+
+function _fmtDuration(sec){
+  if(sec == null) return '—';
+  if(sec < 60) return Math.round(sec) + ' с';
+  if(sec < 3600) return Math.round(sec / 60) + ' хв';
+  if(sec < 86400) return (sec / 3600).toFixed(1) + ' год';
+  return (sec / 86400).toFixed(1) + ' дн';
+}
+
+function buildOnboarding(){
+  const o = LIVE_ONB; if(!o) return;
+  const set=(k,v)=>{ const el=document.querySelector(`[data-k="${k}"]`); if(el) el.textContent=v; };
+  set('onb_opened', o.opened||0);
+  set('onb_completed', o.completed||0);
+  set('onb_rate', (o.completion_rate||0)+'%');
+  // воронка квізу
+  const fb=document.getElementById('onb_funnelbars');
+  if(fb){ fb.innerHTML='';
+    (o.funnel||[]).forEach((f,i)=>{
+      const row=document.createElement('div'); row.className='frow';
+      row.innerHTML=`<div class="fname">${f.step}. ${f.name}</div>
+        <div class="fbar-wrap"><div class="fbar" style="width:0;background:#5B4B9E">${f.pct}%</div></div>
+        <div class="fpct">${f.reached}</div>`;
+      fb.appendChild(row);
+      setTimeout(()=>{ row.querySelector('.fbar').style.width=f.pct+'%'; }, 70*i+120);
+    });
+  }
+  // розподіли (портрет)
+  const dbox=document.getElementById('onb_dists');
+  if(dbox){ dbox.innerHTML='';
+    const fields=[['goals','Мотивація'],['speaking_blocks','Що заважає'],
+      ['tried_before','Що пробували'],['missing_before','Чого бракувало'],
+      ['fluent_means','Вільно ='],['expectations','Очікування'],['time_per_day','Час/день']];
+    fields.forEach(([key,title])=>{
+      const arr=o[key]||[]; if(!arr.length) return;
+      const card=document.createElement('div'); card.className='card';
+      let html=`<div class="lab" style="margin-bottom:8px">${title}</div>`;
+      arr.forEach(it=>{
+        html+=`<div style="display:flex;align-items:center;gap:8px;margin:5px 0">
+          <div style="flex:1;font-size:12px">${it.name}</div>
+          <div style="width:90px;background:#2a2540;border-radius:6px;overflow:hidden;height:14px">
+            <div style="width:${it.pct}%;height:100%;background:#7F77DD"></div></div>
+          <div style="width:34px;text-align:right;font-size:11px;color:var(--muted)">${it.pct}%</div></div>`;
+      });
+      card.innerHTML=html; dbox.appendChild(card);
+    });
+  }
+  // письмові
+  const wm=document.getElementById('onb_written_missing');
+  const we=document.getElementById('onb_written_exp');
+  const fmt=a=>(a&&a.length)?a.map(t=>'• '+t).join('<br>'):'—';
+  if(wm) wm.innerHTML=fmt(o.written_missing);
+  if(we) we.innerHTML=fmt(o.written_expectations);
+}
+
+function buildDiagnostic(){
+  const g = LIVE_DIAG; if(!g) return;
+  const set=(k,v)=>{ const el=document.querySelector(`[data-k="${k}"]`); if(el) el.textContent=v; };
+  set('diag_done', g.done||0);
+  set('diag_words', '≈'+(g.avg_words||0));
+  set('diag_speech', (g.speech_rate||0)+'%');
+  // розподіл рівнів як бари
+  const lb=document.getElementById('diag_levelbars');
+  if(lb){ lb.innerHTML='';
+    const levels=g.levels||{};
+    const order=['A1','A2','B1','B2','C1'];
+    const mx=Math.max(...order.map(l=>levels[l]||0), 1);
+    const COL={A1:'#e8663b',A2:'#e69a2e',B1:'#e6c72e',B2:'#7cbf3f',C1:'#2f9e5e'};
+    order.forEach(l=>{
+      const v=levels[l]||0; const w=Math.round(v/mx*100);
+      lb.insertAdjacentHTML('beforeend',
+        `<div class="frow"><div class="flab">${l}</div>`+
+        `<div class="fbar"><div class="ffill" style="width:${w}%;background:${COL[l]}"></div></div>`+
+        `<div class="fval">${v}</div></div>`);
+    });
+  }
+  // топ прогалин
+  const gp=document.getElementById('diag_gaps');
+  if(gp){
+    const gaps=g.top_gaps||{};
+    const LBL={present_simple:'Present Simple',article_a_an:'Артиклі a/an',noun_plural:'Множина',
+      modal_can_could:'can/could',prepositions_place:'Прийменники місця',adjectives_comparison:'Ступені порівняння',
+      past_simple:'Past Simple',present_continuous:'Present Continuous',future_going_to:'going to',
+      pronouns_some_any:'some/any',prepositions_time:'Прийменники часу',modal_must_have_to:'must/have to',
+      present_perfect:'Present Perfect',conditional_1:'Перша умовна',passive_simple:'Пасив',
+      used_to:'used to',modal_should:'should',reported_statements:'Непряма мова',
+      conditional_2:'Друга умовна',past_perfect:'Past Perfect',present_perfect_continuous:'Perfect Continuous',
+      passive_continuous:'Пасив тривалий',gerund_vs_infinitive:'Герундій/інфінітив',reported_questions:'Непрямі питання',
+      conditional_3:'Третя умовна',mixed_conditionals:'Змішані умовні',inversion:'Інверсія',
+      modal_perfect:'Модальні перфектні',question_tags:'Питальні хвости'};
+    const entries=Object.entries(gaps);
+    gp.innerHTML = entries.length
+      ? entries.map(([k,v])=>`• <b style="color:var(--ink)">${LBL[k]||k}</b> — ${v}`).join('<br>')
+      : '—';
+  }
+}
+
+function buildFunnel(){
+  const box=document.getElementById('funnelbars'); if(!box) return; box.innerHTML='';
+  const src = LIVE_FUNNEL || FUNNEL;
+  src.forEach((f,i)=>{
+    const row=document.createElement('div'); row.className='frow';
+    row.innerHTML=`<div class="fname">${f.name}</div>
+      <div class="fbar-wrap"><div class="fbar" style="width:0;background:${f.c}">${f.v}%</div></div>
+      <div class="fpct">${f.v}%</div>`;
+    box.appendChild(row);
+    setTimeout(()=>{ row.querySelector('.fbar').style.width=f.v+'%'; }, 80*i+120);
+  });
+}
+function buildSocialFunnel(){
+  const box=document.getElementById('socialfunnelbars'); if(!box) return; box.innerHTML='';
+  const s=LIVE_SOCIAL || {}, lp=s.loop || {};
+  const rows=[
+    {name:'Переглянули Practice Feed', n:lp.feed_views||0, c:'#D85A30'},
+    {name:'Записали свою відповідь', n:lp.recorded_responses||0, c:'#5B4B9E'},
+    {name:'Отримали відповідь людини', n:lp.human_replies||0, c:'#3B6D11'}
+  ];
+  const max=Math.max(...rows.map(x=>x.n),1);
+  rows.forEach((f,i)=>{
+    const width=Math.round(f.n/max*100);
+    const row=document.createElement('div'); row.className='frow';
+    row.innerHTML=`<div class="fname">${f.name}</div>
+      <div class="fbar-wrap"><div class="fbar" style="width:0;background:${f.c}">${width}%</div></div>
+      <div class="fpct">${f.n.toLocaleString('uk-UA')}</div>`;
+    box.appendChild(row);
+    setTimeout(()=>{ row.querySelector('.fbar').style.width=Math.max(width,2)+'%'; },80*i+120);
+  });
+}
+function buildBlogger(){
+  const box=document.getElementById('bloggerbars'); if(!box) return; box.innerHTML='';
+  const src = LIVE_BLOGGER || BLOGGER;
+  const isLive = !!LIVE_BLOGGER;
+  src.forEach((b,i)=>{
+    const col=document.createElement('div'); col.className='barcol';
+    const h=Math.round(b.v/b.max*170)+8;
+    const sub = isLive ? b.lab : (b.lab + ' студ.');
+    col.innerHTML=`<div class="bar" style="height:0;background:linear-gradient(180deg,#7F77DD,#5B4B9E)"><span class="bv">$${b.v.toLocaleString('en-US')}</span></div><div class="barlab">${sub}</div>`;
+    box.appendChild(col);
+    setTimeout(()=>{ col.querySelector('.bar').style.height=h+'px'; }, 90*i+150);
+  });
+}
+function go(id,btn){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.nav').forEach(n=>n.classList.remove('on'));
+  document.getElementById(id).classList.add('on');
+  if(btn) btn.classList.add('on');
+  if(id==='funnel'){ buildFunnel(); buildSocialFunnel(); }
+  if(id==='onboarding') buildOnboarding();
+  if(id==='money') buildBlogger();
+}
+// ── UNIT CALCULATOR ──
+(function(){
+  const HAIKU_IN=1/1e6, HAIKU_OUT=5/1e6, WHISPER=0.006/60;
+  const aiEx = ()=>25*WHISPER + 400*HAIKU_IN + 150*HAIKU_OUT;
+  const fmt =n=>'$'+n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const fmt0=n=>'$'+Math.round(n).toLocaleString('en-US');
+
+  // зв'язок поле-число ↔ повзунок (кожен слухає обох)
+  function link(numId, rngId, dec){
+    const num=document.getElementById(numId), rng=document.getElementById(rngId);
+    if(!num||!rng) return;
+    num.addEventListener('input',()=>{ let v=parseFloat(num.value); if(!isNaN(v)) rng.value=v; calc(); });
+    rng.addEventListener('input',()=>{ num.value=parseFloat(rng.value).toFixed(dec); calc(); });
+  }
+
+  function tier(price, comm, aiMonth, ret, pre){
+    const commM=price*comm, net=price-commM-aiMonth, ltv=net*ret, margin=price?net/price*100:0;
+    document.getElementById(pre+'_price').textContent=fmt(price);
+    document.getElementById(pre+'_comm').textContent='−'+fmt(commM);
+    document.getElementById(pre+'_ai').textContent='−'+fmt(aiMonth);
+    document.getElementById(pre+'_months').textContent=ret+' міс';
+    const netEl=document.getElementById(pre+'_net');
+    netEl.textContent=(net<0?'−':'')+fmt(Math.abs(net));
+    netEl.style.color = net>=0 ? '' : '#A32D2D';
+    const ltvEl=document.getElementById(pre+'_ltv');
+    ltvEl.textContent=fmt0(ltv);
+    ltvEl.style.color = ltv>=0 ? 'var(--green)' : '#A32D2D';
+    const pill=document.getElementById(pre+'_margin');
+    pill.textContent='маржа '+Math.round(margin)+'%';
+    pill.className='uc-pill '+(margin>=0?'uc-pos':'uc-neg-pill');
+  }
+
+  window.calc=function(){
+    const g=id=>parseFloat(document.getElementById(id).value)||0;
+    const basic=g('uc_basic'), prem=g('uc_prem'), comm=g('uc_comm')/100,
+          act=g('uc_act'), ret=g('uc_ret');
+    const aiMonth=aiEx()*act*30;
+    tier(basic, comm, aiMonth, ret, 'ucb');
+    tier(prem,  comm, aiMonth, ret, 'ucp');
+  };
+
+  link('uc_basic','uc_basic_r',2); link('uc_prem','uc_prem_r',2);
+  link('uc_comm','uc_comm_r',0); link('uc_act','uc_act_r',0); link('uc_ret','uc_ret_r',0);
+  calc();
+})();
+
+try { TG?.ready(); TG?.expand(); } catch(_){}
+// 22.07: повний екран (Bot API 8.0+), безпечно для старих клієнтів
+try { if (typeof TG?.requestFullscreen === 'function') TG.requestFullscreen(); } catch(_){}
+fillData();
+buildFunnel();
+loadLive();
+</script>
+</body>
+</html>
