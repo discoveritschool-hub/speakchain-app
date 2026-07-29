@@ -616,6 +616,120 @@
   .incoming.phrase .cta{background:#fff;color:var(--purple-dark)}
   .incoming.chall .cta{background:var(--purple);color:#fff}
 
+  /* ══ SOCIAL PRACTICE ══ */
+  .social-head{display:flex;align-items:flex-start;gap:12px;margin:4px 0 12px}
+  .social-head>div{flex:1}.social-head h2{font-size:20px;line-height:1.2;margin:2px 0 0}
+  .social-kicker{font-size:var(--fs-xs);font-weight:800;color:var(--purple);text-transform:uppercase;letter-spacing:.05em}
+  .social-settings{width:38px;height:38px;border:0;border-radius:50%;background:var(--bg-card2);
+    color:var(--text);font-size:18px;cursor:pointer}
+  .social-live-card{display:flex;align-items:center;gap:11px;padding:13px 14px;margin-bottom:12px;
+    border-radius:var(--r);background:linear-gradient(135deg,#30275b,#18162a);color:#fff;cursor:pointer}
+  .social-live-card .body{flex:1}.social-live-card .t{font-size:var(--fs);font-weight:800}
+  .social-live-card .s{font-size:var(--fs-xs);color:#c9c2ff;margin-top:2px}
+  .live-dot{width:10px;height:10px;border-radius:50%;background:#5ad8a6;box-shadow:0 0 0 5px rgba(90,216,166,.16)}
+  .social-arrow{font-size:24px;color:#c9c2ff}
+  .social-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;padding:4px;margin-bottom:12px;
+    border-radius:var(--r-pill);background:var(--bg-card2)}
+  .social-tabs button{border:0;background:none;color:var(--text2);padding:9px 4px;border-radius:var(--r-pill);
+    font-size:var(--fs-sm);font-weight:750;cursor:pointer}
+  .social-tabs button.on{background:var(--bg-card);color:var(--text);box-shadow:0 1px 6px rgba(0,0,0,.08)}
+  .social-tabs button span:not(:empty){display:inline-flex;min-width:17px;height:17px;align-items:center;justify-content:center;
+    padding:0 4px;margin-left:2px;border-radius:99px;background:var(--red);color:#fff;font-size:10px}
+  .social-panel{display:none}.social-panel.on{display:block}
+  .social-quick-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+  .social-quick-grid button{display:flex;align-items:center;justify-content:center;gap:7px;padding:12px 8px;
+    border:0;border-radius:var(--r);background:var(--purple-bg);color:var(--purple-text);font-weight:800;cursor:pointer}
+  .social-quick-grid button span{font-size:18px}
+  .practice-post{overflow:hidden;margin-bottom:12px;border:.5px solid var(--line);border-radius:var(--r);
+    background:var(--bg-card)}
+  .practice-post-head{display:flex;align-items:center;gap:10px;padding:11px 12px;cursor:pointer}
+  .social-avatar{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    background:var(--purple-bg);color:var(--purple-text);font-weight:850;flex:none;overflow:hidden}
+  .social-avatar img{width:100%;height:100%;object-fit:cover}
+  .practice-post-head .who{flex:1;min-width:0}.practice-post-head .nm{font-size:var(--fs);font-weight:800}
+  .practice-post-head .meta{font-size:var(--fs-xs);color:var(--text2);margin-top:1px}
+  .source-badge{display:inline-flex;align-items:center;padding:4px 7px;border-radius:99px;background:var(--purple-bg);
+    color:var(--purple-text);font-size:10px;font-weight:800}
+  .practice-media{position:relative;background:#111;min-height:154px;display:flex;align-items:center;justify-content:center}
+  .practice-media video{width:100%;max-height:420px;display:block;background:#111}
+  .practice-media audio{width:calc(100% - 24px);margin:36px 12px}
+  .practice-media.text-only{min-height:116px;padding:20px;background:linear-gradient(135deg,var(--purple-bg),var(--bg-card2));
+    color:var(--text);font-size:18px;font-weight:750;line-height:1.4}
+  .practice-copy{padding:12px}.practice-topic{font-size:var(--fs);font-weight:800;line-height:1.35}
+  .practice-transcript{font-size:var(--fs-sm);line-height:1.45;color:var(--text2);margin-top:6px}
+  .practice-phrase{display:inline-block;margin-top:8px;padding:6px 9px;border-radius:8px;background:var(--purple-bg);
+    color:var(--purple-text);font-size:var(--fs-xs);font-weight:700}
+  .practice-actions{display:flex;flex-wrap:wrap;gap:6px;padding:0 12px 12px}
+  .practice-actions button{border:0;border-radius:10px;padding:10px 9px;background:var(--bg-card2);
+    color:var(--text);font-size:var(--fs-xs);font-weight:800;cursor:pointer}
+  .practice-actions .reply{background:var(--purple);color:#fff;flex:1 0 45%}
+  .social-empty{padding:24px 18px;text-align:center;border:.5px dashed var(--line);border-radius:var(--r);
+    background:var(--bg-card);color:var(--text2)}
+  .social-empty .ic{display:block;font-size:34px;margin-bottom:8px}.social-empty b{display:block;color:var(--text);margin-bottom:4px}
+  .social-person{display:flex;align-items:center;gap:11px;padding:12px;margin-bottom:8px;border:.5px solid var(--line);
+    border-radius:var(--r);background:var(--bg-card);cursor:pointer}
+  .social-person .body{flex:1;min-width:0}.social-person .nm{font-size:var(--fs);font-weight:800}
+  .social-person .sub{font-size:var(--fs-xs);color:var(--text2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .social-person .challenge-btn{border:0;border-radius:99px;padding:8px 10px;background:var(--purple);
+    color:#fff;font-size:11px;font-weight:800;cursor:pointer}
+  .social-match{background:linear-gradient(135deg,var(--purple-bg),var(--bg-card));border-color:rgba(124,110,247,.3)}
+  .social-invite{padding:13px;margin-bottom:8px;border:.5px solid var(--line);border-radius:var(--r);background:var(--bg-card)}
+  .social-invite-top{display:flex;align-items:center;gap:9px}.social-invite-top .body{flex:1}
+  .social-invite .topic{font-size:var(--fs-sm);line-height:1.4;color:var(--text2);margin:9px 0}
+  .social-invite-actions{display:flex;gap:7px}.social-invite-actions button{flex:1;border:0;border-radius:10px;
+    padding:9px;font-size:var(--fs-xs);font-weight:800;cursor:pointer}
+  .social-invite-actions .accept{background:var(--purple);color:#fff}.social-invite-actions .decline{background:var(--bg-card2);color:var(--text2)}
+  .profile-video-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-top:12px}
+  .profile-video-grid>div{aspect-ratio:1;border-radius:10px;background:var(--purple-bg);display:flex;align-items:center;
+    justify-content:center;font-size:22px;cursor:pointer;overflow:hidden}
+  .profile-video-grid video{width:100%;height:100%;object-fit:cover}
+  .privacy-row{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:10px 0}
+  .privacy-row button{border:.5px solid var(--line);border-radius:10px;padding:9px 4px;background:var(--bg-card2);
+    color:var(--text2);font-size:11px;font-weight:700;cursor:pointer}
+  .privacy-row button.on{border-color:var(--purple);background:var(--purple-bg);color:var(--purple-text)}
+  .record-stage{margin-top:12px;padding:18px;text-align:center;border-radius:var(--r);background:var(--bg-card2)}
+  .record-clock{font-size:30px;font-weight:850;font-variant-numeric:tabular-nums}
+  .record-preview{width:100%;max-height:300px;margin-top:10px;border-radius:12px;background:#111}
+  .record-state{font-size:var(--fs-sm);color:var(--text2);margin:6px 0 12px}
+  .record-main{width:64px;height:64px;border:6px solid rgba(255,255,255,.55);border-radius:50%;
+    background:var(--red);box-shadow:0 0 0 3px var(--red);cursor:pointer}
+  .live-room-head{display:flex;align-items:center;gap:10px;padding:10px 0}.live-room-head .body{flex:1}
+  .live-timer{font-size:22px;font-weight:850;font-variant-numeric:tabular-nums;color:var(--purple)}
+  .live-messages{max-height:230px;overflow-y:auto;margin:10px 0;padding:10px;border-radius:var(--r);
+    background:var(--bg-card2)}
+  .live-message{padding:9px 10px;margin-bottom:7px;border-radius:11px;background:var(--bg-card);font-size:var(--fs-sm)}
+  .live-message.mine{margin-left:28px;background:var(--purple-bg)}
+  .field-label{display:block;margin:13px 0 6px;font-size:var(--fs-xs);font-weight:800;color:var(--text2)}
+  .field-input{box-sizing:border-box;width:100%;padding:11px 12px;border:.5px solid var(--line);border-radius:11px;
+    background:var(--bg-card2);color:var(--text);font:inherit;outline:none;resize:vertical}
+  .field-input:focus{border-color:var(--purple);box-shadow:0 0 0 2px rgba(124,110,247,.12)}
+  .toggle-line{display:flex;align-items:center;gap:9px;padding:10px 0;font-size:var(--fs-sm);color:var(--text)}
+  .toggle-line input{width:18px;height:18px;accent-color:var(--purple)}
+  .social-offline{display:none;margin:0 0 10px;padding:9px 11px;border-radius:10px;
+    background:rgba(247,169,92,.13);border:1px solid rgba(247,169,92,.28);color:var(--orange);
+    font-size:var(--fs-xs);font-weight:750}
+  .social-offline.on{display:block}
+  .today-social-strip{display:flex;gap:9px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:3px}
+  .today-speak-card{flex:0 0 78%;overflow:hidden;border:.5px solid var(--line);border-radius:var(--r);
+    background:var(--bg-card);scroll-snap-align:start}
+  .today-speak-media{height:158px;background:linear-gradient(135deg,var(--purple-bg),var(--bg-card2));
+    display:flex;align-items:center;justify-content:center;font-size:34px}
+  .today-speak-media video{width:100%;height:100%;object-fit:cover;background:#111}
+  .today-speak-media audio{width:calc(100% - 20px)}
+  .today-speak-body{display:flex;align-items:center;gap:8px;padding:10px}.today-speak-body .body{flex:1;min-width:0}
+  .today-speak-body .nm{font-size:var(--fs-sm);font-weight:800}.today-speak-body .sub{font-size:var(--fs-xs);
+    color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+  .moderation-note{margin:0 12px 10px;padding:7px 9px;border-radius:9px;background:rgba(247,169,92,.12);
+    color:var(--orange);font-size:var(--fs-xs);line-height:1.35}
+  .draft-resume{display:none;align-items:center;gap:8px;margin:12px 0 2px;padding:10px 11px;
+    border-radius:11px;background:var(--purple-bg);color:var(--purple-text);font-size:var(--fs-xs)}
+  .draft-resume.on{display:flex}.draft-resume span{flex:1}
+  .draft-resume button{border:0;border-radius:8px;padding:7px 9px;background:var(--purple);color:#fff;
+    font-size:10px;font-weight:800}.draft-resume button:last-child{background:transparent;color:var(--purple-text)}
+  .chainy-compose-nudge{display:none;flex-shrink:0;margin:7px 12px 12px;padding:11px 13px;border:0;
+    border-radius:12px;background:var(--purple);color:#fff;font-size:var(--fs-sm);font-weight:800;cursor:pointer}
+  .chainy-compose-nudge.on{display:block}
+
   /* компактна шапка профілю */
   .prof-head{display:flex;align-items:center;gap:14px;margin:8px 0 16px}
   .prof-head .av{width:52px;height:52px;border-radius:50%;background:var(--purple-bg);flex-shrink:0;
@@ -827,7 +941,6 @@ window.addEventListener('load', function(){
 
   <!-- TOP BAR — висить над усіма екранами -->
   <div class="topbar" id="topbar">
-    <button class="tb-arw" id="tb-prev" onclick="tabStep(-1)" aria-label="Попередній">‹</button>
     <div class="streak-chip" id="tb-streak">
       <span class="f">🔥</span><span class="n">0</span><span class="l">дні</span>
     </div>
@@ -836,7 +949,6 @@ window.addEventListener('load', function(){
       <div class="top-stat" id="tb-xp">⚡ 0<span class="l">XP</span></div>
       <button class="tb-profile" id="tb-profile" onclick="go('s-profile')" aria-label="Профіль">👤</button>
     </div>
-    <button class="tb-arw" id="tb-next" onclick="tabStep(1)" aria-label="Наступний">›</button>
   </div>
 
   <div class="scroll">
@@ -855,8 +967,16 @@ window.addEventListener('load', function(){
   <div class="tile primary" onclick="openChainyNow()"><span class="ic">🗣</span><div class="t">Поговорити з Chainy</div><div class="s">одразу почати розмову</div></div>
 </div>
 <div id="inbox-wrap" style="display:none">
-  <div class="inbox-hd"><span class="ti">📬 Тобі прийшло</span><span class="badge" id="inbox-n">0</span></div>
+  <div class="inbox-hd"><span class="ti">✨ Сьогодні для тебе</span><span class="badge" id="inbox-n">0</span></div>
   <div id="inbox"></div>
+</div>
+<div id="today-social-wrap" style="display:none">
+  <div class="sec-h"><span class="ti">Люди говорять сьогодні</span><span class="meta" onclick="go('s-social')" style="cursor:pointer;color:var(--purple)">Усі →</span></div>
+  <div id="today-social"></div>
+</div>
+<div id="today-phrases-wrap" style="display:none">
+  <div class="sec-h"><span class="ti">Фрази дня</span><span class="meta">натисни, щоб розібрати</span></div>
+  <div id="today-phrases"></div>
 </div>
 <div class="sec-h"><span class="ti">Твоя звичка</span><span class="meta" id="chain-meta">0 днів</span></div>
 <div class="habit-chain" id="chain"></div>
@@ -867,6 +987,16 @@ window.addEventListener('load', function(){
 </div>
 </div>
 <div class="screen" id="s-buddy">
+<div class="net-item" id="cy-publish-card" style="display:none;border-color:rgba(124,110,247,.45)" onclick="resumeComposeRecording()">
+  <span class="ic">🎥</span>
+  <div class="body"><div class="t">Готово — записати відповідь людям</div>
+  <div class="s">повернутися до чернетки після репетиції</div></div><span class="ch">›</span>
+</div>
+<div class="net-item" onclick="prepareWeeklyWithChainy()">
+  <span class="ic">🏆</span>
+  <div class="body"><div class="t">Підготуватися до Челенджу тижня</div>
+  <div class="s">Chainy допоможе скласти й відрепетирувати відповідь</div></div><span class="ch">›</span>
+</div>
 <div class="net-item" id="cy-continue" style="display:none;border-color:rgba(90,216,166,.45)" onclick="cyContinue()">
   <span class="ic">↩️</span>
   <div class="body"><div class="t">Продовжити останню розмову</div>
@@ -918,6 +1048,8 @@ window.addEventListener('load', function(){
   <div class="t" style="font-size:var(--fs-xl)" id="pg-lvl">—</div>
   <div class="s" id="pg-way">—</div>
 </div>
+<div class="sec-h"><span class="ti">Твоє реальне говоріння</span><span class="meta">цього шляху</span></div>
+<div id="pg-social-stats"></div>
 <div class="sec-h"><span class="ti">Шлях A1 → C2</span><span class="meta">торкнись рівня</span></div>
 <div class="lvl-line">
   <div class="lvl-track2"><i id="lvl-fill" style="width:0%"></i></div>
@@ -939,30 +1071,41 @@ window.addEventListener('load', function(){
 <div class="sec-h"><span class="ti" id="lvl-title">Граматика</span><span class="meta" id="lvl-count"></span></div>
 <div id="topics"></div>
 </div>
-    <div class="screen" id="s-social">
-<div id="social-lottery"></div>
-<div class="sec-h" style="margin-top:8px"><span class="ti">Спільні ланцюжки</span></div>
-<div id="chains"></div>
-<div class="sec-h"><span class="ti">Speaking Challenge</span></div>
-<div class="pair">
-  <div class="pair-tile accent" onclick="act('sc_send_challenge')"><span class="ic">🎙️</span><div class="t">Кинути виклик</div><div class="s">надіслати фразу</div></div>
-  <div class="pair-tile" onclick="act('chain_invite_screen')"><span class="ic">🔗</span><div class="t">Зміцнити ланцюжок</div><div class="s">запросити друга</div></div>
+<div class="screen" id="s-social">
+<div class="social-head">
+  <div><div class="social-kicker">Спільнота й друзі</div><h2>Говори з людьми свого рівня</h2></div>
+  <button class="social-settings" onclick="openSocialSettings()" aria-label="Налаштувати профіль">⚙</button>
 </div>
-<div id="partners-wrap" style="display:none">
-  <div class="sec-h"><span class="ti">Speaking Partners</span></div>
-  <div id="partners"></div>
-  <div class="partner-note">💬 Тисни на партнера — побачиш вашу історію викликів. Або йдіть у чат Telegram: там зручно кидати одне одному відео й голосові.</div>
+<div class="social-offline" id="social-offline">Офлайн: перегляд доступний, а запис залишиться чернеткою до відновлення зв’язку.</div>
+<div class="social-live-card" onclick="startLiveMatch()">
+  <span class="live-dot"></span>
+  <div class="body"><div class="t">Швидка розмова · 5 хвилин</div>
+    <div class="s" id="social-live-sub">Знайдемо партнера за рівнем і темою</div></div>
+  <span class="social-arrow">›</span>
 </div>
-<div class="sec-h"><span class="ti">Рейтинг</span></div>
-<div class="menu-group" style="margin-bottom:8px">
-  <div class="mi" onclick="openOv('ov-rating')"><span class="ic">🏆</span>
-    <div class="body"><div class="t">Таблиця лідерів</div><div class="s" id="lb-my">твоє місце</div></div>
-    <span class="ch">›</span></div>
+<div class="social-tabs" role="tablist">
+  <button class="on" id="soc-tab-feed" onclick="socialTab('feed')" role="tab">Для тебе</button>
+  <button id="soc-tab-challenges" onclick="socialTab('challenges')" role="tab">Виклики <span id="soc-unread"></span></button>
+  <button id="soc-tab-people" onclick="socialTab('people')" role="tab">Люди</button>
 </div>
-<div class="sec-h"><span class="ti">Бонуси за мережу</span></div>
-<div class="bonus-row"><div class="txt"><div class="bt">Друг зробив 1-у ланку</div><div class="bs">обидва отримують +20% XP × 7 днів</div></div><span class="rew">⚡</span></div>
-<div class="bonus-row"><div class="txt"><div class="bt">Обидва зробили урок сьогодні</div><div class="bs">Speaking Sync — +25 XP кожному</div></div><span class="rew">🔗</span></div>
-<div class="bonus-row"><div class="txt"><div class="bt">Speaking Partners бейдж</div><div class="bs">після першого спільного виклику</div></div><span class="rew">🎖️</span></div>
+<div class="social-panel on" id="soc-feed">
+  <div id="social-challenge-card"></div>
+  <div class="sec-h"><span class="ti">Практика для тебе</span><span class="meta">відповідай, не лише дивись</span></div>
+  <div id="practice-feed"></div>
+</div>
+<div class="social-panel" id="soc-challenges">
+  <div class="social-quick-grid">
+    <button onclick="openSocialComposer({mode:'challenge'})"><span>🎙</span>Створити виклик</button>
+    <button onclick="startRelay()"><span>🔗</span>Почати естафету</button>
+  </div>
+  <div id="social-invitations"></div>
+</div>
+<div class="social-panel" id="soc-people">
+  <div class="sec-h"><span class="ti">Три найкращі співрозмовники</span><span class="meta">за рівнем та інтересами</span></div>
+  <div id="social-matches"></div>
+  <div class="sec-h"><span class="ti">Усі рекомендовані</span></div>
+  <div id="social-people"></div>
+</div>
 </div>
 <div class="screen" id="s-listen">
 <div class="challenge-card" style="margin-top:8px" onclick="openPlayer()">
@@ -991,6 +1134,11 @@ window.addEventListener('load', function(){
   <span class="ic">🗣</span>
   <div class="body"><div class="t">Застосувати фрази з Chainy</div>
   <div class="s">розмова продовжить тему останнього відео</div></div><span class="ch">›</span>
+</div>
+<div class="net-item" style="margin:8px 12px 0;border-color:rgba(124,110,247,.35)" onclick="lessonToPeople()">
+  <span class="ic">🎥</span>
+  <div class="body"><div class="t">Застосувати тему з людьми</div>
+  <div class="s">запиши коротку відповідь і отримай відеовідповідь</div></div><span class="ch">›</span>
 </div>
 <div class="sec-h"><span class="ti">Як слухати правильно</span></div>
 <div class="instr-card">
@@ -1121,6 +1269,7 @@ window.addEventListener('load', function(){
       <span onclick="closeOv()" style="font-size:26px;color:var(--text2);cursor:pointer;line-height:1;padding:0 4px">×</span>
     </div>
     <div id="ov-buddy-host" style="flex:1;min-height:0;overflow:hidden"></div>
+    <button class="chainy-compose-nudge" id="chainy-compose-nudge" onclick="chainyToRecording()">Ти вже відрепетирувала — записати відповідь людям →</button>
   </div>
 </div>
 <div class="overlay" id="ov-prog">
@@ -1194,6 +1343,153 @@ window.addEventListener('load', function(){
     <div style="display:flex;gap:6px;padding:0 16px 8px;flex-shrink:0" id="chd-chips"></div>
     <div style="display:flex;gap:3px;padding:0 16px 10px;flex-shrink:0" id="chd-progress"></div>
     <div id="chd-body" style="flex:1;min-height:0;overflow-y:auto;padding:0 16px 20px"></div>
+  </div>
+</div>
+<div class="overlay" id="ov-today-phrase">
+  <div class="sheet">
+    <div class="grip"></div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <div>
+        <div id="today-phrase-source" style="font-size:var(--fs-xs);font-weight:800;color:var(--purple);text-transform:uppercase;letter-spacing:.04em">Фраза дня</div>
+        <h3 id="today-phrase-title" style="margin:3px 0 0">Фраза дня</h3>
+      </div>
+      <span onclick="closeOv()" style="margin-left:auto;font-size:26px;color:var(--text2);cursor:pointer;line-height:1;padding:0 4px">×</span>
+    </div>
+    <div id="today-phrase-text" style="font-size:22px;font-weight:850;line-height:1.25;margin:20px 0 8px"></div>
+    <div id="today-phrase-tr" style="color:var(--text2);font-size:var(--fs);line-height:1.45"></div>
+    <div id="today-phrase-ex" style="display:none;margin-top:14px;padding:12px 14px;border-radius:var(--r-sm);background:var(--purple-bg);line-height:1.45"></div>
+    <button id="today-phrase-video" class="sn-go" style="display:none;margin-top:14px" onclick="openTodayPhraseVideo()">▶ Дивитись відео блогера</button>
+    <button class="diag-cta" style="margin-top:14px" onclick="practiceTodayPhrase()">Сказати з Chainy</button>
+    <button class="sn-skip" onclick="saveTodayPhrase()">＋ Додати у словник</button>
+  </div>
+</div>
+<div class="overlay" id="ov-weekly-challenge">
+  <div class="sheet">
+    <div class="grip"></div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <div>
+        <div id="weekly-challenge-source" style="font-size:var(--fs-xs);font-weight:800;color:var(--purple);text-transform:uppercase;letter-spacing:.04em">SpeakChain</div>
+        <h3 id="weekly-challenge-title" style="margin:3px 0 0">Челендж тижня</h3>
+      </div>
+      <span onclick="closeOv()" style="margin-left:auto;font-size:26px;color:var(--text2);cursor:pointer;line-height:1;padding:0 4px">×</span>
+    </div>
+    <div id="weekly-challenge-topic" style="font-size:18px;font-weight:800;line-height:1.35;margin:20px 0 8px"></div>
+    <div id="weekly-challenge-meta" style="color:var(--text2);font-size:var(--fs-sm);line-height:1.45"></div>
+    <button class="diag-cta" style="margin-top:18px" onclick="recordWeeklyChallenge()">Записати відповідь</button>
+    <button class="sn-go" style="margin-top:8px" onclick="practiceWeeklyChallenge()">Підготуватися з Chainy</button>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+      <button class="sn-skip" onclick="relayWeeklyChallenge()">Передати естафету</button>
+      <button class="sn-skip" onclick="viewWeeklyResponses()">Відповіді інших</button>
+    </div>
+    <button class="sn-skip" onclick="sendWeeklyChallengeToChat()">Відкрити завдання в чаті</button>
+  </div>
+</div>
+<div class="overlay" id="ov-student-profile">
+  <div class="sheet" style="max-height:90vh;overflow-y:auto">
+    <div class="grip"></div>
+    <div style="display:flex;align-items:center;gap:12px">
+      <div class="social-avatar" id="sp-avatar" style="width:54px;height:54px;font-size:20px">S</div>
+      <div style="flex:1"><h3 id="sp-name" style="margin:0">Student</h3>
+        <div id="sp-meta" style="font-size:var(--fs-sm);color:var(--text2);margin-top:2px"></div></div>
+      <span onclick="closeOv()" style="font-size:26px;color:var(--text2);cursor:pointer">×</span>
+    </div>
+    <div id="sp-goal" style="margin:15px 0 8px;font-size:var(--fs);line-height:1.45"></div>
+    <div id="sp-tags" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+    <div id="sp-stats" style="display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:15px 0"></div>
+    <button class="diag-cta" onclick="challengeProfile()">Кинути виклик</button>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px">
+      <button class="sn-go" style="margin-top:7px" onclick="relayProfile()">Передати естафету</button>
+      <button class="sn-go" style="margin-top:7px;background:var(--bg-card2);color:var(--text)" onclick="friendProfile()">Додати в друзі</button>
+    </div>
+    <div class="sec-h"><span class="ti">Публічні відповіді</span></div>
+    <div class="profile-video-grid" id="sp-posts"></div>
+    <button class="sn-skip" onclick="socialSafetyMenu()">Приховати · заблокувати · поскаржитися</button>
+  </div>
+</div>
+<div class="overlay" id="ov-social-settings">
+  <div class="sheet" style="max-height:92vh;overflow-y:auto">
+    <div class="grip"></div>
+    <div style="display:flex;align-items:center"><h3 style="margin:0;flex:1">Мій speaking-профіль</h3>
+      <span onclick="closeOv()" style="font-size:26px;color:var(--text2);cursor:pointer">×</span></div>
+    <p style="font-size:var(--fs-sm);color:var(--text2);line-height:1.45">Ти вирішуєш, хто бачить профіль і кожну відповідь. Контакти й точна локація ніколи не показуються.</p>
+    <label class="field-label">Ім’я або псевдонім</label>
+    <input class="field-input" id="ss-name" maxlength="40" placeholder="Як тебе називати">
+    <label class="field-label">Посилання на аватар (необов’язково)</label>
+    <input class="field-input" id="ss-avatar" maxlength="500" placeholder="https://…">
+    <label class="field-label">Моя ціль</label>
+    <input class="field-input" id="ss-goal" maxlength="80" placeholder="Наприклад: впевнено говорити в подорожах">
+    <label class="field-label">Інтереси через кому</label>
+    <input class="field-input" id="ss-interests" maxlength="160" placeholder="подорожі, кіно, робота">
+    <label class="field-label">Комфортний формат</label>
+    <div class="privacy-row" id="ss-format">
+      <button data-value="audio" onclick="socialPickSetting('format','audio')">🎙 Аудіо</button>
+      <button data-value="video" onclick="socialPickSetting('format','video')">📹 Відео</button>
+      <button data-value="any" onclick="socialPickSetting('format','any')">Обидва</button>
+    </div>
+    <label class="field-label">Хто бачить профіль</label>
+    <div class="privacy-row" id="ss-visibility">
+      <button data-value="private" onclick="socialPickSetting('visibility','private')">Лише я</button>
+      <button data-value="friends" onclick="socialPickSetting('visibility','friends')">Друзі</button>
+      <button data-value="community" onclick="socialPickSetting('visibility','community')">Спільнота</button>
+    </div>
+    <label class="toggle-line"><input type="checkbox" id="ss-live"> Дозволити підбір у «Швидку розмову»</label>
+    <label class="toggle-line"><input type="checkbox" id="ss-minor"> Безпечний режим для неповнолітніх</label>
+    <button class="diag-cta" onclick="saveSocialSettings()">Зберегти профіль</button>
+  </div>
+</div>
+<div class="overlay" id="ov-social-compose">
+  <div class="sheet" style="max-height:94vh;overflow-y:auto">
+    <div class="grip"></div>
+    <div style="display:flex;align-items:center"><div><div class="social-kicker" id="compose-kicker">Speaking response</div>
+      <h3 id="compose-title" style="margin:2px 0 0">Записати відповідь</h3></div>
+      <span onclick="closeSocialComposer()" style="margin-left:auto;font-size:26px;color:var(--text2);cursor:pointer">×</span></div>
+    <div class="draft-resume" id="compose-draft-resume"><span>Є незавершена чернетка</span>
+      <button onclick="restoreComposeDraft()">Відновити</button><button onclick="discardComposeDraft()">Видалити</button></div>
+    <label class="field-label">Тема або запитання</label>
+    <textarea class="field-input" id="compose-topic" maxlength="240" rows="2" placeholder="What made you smile today?"></textarea>
+    <label class="field-label">Фраза, яку варто використати</label>
+    <input class="field-input" id="compose-phrase" maxlength="180" placeholder="It made my day">
+    <div style="display:flex;gap:7px;margin-top:10px">
+      <button class="sn-go" style="flex:1" onclick="prepareComposeWithChainy()">Підготуватися з Chainy</button>
+      <button class="sn-go" style="flex:1;background:var(--bg-card2);color:var(--text)" onclick="socialSetRecordType()">🎙/📹 Формат</button>
+    </div>
+    <div class="record-stage">
+      <div class="record-clock" id="compose-clock">00:00</div>
+      <div class="record-state" id="compose-state">До 45 секунд. Можна перезаписати перед публікацією.</div>
+      <button class="record-main" id="compose-record" onclick="toggleSocialRecord()" aria-label="Почати запис"></button>
+      <video class="record-preview" id="compose-preview" controls playsinline style="display:none"></video>
+      <audio id="compose-audio-preview" controls style="display:none;width:100%;margin-top:10px"></audio>
+    </div>
+    <label class="field-label">Хто побачить відповідь</label>
+    <div class="privacy-row" id="compose-visibility">
+      <button data-value="private" onclick="setComposeVisibility('private')">Лише я</button>
+      <button data-value="friends" onclick="setComposeVisibility('friends')">Друзі</button>
+      <button data-value="community" onclick="setComposeVisibility('community')">Спільнота</button>
+    </div>
+    <textarea class="field-input" id="compose-transcript" maxlength="1200" rows="2" placeholder="За бажанням додай субтитри або короткий текст"></textarea>
+    <button class="diag-cta" id="compose-publish" onclick="publishSocialResponse()">Переглянути й опублікувати</button>
+    <div style="font-size:11px;color:var(--text3);line-height:1.4;margin-top:8px">Публікацію можна видалити. Контент проходить автоматичну перевірку; скарги переглядає команда.</div>
+  </div>
+</div>
+<div class="overlay" id="ov-live-match">
+  <div class="sheet" style="max-height:94vh;overflow-y:auto">
+    <div class="grip"></div>
+    <div style="display:flex;align-items:center"><div><div class="social-kicker">Швидка розмова</div>
+      <h3 id="live-title" style="margin:2px 0 0">Шукаємо партнера…</h3></div>
+      <span onclick="leaveLiveMatch()" style="margin-left:auto;font-size:26px;color:var(--text2);cursor:pointer">×</span></div>
+    <div id="live-waiting" class="social-empty" style="margin-top:14px"><span class="ic">🔎</span>
+      <b>Підбираємо людину твого рівня</b><span>Можеш закрити екран — ми збережемо місце в черзі.</span></div>
+    <div id="live-room" style="display:none">
+      <div class="live-room-head"><div class="social-avatar" id="live-avatar">S</div>
+        <div class="body"><b id="live-partner">Speaking partner</b><div id="live-scenario" style="font-size:var(--fs-xs);color:var(--text2)"></div></div>
+        <div class="live-timer" id="live-timer">05:00</div></div>
+      <div id="live-ready-box" class="instr-note">Матч почнеться, коли обидва натиснуть «Я готова».</div>
+      <button class="diag-cta" id="live-ready" onclick="readyLiveMatch()">Я готова</button>
+      <div class="live-messages" id="live-messages"></div>
+      <button class="diag-cta" id="live-record" style="display:none" onclick="toggleLiveRecord()">🎙 Записати коротку репліку</button>
+      <div style="display:flex;gap:6px"><button class="sn-skip" onclick="reportLiveMatch()">Поскаржитися</button>
+        <button class="sn-skip" onclick="blockLivePartner()">Заблокувати</button></div>
+    </div>
   </div>
 </div>
 <div class="overlay" id="ov-diagnostic">
@@ -1343,6 +1639,21 @@ window.addEventListener('message',event=>{
   if(d.type==='sc_word_tap')openWordCard(d.word,d.context);
 });
 
+async function postAction(action,extra){
+  const r=await fetch(BOT_API+'/miniapp_action',{method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify(Object.assign({uid:UID,init_data:IDT,action:action},extra||{}))});
+  if(!r.ok)throw new Error('action_failed');
+  return r.json().catch(()=>({ok:true}));
+}
+async function playerAction(action,extra){
+  const r=await fetch(BOT_API+'/player_action',{method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify(Object.assign({uid:UID,init_data:IDT,action:action},extra||{}))});
+  if(!r.ok)throw new Error('player_action_failed');
+  return r.json().catch(()=>({ok:true}));
+}
+
 function trackUx(event,meta){
   try{
     fetch(BOT_API+'/miniapp_action',{method:'POST',
@@ -1359,16 +1670,15 @@ function trackUx(event,meta){
    Стало: дію шлемо боту (аналітика/стан), а екран показуємо ТУТ ЖЕ
           через РІДНІ go()/openOv() — вони вміють HIST, CUR, leaveBuddy, tgBack. */
 const SHELL_TABS = {
-  buy_basic:         's-profile',
-  buy_premium:       's-profile',
-  paywall_fluent:    's-profile',
-  sc_send_challenge: 's-social',
-  open_buddy:        's-buddy',    /* була МЕРТВА: 0 згадок у боті */
   show_progress:     's-prog',
 };
 const SHELL_OVERLAYS = {
-  chain_invite_screen: 'ov-invite',
   open_diagnostic:     'ov-diagnostic',
+  chain_invite_screen: 'ov-invite',
+  sc_send_challenge:   'ov-invite',
+  buy_basic:           'ov-plans',
+  buy_premium:         'ov-plans',
+  paywall_fluent:      'ov-plans',
 };
 /* start_lesson / revive_chain / open_diagnostic / paywall_buy / логи — веде БОТ.
    ТЕХБОРГ: щоб start_lesson відкривав плеєр усередині оболонки, боту треба
@@ -1381,16 +1691,41 @@ function shellRoute(a){
 window.shellRoute = shellRoute;   /* мініапи бачать через fakeWindow (Proxy) */
 
 async function act(a,x){
+  /* Будь-яка кнопка зі старою назвою дії теж має відкрити готовий
+     вбудований екран, а не лише мовчки змінити стан у боті. */
+  if(a==='challenge_start'){ await startChallengeAndOpen(); return; }
+  if(a==='challenge_day'||a==='open_challenge'){
+    delete PAYLOAD['ov-challenge']; delete PENDING['ov-challenge'];
+    await openOv('ov-challenge'); return;
+  }
+  /* Дії, для яких уже є нативний екран, не дублюємо повідомленням у чаті. */
+  if(a==='start_lesson'){ openLessonNow(); return; }
+  if(a==='open_buddy'){ openChainyNow(); return; }
+  if(a==='open_topic_step'){
+    const cmd=(x&&x.cmd)||'';
+    if(cmd==='lesson'){ openLessonNow(); return; }
+    if(cmd==='buddy'){ openChainyNow(); return; }
+    if(cmd==='table'){ go('s-prog'); return; }
+  }
+  if(a==='revive_chain'){
+    try{
+      await postAction(a,x||{});
+      delete PAYLOAD['s-home'];delete PENDING['s-home'];
+      if(CUR==='s-home')await renderHome();
+      toast('Ланцюжок оновлено ✓');
+    }catch(e){toast('Не вдалося відновити. Спробуй ще раз');}
+    return;
+  }
+  if(shellRoute(a)){ trackUx('route_'+a); return; }
   const body=Object.assign({action:a,uid:UID,init_data:IDT},x||{});
   /* Боту шлемо У ФОНІ — не тримаємо людину, поки летить fetch */
   fetch(BOT_API+'/miniapp_action',{method:'POST',
     headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
     .catch(()=>{ if(TG?.sendData){try{TG.sendData(JSON.stringify(body));}catch(e){}} });
 
-  if (shellRoute(a)) return;      /* екран є тут → відкриваємо, НЕ гасимо */
-
   toast('Готово — дивись у чаті 💬');   /* решту веде бот. Додаток НЕ гасимо */
 }
+window.__shellAct=act;
 
 /* 23.07: раніше мережева помилка мовчки поверталась як {} — людина
    бачила порожній екран і думала, що застосунок завис або нічого не
@@ -1551,6 +1886,7 @@ const DAILY_STEPS=[
 
 async function renderHome(){
   const D=await load('s-home');
+  TODAY_HOME=D||{};
   renderTop(D);
   paintNudge(D);           /* одна картка «що робити зараз» — замість вибору */
   const len=D.chain_length||0;
@@ -1591,18 +1927,120 @@ async function renderHome(){
     t:'День '+D.challenge_active_day+' челенджу чекає',
     s:'Відео, завдання і словник — усе на одному екрані',
     cta:'Відкрити →',go:"openOv('ov-challenge')"});
-  if(D.phrase_of_day)it.push({c:'phrase',av:'<span class="yt"></span>',
-    t:D.phrase_from?('Фраза дня від '+esc(D.phrase_from)):'Фраза дня',
-    s:'«'+esc(D.phrase_of_day)+'»',cta:'Сказати →',go:"act('start_lesson')"});
+  (D.social_updates||[]).slice(0,2).forEach(n=>it.push({c:'chall',av:'💬',
+    t:esc(n.from?.name||'Хтось')+(n.status==='responded'?' відповів тобі':' надіслав виклик'),
+    s:esc(n.topic||'Продовж speaking-ланцюжок'),cta:'Відповісти →',
+    go:"go('s-social');setTimeout(()=>socialTab('challenges'),80)"}));
+  if(D.weekly_challenge&&D.weekly_challenge.topic)it.push({c:'chall',av:'🏆',
+    t:esc(D.weekly_challenge.title||'Челендж тижня'),
+    s:esc(D.weekly_challenge.topic),cta:'Долучитись →',go:"openWeeklyChallenge()"});
   if(D.incoming_challenge){const c=D.incoming_challenge;
     it.push({c:'chall',av:ini(c.from),t:esc(c.from)+' кинув тобі виклик',
       s:'хто краще повторить фразу',cta:'Прийняти',go:"openOv('ov-invite')"});}
   const w=$('#inbox-wrap');
-  if(!it.length){w.style.display='none';return;}
-  w.style.display='';$('#inbox-n').textContent=it.length;
-  $('#inbox').innerHTML=it.map(o=>'<div class="incoming '+o.c+'" onclick="'+o.go+'">'
-    +'<div class="av">'+o.av+'</div><div class="body"><div class="t">'+o.t+'</div>'
-    +'<div class="s">'+o.s+'</div></div><span class="cta">'+o.cta+'</span></div>').join('');
+  if(!it.length)w.style.display='none';
+  else{
+    w.style.display='';$('#inbox-n').textContent=it.length;
+    $('#inbox').innerHTML=it.map(o=>'<div class="incoming '+o.c+'" onclick="'+o.go+'">'
+      +'<div class="av">'+o.av+'</div><div class="body"><div class="t">'+o.t+'</div>'
+      +'<div class="s">'+o.s+'</div></div><span class="cta">'+o.cta+'</span></div>').join('');
+  }
+  renderTodaySocial(D);
+  renderTodayPhrases(D);
+}
+function renderTodaySocial(D){
+  const feed=D.social_preview||[],wrap=$('#today-social-wrap');
+  if(!feed.length){wrap.style.display='none';return;}
+  wrap.style.display='';
+  $('#today-social').className='today-social-strip';
+  $('#today-social').innerHTML=feed.slice(0,5).map(p=>{
+    const a=p.author||{},media=socialMediaUrl(p.media_url||'');
+    const visual=media&&p.media_type==='video'
+      ?'<video src="'+esc(media)+'" controls playsinline preload="metadata" onplay="socialViewed(\''+esc(p.id)+'\')"></video>'
+      :media&&p.media_type==='audio'
+        ?'<audio src="'+esc(media)+'" controls preload="metadata" onplay="socialViewed(\''+esc(p.id)+'\')"></audio>'
+        :'<span>🎙</span>';
+    return '<article class="today-speak-card"><div class="today-speak-media">'+visual+'</div>'
+      +'<div class="today-speak-body" onclick="go(&quot;s-social&quot;)">'+socialAvatar(a)
+      +'<div class="body"><div class="nm">'+esc(a.name||'Student')+' · '+esc(a.level||'A1')+'</div>'
+      +'<div class="sub">'+esc(p.topic||p.transcript||'Коротка speaking-відповідь')+'</div></div>'
+      +'<button class="challenge-btn" onclick="event.stopPropagation();go(&quot;s-social&quot;)">Відповісти</button></div></article>';
+  }).join('');
+}
+function renderTodayPhrases(D){
+  const arr=[];
+  if(D.blogger_phrase?.text)arr.push({kind:'blogger',av:'🎬',t:'Від '+(D.blogger_phrase.source||'блогера'),s:D.blogger_phrase.text});
+  if(D.speakchain_phrase?.text)arr.push({kind:'speakchain',av:'⛓',t:'Від SpeakChain',s:D.speakchain_phrase.text});
+  const wrap=$('#today-phrases-wrap');if(!arr.length){wrap.style.display='none';return;}wrap.style.display='';
+  $('#today-phrases').innerHTML=arr.map(p=>'<div class="incoming phrase" onclick="openTodayPhrase(&quot;'+p.kind+'&quot;)">'
+    +'<div class="av">'+p.av+'</div><div class="body"><div class="t">'+esc(p.t)+'</div><div class="s">«'+esc(p.s)+'»</div></div>'
+    +'<span class="cta">Відкрити →</span></div>').join('');
+}
+
+let TODAY_HOME={}, ACTIVE_TODAY_PHRASE=null, ACTIVE_WEEKLY_CHALLENGE=null;
+function openTodayPhrase(kind){
+  const p=(TODAY_HOME||{})[kind+'_phrase'];
+  if(!p||!p.text){ toast('Фраза ще готується'); return; }
+  ACTIVE_TODAY_PHRASE=p;
+  $('#today-phrase-source').textContent=p.source||'Фраза дня';
+  $('#today-phrase-title').textContent=kind==='blogger'?'Від блогера':'Від SpeakChain';
+  $('#today-phrase-text').textContent=p.text;
+  $('#today-phrase-tr').textContent=p.translation||'';
+  const ex=$('#today-phrase-ex');
+  ex.textContent=p.example||''; ex.style.display=p.example?'':'none';
+  $('#today-phrase-video').style.display=p.video_url?'':'none';
+  openOv('ov-today-phrase');
+}
+function openTodayPhraseVideo(){
+  if(!ACTIVE_TODAY_PHRASE?.video_url)return;
+  closeOv(); openPlayer(ACTIVE_TODAY_PHRASE.video_url);
+}
+async function saveTodayPhrase(){
+  const p=ACTIVE_TODAY_PHRASE;if(!p)return;
+  await playerAction('save_phrase',{phrase:p.text,translation:p.translation||'',example:p.example||''});
+  toast('Додано у словник ✓');
+}
+function practiceTodayPhrase(){
+  const p=ACTIVE_TODAY_PHRASE;if(!p)return;
+  closeOv(); go('s-buddy');
+  cyLaunch(w=>w.startVideoChat&&w.startVideoChat('Phrase of the day','discuss','',[p.text]));
+}
+function openWeeklyChallenge(challenge){
+  const c=challenge||(TODAY_HOME||{}).weekly_challenge;
+  if(!c){toast('Челендж ще готується');return;}
+  ACTIVE_WEEKLY_CHALLENGE=c;
+  $('#weekly-challenge-source').textContent=c.source_label||'SpeakChain Community';
+  $('#weekly-challenge-title').textContent=c.title||'Челендж тижня';
+  $('#weekly-challenge-topic').textContent=c.topic||'Запиши коротку відповідь англійською';
+  const parts=[];
+  if(c.source_author)parts.push(c.source_author);
+  if(c.duration)parts.push(c.duration);
+  if(c.deadline)parts.push('до '+String(c.deadline).slice(0,16).replace('T',' '));
+  if(c.participants!=null)parts.push('Учасників: '+c.participants);
+  if(c.prize)parts.push('Приз: '+c.prize);
+  if(c.done)parts.push('Ти вже долучилась цього тижня ✓');
+  $('#weekly-challenge-meta').textContent=parts.join(' · ');
+  openOv('ov-weekly-challenge');
+}
+function practiceWeeklyChallenge(){
+  const c=ACTIVE_WEEKLY_CHALLENGE;if(!c)return;
+  closeOv();go('s-buddy');
+  cyLaunch(w=>w.startVideoChat&&w.startVideoChat('Weekly challenge: '+c.topic,'discuss','',[c.topic]));
+}
+function recordWeeklyChallenge(){
+  const c=ACTIVE_WEEKLY_CHALLENGE||{};closeOv();
+  openSocialComposer({mode:'challenge_week',challenge:c,topic:c.topic||'',phrase:c.phrase||''});
+}
+function relayWeeklyChallenge(){
+  const c=ACTIVE_WEEKLY_CHALLENGE||{};closeOv();
+  openSocialComposer({mode:'relay',challenge:c,topic:c.topic||'',phrase:c.phrase||''});
+}
+function viewWeeklyResponses(){closeOv();go('s-social');setTimeout(()=>socialTab('feed'),80);}
+async function sendWeeklyChallengeToChat(){
+  const c=ACTIVE_WEEKLY_CHALLENGE||{};
+  if(c.kind==='friend'||c.source==='friend'){closeOv();go('s-social');setTimeout(()=>socialTab('challenges'),80);return;}
+  await postAction('weekly_challenge_open',{kind:c.kind||''});
+  toast('Завдання надіслано в чат ✓');
 }
 
 /* ══════════ CHAINY ══════════ */
@@ -1624,6 +2062,7 @@ async function renderBuddy(){
   const d=cyData();
   const state=await load('s-buddy');
   CY_STATE=state||{};
+  const pub=$('#cy-publish-card');if(pub)pub.style.display=COMPOSE_CTX&&COMPOSE_CTX.topic?'':'none';
   $('#cy-sub').textContent="Почни з одного речення — Chainy підтримає і м’яко виправить.";
   const cont=$('#cy-continue');
   if(cont){
@@ -1645,6 +2084,12 @@ async function renderBuddy(){
   cyList();
   setTimeout(scWatchAll,50);
 }
+function prepareWeeklyWithChainy(){
+  const c=SOCIAL.challenge||TODAY_HOME.weekly_challenge||{};
+  COMPOSE_CTX={mode:'challenge_week',challenge:c,topic:c.topic||'Weekly speaking challenge',phrase:c.phrase||''};
+  cyLaunch(w=>w.startVideoChat&&w.startVideoChat(COMPOSE_CTX.topic,'discuss','',COMPOSE_CTX.phrase?[COMPOSE_CTX.phrase]:[]));
+}
+function resumeComposeRecording(){openSocialComposer(COMPOSE_CTX||{mode:'free'});}
 
 function cyList(){
   const d=cyData();
@@ -1702,7 +2147,27 @@ async function cyLaunch(fn){
   const ov=$('#ov-buddy'); ov.classList.add('on'); tgBack(true);
   const win=await mountApp('s-buddy', $('#ov-buddy-host'), null);
   try{ fn(win); }catch(e){ console.warn('chainy',e.message); }
+  setTimeout(watchChainyForCompose,250);
   return win;
+}
+function watchChainyForCompose(){
+  CHAINY_COMPOSE_OBSERVER?.disconnect();CHAINY_COMPOSE_OBSERVER=null;
+  const cta=$('#chainy-compose-nudge');if(cta)cta.classList.remove('on');
+  if(!COMPOSE_CTX?.topic)return;
+  const root=$('#ov-buddy-host')?.shadowRoot, messages=root?.getElementById('chat-messages');
+  if(!messages){setTimeout(watchChainyForCompose,450);return;}
+  const paint=()=>{
+    const turns=messages.querySelectorAll('.msg.user').length;
+    cta?.classList.toggle('on',turns>=2);
+    if(turns===2)trackUx('chainy_to_human_ready',{topic:COMPOSE_CTX.topic||''});
+  };
+  CHAINY_COMPOSE_OBSERVER=new MutationObserver(paint);
+  CHAINY_COMPOSE_OBSERVER.observe(messages,{childList:true,subtree:true});paint();
+}
+function chainyToRecording(){
+  CHAINY_COMPOSE_OBSERVER?.disconnect();CHAINY_COMPOSE_OBSERVER=null;
+  $('#chainy-compose-nudge')?.classList.remove('on');
+  closeOv();setTimeout(()=>openSocialComposer(COMPOSE_CTX||{mode:'free'}),80);
 }
 
 /* Прямі входи: один тап — одразу робочий інструмент, без проміжного екрана. */
@@ -1719,6 +2184,10 @@ async function openChainyNow(){
   await go('s-buddy');
   await cyChat();
 }
+function lessonToPeople(){
+  const p=PAYLOAD['ov-player']||{},topic=p.video_title||p.title||'What did you learn from today’s video?';
+  openSocialComposer({mode:'lesson',topic:topic,phrase:(p.phrases||[])[0]||''});
+}
 
 /* ══════════ ПРОГРЕС ══════════ */
 const LVLS=['A1','A2','B1','B2','C1','C2'];
@@ -1726,6 +2195,11 @@ let pgLvl=null;
 
 async function renderProg(){
   const D=await load('s-prog');
+  const ss=D.social_stats||{};
+  $('#pg-social-stats').innerHTML='<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:5px">'
+    +[['🗣',ss.speaking_minutes||0,'хв'],['💬',ss.responses||0,'відповіді'],['✨',ss.phrases_applied||0,'фрази'],['🏆',ss.challenges_done||0,'челенджі'],['🔗',ss.relay_links||0,'ланки']]
+      .map(x=>'<div style="text-align:center;padding:10px 3px;border-radius:10px;background:var(--bg-card)"><div>'+x[0]+'</div><b>'+x[1]+'</b><div style="font-size:9px;color:var(--text2)">'+x[2]+'</div></div>').join('')
+    +'</div><button class="diag-cta" onclick="openSocialComposer({mode:\'progress\',topic:\'What can you say better now than last week?\'})">Додати хвилину говоріння</button>';
   const G=D.cefr_grammar||{}, TD=D.topics_data||{};
   const cur=D.level||'A1';
   if(!pgLvl) pgLvl=cur;
@@ -1824,49 +2298,494 @@ const LBC=[{k:'chain',l:'🔗 Ланцюжок',u:'ланок'},{k:'xp',l:'⚡ X
 const LBP=[['week','Тиждень'],['month','Місяць'],['all','Весь час']];
 let lbC='chain', lbP='week';
 
-async function renderSocial(){
-  const D=await load('s-social');
-  const U=D.users||[];
-  const me=U.find(u=>u.me);
-  const top=U.filter(u=>!u.me).sort((a,b)=>(b.chain||0)-(a.chain||0))[0];
+let SOCIAL={}, SOCIAL_TAB='feed', SOCIAL_PROFILE=null, SOCIAL_SETTINGS={format:'any',visibility:'private'};
+let COMPOSE_CTX={}, COMPOSE_VIS='private', COMPOSE_TYPE='audio', COMPOSE_REC=null;
+let COMPOSE_STREAM=null, COMPOSE_CHUNKS=[], COMPOSE_B64='', COMPOSE_MIME='', COMPOSE_TIMER=null, COMPOSE_SEC=0, COMPOSE_CONFIRMED=false;
+let LIVE_MATCH=null, LIVE_POLL=null, LIVE_TIMER_INT=null, LIVE_REC=null, LIVE_STREAM=null, LIVE_CHUNKS=[], LIVE_DEADLINE=0;
+let CHAINY_COMPOSE_OBSERVER=null;
 
-  const rows=[];
-  if(me)rows.push({...me,rl:'я',top:0});
-  if(top)rows.push({...top,rl:'лідер тижня',top:1});
-  $('#chains').innerHTML=rows.length?rows.map(u=>{
-    const c=Math.min(u.chain||0,7);
-    let ml='';for(let i=0;i<7;i++)ml+='<span class="ml'+(i<c?' on':'')+'"></span>';
-    return '<div class="friend-chain">'
-      +'<div class="av"'+(u.top?' style="background:var(--purple-bg);color:var(--orange)"':'')+'>'
-      +(u.top?'🏆':ini(u.name))+'</div>'
-      +'<div class="info"><div class="nm">'+esc(u.name||'—')+'</div><div class="rl">'+u.rl+'</div></div>'
-      +'<div class="mini-links">'+ml+'</div><div class="cnt">'+(u.chain||0)+'</div></div>';
-  }).join('')
-   :'<div class="instr-note">Запроси друга — і тут з’явиться ваш спільний ланцюжок.</div>';
-
-  /* Speaking Partners — тільки якщо бот прислав реальних */
-  const P=D.partners||[];
-  const pw=$('#partners-wrap');
-  if(P.length){
-    pw.style.display='';
-    $('#partners').innerHTML=P.map(p=>
-      '<div class="partner-chat" onclick="openDuel('+(p.uid||0)+')">'
-      +'<div class="av2">'+ini(p.name)+'</div>'
-      +'<div class="body"><div class="nm">'+esc(p.name||'—')+'</div>'
-      +'<div class="rl">рахунок '+(p.my_score||0)+':'+(p.their_score||0)
-      +(p.waiting?' · 1 виклик чекає':'')+'</div></div>'
-      +(p.tg?'<button class="tg-btn" onclick="event.stopPropagation();openTg(\''+p.tg+'\')">✈️ Чат</button>':'')
-      +'</div>').join('');
-  } else pw.style.display='none';
-
-  /* Моє місце в рейтингу — коротко */
-  const S=U.slice().sort((a,b)=>(b.chain||0)-(a.chain||0));
-  const pos=S.findIndex(u=>u.me)+1;
-  $('#lb-my').textContent=pos?('твоє місце · '+pos+' з '+S.length):'подивитись таблицю';
-
-  renderLotteryCard('social-lottery','sl-buy-btn');
-  setTimeout(scWatchAll,50);
+async function socialApi(op,extra){
+  const r=await fetch(BOT_API+'/social_api',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify(Object.assign({uid:UID,init_data:IDT,op:op},extra||{}))});
+  const d=await r.json().catch(()=>({ok:false,error:'bad_response'}));
+  if(!r.ok||d.ok===false)throw new Error(d.error||'social_error');
+  return d;
 }
+function socialMediaUrl(url){return url&&url[0]==='/'?BOT_API+url:url;}
+function socialAvatar(p,cls='social-avatar'){
+  return '<div class="'+cls+'">'+(p?.avatar?'<img src="'+esc(p.avatar)+'" alt="">':ini(p?.name||'S'))+'</div>';
+}
+function socialEmpty(icon,title,sub,cta,fn){
+  return '<div class="social-empty"><span class="ic">'+icon+'</span><b>'+esc(title)+'</b><span>'+esc(sub)+'</span>'
+    +(cta?'<button class="diag-cta" onclick="'+fn+'">'+esc(cta)+'</button>':'')+'</div>';
+}
+function paintSocialConnection(){
+  $('#social-offline')?.classList.toggle('on',!navigator.onLine);
+}
+window.addEventListener('online',()=>{paintSocialConnection();if(CUR==='s-social')refreshSocial().catch(()=>{});});
+window.addEventListener('offline',paintSocialConnection);
+async function renderSocial(){
+  const feedHost=$('#practice-feed');
+  if(feedHost&&!SOCIAL.feed)feedHost.innerHTML=socialEmpty('⏳','Завантажуємо практику','Підбираємо людей твого рівня та інтересів.','','');
+  paintSocialConnection();
+  let D=await load('s-social');
+  try{D=await socialApi('payload');PAYLOAD['s-social']=Object.assign(PAYLOAD['s-social']||{},D);}catch(e){}
+  SOCIAL=D||{};
+  $('#soc-unread').textContent=SOCIAL.unread||'';
+  const liveSub=$('#social-live-sub');
+  if(liveSub)liveSub.textContent=SOCIAL.me?.allow_live?'Знайдемо партнера за рівнем і темою':'Увімкни live-матч у налаштуваннях';
+  renderSocialChallenge();
+  renderPracticeFeed();
+  renderSocialInvites();
+  renderSocialPeople();
+  socialTab(SOCIAL_TAB);
+}
+function socialTab(tab){
+  SOCIAL_TAB=tab;
+  ['feed','challenges','people'].forEach(k=>{
+    $('#soc-tab-'+k)?.classList.toggle('on',k===tab);
+    $('#soc-'+k)?.classList.toggle('on',k===tab);
+  });
+  if(tab==='challenges'&&SOCIAL.unread){
+    socialApi('mark_seen').catch(()=>{});SOCIAL.unread=0;$('#soc-unread').textContent='';
+  }
+}
+function renderSocialChallenge(){
+  const c=SOCIAL.challenge||{};
+  $('#social-challenge-card').innerHTML=c.topic
+    ?'<div class="challenge-card" onclick="openUnifiedChallenge()">'
+      +'<div class="source-badge">'+esc(c.source_label||'SpeakChain')+'</div>'
+      +'<div class="t" style="margin-top:8px">🏆 '+esc(c.title||'Челендж тижня')+'</div>'
+      +'<div class="s">'+esc(c.topic)+'</div>'
+      +'<div style="display:flex;gap:7px;margin-top:10px">'
+      +'<button class="cr-primary" onclick="event.stopPropagation();openSocialComposer({mode:\'challenge_week\',challenge:SOCIAL.challenge,topic:SOCIAL.challenge.topic,phrase:SOCIAL.challenge.phrase})">Записати відповідь</button>'
+      +'<button class="cr-secondary" onclick="event.stopPropagation();startRelay()">Передати естафету</button></div></div>'
+    :'';
+}
+function practiceCard(p,i){
+  const a=p.author||{}, media=socialMediaUrl(p.media_url||'');
+  let visual='';
+  if(media&&p.media_type==='video')visual='<div class="practice-media"><video src="'+esc(media)+'" controls playsinline preload="metadata" onplay="socialViewed(\''+esc(p.id)+'\')"></video></div>';
+  else if(media&&p.media_type==='audio')visual='<div class="practice-media"><audio src="'+esc(media)+'" controls preload="metadata" onplay="socialViewed(\''+esc(p.id)+'\')"></audio></div>';
+  else visual='<div class="practice-media text-only" onclick="socialViewed(\''+esc(p.id)+'\')">“'+esc(p.transcript||p.topic||'Твоя черга говорити')+'”</div>';
+  return '<article class="practice-post">'
+    +'<div class="practice-post-head" onclick="openStudentProfile('+(a.uid||0)+')">'+socialAvatar(a)
+    +'<div class="who"><div class="nm">'+esc(a.name||'Student')+'</div><div class="meta">'+esc(a.level||'A1')
+    +' · '+esc((a.interests||[]).slice(0,2).join(' · ')||'speaking practice')+'</div></div>'
+    +(p.challenge?.source_label?'<span class="source-badge">'+esc(p.challenge.source_label)+'</span>':'')
+    +(!p.mine?'<button class="social-settings" style="width:28px;height:28px" onclick="event.stopPropagation();safetyPost(\''+esc(p.id)+'\','+(a.uid||0)+')">⋯</button>':'')+'</div>'
+    +visual+'<div class="practice-copy"><div class="practice-topic">'+esc(p.topic||'Коротка speaking-відповідь')+'</div>'
+    +(p.transcript&&media?'<details class="practice-transcript"><summary>Субтитри</summary><div>'+esc(p.transcript)+'</div></details>':'')
+    +(p.phrase?'<span class="practice-phrase">'+esc(p.phrase)+'</span>':'')+'</div>'
+    +(p.mine&&p.moderation!=='approved'?'<div class="moderation-note">'+(p.moderation==='blocked'
+      ?'Ця відповідь прихована: автоматична перевірка знайшла ризикований вміст.'
+      :'Відповідь проходить перевірку й поки видима лише тобі.')+'</div>':'')
+    +'<div class="practice-actions"><button class="reply" onclick="replyToPost(\''+esc(p.id)+'\')">Відповісти відео</button>'
+    +'<button onclick="practicePostWithChainy(\''+esc(p.id)+'\')">Chainy</button>'
+    +'<button onclick="challengePost(\''+esc(p.id)+'\')">Виклик</button>'
+    +'<button onclick="savePostPhrase(\''+esc(p.id)+'\')">＋ Фраза</button>'
+    +(p.mine?'<button onclick="deleteSocialPost(\''+esc(p.id)+'\')">Видалити</button>'
+      :'<button onclick="reactPost(\''+esc(p.id)+'\',\'support\')">💜 '+(p.reactions?.support||0)+'</button>'
+       +'<button onclick="reactPost(\''+esc(p.id)+'\',\'useful_phrase\')">✨ '+(p.reactions?.useful_phrase||0)+'</button>')+'</div></article>'
+    +(i===2?'<div class="social-empty" style="margin-bottom:12px"><span class="ic">🎙</span><b>Тепер твоя відповідь</b><span>Ти вже подивилась три приклади. Скажи свої 20 секунд.</span><button class="diag-cta" onclick="openSocialComposer({mode:\'free\'})">Записати відповідь</button></div>':'');
+}
+function renderPracticeFeed(){
+  const feed=SOCIAL.feed||[];
+  $('#practice-feed').innerHTML=feed.length?feed.map(practiceCard).join('')
+    :socialEmpty('🎥','Поки немає публічних відповідей','Стань першою або запроси друга в естафету.','Записати першу відповідь',"openSocialComposer({mode:'free'})");
+}
+function socialViewed(postId){
+  const key='sc_social_viewed_'+postId;
+  if(postId&&!sessionStorage.getItem(key)){sessionStorage.setItem(key,'1');socialApi('view',{post_id:postId}).catch(()=>{});}
+  const n=Number(sessionStorage.getItem('sc_social_views')||0)+1;
+  sessionStorage.setItem('sc_social_views',String(n));trackUx('social_video_view');
+  if(n===3)toast('Три приклади є — тепер твоя черга говорити 🎙');
+}
+function replyToPost(id){const p=(SOCIAL.feed||[]).find(x=>x.id===id);if(p)openSocialComposer({mode:'reply',response_to:id,topic:p.topic||'',phrase:p.phrase||''});}
+function challengePost(id){const p=(SOCIAL.feed||[]).find(x=>x.id===id);if(p)openSocialComposer({mode:'challenge',target_uid:p.author?.uid||0,target_name:p.author?.name||'',topic:p.topic||'',phrase:p.phrase||''});}
+async function savePostPhrase(id){
+  const p=(SOCIAL.feed||[]).find(x=>x.id===id);if(!p?.phrase){toast('У цій відповіді немає окремої фрази');return;}
+  try{await playerAction('save_phrase',{phrase:p.phrase,current_time:0,video_id:''});toast('Фразу додано у словник ✓');}
+  catch(e){toast('Не вдалося зберегти фразу');}
+}
+async function reactPost(id,kind){
+  try{await socialApi('reaction',{post_id:id,kind:kind||'support'});
+    toast(kind==='useful_phrase'?'Позначено як корисну фразу ✨':'Підтримку надіслано 💜');renderSocial();}
+  catch(e){toast('Не вдалося надіслати реакцію');}
+}
+async function deleteSocialPost(id){if(!confirm('Видалити цю відповідь?'))return;try{await socialApi('delete',{post_id:id});toast('Відповідь видалено');await refreshSocial();}catch(e){toast('Не вдалося видалити');}}
+function safetyPost(id,uid){
+  const hide=confirm('Приховати цю публікацію? Натисни «Скасувати», щоб надіслати скаргу.');
+  if(hide)socialApi('hide',{post_id:id,target_uid:uid}).then(()=>{toast('Публікацію приховано');refreshSocial();}).catch(()=>{});
+  else{const reason=prompt('Причина скарги:');if(reason)socialApi('report',{post_id:id,target_uid:uid,reason}).then(()=>toast('Скаргу надіслано')).catch(()=>{});}
+}
+function practicePostWithChainy(id){
+  const p=(SOCIAL.feed||[]).find(x=>x.id===id);if(!p)return;
+  go('s-buddy');cyLaunch(w=>w.startVideoChat&&w.startVideoChat(p.topic||'Speaking response','discuss','',[p.phrase||'']));
+}
+function socialStatusLabel(status){
+  return ({pending:'чекає',accepted:'прийнято',responded:'є відповідь',expired:'час минув',declined:'відхилено'})[status]||status||'чекає';
+}
+function renderSocialInvites(){
+  const list=SOCIAL.notifications||[];
+  let html=list.length?'<div class="sec-h"><span class="ti">Отримані</span></div>'+list.map(n=>{
+    const p=n.from||{};
+    return '<div class="social-invite"><div class="social-invite-top">'+socialAvatar(p)
+      +'<div class="body"><b>'+esc(p.name||'Student')+'</b><div style="font-size:var(--fs-xs);color:var(--text2)">'
+      +(n.kind==='friend'?'хоче додати тебе в друзі':n.kind==='async_match'?'пропонує speaking-матч':'кинув тобі виклик')+'</div></div>'
+      +'<span class="source-badge">'+esc(socialStatusLabel(n.status))+'</span></div>'
+      +'<div class="topic">'+esc(n.topic||'Коротка відповідь англійською')+'</div>'
+      +(n.status==='pending'?'<div class="social-invite-actions"><button class="accept" onclick="acceptSocialInvite(\''+esc(n.id)+'\',\''+esc(n.kind)+'\')">Прийняти</button>'
+      +'<button class="decline" onclick="declineSocialInvite(\''+esc(n.id)+'\')">Не зараз</button></div>'
+      :n.status==='accepted'?'<button class="diag-cta" onclick="replyToInvite(\''+esc(n.id)+'\')">Записати відповідь</button>'
+      :n.round_offer?'<div class="social-invite-actions"><button class="accept" onclick="nextSocialRound('+(p.uid||0)+')">Ще раунд</button>'
+        +'<button class="decline" onclick="friendSocialUid('+(p.uid||0)+')">Додати в друзі</button></div>':'')
+      +'</div>';
+  }).join(''):socialEmpty('📭','Нових викликів немає','Знайди людину свого рівня або почни естафету.','Знайти співрозмовника',"socialTab('people')");
+  const sent=SOCIAL.sent||[];
+  if(sent.length)html+='<div class="sec-h"><span class="ti">Надіслані й завершені</span></div>'+sent.map(n=>{
+    const p=n.to||{},status=n.status==='responded'?'є відповідь ✓':n.status==='accepted'?'прийнято':n.status==='expired'?'час минув':'чекаємо до 24 год';
+    return '<div class="social-invite"><div class="social-invite-top">'+socialAvatar(p)
+      +'<div class="body"><b>'+esc(p.name||'Student')+'</b><div style="font-size:var(--fs-xs);color:var(--text2)">'+status+'</div></div>'
+      +'<span class="source-badge">'+esc(socialStatusLabel(n.status))+'</span></div><div class="topic">'+esc(n.topic||'Speaking challenge')+'</div>'
+      +(n.status==='pending'||n.status==='expired'?'<button class="sn-go" onclick="fallbackInviteToChainy(\''+esc(n.id)+'\')">Поки потренуватися з Chainy</button>':'')
+      +(n.round_offer?'<div class="social-invite-actions"><button class="accept" onclick="nextSocialRound('+(p.uid||0)+')">Ще раунд</button>'
+        +'<button class="decline" onclick="friendSocialUid('+(p.uid||0)+')">Додати в друзі</button></div>':'')+'</div>';
+  }).join('');
+  const relays=SOCIAL.relays||[];
+  if(relays.length)html+='<div class="sec-h"><span class="ti">Естафети</span></div>'+relays.map(r=>
+    '<div class="social-invite"><div class="social-invite-top"><div class="social-avatar">🔗</div><div class="body"><b>'
+    +esc(r.topic||'Speaking-естафета')+'</b><div style="font-size:var(--fs-xs);color:var(--text2)">'
+    +(r.n_links||0)+' ланок · '+(r.participants||0)+' учасників</div></div><span class="source-badge">'+esc(r.status||'active')+'</span></div>'
+    +'<button class="sn-go" style="margin-top:8px" onclick="shareRelayAgain(\''+esc(r.room_url||'')+'\')">Передати далі</button></div>'
+  ).join('');
+  $('#social-invitations').innerHTML=html;
+}
+function shareRelayAgain(url){
+  if(navigator.share)navigator.share({title:'Speaking-естафета SpeakChain',text:'Продовж ланцюжок англійською',url}).catch(()=>{});
+  else if(navigator.clipboard)navigator.clipboard.writeText(url).then(()=>toast('Посилання естафети скопійовано'));
+}
+function fallbackInviteToChainy(id){
+  const n=(SOCIAL.sent||[]).find(x=>x.id===id);if(!n)return;
+  go('s-buddy');cyLaunch(w=>w.startVideoChat&&w.startVideoChat(n.topic||'Speaking challenge','discuss','',n.phrase?[n.phrase]:[]));
+}
+function replyToInvite(id){const n=(SOCIAL.notifications||[]).find(x=>x.id===id);if(n)openSocialComposer({mode:'reply',response_to:id,topic:n.topic||'',phrase:n.phrase||''});}
+async function acceptSocialInvite(id,kind){
+  try{await socialApi('invitation_accept',{invitation_id:id});await refreshSocial();
+    if(kind!=='friend'){const n=(SOCIAL.notifications||[]).find(x=>x.id===id);openSocialComposer({mode:'reply',response_to:id,topic:n?.topic||'',phrase:n?.phrase||''});}
+    else toast('Тепер ви друзі ✓');
+  }catch(e){toast('Не вдалося прийняти');}
+}
+async function declineSocialInvite(id){try{await socialApi('invitation_decline',{invitation_id:id});await refreshSocial();}catch(e){toast('Не вдалося оновити');}}
+function nextSocialRound(uid){
+  const n=[...(SOCIAL.notifications||[]),...(SOCIAL.sent||[])].find(x=>(x.from?.uid||x.to?.uid)===uid)||{};
+  const p=n.from||n.to||{};
+  openSocialComposer({mode:'challenge',target_uid:uid,target_name:p.name||'',topic:n.topic||'',phrase:n.phrase||''});
+}
+async function friendSocialUid(uid){
+  try{await socialApi('friend_add',{target_uid:uid});toast('Запит у друзі надіслано ✓');}
+  catch(e){toast('Не вдалося надіслати запит');}
+}
+function personCard(p,match=false){
+  return '<div class="social-person'+(match?' social-match':'')+'" onclick="openStudentProfile('+(p.uid||0)+')">'+socialAvatar(p)
+    +'<div class="body"><div class="nm">'+esc(p.name||'Student')+' · '+esc(p.level||'A1')+'</div>'
+    +'<div class="sub">'+esc((p.interests||[]).join(' · ')||p.goal||'Хоче говорити впевненіше')+'</div></div>'
+    +'<button class="challenge-btn" onclick="event.stopPropagation();quickChallenge('+(p.uid||0)+')">Виклик</button></div>';
+}
+function renderSocialPeople(){
+  const matches=SOCIAL.matches||[], people=SOCIAL.people||[];
+  $('#social-matches').innerHTML=matches.length?matches.map(p=>personCard(p,true)).join('')
+    :socialEmpty('👋','Поки немає відкритих профілів','Увімкни свій профіль або запроси знайомого.','Налаштувати профіль','openSocialSettings()');
+  $('#social-people').innerHTML=people.length?people.map(p=>personCard(p,false)).join('')
+    :socialEmpty('🌱','Спільнота росте','Перші профілі з’являться тут після їхньої згоди.','','');
+}
+async function refreshSocial(){delete PAYLOAD['s-social'];delete PENDING['s-social'];await renderSocial();}
+function openUnifiedChallenge(){
+  const c=SOCIAL.challenge||TODAY_HOME.weekly_challenge||{};
+  const kind=c.kind||(c.source==='blogger'?'blogger':c.source==='community'?'community':'marathon');
+  ACTIVE_WEEKLY_CHALLENGE=Object.assign({},c,{kind});openWeeklyChallenge(ACTIVE_WEEKLY_CHALLENGE);
+}
+async function quickChallenge(uid){const p=(SOCIAL.people||[]).find(x=>x.uid===uid);openSocialComposer({mode:'challenge',target_uid:uid,topic:SOCIAL.challenge?.topic||'',phrase:SOCIAL.challenge?.phrase||'',target_name:p?.name||''});}
+
+async function openStudentProfile(uid){
+  try{
+    const d=await socialApi('profile',{target_uid:uid});SOCIAL_PROFILE=d;
+    const p=d.profile||{};$('#sp-avatar').innerHTML=p.avatar?'<img src="'+esc(p.avatar)+'" alt="">':ini(p.name||'S');
+    $('#sp-name').textContent=p.name||'Student';
+    $('#sp-meta').textContent=(p.level||'A1')+' · '+(p.format==='audio'?'аудіо':p.format==='video'?'відео':'аудіо або відео');
+    $('#sp-goal').textContent=p.goal||'Хоче говорити англійською впевненіше';
+    $('#sp-tags').innerHTML=(p.interests||[]).map(x=>'<span class="source-badge">'+esc(x)+'</span>').join('');
+    $('#sp-stats').innerHTML=[
+      [p.speaking_minutes||0,'хв говоріння'],[p.challenges_done||0,'челенджів'],[p.responses||0,'відповідей']
+    ].map(x=>'<div style="padding:10px 5px;text-align:center;border-radius:10px;background:var(--bg-card2)"><b style="font-size:18px">'+x[0]+'</b><div style="font-size:10px;color:var(--text2)">'+x[1]+'</div></div>').join('');
+    $('#sp-posts').innerHTML=(d.posts||[]).length?(d.posts||[]).map(post=>
+      '<div onclick="closeOv();socialTab(&quot;feed&quot;);go(&quot;s-social&quot;)">'+(post.media_type==='video'&&post.media_url
+        ?'<video src="'+esc(socialMediaUrl(post.media_url))+'" muted preload="metadata"></video>':'🎙')+'</div>').join('')
+      :'<div style="grid-column:1/-1;aspect-ratio:auto;padding:14px;font-size:var(--fs-xs);color:var(--text2)">Публічних відповідей ще немає</div>';
+    openOv('ov-student-profile');
+  }catch(e){toast(e.message==='private_profile'?'Цей профіль приватний':'Не вдалося відкрити профіль');}
+}
+function challengeProfile(){if(!SOCIAL_PROFILE)return;const p=SOCIAL_PROFILE.profile;closeOv();quickChallenge(p.uid);}
+async function friendProfile(){
+  if(!SOCIAL_PROFILE)return;
+  try{await socialApi('friend_add',{target_uid:SOCIAL_PROFILE.profile.uid});toast('Запит у друзі надіслано ✓');}catch(e){toast('Не вдалося надіслати запит');}
+}
+function relayProfile(){if(!SOCIAL_PROFILE)return;const p=SOCIAL_PROFILE.profile;closeOv();openSocialComposer({mode:'relay',target_uid:p.uid,target_name:p.name,topic:SOCIAL.challenge?.topic||''});}
+function socialSafetyMenu(){
+  if(!SOCIAL_PROFILE)return;const p=SOCIAL_PROFILE.profile;
+  const block=confirm('Заблокувати '+p.name+'? Натисни «Скасувати», щоб натомість надіслати скаргу.');
+  if(block){socialApi('block',{target_uid:p.uid}).then(()=>{closeOv();toast('Профіль заблоковано');refreshSocial();}).catch(()=>{});}
+  else{const reason=prompt('Коротко опиши причину скарги:');if(reason)socialApi('report',{target_uid:p.uid,reason}).then(()=>toast('Скаргу надіслано')).catch(()=>{});}
+}
+
+function openSocialSettings(){
+  const p=SOCIAL.me||{};SOCIAL_SETTINGS={format:p.format||'any',visibility:p.visibility||'private'};
+  $('#ss-name').value=p.name||'';$('#ss-goal').value=p.goal||'';
+  $('#ss-avatar').value=p.avatar||'';
+  $('#ss-interests').value=(p.interests||[]).join(', ');
+  $('#ss-live').checked=!!p.allow_live;$('#ss-minor').checked=!!p.minor_mode;
+  paintSocialSettings();openOv('ov-social-settings');
+}
+function socialPickSetting(key,value){SOCIAL_SETTINGS[key]=value;paintSocialSettings();}
+function paintSocialSettings(){
+  ['format','visibility'].forEach(key=>{
+    $$('#ss-'+key+' button').forEach(b=>b.classList.toggle('on',b.dataset.value===SOCIAL_SETTINGS[key]));
+  });
+}
+async function saveSocialSettings(){
+  const data={name:$('#ss-name').value.trim(),goal:$('#ss-goal').value.trim(),
+    avatar:$('#ss-avatar').value.trim(),
+    interests:$('#ss-interests').value.split(',').map(x=>x.trim()).filter(Boolean),
+    format:SOCIAL_SETTINGS.format,visibility:SOCIAL_SETTINGS.visibility,
+    allow_live:$('#ss-live').checked,minor_mode:$('#ss-minor').checked,enabled:true};
+  if(data.minor_mode&&data.visibility==='community'){
+    data.visibility='friends';data.allow_live=false;
+    toast('У безпечному режимі профіль доступний лише друзям, live вимкнено');
+  }
+  try{data.timezone=Intl.DateTimeFormat().resolvedOptions().timeZone||'';}catch(e){}
+  try{const r=await socialApi('profile_update',data);SOCIAL.me=r.profile;closeOv();toast('Профіль збережено ✓');await refreshSocial();}
+  catch(e){toast('Не вдалося зберегти профіль');}
+}
+
+const COMPOSE_DRAFT_KEY='speakchain_social_draft_v1';
+function composeDraftDb(){
+  return new Promise((resolve,reject)=>{
+    if(!window.indexedDB){reject(new Error('no_indexeddb'));return;}
+    const req=indexedDB.open('speakchain-drafts',1);
+    req.onupgradeneeded=()=>req.result.createObjectStore('drafts');
+    req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);
+  });
+}
+async function composeDraftMediaSet(value){
+  try{const db=await composeDraftDb();await new Promise((resolve,reject)=>{
+    const tx=db.transaction('drafts','readwrite');tx.objectStore('drafts').put(value,'social-media');
+    tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);
+  });db.close();}catch(e){}
+}
+async function composeDraftMediaGet(){
+  try{const db=await composeDraftDb();const value=await new Promise((resolve,reject)=>{
+    const req=db.transaction('drafts','readonly').objectStore('drafts').get('social-media');
+    req.onsuccess=()=>resolve(req.result||'');req.onerror=()=>reject(req.error);
+  });db.close();return value;}catch(e){return '';}
+}
+async function composeDraftMediaDelete(){
+  try{const db=await composeDraftDb();const tx=db.transaction('drafts','readwrite');
+    tx.objectStore('drafts').delete('social-media');db.close();}catch(e){}
+}
+async function saveComposeDraft(){
+  const topic=$('#compose-topic')?.value.trim()||COMPOSE_CTX.topic||'';
+  const phrase=$('#compose-phrase')?.value.trim()||COMPOSE_CTX.phrase||'';
+  const transcript=$('#compose-transcript')?.value.trim()||'';
+  if(!topic&&!phrase&&!transcript&&!COMPOSE_B64)return;
+  try{localStorage.setItem(COMPOSE_DRAFT_KEY,JSON.stringify({
+    ctx:COMPOSE_CTX,topic,phrase,transcript,visibility:COMPOSE_VIS,type:COMPOSE_TYPE,
+    mime:COMPOSE_MIME,seconds:COMPOSE_SEC,saved_at:new Date().toISOString(),has_media:!!COMPOSE_B64
+  }));}catch(e){}
+  if(COMPOSE_B64)await composeDraftMediaSet(COMPOSE_B64);
+  $('#compose-draft-resume')?.classList.add('on');
+}
+async function restoreComposeDraft(){
+  let d={};try{d=JSON.parse(localStorage.getItem(COMPOSE_DRAFT_KEY)||'{}');}catch(e){}
+  if(!d.saved_at){toast('Чернетку не знайдено');return;}
+  COMPOSE_CTX=d.ctx||{};COMPOSE_VIS=d.visibility||'private';COMPOSE_TYPE=d.type||'audio';
+  COMPOSE_MIME=d.mime||'';COMPOSE_SEC=Number(d.seconds||0);COMPOSE_B64=d.has_media?await composeDraftMediaGet():'';
+  $('#compose-topic').value=d.topic||'';$('#compose-phrase').value=d.phrase||'';
+  $('#compose-transcript').value=d.transcript||'';setComposeVisibility(COMPOSE_VIS);
+  $('#compose-clock').textContent='00:'+String(Math.min(59,COMPOSE_SEC)).padStart(2,'0');
+  if(COMPOSE_B64){
+    const media=COMPOSE_TYPE==='video'?$('#compose-preview'):$('#compose-audio-preview');
+    media.src=COMPOSE_B64;media.style.display='';
+    $('#compose-state').textContent='Чернетку відновлено. Перевір запис перед публікацією.';
+  }else $('#compose-state').textContent='Текст чернетки відновлено. Запиши відповідь, коли будеш готова.';
+  $('#compose-draft-resume').classList.remove('on');toast('Чернетку відновлено ✓');
+}
+async function discardComposeDraft(){
+  try{localStorage.removeItem(COMPOSE_DRAFT_KEY);}catch(e){}
+  await composeDraftMediaDelete();$('#compose-draft-resume')?.classList.remove('on');
+}
+
+function openSocialComposer(ctx){
+  COMPOSE_CTX=Object.assign({},ctx||{});COMPOSE_B64='';COMPOSE_MIME='';COMPOSE_SEC=0;COMPOSE_CONFIRMED=false;
+  COMPOSE_TYPE=SOCIAL.me?.format==='video'?'video':'audio';
+  COMPOSE_VIS=SOCIAL.me?.visibility||'private';
+  if(COMPOSE_VIS==='private'&&COMPOSE_CTX.mode!=='free')COMPOSE_VIS='friends';
+  $('#compose-topic').value=COMPOSE_CTX.topic||'';
+  $('#compose-phrase').value=COMPOSE_CTX.phrase||'';
+  $('#compose-transcript').value='';
+  $('#compose-clock').textContent='00:00';$('#compose-state').textContent='До 45 секунд. Можна перезаписати перед публікацією.';
+  $('#compose-preview').style.display='none';$('#compose-audio-preview').style.display='none';
+  $('#compose-draft-resume')?.classList.toggle('on',!!localStorage.getItem(COMPOSE_DRAFT_KEY));
+  $('#compose-publish').textContent='Переглянути й опублікувати';
+  const labels={challenge:'Виклик для '+(COMPOSE_CTX.target_name||'студента'),relay:'Перша ланка естафети',
+    reply:'Відеовідповідь',challenge_week:'Челендж тижня',free:'Speaking response'};
+  $('#compose-title').textContent=labels[COMPOSE_CTX.mode]||'Записати відповідь';
+  $('#compose-kicker').textContent=COMPOSE_CTX.mode==='relay'?'Speaking relay':'Speaking practice';
+  setComposeVisibility(COMPOSE_VIS);openOv('ov-social-compose');
+}
+function setComposeVisibility(v){
+  if(v==='community'&&SOCIAL.me?.minor_mode){v='friends';toast('У безпечному режимі відповідь бачать лише друзі');}
+  COMPOSE_VIS=v;$$('#compose-visibility button').forEach(b=>b.classList.toggle('on',b.dataset.value===v));
+}
+function socialSetRecordType(){COMPOSE_TYPE=COMPOSE_TYPE==='audio'?'video':'audio';toast(COMPOSE_TYPE==='video'?'Формат: відео 📹':'Формат: аудіо 🎙');}
+async function toggleSocialRecord(){
+  if(COMPOSE_REC&&COMPOSE_REC.state==='recording'){COMPOSE_REC.stop();return;}
+  try{
+    stopComposeMedia();
+    COMPOSE_STREAM=await navigator.mediaDevices.getUserMedia(COMPOSE_TYPE==='video'?{audio:true,video:{facingMode:'user'}}:{audio:true});
+    const mime=COMPOSE_TYPE==='video'?'video/webm;codecs=vp8,opus':'audio/webm;codecs=opus';
+    COMPOSE_CHUNKS=[];COMPOSE_REC=new MediaRecorder(COMPOSE_STREAM,MediaRecorder.isTypeSupported(mime)?{mimeType:mime}:undefined);
+    COMPOSE_REC.ondataavailable=e=>{if(e.data.size)COMPOSE_CHUNKS.push(e.data);};
+    COMPOSE_REC.onstop=async()=>{
+      clearInterval(COMPOSE_TIMER);const blob=new Blob(COMPOSE_CHUNKS,{type:COMPOSE_REC.mimeType});
+      COMPOSE_MIME=COMPOSE_REC.mimeType.split(';')[0]||blob.type;
+      COMPOSE_B64=await blobToDataUrl(blob);const url=URL.createObjectURL(blob);
+      if(COMPOSE_TYPE==='video'){const v=$('#compose-preview');v.src=url;v.style.display='';}
+      else{const a=$('#compose-audio-preview');a.src=url;a.style.display='';}
+      $('#compose-state').textContent='Запис готовий. Прослухай і, якщо потрібно, перезапиши.';
+      stopComposeTracks();trackUx('social_record_complete',{seconds:COMPOSE_SEC});saveComposeDraft();
+    };
+    COMPOSE_REC.start(250);COMPOSE_SEC=0;$('#compose-state').textContent='Записуємо… Говори природно.';
+    COMPOSE_TIMER=setInterval(()=>{COMPOSE_SEC++;$('#compose-clock').textContent='00:'+String(COMPOSE_SEC).padStart(2,'0');if(COMPOSE_SEC>=45&&COMPOSE_REC?.state==='recording')COMPOSE_REC.stop();},1000);
+  }catch(e){toast('Дозволь доступ до '+(COMPOSE_TYPE==='video'?'камери й мікрофона':'мікрофона'));}
+}
+function blobToDataUrl(blob){return new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsDataURL(blob);});}
+function stopComposeTracks(){try{COMPOSE_STREAM?.getTracks().forEach(t=>t.stop());}catch(e){}COMPOSE_STREAM=null;}
+function stopComposeMedia(){clearInterval(COMPOSE_TIMER);if(COMPOSE_REC?.state==='recording')COMPOSE_REC.stop();else stopComposeTracks();}
+function closeSocialComposer(){saveComposeDraft();stopComposeMedia();closeOv();}
+function prepareComposeWithChainy(){
+  const topic=$('#compose-topic').value.trim(),phrase=$('#compose-phrase').value.trim();
+  COMPOSE_CTX.topic=topic;COMPOSE_CTX.phrase=phrase;saveComposeDraft();closeOv();go('s-buddy');
+  cyLaunch(w=>w.startVideoChat&&w.startVideoChat(topic||'Prepare my speaking response','discuss','',phrase?[phrase]:[]));
+  toast('Після репетиції повернись до запису');
+}
+async function publishSocialResponse(){
+  const topic=$('#compose-topic').value.trim(),phrase=$('#compose-phrase').value.trim(),transcript=$('#compose-transcript').value.trim();
+  if(!COMPOSE_B64&&!transcript){toast('Спочатку запиши відповідь або додай текст');return;}
+  if(!COMPOSE_CONFIRMED){
+    COMPOSE_CONFIRMED=true;$('#compose-publish').textContent='Опублікувати зараз';
+    $('#compose-state').textContent='Перевір запис і аудиторію: '+(COMPOSE_VIS==='private'?'лише ти':COMPOSE_VIS==='friends'?'друзі':'спільнота')+'.';
+    toast('Перевір усе перед публікацією');return;
+  }
+  const btn=$('#compose-publish'),needsProfile=!SOCIAL.me?.enabled;btn.disabled=true;btn.textContent='Публікуємо…';
+  try{
+    let relayRoom='';
+    if(COMPOSE_CTX.mode==='relay'){
+      const relay=await socialApi('relay_create',{target_uid:COMPOSE_CTX.target_uid||0,topic});relayRoom=relay.room_id;
+      await postAction('relay_room_send',{room_id:relayRoom,
+        audio_b64:COMPOSE_TYPE==='audio'?String(COMPOSE_B64).split(',').pop():'',
+        video_b64:COMPOSE_TYPE==='video'?String(COMPOSE_B64).split(',').pop():'',media_mime:COMPOSE_MIME}).catch(()=>{});
+      COMPOSE_CTX.room_url=relay.room_url;
+    }
+    const response=await socialApi('publish',{topic,phrase,transcript,visibility:COMPOSE_VIS,
+      media_type:COMPOSE_TYPE,media_b64:COMPOSE_B64,response_to:COMPOSE_CTX.response_to||'',
+      media_mime:COMPOSE_MIME,relay_room_id:relayRoom,duration_sec:COMPOSE_SEC,challenge:COMPOSE_CTX.challenge||SOCIAL.challenge||{}});
+    if(COMPOSE_CTX.mode==='challenge'&&COMPOSE_CTX.target_uid){
+      await socialApi('challenge_send',{target_uid:COMPOSE_CTX.target_uid,topic,phrase,legacy_ref:SOCIAL.challenge?.legacy_ref||{}});
+    }
+    await discardComposeDraft();stopComposeMedia();closeOv();toast(response.moderation==='blocked'?'Відповідь збережено, але приховано до перевірки':'Твоя speaking-відповідь опублікована ✓');
+    trackUx('social_publish',{mode:COMPOSE_CTX.mode||'free',visibility:COMPOSE_VIS});
+    await refreshSocial();socialTab('feed');
+    if(relayRoom)setTimeout(()=>showRelayResult(relayRoom,COMPOSE_CTX.room_url),250);
+    else if(needsProfile)setTimeout(()=>{openSocialSettings();toast('Перша фраза готова. Тепер обери, як тебе бачить спільнота.');},350);
+  }catch(e){await saveComposeDraft();toast(e.message==='media_too_large'?'Запис завеликий. Спробуй до 30 секунд':'Не вдалося опублікувати. Чернетка лишилась.');}
+  finally{btn.disabled=false;btn.textContent='Опублікувати зараз';}
+}
+function showRelayResult(room,url){
+  const text='Твоя ланка додана. Передай естафету далі: '+(url||'');
+  if(navigator.share&&url)navigator.share({title:'SpeakChain естафета',text:'Відповідай англійською і продовж ланцюжок',url}).catch(()=>{});
+  else if(url&&navigator.clipboard)navigator.clipboard.writeText(url).then(()=>toast('Посилання естафети скопійовано 🔗'));
+  else toast(text);
+}
+function startRelay(){openSocialComposer({mode:'relay',topic:SOCIAL.challenge?.topic||'',phrase:SOCIAL.challenge?.phrase||''});}
+
+async function startLiveMatch(){
+  if(!SOCIAL.me?.enabled||!SOCIAL.me?.allow_live){openSocialSettings();toast('Спочатку увімкни live-матч у профілі');return;}
+  openOv('ov-live-match');$('#live-waiting').style.display='';$('#live-room').style.display='none';
+  try{const r=await socialApi('live_join',{scenario_id:'emotion_guess'});handleLiveStatus(r);startLivePolling();}
+  catch(e){closeOv();toast(e.message==='minor_live_restricted'?'Live-матч недоступний у безпечному режимі':'Не вдалося почати пошук');}
+}
+function startLivePolling(){clearInterval(LIVE_POLL);LIVE_POLL=setInterval(async()=>{try{handleLiveStatus(await socialApi('live_status'));}catch(e){}},2500);}
+function handleLiveStatus(r){
+  if(r.status!=='matched'){$('#live-title').textContent='Шукаємо партнера…';return;}
+  LIVE_MATCH=r.match||LIVE_MATCH;if(!LIVE_MATCH)return;
+  $('#live-waiting').style.display='none';$('#live-room').style.display='';
+  $('#live-title').textContent='Партнера знайдено';
+  const p=LIVE_MATCH.partner||{};$('#live-partner').textContent=p.name||'Speaking partner';$('#live-avatar').textContent=ini(p.name||'S');
+  $('#live-scenario').textContent=LIVE_MATCH.scenario?.title||'Коротка розмова англійською';
+  pollLiveRoom();clearInterval(LIVE_POLL);LIVE_POLL=setInterval(pollLiveRoom,1800);
+  $('#live-timer').textContent='05:00';
+}
+async function pollLiveRoom(){
+  if(!LIVE_MATCH?.room_id)return;
+  try{
+    const r=await fetch(BOT_API+'/duo_room_state?room_id='+encodeURIComponent(LIVE_MATCH.room_id));
+    const d=await r.json();if(!d.ok)return;
+    const ready=(d.ready||[]).map(String),both=ready.length>=2;
+    $('#live-ready-box').textContent=both?'Обидва готові — говоріть по черзі короткими репліками.':'Готові: '+ready.length+' із 2';
+    $('#live-record').style.display=both?'':'none';$('#live-ready').style.display=ready.includes(String(UID))?'none':'';
+    if(both&&d.deadline_ts&&Number(d.deadline_ts)!==LIVE_DEADLINE){
+      LIVE_DEADLINE=Number(d.deadline_ts);startLiveTimer(LIVE_DEADLINE);
+    }
+    $('#live-messages').innerHTML=(d.messages||[]).length?(d.messages||[]).map(m=>{
+      const media=socialMediaUrl(m.media_url||'');
+      const player=media?(m.is_video
+        ?'<video src="'+esc(media)+'" controls playsinline preload="metadata" style="width:100%;max-height:180px;border-radius:8px;margin-top:6px"></video>'
+        :'<audio src="'+esc(media)+'" controls preload="metadata" style="width:100%;margin-top:6px"></audio>'):'';
+      return '<div class="live-message'+(String(m.sender)===String(UID)?' mine':'')+'"><b>'
+        +(String(m.sender)===String(UID)?'Ти':'Партнер')+'</b><div>'+esc(m.transcript||'🎙 Репліка')+'</div>'+player+'</div>';
+    }).join('')
+      :'<div style="text-align:center;color:var(--text3);font-size:var(--fs-xs)">Перша репліка з’явиться тут</div>';
+    if(d.status!=='active'){toast('Матч завершено');leaveLiveMatch(false);}
+  }catch(e){}
+}
+async function readyLiveMatch(){try{handleLiveStatus(await socialApi('live_ready'));trackUx('live_match_ready');}catch(e){toast('Не вдалося підтвердити готовність');}}
+function startLiveTimer(expires){
+  clearInterval(LIVE_TIMER_INT);const paint=()=>{const left=Math.max(0,Math.floor(expires-Date.now()/1000));
+    $('#live-timer').textContent=String(Math.floor(left/60)).padStart(2,'0')+':'+String(left%60).padStart(2,'0');
+    if(left<=0){clearInterval(LIVE_TIMER_INT);toast('П’ять хвилин завершились');leaveLiveMatch(false);}};
+  paint();LIVE_TIMER_INT=setInterval(paint,1000);
+}
+async function toggleLiveRecord(){
+  if(LIVE_REC?.state==='recording'){LIVE_REC.stop();return;}
+  try{
+    const isVideo=SOCIAL.me?.format==='video';
+    LIVE_STREAM=await navigator.mediaDevices.getUserMedia(isVideo?{audio:true,video:{facingMode:'user'}}:{audio:true});LIVE_CHUNKS=[];
+    LIVE_REC=new MediaRecorder(LIVE_STREAM);LIVE_REC.ondataavailable=e=>{if(e.data.size)LIVE_CHUNKS.push(e.data);};
+    LIVE_REC.onstop=async()=>{const blob=new Blob(LIVE_CHUNKS,{type:LIVE_REC.mimeType});const b64=await blobToDataUrl(blob);
+      LIVE_STREAM?.getTracks().forEach(t=>t.stop());$('#live-record').textContent='Надсилаємо…';
+      try{await postAction('duo_room_send',{room_id:LIVE_MATCH.room_id,
+        audio_b64:isVideo?'':String(b64).split(',').pop(),video_b64:isVideo?String(b64).split(',').pop():'',
+        media_mime:(LIVE_REC.mimeType||blob.type||'').split(';')[0]});await pollLiveRoom();}
+      catch(e){toast('Не вдалося надіслати репліку');}$('#live-record').textContent='🎙 Записати коротку репліку';};
+    LIVE_REC.start();$('#live-record').textContent='■ Завершити репліку';setTimeout(()=>{if(LIVE_REC?.state==='recording')LIVE_REC.stop();},30000);
+  }catch(e){toast('Дозволь доступ до мікрофона');}
+}
+async function leaveLiveMatch(send=true){
+  clearInterval(LIVE_POLL);clearInterval(LIVE_TIMER_INT);try{LIVE_STREAM?.getTracks().forEach(t=>t.stop());}catch(e){}
+  if(send)await socialApi('live_leave').catch(()=>{});LIVE_MATCH=null;LIVE_DEADLINE=0;closeOv();
+}
+function reportLiveMatch(){if(!LIVE_MATCH)return;const reason=prompt('Що сталося?');if(reason)socialApi('report',{target_uid:LIVE_MATCH.partner_uid,reason}).then(()=>{toast('Скаргу надіслано');leaveLiveMatch();}).catch(()=>{});}
+function blockLivePartner(){if(!LIVE_MATCH)return;if(confirm('Заблокувати цього користувача?'))socialApi('block',{target_uid:LIVE_MATCH.partner_uid}).then(()=>{toast('Користувача заблоковано');leaveLiveMatch();}).catch(()=>{});}
 
 /* Рейтинг — в оверлеї, як у прототипі */
 function renderRating(){
@@ -2012,6 +2931,7 @@ window.SC_reward = function(action, xp, chain){
    оболонка малює ОДНУ картку і веде людину далі БЕЗ виходу з додатка.
    Плеєр і Chainy живуть тут же — навіщо йти в чат. */
 let NUDGE = null;
+let CHALLENGE_STARTING = false;
 
 function paintNudge(D){
   const n = D && D.nudge;
@@ -2035,8 +2955,13 @@ async function flow(nudge){
 
   /* 💔 Ланцюжок розірвано — це дія бота (списує XP), йде через чат */
   if(n.kind === 'revive'){ act('revive_chain'); return; }
-  if(n.kind === 'challenge_start'){ act('challenge_start'); return; }
+  if(n.kind === 'challenge_start'){ await startChallengeAndOpen(); return; }
   if(n.kind === 'challenge_day'){ openOv('ov-challenge'); return; }
+  if(n.kind === 'social_reply'){ go('s-social');setTimeout(()=>socialTab('challenges'),80);return; }
+  if(n.kind === 'first_speak'){
+    openSocialComposer({mode:'first',topic:'Introduce yourself in one or two simple sentences',phrase:'My name is…'});
+    setComposeVisibility('private');return;
+  }
   if(n.action){ act(n.action); return; }
 
   /* ▶️ Незавершене відео — вертаємо ПРЯМО в нього, без чату */
@@ -2047,6 +2972,39 @@ async function flow(nudge){
 }
 /* Міст для мініапів: s-home має власну картку nudge — хай кличе те саме. */
 window.SC_flow = flow;
+
+/* Старт челенджу — одна завершена дія:
+   1) бекенд створює challenge_state;
+   2) скидаємо старі payload-кеші;
+   3) одразу відкриваємо вбудований екран Дня 1.
+   Раніше був тільки крок 1, тому після кліку в застосунку візуально
+   нічого не відбувалося. */
+async function startChallengeAndOpen(){
+  if(CHALLENGE_STARTING) return;
+  CHALLENGE_STARTING = true;
+  const heroBtn=$('#hero-go');
+  const oldText=heroBtn?.textContent||'';
+  if(heroBtn){heroBtn.disabled=true;heroBtn.textContent='Готую День 1…';}
+  try{
+    const res=await fetch(BOT_API+'/miniapp_action',{method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'challenge_start',uid:UID,init_data:IDT})});
+    const result=await res.json().catch(()=>({}));
+    if(!res.ok || result.ok===false) throw new Error(result.error||'challenge_start_failed');
+    delete PAYLOAD['ov-challenge']; delete PENDING['ov-challenge'];
+    delete PAYLOAD['s-home']; delete PENDING['s-home'];
+    NUDGE={kind:'challenge_day'};
+    await openOv('ov-challenge');
+    trackUx('challenge_screen_open',{source:'start'});
+  }catch(e){
+    toast('Не вдалося відкрити челендж — спробуй ще раз');
+    try{window.SC_report?.('challenge start/open: '+(e?.message||e),'ov-challenge');}catch(_){}
+  }finally{
+    CHALLENGE_STARTING=false;
+    if(heroBtn){heroBtn.disabled=false;heroBtn.textContent=oldText||'Почати →';}
+  }
+}
+window.startChallengeAndOpen=startChallengeAndOpen;
 
 async function openPlayer(url,positionSec){
   const ov=$('#ov-player'); ov.classList.add('on'); tgBack(true);
@@ -2696,7 +3654,11 @@ async function mountApp(id,host,pk){
     const v=t[p];return typeof v==='function'?v.bind(t):v;}});
   const fW=new Proxy(window,{
     get(t,p){if(p==='location')return fL;const v=t[p];return typeof v==='function'?v.bind(t):v;},
-    set(t,p,v){t[p]=v;
+    set(t,p,v){
+      /* Модулі старого покоління пробували писати window.go/openOv/closeOv.
+         Не дозволяємо їм замінити навігацію оболонки після монтування. */
+      if(['go','openOv','closeOv','act','switchTab'].includes(String(p)))return true;
+      t[p]=v;
       if(p==='onYouTubeIframeAPIReady'&&typeof YT!=='undefined'&&YT.Player){try{v();}catch(e){}}
       return true;}});
   const fD=new Proxy(document,{get(t,p){
@@ -2748,15 +3710,13 @@ async function mountApp(id,host,pk){
       'new YT.Player(document.getElementById("yt-player"),'
     );
   }
-  const _fnNameRe = /^(?:async\s+)?function\s+([a-zA-Z_$][a-zA-Z0-9_$]*)\s*\(/gm;
-  const _exportedNames = [];
-  let _m;
-  while ((_m = _fnNameRe.exec(moduleJs))) _exportedNames.push(_m[1]);
-  const _windowExports = _exportedNames
-    .map(n => `try{window.${n}=${n};}catch(e){}`).join('\n');
   try{
     new Function('document','window','location','__box',
-      moduleJs+'\n'+_windowExports
+      moduleJs
+      +'\n;__box.__dispatch=function(code,event,element){'
+      +'const m=String(code||"").trim().match(/^act\\(([\\\'\\\"])([^\\\'\\\"]+)\\1(?:\\s*,\\s*([\\s\\S]*))?\\)$/);'
+      +'if(m&&typeof window.__shellAct==="function"){let p={};if(m[3]){try{p=eval("("+m[3]+")")}catch(e){}}return window.__shellAct(m[2],p)}'
+      +'return (function(){return eval(code)}).call(element)};'
       +'\n;try{Object.assign(__box,{openScenario:typeof openScenario!=="undefined"?openScenario:0,'
       +'startChainyChat:typeof startChainyChat!=="undefined"?startChainyChat:0,'
       +'openMySituation:typeof openMySituation!=="undefined"?openMySituation:0,'
@@ -2769,6 +3729,15 @@ async function mountApp(id,host,pk){
       +'endSession:typeof endSession!=="undefined"?endSession:0});}catch(e){}'
     )(fD,fW,fL,box);
   }catch(e){ console.warn('['+id+']',e.message); }
+  /* Inline-кнопки кожного модуля виконуються у ВЛАСНІЙ області.
+     Інакше однойменні act()/switchTab() з різних екранів перезаписувалися. */
+  sh.addEventListener('click',e=>{
+    const node=e.target&&e.target.closest?e.target.closest('[onclick]'):null;
+    if(!node||!sh.contains(node)||!box.__dispatch)return;
+    const code=node.getAttribute('onclick');if(!code)return;
+    e.preventDefault();e.stopImmediatePropagation();
+    try{box.__dispatch(code,e,node);}catch(err){console.warn('['+id+' click]',err.message);}
+  },true);
   mounted[id]=box;
   return box;
 }
@@ -2929,6 +3898,8 @@ async function openOv(id){
 function closeOv(){
   const wasPlayer = $('#ov-player')?.classList.contains('on');
   const wasBuddy = $('#ov-buddy')?.classList.contains('on');
+  const wasCompose = $('#ov-social-compose')?.classList.contains('on');
+  const wasLive = $('#ov-live-match')?.classList.contains('on');
   if(wasPlayer){
     const frame=$('#ov-player-host iframe');
     if(frame) frame.src='about:blank'; /* stop audio/video immediately */
@@ -2936,10 +3907,18 @@ function closeOv(){
     const mp=$('#mini-player'); if(mp)mp.classList.remove('on');
   }
   if(wasBuddy){
+    CHAINY_COMPOSE_OBSERVER?.disconnect();CHAINY_COMPOSE_OBSERVER=null;
+    $('#chainy-compose-nudge')?.classList.remove('on');
     try{
       const b=mounted['s-buddy'];
       if(b&&typeof b.endSession==='function') b.endSession();
     }catch(e){}
+  }
+  if(wasCompose)stopComposeMedia();
+  if(wasLive){
+    clearInterval(LIVE_POLL);clearInterval(LIVE_TIMER_INT);
+    try{LIVE_STREAM?.getTracks().forEach(t=>t.stop());}catch(e){}
+    if(LIVE_MATCH){socialApi('live_leave').catch(()=>{});LIVE_MATCH=null;}
   }
   $$('.overlay').forEach(o=>o.classList.remove('on'));
   tgBack(CUR!=='s-home' || HIST.length>0);
@@ -3183,6 +4162,10 @@ if (START === 'ov-player') {
   openOv(START);
 } else {
   go(R[START] ? START : 's-home');
+  if(START==='s-social'&&new URLSearchParams(location.search).get('invite')){
+    SOCIAL_TAB='challenges';
+    setTimeout(()=>socialTab('challenges'),350);
+  }
 }
 setTimeout(scWatchAll,300);
 window.addEventListener('resize',scWatchAll);
