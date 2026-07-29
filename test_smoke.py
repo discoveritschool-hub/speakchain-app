@@ -614,6 +614,12 @@ def test_friends_stable_layers():
     src = SHELL.read_text(encoding="utf-8")
     markers = (
         '<div class="screen" id="s-social">',
+        'class="friends-value-card"',
+        "+20% XP на 7 днів",
+        "+15 XP і +1 ланка",
+        "act('chain_invite_screen')",
+        "openFriendsSection('challenges')",
+        "openFriendsSection('people')",
         'id="soc-tab-feed"',
         'id="soc-tab-challenges"',
         'id="soc-tab-people"',
@@ -634,6 +640,39 @@ def test_friends_stable_layers():
         ok("стабільні рівні й переходи «Друзів» на місці")
 
 
+def test_profile_lottery_ux():
+    """Лотерея живе у профілі, показує прогрес і візуальні квитки."""
+    section("Профіль — лотерея, 100 ланок і візуальні квитки")
+    if not SHELL.exists():
+        fail("Не знайдено оболонку для перевірки лотереї")
+        return
+    src = SHELL.read_text(encoding="utf-8")
+    markers = (
+        'id="profile-lottery"',
+        "100 ланок = 1 квиток",
+        'id="ov-lottery"',
+        'id="lottery-overlay-buy"',
+        "function lotteryTicketHtml(ticket,index)",
+        'class="ticket-card"',
+        "lottery_links",
+        "links_needed",
+        "buyLotteryTicket(",
+        "openLotteryTickets()",
+    )
+    missing = [marker for marker in markers if marker not in src]
+    if missing:
+        fail(f"Лотерея у профілі: бракує механік {missing}")
+        return
+
+    home_start = src.find('<div class="screen on" id="s-home">')
+    home_end = src.find('<div class="screen" id="s-buddy">', home_start)
+    home = src[home_start:home_end] if home_start >= 0 and home_end > home_start else ""
+    if "Лотерея SpeakChain" in home or "openLotteryTickets()" in home:
+        fail("Лотерея знову з'явилась на «Сьогодні» замість Профілю")
+    else:
+        ok("лотерея у Профілі; прогрес, купівля й колекція квитків на місці")
+
+
 def main():
     print("\033[1m" + "═" * 58)
     print("  SpeakChain — смоук-тести")
@@ -651,6 +690,7 @@ def main():
     test_shell_router()
     test_analytics_dashboards()
     test_friends_stable_layers()
+    test_profile_lottery_ux()
 
     print("\n" + "═" * 58)
     if FAILS:

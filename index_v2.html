@@ -145,6 +145,8 @@
 .cr-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
 .cr-actions button{border:none;border-radius:var(--r);padding:11px 8px;font-size:12px;
   font-weight:700;cursor:pointer}
+.cr-primary,.cr-secondary{border:none;border-radius:10px;padding:9px 10px;
+  font-size:var(--fs-xs);font-weight:800;cursor:pointer}
 .cr-primary{background:var(--purple);color:#fff}
 .cr-secondary{background:var(--bg-card3);color:var(--text)}
 .sn-card{display:flex;align-items:center;gap:12px;margin-bottom:12px}
@@ -501,13 +503,22 @@
   .ach .e{font-size:18px}
   .ach .n{font-size:9px;color:var(--text2);text-align:center;line-height:1.1}
   .ach.got .n{color:var(--purple-text)}
-  /* ── Мої квитки (лотерея) — той самий дизайн, що лотерейна картка ── */
-  .ticket-row{display:flex;align-items:center;gap:12px;padding:12px 14px;margin-bottom:8px;
-    border-radius:var(--r);background:linear-gradient(135deg,rgba(245,200,66,.14),rgba(124,110,247,.08));
-    border:1px solid rgba(245,200,66,.3)}
-  .ticket-ico{font-size:22px;flex-shrink:0}
-  .ticket-num{font-size:var(--fs-md);font-weight:700;color:var(--gold);letter-spacing:.03em;font-variant-numeric:tabular-nums}
-  .ticket-empty{text-align:center;color:var(--text2);font-size:var(--fs-sm);padding:40px 20px}
+  /* ── Лотерейні квитки: візуальна колекція, а не технічний список ── */
+  .ticket-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .ticket-card{position:relative;min-width:0;padding:13px 12px 12px;border-radius:14px;
+    overflow:hidden;background:linear-gradient(145deg,#f6d867,#e9ad31);color:#2d2408;
+    box-shadow:0 8px 22px rgba(0,0,0,.16)}
+  .ticket-card::before,.ticket-card::after{content:'';position:absolute;top:50%;width:16px;height:16px;
+    margin-top:-8px;border-radius:50%;background:var(--bg-card);z-index:2}
+  .ticket-card::before{left:-8px}.ticket-card::after{right:-8px}
+  .ticket-brand{font-size:9px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;opacity:.68}
+  .ticket-number{margin:15px 0 4px;font-size:17px;font-weight:900;letter-spacing:.04em;
+    font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ticket-caption{padding-top:8px;border-top:1px dashed rgba(45,36,8,.32);
+    font-size:10px;font-weight:750;display:flex;justify-content:space-between;gap:5px}
+  .ticket-empty{padding:28px 18px;text-align:center;border:1px dashed var(--line);
+    border-radius:var(--r);background:var(--bg-card);color:var(--text2);font-size:var(--fs-sm);line-height:1.5}
+  .ticket-empty .ic{display:block;font-size:34px;margin-bottom:8px}
   .xp-summary{display:flex;gap:10px;margin-bottom:14px}
   .xp-box{flex:1;background:var(--bg-card);border:0.5px solid var(--line);border-radius:var(--r);padding:12px;text-align:center}
   .xp-box .v{font-size:var(--fs-lg);font-weight:800;color:var(--purple)}
@@ -562,22 +573,50 @@
     background:var(--grad-purple,linear-gradient(135deg,#7c6ef7,#5b4bc4));color:#fff;
     font-size:var(--fs);font-weight:700;cursor:pointer}
   .diag-cta:active{opacity:.9}
-  /* ── Лотерея в профілі (24.07) — той самий дизайн, що картка на
-     вкладці Друзі, перевикористовуємо клас. ── */
-  .lottery-card{margin:0 0 8px;padding:14px;border-radius:var(--r);
-    background:linear-gradient(135deg,rgba(245,200,66,.14),rgba(124,110,247,.08));
-    border:1px solid rgba(245,200,66,.3)}
-  .lottery-top{display:flex;align-items:center;gap:10px;margin-bottom:10px}
-  .lottery-icon{font-size:22px;flex-shrink:0}
-  .lottery-title{font-size:var(--fs);font-weight:700;color:var(--text)}
-  .lottery-prize{font-size:var(--fs-xs);color:var(--text2);margin-top:1px}
-  .lottery-track{height:8px;background:var(--bg-card2);border-radius:var(--r-sm);overflow:hidden;margin-bottom:6px}
-  .lottery-fill{height:100%;border-radius:var(--r-sm);background:linear-gradient(90deg,var(--gold),var(--purple));transition:width .5s}
-  .lottery-meta{display:flex;justify-content:space-between;font-size:var(--fs-xs);color:var(--text2);margin-bottom:10px}
-  .lottery-btn{width:100%;padding:11px;border-radius:var(--r-sm);border:none;background:var(--gold);
-    color:#241d00;font-size:var(--fs-sm);font-weight:700;cursor:pointer}
-  .lottery-btn:disabled{opacity:.4;cursor:not-allowed}
-  .lottery-tickets{margin-top:9px;font-size:var(--fs-xs);color:var(--purple);text-align:center;text-decoration:underline;cursor:pointer}
+  /* ── Лотерея живе у профілі: один зрозумілий вхід і весь стан одразу ── */
+  .lottery-card{position:relative;margin:0 0 10px;padding:15px;border-radius:16px;overflow:hidden;
+    background:linear-gradient(145deg,rgba(245,200,66,.18),rgba(124,110,247,.10));
+    border:1px solid rgba(245,200,66,.34);cursor:pointer}
+  .lottery-card::after{content:'🎟';position:absolute;right:-8px;top:-20px;font-size:82px;
+    opacity:.07;transform:rotate(15deg);pointer-events:none}
+  .lottery-top{position:relative;z-index:1;display:flex;align-items:center;gap:10px;margin-bottom:12px}
+  .lottery-top .body{flex:1;min-width:0}
+  .lottery-icon{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;
+    flex-shrink:0;background:rgba(245,200,66,.18);font-size:22px}
+  .lottery-title{font-size:var(--fs-md);font-weight:850;color:var(--text)}
+  .lottery-prize{font-size:var(--fs-xs);color:var(--text2);margin-top:2px;white-space:nowrap;
+    overflow:hidden;text-overflow:ellipsis}
+  .lottery-count-badge{padding:5px 8px;border-radius:99px;background:rgba(245,200,66,.16);
+    color:var(--gold);font-size:10px;font-weight:850;white-space:nowrap}
+  .lottery-track{height:9px;background:var(--bg-card2);border-radius:99px;overflow:hidden;margin-bottom:7px}
+  .lottery-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--gold),var(--purple));
+    transition:width .5s}
+  .lottery-meta{display:flex;justify-content:space-between;gap:8px;font-size:var(--fs-xs);
+    color:var(--text2);margin-bottom:11px}
+  .lottery-meta strong{color:var(--text);font-weight:800}
+  .lottery-actions{position:relative;z-index:1;display:grid;grid-template-columns:1.35fr 1fr;gap:7px}
+  .lottery-btn,.lottery-view-btn{min-width:0;padding:11px 8px;border-radius:11px;border:none;
+    font-size:var(--fs-sm);font-weight:800;cursor:pointer}
+  .lottery-btn{background:var(--gold);color:#241d00}
+  .lottery-btn:disabled{background:var(--bg-card2);color:var(--text2);cursor:not-allowed;opacity:1}
+  .lottery-view-btn{background:var(--bg-card);color:var(--text);border:.5px solid var(--line)}
+  .lottery-loading{height:144px;border-radius:16px;background:linear-gradient(90deg,var(--bg-card) 25%,
+    var(--bg-card2) 50%,var(--bg-card) 75%);background-size:200% 100%;animation:shimmer 1.3s infinite}
+  @keyframes shimmer{from{background-position:200% 0}to{background-position:-200% 0}}
+  .lottery-sheet-summary{padding:15px;margin-bottom:16px;border-radius:16px;
+    background:linear-gradient(145deg,rgba(245,200,66,.16),rgba(124,110,247,.10));
+    border:1px solid rgba(245,200,66,.30)}
+  .lottery-sheet-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:13px}
+  .lottery-sheet-head b{display:block;font-size:17px}.lottery-sheet-head span{display:block;
+    margin-top:3px;color:var(--text2);font-size:var(--fs-xs);line-height:1.4}
+  .lottery-sheet-count{font-size:24px;font-weight:900;color:var(--gold);white-space:nowrap}
+  .lottery-sheet-stats{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin:12px 0}
+  .lottery-sheet-stat{padding:9px 10px;border-radius:11px;background:var(--bg-card)}
+  .lottery-sheet-stat b{display:block;font-size:16px;color:var(--text)}
+  .lottery-sheet-stat span{display:block;margin-top:2px;color:var(--text2);font-size:10px}
+  .lottery-section-title{display:flex;align-items:center;justify-content:space-between;gap:10px;
+    margin:0 0 9px;font-size:var(--fs);font-weight:850}
+  .lottery-section-title span{color:var(--text2);font-size:var(--fs-xs);font-weight:650}
   /* ── Прогалини (Розділ L, v59-60) — бекенд рахував завжди,
      ніде не показувалось. Найслабші 2-3 теми свого рівня й нижче,
      мотивують підтягнути фундамент. ── */
@@ -622,6 +661,31 @@
   .social-kicker{font-size:var(--fs-xs);font-weight:800;color:var(--purple);text-transform:uppercase;letter-spacing:.05em}
   .social-settings{width:38px;height:38px;border:0;border-radius:50%;background:var(--bg-card2);
     color:var(--text);font-size:18px;cursor:pointer}
+  .friends-value-card{margin:0 0 12px;padding:14px;border-radius:16px;
+    background:linear-gradient(145deg,rgba(124,110,247,.16),rgba(90,216,166,.07));
+    border:1px solid rgba(124,110,247,.28)}
+  .friends-value-main{display:flex;align-items:center;gap:11px}
+  .friends-value-copy{flex:1;min-width:0}
+  .friends-value-kicker{font-size:10px;font-weight:850;letter-spacing:.07em;text-transform:uppercase;color:var(--purple)}
+  .friends-value-title{margin:3px 0 3px;font-size:17px;line-height:1.22}
+  .friends-value-sub{font-size:var(--fs-xs);line-height:1.4;color:var(--text2)}
+  .friends-invite-btn{flex-shrink:0;border:0;border-radius:11px;padding:10px 12px;
+    background:var(--purple);color:#fff;font-size:var(--fs-sm);font-weight:850;cursor:pointer}
+  .friends-rewards{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:11px}
+  .friends-reward{min-width:0;padding:8px 9px;border-radius:10px;background:var(--bg-card)}
+  .friends-reward b{display:block;font-size:var(--fs-xs);line-height:1.25;color:var(--text)}
+  .friends-reward small{display:block;margin-top:3px;color:var(--text2);font-size:9px;line-height:1.25}
+  .friends-more{margin-top:9px;border-top:.5px solid rgba(124,110,247,.22)}
+  .friends-more summary{padding:10px 1px 1px;list-style:none;cursor:pointer;color:var(--text2);
+    font-size:var(--fs-xs);font-weight:800}
+  .friends-more summary::-webkit-details-marker{display:none}
+  .friends-more summary::after{content:'⌄';float:right;color:var(--purple)}
+  .friends-more[open] summary::after{content:'⌃'}
+  .friends-layer-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:9px}
+  .friends-layer-actions button{display:flex;align-items:center;gap:8px;min-width:0;padding:10px;
+    border:.5px solid var(--line);border-radius:11px;background:var(--bg-card);color:var(--text);
+    text-align:left;font-size:var(--fs-xs);font-weight:800;cursor:pointer}
+  .friends-layer-actions button span{font-size:17px;flex-shrink:0}
   .social-live-card{display:flex;align-items:center;gap:11px;padding:13px 14px;margin-bottom:12px;
     border-radius:var(--r);background:linear-gradient(135deg,#30275b,#18162a);color:#fff;cursor:pointer}
   .social-live-card .body{flex:1}.social-live-card .t{font-size:var(--fs);font-weight:800}
@@ -980,11 +1044,6 @@ window.addEventListener('load', function(){
 </div>
 <div class="sec-h"><span class="ti">Твоя звичка</span><span class="meta" id="chain-meta">0 днів</span></div>
 <div class="habit-chain" id="chain"></div>
-<div class="net-item" style="margin-top:12px;border-color:rgba(245,200,66,.35)" onclick="openLotteryTickets()">
-  <span class="ic">🎟</span>
-  <div class="body"><div class="t">Лотерея SpeakChain</div>
-  <div class="s">переглянути свої квитки та поточний розіграш</div></div><span class="ch">›</span>
-</div>
 <div class="sec-h"><span class="ti">Ще</span></div>
 <div class="tiles">
   <div class="tile" onclick="openOv('ov-vocab')"><span class="ic">📚</span><div class="t">Словник</div><div class="s">твої збережені фрази</div></div>
@@ -1082,6 +1141,29 @@ window.addEventListener('load', function(){
   <button class="social-settings" onclick="openSocialSettings()" aria-label="Налаштувати профіль">⚙</button>
 </div>
 <div class="social-offline" id="social-offline">Офлайн: перегляд доступний, а запис залишиться чернеткою до відновлення зв’язку.</div>
+<section class="friends-value-card" aria-labelledby="friends-value-title">
+  <div class="friends-value-main">
+    <div class="friends-value-copy">
+      <div class="friends-value-kicker">Вигода для обох</div>
+      <h3 class="friends-value-title" id="friends-value-title">Зростайте швидше разом</h3>
+      <div class="friends-value-sub">Запроси друга — і одразу відкрийте спільну практику.</div>
+    </div>
+    <button class="friends-invite-btn" onclick="act('chain_invite_screen')">Запросити</button>
+  </div>
+  <div class="friends-rewards" aria-label="Нагороди за друзів">
+    <div class="friends-reward"><b>⚡ +20% XP на 7 днів</b><small>коли друг приєднається</small></div>
+    <div class="friends-reward"><b>🔗 +15 XP і +1 ланка</b><small>за участь в естафеті</small></div>
+  </div>
+  <details class="friends-more">
+    <summary>Усі способи розширити мережу</summary>
+    <div class="friends-layer-actions">
+      <button onclick="startLiveMatch()"><span>🟢</span>Живий матч</button>
+      <button onclick="openFriendsSection('challenges')"><span>🎙</span>Кинути виклик</button>
+      <button onclick="startRelay()"><span>🔗</span>Запустити естафету</button>
+      <button onclick="openFriendsSection('people')"><span>👥</span>Знайти людей</button>
+    </div>
+  </details>
+</section>
 <div class="social-live-card" onclick="startLiveMatch()">
   <span class="live-dot"></span>
   <div class="body"><div class="t">Швидка розмова · 5 хвилин</div>
@@ -1159,7 +1241,8 @@ window.addEventListener('load', function(){
 </div>
 <div class="sec-h"><span class="ti">Досягнення</span><span class="meta" id="ach-n"></span></div>
 <div class="ach-grid" id="ach"></div>
-<div id="profile-lottery"></div>
+<div class="sec-h"><span class="ti">Лотерея</span><span class="meta">100 ланок = 1 квиток</span></div>
+<div id="profile-lottery"><div class="lottery-loading" aria-label="Завантажуємо лотерею"></div></div>
 <div class="sec-h"><span class="ti">Навчання</span></div>
 <div class="menu-group">
   <div class="mi" onclick="act('start_lesson')"><span class="ic"><span class="yt"></span></span>
@@ -1521,7 +1604,7 @@ window.addEventListener('load', function(){
   <div class="sheet" style="max-height:80vh;padding:0;overflow:hidden;display:flex;flex-direction:column">
     <div class="grip" style="margin:10px auto 4px;flex-shrink:0"></div>
     <div style="display:flex;align-items:center;padding:0 16px 8px;flex-shrink:0">
-      <h3 style="margin:0;flex:1;font-size:var(--fs-lg)">🎟 Мої квитки</h3>
+      <h3 style="margin:0;flex:1;font-size:var(--fs-lg)">🎟 Лотерея</h3>
       <span onclick="closeOv()" style="font-size:26px;color:var(--text2);cursor:pointer;line-height:1;padding:0 4px">×</span>
     </div>
     <div id="ov-lottery-list" style="flex:1;overflow-y:auto;padding:0 16px 20px"></div>
@@ -2355,6 +2438,14 @@ function socialTab(tab){
     socialApi('mark_seen').catch(()=>{});SOCIAL.unread=0;$('#soc-unread').textContent='';
   }
 }
+function openFriendsSection(tab){
+  socialTab(tab);
+  const more=$('.friends-more');
+  if(more) more.open=false;
+  const target=$('#soc-tab-'+tab);
+  try{target?.scrollIntoView({behavior:'smooth',block:'start'});}catch(e){}
+  trackUx('friends_layer_open',{layer:tab});
+}
 function renderSocialChallenge(){
   const c=SOCIAL.challenge||{};
   $('#social-challenge-card').innerHTML=c.topic
@@ -3127,18 +3218,16 @@ async function renderProfile(){
   renderProfileLottery();
 }
 
-/* 24.07: лотерея в профілі — раніше була ЛИШЕ на вкладці Друзі, і власниця
-   не знайшла її, шукаючи в профілі. Той самий /lottery_status, той самий
-   дизайн картки, просто ще одна точка показу — де людина реально дивиться.
-
-   25.07: виявилось навпаки — контейнер лотереї (#lottery-card) фізично був
-   ТІЛЬКИ в HTML екрана s-profile (#profile-lottery), а на s-social (Друзі),
-   де вона мала бути за первинним задумом і за журналом v71, div-а не було
-   взагалі. Кнопки не "не працювали" — їм просто не було куди рендеритись.
-   Замість дублювати всю функцію під другий id — параметризуємо ОДНУ функцію
-   довільним hostId/btnId, кличемо з обох екранів. Той самий баг (лотерея
-   губиться між Друзями і Профілем) більше не може статись, бо джерело
-   правди тепер одне на обидва місця показу. */
+/* Лотерея має одне продуктове місце — Профіль. Картка показує баланс,
+   прогрес до наступного квитка й кількість уже придбаних квитків.
+   Детальний екран використовує той самий /lottery_status. */
+function pluralUk(value,one,few,many){
+  const n=Math.abs(Number(value)||0)%100, n1=n%10;
+  if(n>10&&n<20) return many;
+  if(n1===1) return one;
+  if(n1>=2&&n1<=4) return few;
+  return many;
+}
 async function renderLotteryCard(hostId, btnId){
   const host=$('#'+hostId);
   if(!host) return;
@@ -3146,27 +3235,37 @@ async function renderLotteryCard(hostId, btnId){
     const res=await fetch(BOT_API+'/lottery_status',{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({uid:UID,init_data:IDT})});
     const d=await res.json();
-    if(!d||!d.ok||!d.has_active){ host.innerHTML=''; return; }
-    const links=d.lottery_links||0, needed=d.links_needed||100;
+    if(!res.ok||!d||!d.ok) throw new Error('lottery_status');
+    const links=Math.max(0,Number(d.lottery_links)||0);
+    const needed=Math.max(1,Number(d.links_needed)||100);
+    const remaining=Math.max(0,needed-links);
     const pct=Math.min(100,Math.round(links/needed*100));
-    const canBuy=links>=needed;
+    const canBuy=Boolean(d.has_active)&&links>=needed;
     const ticketsCount=(d.my_tickets||[]).length;
-    host.innerHTML='<div class="lottery-card">'
-      +'<div class="lottery-top"><span class="lottery-icon">🎟</span><div>'
-      +'<div class="lottery-title">Розіграш</div>'
-      +'<div class="lottery-prize">'+(d.prize||'Приз оголосимо скоро')+'</div></div></div>'
+    const prize=d.has_active?(d.prize||'Приз оголосимо скоро'):'Новий розіграш готується';
+    host.innerHTML='<div class="lottery-card" onclick="openLotteryTickets()" role="button" tabindex="0">'
+      +'<div class="lottery-top"><span class="lottery-icon">🎟</span><div class="body">'
+      +'<div class="lottery-title">Лотерея SpeakChain</div>'
+      +'<div class="lottery-prize">'+esc(prize)+'</div></div>'
+      +'<span class="lottery-count-badge">'+ticketsCount+' '+pluralUk(ticketsCount,'квиток','квитки','квитків')+'</span></div>'
       +'<div class="lottery-track"><div class="lottery-fill" style="width:'+pct+'%"></div></div>'
-      +'<div class="lottery-meta"><span>'+links+' з '+needed+' ланок</span>'
-      +'<span>'+(canBuy?'Готово!':(needed-links)+' до квитка')+'</span></div>'
-      +'<button class="lottery-btn" id="'+btnId+'" '+(canBuy?'':'disabled')+' onclick="buyLotteryTicket(\''+hostId+'\',\''+btnId+'\')">'
-      +(canBuy?'🎟 Отримати квиток':'🔒 Ще недостатньо ланок')+'</button>'
-      +(ticketsCount?'<div class="lottery-tickets" onclick="openLotteryTickets()">🎟 Мої квитки ('+ticketsCount+')</div>':'')
-      +'</div>';
+      +'<div class="lottery-meta"><span><strong>'+links+'</strong> із '+needed+' ланок</span>'
+      +'<span>'+(canBuy?'Можна купити квиток':remaining+' ще потрібно')+'</span></div>'
+      +'<div class="lottery-actions">'
+      +'<button class="lottery-btn" id="'+btnId+'" '+(canBuy?'':'disabled')
+      +' onclick="event.stopPropagation();buyLotteryTicket(\''+hostId+'\',\''+btnId+'\')">'
+      +(canBuy?'Купити за '+needed+' ланок':d.has_active?'Ще '+remaining+' ланок':'Розіграш готується')+'</button>'
+      +'<button class="lottery-view-btn" onclick="event.stopPropagation();openLotteryTickets()">Мої квитки →</button>'
+      +'</div></div>';
   }catch(e){
-    host.innerHTML='';
+    host.innerHTML='<div class="lottery-card" onclick="renderProfileLottery()" role="button">'
+      +'<div class="lottery-top"><span class="lottery-icon">🎟</span><div class="body">'
+      +'<div class="lottery-title">Лотерея SpeakChain</div>'
+      +'<div class="lottery-prize">Не вдалося завантажити стан</div></div></div>'
+      +'<button class="lottery-view-btn" style="width:100%">Повторити</button></div>';
   }
 }
-async function buyLotteryTicket(hostId, btnId){
+async function buyLotteryTicket(hostId, btnId, reopenTickets=false){
   const btn=$('#'+btnId);
   if(!btn||btn.disabled) return;
   btn.disabled=true; btn.textContent='Отримую…';
@@ -3174,9 +3273,16 @@ async function buyLotteryTicket(hostId, btnId){
     const res=await fetch(BOT_API+'/lottery_buy_ticket',{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({uid:UID,init_data:IDT})});
     const d=await res.json();
-    if(d.ticket){ if(window.showReward) showReward('lottery_ticket',{ticket:d.ticket}); renderLotteryCard(hostId,btnId); }
-    else { btn.disabled=false; btn.textContent='🎟 Отримати квиток'; }
-  }catch(e){ btn.disabled=false; btn.textContent='🎟 Отримати квиток'; }
+    if(!res.ok||!d||!d.ticket) throw new Error((d&&d.error)||'lottery_buy');
+    if(window.showReward) showReward('lottery_ticket',{ticket:d.ticket});
+    toast('Квиток додано до твоєї колекції 🎟');
+    await renderProfileLottery();
+    if(reopenTickets||$('#ov-lottery')?.classList.contains('on')) await openLotteryTickets();
+  }catch(e){
+    btn.disabled=false;
+    btn.textContent='Спробувати ще раз';
+    toast('Не вдалося купити квиток. Ланки не списані.');
+  }
 }
 /* Стара назва лишена як міст: якщо десь у коді ще лишився виклик
    renderProfileLottery()/buyProfileLottery() (напр. кеш GitHub Pages
@@ -3184,28 +3290,59 @@ async function buyLotteryTicket(hostId, btnId){
 function renderProfileLottery(){ return renderLotteryCard('profile-lottery','pl-buy-btn'); }
 function buyProfileLottery(){ return buyLotteryTicket('profile-lottery','pl-buy-btn'); }
 
-/* Мої квитки — той самий /lottery_status, що вже живить лотерейну картку
-   на Друзях. Простий рендер прямо в оболонці (не Shadow DOM мініап) —
-   вміст занадто простий, щоб виправдовувати окремий модуль. */
+function lotteryTicketCode(ticket,index){
+  if(ticket&&typeof ticket==='object'){
+    return String(ticket.number||ticket.ticket||ticket.code||ticket.id||('SC-'+String(index+1).padStart(4,'0')));
+  }
+  return String(ticket||('SC-'+String(index+1).padStart(4,'0')));
+}
+function lotteryTicketHtml(ticket,index){
+  const code=lotteryTicketCode(ticket,index);
+  return '<div class="ticket-card"><div class="ticket-brand">SpeakChain Lottery</div>'
+    +'<div class="ticket-number">'+esc(code)+'</div>'
+    +'<div class="ticket-caption"><span>Квиток '+(index+1)+'</span><span>дійсний</span></div></div>';
+}
+
+/* Детальний екран: спочатку пояснює, що відбувається з 100 ланками,
+   потім показує колекцію фізично схожих на квитки карток. */
 async function openLotteryTickets(){
   openOv('ov-lottery');
   const host=$('#ov-lottery-list');
   if(!host) return;
-  host.innerHTML='<div class="ticket-empty">Завантажую…</div>';
+  host.innerHTML='<div class="lottery-loading" aria-label="Завантажуємо квитки"></div>';
   try{
-    const res=await fetch(window.SC_BOT_API+'/lottery_status',{method:'POST',headers:{'Content-Type':'application/json'},
+    const res=await fetch(BOT_API+'/lottery_status',{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({uid:UID,init_data:IDT})});
     const d=await res.json();
+    if(!res.ok||!d||!d.ok) throw new Error('lottery_status');
+    const links=Math.max(0,Number(d.lottery_links)||0);
+    const needed=Math.max(1,Number(d.links_needed)||100);
+    const remaining=Math.max(0,needed-links);
+    const pct=Math.min(100,Math.round(links/needed*100));
+    const canBuy=Boolean(d.has_active)&&links>=needed;
     const tickets=(d&&d.my_tickets)||[];
-    if(!tickets.length){
-      host.innerHTML='<div class="ticket-empty">Поки немає квитків — назбирай 100 ланок лотереї на вкладці «Друзі»</div>';
-      return;
-    }
-    host.innerHTML=tickets.map(t=>
-      '<div class="ticket-row"><span class="ticket-ico">🎟</span><span class="ticket-num">'+t+'</span></div>'
-    ).join('');
+    const prize=d.has_active?(d.prize||'Приз оголосимо скоро'):'Новий розіграш готується';
+    host.innerHTML='<div class="lottery-sheet-summary">'
+      +'<div class="lottery-sheet-head"><div><b>'+esc(prize)+'</b>'
+      +'<span>Кожні '+needed+' доступних ланок можна обміняти на один квиток.</span></div>'
+      +'<div class="lottery-sheet-count">'+tickets.length+' 🎟</div></div>'
+      +'<div class="lottery-track"><div class="lottery-fill" style="width:'+pct+'%"></div></div>'
+      +'<div class="lottery-sheet-stats">'
+      +'<div class="lottery-sheet-stat"><b>'+links+' / '+needed+'</b><span>доступних ланок</span></div>'
+      +'<div class="lottery-sheet-stat"><b>'+(canBuy?'Готово':remaining)+'</b><span>'
+      +(canBuy?'можна купувати':pluralUk(remaining,'ланка потрібна','ланки потрібні','ланок потрібно'))+'</span></div></div>'
+      +'<button class="lottery-btn" style="width:100%" id="lottery-overlay-buy" '+(canBuy?'':'disabled')
+      +' onclick="buyLotteryTicket(\'profile-lottery\',\'lottery-overlay-buy\',true)">'
+      +(canBuy?'Купити квиток за '+needed+' ланок':d.has_active?'Ще '+remaining+' ланок до квитка':'Розіграш готується')
+      +'</button></div>'
+      +'<div class="lottery-section-title">Мої квитки <span>'+tickets.length+' у колекції</span></div>'
+      +(tickets.length?'<div class="ticket-grid">'+tickets.map(lotteryTicketHtml).join('')+'</div>'
+        :'<div class="ticket-empty"><span class="ic">🎟</span><b>Поки немає квитків</b><br>'
+          +'Збирай ланки разом із друзями. Коли буде '+needed+', кнопка купівлі стане активною.</div>');
   }catch(e){
-    host.innerHTML='<div class="ticket-empty">Не вдалось завантажити — спробуй ще раз</div>';
+    host.innerHTML='<div class="ticket-empty"><span class="ic">↻</span><b>Не вдалося завантажити лотерею</b><br>'
+      +'Перевір зв’язок і натисни нижче.'
+      +'<button class="diag-cta" onclick="openLotteryTickets()">Спробувати ще раз</button></div>';
   }
 }
 
