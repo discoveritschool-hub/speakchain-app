@@ -758,20 +758,6 @@
   .record-main{width:64px;height:64px;border:6px solid rgba(255,255,255,.55);border-radius:50%;
     background:var(--red);box-shadow:0 0 0 3px var(--red);cursor:pointer}
   .live-room-head{display:flex;align-items:center;gap:10px;padding:10px 0}.live-room-head .body{flex:1}
-  .live-topic-chips{display:flex;gap:7px;overflow-x:auto;padding:2px 0 10px;scrollbar-width:none}
-  .live-topic-chips::-webkit-scrollbar{display:none}
-  .live-topic-chips button{flex:none;border:.5px solid var(--line);background:var(--bg-card2);color:var(--text2);
-    border-radius:var(--r-pill);padding:8px 11px;font-size:var(--fs-xs);cursor:pointer}
-  .live-prep-card,.live-help-card{background:var(--bg-card2);border:.5px solid var(--line);
-    border-radius:var(--r);padding:12px;margin-top:10px}
-  .live-prep-card h4{font-size:var(--fs);margin:0 0 5px}.live-prep-card p{font-size:var(--fs-xs);color:var(--text2);line-height:1.45}
-  .live-prep-list{display:flex;flex-direction:column;gap:7px;margin-top:10px}
-  .live-prep-item{font-size:var(--fs-sm);line-height:1.4;padding:8px 9px;background:var(--bg-card3);border-radius:var(--r-sm)}
-  .live-prep-item small{display:block;color:var(--text2);margin-top:2px}
-  .live-help-card .k{font-size:var(--fs-xs);font-weight:800;color:var(--purple);text-transform:uppercase;letter-spacing:.04em}
-  .live-help-card .v{font-size:var(--fs);line-height:1.45;margin:5px 0 9px}
-  .live-help-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px}
-  .live-help-actions button{border:none;border-radius:var(--r-sm);padding:9px 6px;background:var(--bg-card3);color:var(--text);font-size:var(--fs-xs);font-weight:700}
   .live-timer{font-size:22px;font-weight:850;font-variant-numeric:tabular-nums;color:var(--purple)}
   .live-messages{max-height:230px;overflow-y:auto;margin:10px 0;padding:10px;border-radius:var(--r);
     background:var(--bg-card2)}
@@ -1577,25 +1563,9 @@ window.addEventListener('load', function(){
   <div class="sheet" style="max-height:94vh;overflow-y:auto">
     <div class="grip"></div>
     <div style="display:flex;align-items:center"><div><div class="social-kicker">Швидка розмова</div>
-      <h3 id="live-title" style="margin:2px 0 0">Обери тему</h3></div>
+      <h3 id="live-title" style="margin:2px 0 0">Шукаємо партнера…</h3></div>
       <span onclick="leaveLiveMatch()" style="margin-left:auto;font-size:26px;color:var(--text2);cursor:pointer">×</span></div>
-    <div id="live-topic-setup" style="margin-top:14px">
-      <label class="field-label">Про що хочеш поговорити?</label>
-      <textarea class="field-input" id="live-topic-input" maxlength="180" rows="2"
-        placeholder="Наприклад: подорожі без плану, нова професія або улюблений серіал"></textarea>
-      <div class="live-topic-chips">
-        <button onclick="setLiveTopic('Подорожі та нові місця')">✈️ Подорожі</button>
-        <button onclick="setLiveTopic('Фільми та серіали')">🎬 Фільми</button>
-        <button onclick="setLiveTopic('Робота майбутнього')">💼 Робота</button>
-        <button onclick="setLiveTopic('Маленькі радощі дня')">☀️ Мій день</button>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-        <button class="sn-go" style="background:var(--bg-card3);color:var(--text)" onclick="prepareLiveTopic(true)">🎲 Будь-яка тема</button>
-        <button class="sn-go" onclick="prepareLiveTopic(false)">Підготуватися</button>
-      </div>
-    </div>
-    <div id="live-preparation" style="display:none"></div>
-    <div id="live-waiting" class="social-empty" style="display:none;margin-top:14px"><span class="ic">🔎</span>
+    <div id="live-waiting" class="social-empty" style="margin-top:14px"><span class="ic">🔎</span>
       <b>Підбираємо людину твого рівня</b><span>Можеш закрити екран — ми збережемо місце в черзі.</span></div>
     <div id="live-room" style="display:none">
       <div class="live-room-head"><div class="social-avatar" id="live-avatar">S</div>
@@ -1603,14 +1573,6 @@ window.addEventListener('load', function(){
         <div class="live-timer" id="live-timer">05:00</div></div>
       <div id="live-ready-box" class="instr-note">Матч почнеться, коли обидва натиснуть «Я готова».</div>
       <button class="diag-cta" id="live-ready" onclick="readyLiveMatch()">Я готова</button>
-      <div class="live-help-card" id="live-help-card" style="display:none">
-        <div class="k" id="live-help-kind">Що сказати</div>
-        <div class="v" id="live-help-text"></div>
-        <div class="live-help-actions">
-          <button onclick="nextLiveHint('phrase')">💬 Що сказати?</button>
-          <button onclick="nextLiveHint('question')">❓ Нове запитання</button>
-        </div>
-      </div>
       <div class="live-messages" id="live-messages"></div>
       <button class="diag-cta" id="live-record" style="display:none" onclick="toggleLiveRecord()">🎙 Записати коротку репліку</button>
       <div style="display:flex;gap:6px"><button class="sn-skip" onclick="reportLiveMatch()">Поскаржитися</button>
@@ -2428,7 +2390,6 @@ let SOCIAL={}, SOCIAL_TAB='feed', SOCIAL_PROFILE=null, SOCIAL_SETTINGS={format:'
 let COMPOSE_CTX={}, COMPOSE_VIS='private', COMPOSE_TYPE='audio', COMPOSE_REC=null;
 let COMPOSE_STREAM=null, COMPOSE_CHUNKS=[], COMPOSE_B64='', COMPOSE_MIME='', COMPOSE_TIMER=null, COMPOSE_SEC=0, COMPOSE_CONFIRMED=false;
 let LIVE_MATCH=null, LIVE_POLL=null, LIVE_TIMER_INT=null, LIVE_REC=null, LIVE_STREAM=null, LIVE_CHUNKS=[], LIVE_DEADLINE=0;
-let LIVE_TOPIC='', LIVE_TOPIC_MODE='any', LIVE_TOPIC_PACK=null, LIVE_HINT_INDEX={phrase:0,question:0};
 let CHAINY_COMPOSE_OBSERVER=null;
 
 async function socialApi(op,extra){
@@ -2853,103 +2814,28 @@ function showRelayResult(room,url){
 }
 function startRelay(){openSocialComposer({mode:'relay',topic:SOCIAL.challenge?.topic||'',phrase:SOCIAL.challenge?.phrase||''});}
 
-function setLiveTopic(topic){
-  LIVE_TOPIC=String(topic||'').slice(0,180);
-  const input=$('#live-topic-input');if(input)input.value=LIVE_TOPIC;
-}
-function localLiveTopicPack(topic){
-  const title=String(topic||'Вільна розмова').trim()||'Вільна розмова';
-  return {topic_title:title,topic_description:'Поділіться думками, поставте запитання та наведіть хоча б один особистий приклад.',
-    conversation_questions:['What interests you most about this topic?','Have you had any personal experience with it?',
-      'What are its main advantages and disadvantages?','Has your opinion about it changed over time?',
-      'What would you like to ask someone else about it?'],
-    useful_phrases:[
-      {en:'In my opinion, ...',ua:'На мою думку, ...'},{en:'From my experience, ...',ua:'З мого досвіду, ...'},
-      {en:'I see your point, but ...',ua:'Я розумію твою думку, але ...'},
-      {en:'Could you tell me more about that?',ua:'Можеш розповісти про це більше?'},
-      {en:'What makes you think that?',ua:'Чому ти так думаєш?'}],
-    opening_lines:['I think this is an interesting topic because ...','I have a question for you about this topic.'],
-    rescue_phrases:['Let me think for a second.',"I'm not sure how to say it, but I think ..."],
-    level_tip:'Не шукай ідеальну фразу — скажи простіше й постав партнеру уточнювальне запитання.'};
-}
-function renderLivePreparation(pack){
-  pack=pack||localLiveTopicPack(LIVE_TOPIC);LIVE_TOPIC_PACK=pack;
-  const qs=(pack.conversation_questions||[]).slice(0,3);
-  const phrases=(pack.useful_phrases||[]).slice(0,3);
-  $('#live-preparation').innerHTML='<div class="live-prep-card"><h4>🧭 '+esc(pack.topic_title||LIVE_TOPIC||'Вільна розмова')+'</h4>'
-    +'<p>'+esc(pack.topic_description||'Поговоріть англійською та обміняйтеся думками.')+'</p>'
-    +'<div class="live-prep-list"><div class="live-prep-item"><b>Почни так:</b><small>'+esc((pack.opening_lines||[])[0]||'What do you think about this topic?')+'</small></div>'
-    +qs.map(q=>'<div class="live-prep-item">❓ '+esc(q)+'</div>').join('')
-    +phrases.map(p=>'<div class="live-prep-item">💬 '+esc(p.en||p)+'<small>'+esc(p.ua||'')+'</small></div>').join('')
-    +'<div class="live-prep-item">🛟 '+esc((pack.rescue_phrases||[])[0]||'Let me think for a second.')+'</div>'
-    +'<div class="live-prep-item">💡 '+esc(pack.level_tip||'Говори простими фразами й не бійся перепитати.')+'</div></div></div>'
-    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">'
-    +'<button class="sn-go" style="background:var(--bg-card3);color:var(--text)" onclick="resetLiveTopic()">Інша тема</button>'
-    +'<button class="sn-go" style="background:var(--bg-card3);color:var(--text)" onclick="rehearseLiveTopic()">З Chainy</button></div>'
-    +'<button class="diag-cta" onclick="beginLiveSearch()">Я готова — знайти партнера</button>';
-}
-function prepareLiveTopic(anyTopic){
-  const input=$('#live-topic-input');LIVE_TOPIC=anyTopic?'':String(input?.value||'').trim().slice(0,180);
-  LIVE_TOPIC_MODE=LIVE_TOPIC?'custom':'any';
-  if(!anyTopic&&!LIVE_TOPIC){toast('Напиши тему або обери «Будь-яка тема»');return;}
-  $('#live-topic-setup').style.display='none';$('#live-preparation').style.display='';
-  $('#live-title').textContent='Підготуйся до розмови';
-  renderLivePreparation(localLiveTopicPack(LIVE_TOPIC));
-}
-function resetLiveTopic(){
-  $('#live-preparation').style.display='none';$('#live-topic-setup').style.display='';
-  $('#live-title').textContent='Обери тему';
-}
-function rehearseLiveTopic(){
-  const topic=LIVE_TOPIC||LIVE_TOPIC_PACK?.topic_title||'Free conversation';
-  closeOv();go('s-buddy');
-  cyLaunch(w=>w.startVideoChat&&w.startVideoChat(topic,'discuss','',(LIVE_TOPIC_PACK?.useful_phrases||[]).map(p=>p.en||p).slice(0,3)));
-  toast('Після репетиції повернись до швидкої розмови');
-}
-async function beginLiveSearch(){
-  $('#live-preparation').style.display='none';$('#live-topic-setup').style.display='none';
-  $('#live-waiting').style.display='';$('#live-room').style.display='none';
-  $('#live-title').textContent='Шукаємо партнера…';
-  try{const r=await socialApi('live_join',{topic_text:LIVE_TOPIC,topic_mode:LIVE_TOPIC_MODE});handleLiveStatus(r);if(r.status!=='matched')startLivePolling();}
-  catch(e){resetLiveTopic();toast(e.message==='minor_live_restricted'?'Live-матч недоступний у безпечному режимі':'Не вдалося почати пошук');}
-}
-function startLiveMatch(){
+async function startLiveMatch(){
   if(!SOCIAL.me?.enabled||!SOCIAL.me?.allow_live){openSocialSettings();toast('Спочатку увімкни live-матч у профілі');return;}
-  LIVE_TOPIC='';LIVE_TOPIC_MODE='any';LIVE_TOPIC_PACK=null;LIVE_HINT_INDEX={phrase:0,question:0};
-  $('#live-topic-input').value='';$('#live-topic-setup').style.display='';
-  $('#live-preparation').style.display='none';$('#live-waiting').style.display='none';$('#live-room').style.display='none';
-  $('#live-title').textContent='Обери тему';openOv('ov-live-match');
+  openOv('ov-live-match');$('#live-waiting').style.display='';$('#live-room').style.display='none';
+  try{const r=await socialApi('live_join',{scenario_id:'emotion_guess'});handleLiveStatus(r);startLivePolling();}
+  catch(e){closeOv();toast(e.message==='minor_live_restricted'?'Live-матч недоступний у безпечному режимі':'Не вдалося почати пошук');}
 }
 function startLivePolling(){clearInterval(LIVE_POLL);LIVE_POLL=setInterval(async()=>{try{handleLiveStatus(await socialApi('live_status'));}catch(e){}},2500);}
 function handleLiveStatus(r){
   if(r.status!=='matched'){$('#live-title').textContent='Шукаємо партнера…';return;}
   LIVE_MATCH=r.match||LIVE_MATCH;if(!LIVE_MATCH)return;
-  LIVE_TOPIC_PACK=LIVE_MATCH.topic_pack||LIVE_TOPIC_PACK||localLiveTopicPack(LIVE_TOPIC);
   $('#live-waiting').style.display='none';$('#live-room').style.display='';
   $('#live-title').textContent='Партнера знайдено';
   const p=LIVE_MATCH.partner||{};$('#live-partner').textContent=p.name||'Speaking partner';$('#live-avatar').textContent=ini(p.name||'S');
-  $('#live-scenario').textContent=LIVE_TOPIC_PACK.topic_title||LIVE_MATCH.scenario?.title||'Коротка розмова англійською';
-  $('#live-help-card').style.display='';nextLiveHint('phrase');
+  $('#live-scenario').textContent=LIVE_MATCH.scenario?.title||'Коротка розмова англійською';
   pollLiveRoom();clearInterval(LIVE_POLL);LIVE_POLL=setInterval(pollLiveRoom,1800);
   $('#live-timer').textContent='05:00';
-}
-function nextLiveHint(kind){
-  const pack=LIVE_TOPIC_PACK||localLiveTopicPack(LIVE_TOPIC);
-  const list=kind==='question'?(pack.conversation_questions||[]):[
-    ...(pack.opening_lines||[]),...(pack.useful_phrases||[]).map(p=>p.en||p),...(pack.rescue_phrases||[])
-  ];
-  if(!list.length)return;
-  const i=LIVE_HINT_INDEX[kind]||0;
-  $('#live-help-kind').textContent=kind==='question'?'Нове запитання':'Що сказати';
-  $('#live-help-text').textContent=list[i%list.length];
-  LIVE_HINT_INDEX[kind]=i+1;
 }
 async function pollLiveRoom(){
   if(!LIVE_MATCH?.room_id)return;
   try{
     const r=await fetch(BOT_API+'/duo_room_state?room_id='+encodeURIComponent(LIVE_MATCH.room_id));
     const d=await r.json();if(!d.ok)return;
-    if(d.topic_pack){LIVE_TOPIC_PACK=d.topic_pack;$('#live-scenario').textContent=d.topic_pack.topic_title||d.topic_title||'';}
     const ready=(d.ready||[]).map(String),both=ready.length>=2;
     $('#live-ready-box').textContent=both?'Обидва готові — говоріть по черзі короткими репліками.':'Готові: '+ready.length+' із 2';
     $('#live-record').style.display=both?'':'none';$('#live-ready').style.display=ready.includes(String(UID))?'none':'';
