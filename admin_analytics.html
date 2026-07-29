@@ -1141,6 +1141,15 @@ function renderFinance() {
       + 'Журнал платежів ведеться з <b>' + esc(f.journal_from) + '</b>. '
       + 'Оплати до цієї дати ніде не записувались — відновити неможливо.</div>';
   }
+  if (inc.mixed_currency_warning) {
+    const currencies = Object.entries(inc.by_currency || {})
+      .map(([code, amount]) => esc(code) + ' ' + Number(amount || 0).toFixed(2))
+      .join(' · ');
+    h += '<div style="background:rgba(245,158,11,.12);border:1px solid var(--amber);'
+      + 'border-radius:9px;padding:9px 11px;margin-bottom:12px;font-size:11px;color:var(--amber)">'
+      + '⚠️ У журналі кілька валют: ' + currencies + '. Загальний підсумок без FX-конвертації '
+      + 'не можна трактувати як одну валюту.</div>';
+  }
 
   /* ═══ ДОХІД ═══ */
   h += '<div style="font-size:13px;font-weight:700;color:var(--green);margin:14px 0 8px">'
@@ -1243,13 +1252,25 @@ function renderFinance() {
     + '<tr id="fin-acc-blogger" style="display:none"><td colspan="3" style="padding:0">'
     +   '<table style="width:100%">' + bloggerAccordionRows + '</table></td></tr>';
 
+  const acquiringDetails = ((exp.acquiring && exp.acquiring.by_provider) || []).map(p =>
+    '<tr style="background:var(--surface1)">'
+    + '<td style="padding-left:24px;font-size:12px">'
+    + esc(p.provider || 'legacy')
+    + (p.uses_fallback ? ' <span style="color:var(--text3);font-size:10px">• fallback</span>' : '')
+    + '<div style="font-size:10px;color:var(--text3)">'
+    + fmt(p.payments || 0) + ' оплат · revenue ' + money(p.revenue || 0) + '</div></td>'
+    + '<td style="text-align:center;font-size:12px">' + Number(p.pct || 0).toFixed(2) + '%</td>'
+    + '<td style="text-align:right;font-size:12px">' + money(p.amount || 0) + '</td></tr>'
+  ).join('');
+
   h += '<div class="table-block"><table>'
     + '<tr><th>Стаття</th><th style="text-align:center">%</th>'
     + '<th style="text-align:right">Сума</th></tr>'
     + bloggerRow
     + pctRow('fx-tax', 'Податок', exp.tax.pct, exp.tax.amount, 'введи % — порахує само')
     + pctRow('fx-acq', 'Комісія еквайринга', exp.acquiring.pct, exp.acquiring.amount,
-             'WayForPay — поки єдиний провайдер, деталізація зʼявиться з другим')
+             'поле = глобальний fallback; фактичні ставки — нижче по провайдерах')
+    + acquiringDetails
     + pctRow(null, exp.ai.label, null, exp.ai.amount, 'з обліку витрат на AI')
     + staffRows + customExpRows
     + '<tr style="border-top:1px solid var(--border-strong)">'
@@ -3615,7 +3636,25 @@ function renderCosts() {
       + '(' + fmt(c.tokens_cached) + ' токенів прочитано з кешу замість повної ціни)</div>'
     : '';
 
-  return cards + table + cache;
+  const featureRows = (c.by_feature || []).map(f => '<tr>'
+    + '<td style="font-weight:600"><code style="font-size:11px">' + esc(f.feature) + '</code></td>'
+    + '<td>' + fmt(f.calls) + '</td>'
+    + '<td>' + fmt(f.users) + '</td>'
+    + '<td>$' + Number(f.claude_cost || 0).toFixed(4) + '</td>'
+    + '<td>$' + Number(f.whisper_cost || 0).toFixed(4) + '</td>'
+    + '<td style="color:var(--amber);font-weight:600">$'
+    + Number(f.total_cost || 0).toFixed(4) + '</td></tr>').join('');
+  const featureTable = featureRows
+    ? '<div class="chart-block" style="margin-top:14px">'
+      + '<div class="chart-title">Витрати за функціями продукту</div>'
+      + '<div style="font-size:11px;color:var(--text3);margin-bottom:8px">'
+      + 'Назва = функція, яка зробила AI-виклик. <code>legacy_unattributed</code> — історичні записи до цього релізу.</div>'
+      + '<table><tr><th>Функція</th><th>Викликів</th><th>Юзерів</th>'
+      + '<th>Claude</th><th>Whisper</th><th>Разом</th></tr>'
+      + featureRows + '</table></div>'
+    : '';
+
+  return cards + table + featureTable + cache;
 }
 
 function renderRevenue() {
