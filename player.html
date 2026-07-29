@@ -11,7 +11,7 @@
        а сайт живе в підпапці /speakchain-app/ → 404.
   ─────────────────────────────────────────────────────────────── -->
   <style>
-  :root {
+  :root, :host {
     --purple:#7c6ef7; --purple-dark:#5b4bc4; --purple-bg:#241d4d; --purple-text:#c9c2ff;
     --green:#5ad8a6; --green-bg:#1b3229;
     --red:#f76e6e; --orange:#f7a35c; --gold:#f5c842; --silver:#b0b0c0;
@@ -29,6 +29,7 @@
     --grad-progress:linear-gradient(90deg,var(--green),var(--purple));
     --grad-gold:linear-gradient(135deg,#f5c451,#e0a020);
     --dur-fast:.12s; --dur:.15s; --ease:cubic-bezier(.4,0,.2,1);
+    color-scheme:dark;
   }
   
     /* ══ ЕКРАН ВСТАВКИ ПОСИЛАННЯ ══ */
@@ -39,49 +40,80 @@
          екран усередині плеєра. Окремо (standalone) поводиться так само,
          бо body/html розтягнуті на 100%. */
       display:none; position:absolute; inset:0; z-index:60;
-      background:var(--bg,#0f0f14);
-      align-items:center; justify-content:center; padding:24px;
+      background:
+        radial-gradient(circle at 50% 12%,rgba(124,110,247,.18),transparent 42%),
+        var(--bg,#0d0d14);
+      align-items:center; justify-content:center; padding:24px 16px;
       overflow-y:auto;
     }
     #paste-screen.show { display:flex; }
-    .paste-box { width:100%; max-width:420px; }
+    .paste-box {
+      width:100%; max-width:420px; padding:24px;
+      background:linear-gradient(180deg,rgba(30,30,42,.98),rgba(22,22,31,.98));
+      border:1px solid rgba(201,194,255,.16); border-radius:var(--r-lg,20px);
+      box-shadow:0 24px 64px rgba(0,0,0,.52),0 1px 0 rgba(255,255,255,.05) inset;
+    }
     .paste-title {
-      font-size:var(--fs-xl,20px); font-weight:700; margin-bottom:6px;
+      font-size:var(--fs-xl,28px); font-weight:800; margin-bottom:6px;
+      color:var(--text,#eaeaf5); letter-spacing:-.02em;
     }
     .paste-sub {
-      font-size:var(--fs-sm,13px); color:var(--text2,#8b8b93);
+      font-size:var(--fs,14px); color:var(--text2,#8888a8);
       margin-bottom:20px; line-height:1.5;
+    }
+    .paste-label {
+      display:block; margin:0 0 8px; color:var(--purple-text,#c9c2ff);
+      font-size:var(--fs-xs,11px); font-weight:800; letter-spacing:.08em;
+      text-transform:uppercase;
     }
     .paste-input {
       width:100%; padding:14px 16px; border-radius:var(--r-lg,12px);
-      border:1px solid var(--line,#2a2a35); background:var(--card,#1a1a22);
-      color:var(--text,#fff); font-size:var(--fs,15px); outline:none;
-      transition:border-color .15s;
+      border:1px solid var(--line,#2a2a3a); background:var(--bg,#0d0d14);
+      color:var(--text,#eaeaf5); -webkit-text-fill-color:var(--text,#eaeaf5);
+      caret-color:var(--purple,#7c6ef7); font-size:16px; font-family:inherit; outline:none;
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.025);
+      transition:border-color .15s,box-shadow .15s,background .15s;
     }
-    .paste-input:focus { border-color:var(--purple,#7c6ef7); }
+    .paste-input::placeholder {
+      color:var(--text2,#8888a8); -webkit-text-fill-color:var(--text2,#8888a8); opacity:.78;
+    }
+    .paste-input:focus {
+      border-color:var(--purple,#7c6ef7); background:var(--bg-card,#16161f);
+      box-shadow:0 0 0 4px var(--purple-bg,#241d4d);
+    }
     .paste-err {
       font-size:var(--fs-sm,13px); color:#ff6b6b; margin-top:8px;
       min-height:18px;
     }
-    .paste-modes { display:flex; flex-direction:column; gap:8px; margin:18px 0; }
+    .paste-modes { display:flex; flex-direction:column; gap:10px; margin:16px 0 18px; }
     .pmode {
       display:flex; align-items:center; gap:12px; text-align:left;
-      padding:13px 14px; border-radius:var(--r-lg,12px);
-      border:1px solid var(--line,#2a2a35); background:var(--card,#1a1a22);
-      color:var(--text,#fff); cursor:pointer; transition:all .15s;
+      position:relative; width:100%; padding:14px; border-radius:var(--r,12px);
+      border:1px solid var(--line,#2a2a3a); background:var(--bg-card,#16161f);
+      color:var(--text,#eaeaf5); -webkit-text-fill-color:var(--text,#eaeaf5);
+      cursor:pointer; transition:transform .15s,border-color .15s,background .15s;
     }
     .pmode.active {
       border-color:var(--purple,#7c6ef7);
-      background:rgba(124,110,247,.12);
+      background:var(--purple-bg,#241d4d);
+      box-shadow:0 0 0 1px rgba(124,110,247,.22) inset;
     }
+    .pmode.active::after {
+      content:"✓"; margin-left:auto; width:22px; height:22px; border-radius:50%;
+      display:grid; place-items:center; flex-shrink:0;
+      background:var(--purple,#7c6ef7); color:#fff; -webkit-text-fill-color:#fff;
+      font-size:13px; font-weight:800;
+    }
+    .pmode:active { transform:scale(.985); }
     .pm-ico { font-size:22px; flex-shrink:0; }
     .pm-body { display:flex; flex-direction:column; gap:2px; }
     .pm-name { font-size:var(--fs,15px); font-weight:600; }
     .pm-desc { font-size:var(--fs-sm,13px); color:var(--text2,#8b8b93); line-height:1.4; }
     .paste-go {
       width:100%; padding:15px; border-radius:var(--r-lg,12px); border:none;
-      background:var(--purple,#7c6ef7); color:#fff;
-      font-size:var(--fs,15px); font-weight:600; cursor:pointer;
+      background:var(--grad-purple,linear-gradient(135deg,#7c6ef7,#5b4bc4)); color:#fff;
+      font-size:var(--fs-md,16px); font-weight:700; cursor:pointer;
+      box-shadow:0 10px 24px rgba(91,75,196,.35);
     }
     .paste-go:active { transform:scale(.98); }
   </style>
@@ -363,6 +395,7 @@
     <div class="paste-title">🎬 Практика по відео</div>
     <div class="paste-sub">Встав посилання на YouTube — і працюємо</div>
 
+    <label class="paste-label" for="paste-url">Посилання на YouTube</label>
     <input id="paste-url" class="paste-input"
            placeholder="https://youtube.com/watch?v=…"
            autocomplete="off" inputmode="url">

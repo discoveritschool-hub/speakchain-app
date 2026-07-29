@@ -6,12 +6,13 @@
 <title>Діагностика рівня — SpeakChain</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
-  :root{
+  :root, :host{
     --ink:#12203a; --muted:#6b7891; --line:#e6eaf2;
     --brand:#2f6df6; --brand-deep:#1b4fd0;
     --a1:#e8663b; --a2:#e69a2e; --b1:#e6c72e; --b2:#7cbf3f; --c1:#2f9e5e;
     --card:#ffffff; --bg:#f4f7fc; --ok:#2f9e5e; --wrong:#d9534f; --warn:#e0873a; --sink:#eef3fb;
     --shadow:0 2px 10px rgba(20,40,80,.06);
+    color-scheme:light;
   }
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
   body{
@@ -39,9 +40,11 @@
     background:var(--card); border:1.5px solid var(--line); border-radius:12px;
     padding:11px 15px; font-size:16px; font-weight:600; letter-spacing:-.01em;
     cursor:pointer; transition:all .12s; user-select:none; color:var(--ink);
+    -webkit-text-fill-color:var(--ink);
   }
   .tile:active{transform:scale(.95);}
   .tile.on{background:var(--brand); border-color:var(--brand); color:#fff;
+    -webkit-text-fill-color:#fff;
     box-shadow:0 4px 12px rgba(47,109,246,.28);}
   .hint{text-align:center; color:var(--muted); font-size:13px; margin:18px 0 0;}
 
@@ -55,6 +58,7 @@
     display:flex; align-items:center; gap:12px; background:var(--sink);
     border:1.5px solid transparent; border-radius:13px; padding:14px 16px;
     cursor:pointer; font-size:16px; font-weight:500; transition:all .13s; user-select:none;
+    color:var(--ink); -webkit-text-fill-color:var(--ink);
   }
   .opt:active{transform:scale(.99);}
   .opt.sel{background:#eaf1ff; border-color:var(--brand); font-weight:600;}
