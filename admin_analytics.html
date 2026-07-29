@@ -3654,7 +3654,21 @@ function renderCosts() {
       + featureRows + '</table></div>'
     : '';
 
-  return cards + table + featureTable + cache;
+  const modelRows = (c.by_model || []).map(m => '<tr>'
+    + '<td><code style="font-size:11px">' + esc(m.model) + '</code></td>'
+    + '<td>' + fmt(m.calls) + '</td>'
+    + '<td style="color:var(--amber);font-weight:600">$'
+    + Number(m.cost || 0).toFixed(4) + '</td></tr>').join('');
+  const modelTable = modelRows
+    ? '<div class="chart-block" style="margin-top:14px">'
+      + '<div class="chart-title">Витрати за моделями Claude</div>'
+      + '<div style="font-size:11px;color:var(--text3);margin-bottom:8px">'
+      + 'Haiku й Opus рахуються за різними вбудованими тарифами. Railway Variables — лише optional override.</div>'
+      + '<table><tr><th>Модель</th><th>Викликів</th><th>Вартість</th></tr>'
+      + modelRows + '</table></div>'
+    : '';
+
+  return cards + table + modelTable + featureTable + cache;
 }
 
 function renderRevenue() {
