@@ -791,7 +791,8 @@ window.onYouTubeIframeAPIReady = function() {
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
     ytPlayer = new YT.Player("yt-player", {
       height:"100%", width:"100%", videoId,
-      playerVars: { autoplay:isIOS?0:1, rel:0, modestbranding:1, playsinline:1 },
+      playerVars: { autoplay:isIOS?0:1, rel:0, modestbranding:1, playsinline:1,
+                    cc_load_policy:1, cc_lang_pref:'en' },
       events: {
         onReady: function(e) {
           ytReady = true;
@@ -1153,7 +1154,7 @@ async function loadCaptions(){
     const res=await fetch(`${capBase}?v=${videoId}&lang=en`,{signal:AbortSignal.timeout(6000)});
     if (!res.ok) return;
     const data=await res.json();
-    if (!data.events) return;
+    if (!data.events) { showToast('У цього відео немає доступних англійських субтитрів'); return; }
     captions=data.events
       .filter(e=>e.segs&&e.tStartMs!=null)
       .map(e=>({start:e.tStartMs/1000,end:(e.tStartMs+(e.dDurationMs||2000))/1000,
@@ -1162,7 +1163,7 @@ async function loadCaptions(){
     if (captions.length>0){
       document.getElementById("transcript-overlay").classList.add("show");
       setInterval(syncCaptions,150); // 150ms для плавніших субтитрів
-    }
+    } else showToast('У цього відео немає доступних англійських субтитрів');
   } catch(e){}
 }
 
