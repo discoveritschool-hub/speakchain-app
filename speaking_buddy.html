@@ -2237,13 +2237,15 @@ document.addEventListener('visibilitychange', () => {
 window.addEventListener('pagehide', endSession);
 
 // ── Маршрут «відео → Chainy»: ?context=video&topic=... ──
-function startVideoChat(topic, mode, summary) {
+function startVideoChat(topic, mode, summary, phrases, resourceKind) {
   stopRealtimeSession();
   const topicTxt = (topic || 'the video you just watched').slice(0, 120);
+  const isBook = resourceKind === 'book';
+  const resource = isBook ? 'book excerpt' : 'video';
   currentScenario = {
     catId: 'chainy', idx: 0,
     title: '🎬 ' + topicTxt.slice(0, 24),
-    emoji: '🎬', desc: 'Video practice', video: '', isChainy: false,
+    emoji: isBook ? '📚' : '🎬', desc: isBook ? 'Book Loop' : 'Video practice', video: '', isChainy: false,
     videoPractice: { topic: topicTxt, mode: mode, summary: summary || '' },
   };
   selectedRole = 'chainy';
@@ -2259,8 +2261,8 @@ function startVideoChat(topic, mode, summary) {
   showScreen('s-chat');
 
   const greeting = (mode === 'retell')
-    ? `Great, you watched "${topicTxt}"! 🎬 Tell me in your own words what it was about — I'm listening. Take your time!`
-    : `Nice, you watched "${topicTxt}"! 🎬 What did you think? Let's talk about it — I'll ask you a few questions to get you speaking.`;
+    ? `Great, you finished "${topicTxt}"! ${isBook ? '📚' : '🎬'} Tell me in your own words what the ${resource} was about — I'm listening. Take your time!`
+    : `Nice, you finished "${topicTxt}"! ${isBook ? '📚' : '🎬'} What did you think? Let's talk about it — I'll ask you a few questions to get you speaking.`;
   addMessage('ai', greeting, []);
   history.push({ role: 'user',      content: '[START]' });
   history.push({ role: 'assistant', content: greeting });

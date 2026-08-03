@@ -168,7 +168,7 @@
       padding:8px 12px 10px;
       background:linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 70%, transparent 100%);
       display:flex; align-items:flex-end; justify-content:center;
-      z-index:20; pointer-events:none;
+      z-index:20; pointer-events:auto;
       min-height:48px;
       opacity:0; transition:opacity 0.3s;
     }
@@ -177,6 +177,16 @@
       font-size:var(--fs); font-weight:600; color:#fff; text-align:center; line-height:1.5;
       text-shadow:0 1px 6px rgba(0,0,0,0.9); transition:opacity 0.2s; max-width:100%;
     }
+    .caption-word { border:0; padding:0 1px; background:transparent; color:inherit; font:inherit; cursor:pointer; }
+    .caption-word:active { color:var(--gold); text-decoration:underline; }
+    #book-loop { display:none; margin:12px 16px 0; padding:14px; border:1px solid rgba(124,110,247,.32); border-radius:var(--r); background:rgba(124,110,247,.08); }
+    #book-loop.show { display:block; }
+    .book-title { font-weight:800; font-size:var(--fs-md); }
+    .book-sub { color:var(--text2); font-size:var(--fs-sm); line-height:1.4; margin:4px 0 10px; }
+    .book-steps { display:grid; grid-template-columns:1fr 1fr; gap:7px; }
+    .book-step { min-height:46px; border:1px solid var(--line); border-radius:var(--r-sm); background:var(--bg-card); color:var(--text); text-align:left; padding:8px; font-size:var(--fs-xs); cursor:pointer; }
+    .book-step.done { border-color:var(--green); color:var(--green); }
+    .book-step.retell { grid-column:1 / -1; background:var(--purple); border-color:var(--purple); color:#fff; text-align:center; font-weight:700; }
     /* fade керується через style.opacity в syncCaptions */
 
     /* ── Session bar ── */
@@ -416,6 +426,10 @@
           <span class="pm-desc">Просто слухаю — під час прогулянки, справ</span>
         </span>
       </button>
+      <button class="pmode" id="pm-book" onclick="setListenMode('book')">
+        <span class="pm-ico">📚</span>
+        <span class="pm-body"><span class="pm-name">Book Loop</span><span class="pm-desc">Слухаю, читаю, зберігаю слова, переказую Chainy</span></span>
+      </button>
     </div>
 
     <button class="paste-go" onclick="openPasted()">Почати</button>
@@ -460,6 +474,17 @@
   </div>
   <div class="journey-marks" id="j-marks"></div>
 </div>
+
+<section id="book-loop" aria-live="polite">
+  <div class="book-title">📚 Book Loop</div>
+  <div class="book-sub">Торкайся слова в субтитрах — воно одразу піде в SRS. Пройди цикл і перекажи сюжет Chainy.</div>
+  <div class="book-steps">
+    <button class="book-step" data-book-stage="read_listen" onclick="bookStage('read_listen')">1. 🎧 Слухаю + читаю</button>
+    <button class="book-step" data-book-stage="repeat" onclick="bookStage('repeat')">2. 🔁 Повторюю уривок</button>
+    <button class="book-step" data-book-stage="listen_only" onclick="bookStage('listen_only')">3. 👂 Лише слухаю</button>
+    <button class="book-step retell" data-book-stage="retell" onclick="bookRetell()">4. 🎙 Переказати й обговорити з Chainy</button>
+  </div>
+</section>
 
 <!-- Shadowing panel -->
 <div class="shadow-panel">
@@ -542,6 +567,7 @@ const params     = new URLSearchParams(window.location.search);
 const startParam = TG?.initDataUnsafe?.start_param || "";
 let videoId      = params.get("v") || null;
 let videoTitle   = "";   // назва відео з YouTube
+let bookMode     = params.get("book") === "1";
 let refCode      = null;
 const dataRaw    = params.get("d");
 
@@ -745,7 +771,9 @@ if (!videoId) {
   document.getElementById('paste-screen')?.classList.add('show');
   clearTimeout(apiTimeout);
 } else {
-  applyListenMode();
+  // The mode helper is declared in the final script block, so defer this
+  // initial call until the document has finished parsing.
+  document.addEventListener('DOMContentLoaded', () => applyListenMode(), {once:true});
 }
 
 /* Створення плеєра винесено у функцію: після вставки посилання
@@ -1150,12 +1178,33 @@ function syncCaptions(){
     overlay.classList.add("show");
     if (el.textContent!==found.text){
       el.style.opacity="0";
-      setTimeout(()=>{ el.textContent=found.text; el.style.opacity="1"; },120);
+      setTimeout(()=>{ renderCaption(found.text); el.style.opacity="1"; },120);
     } else {
       el.style.opacity="1";
     }
   } else {
     el.style.opacity="0.3";
+  }
+}
+
+function renderCaption(text) {
+  const el = document.getElementById('transcript-text');
+  if (!bookMode) { el.textContent = text; return; }
+  el.replaceChildren();
+  for (const part of String(text).split(/([A-Za-z][A-Za-z'-]*)/g)) {
+    if (!part) continue;
+    if (/^[A-Za-z][A-Za-z'-]*$/.test(part)) {
+      const button = document.createElement('button');
+      button.type = 'button'; button.className = 'caption-word'; button.textContent = part;
+      button.title = 'Зберегти в SRS';
+      button.addEventListener('click', async event => {
+        event.stopPropagation();
+        const word = part.toLowerCase();
+        const ok = await bookAction('book_save_word', 'repeat', word);
+        showToast(ok ? `💎 ${word} у SRS` : 'Не вдалося зберегти слово');
+      });
+      el.appendChild(button);
+    } else el.appendChild(document.createTextNode(part));
   }
 }
 
@@ -1252,14 +1301,17 @@ if (dataRaw){
    їхні вбудовані плеєри не пускають ні до позиції, ні до петлі.
    Але майже всі подкасти є і на YouTube, часто з субтитрами.      */
 
-let listenMode = 'active';
+let listenMode = bookMode ? 'book' : 'active';
 
 function setListenMode(m) {
-  listenMode = (m === 'passive') ? 'passive' : 'active';
+  listenMode = (m === 'passive' || m === 'book') ? m : 'active';
+  bookMode = listenMode === 'book';
   const a = document.getElementById('pm-active');
   const p = document.getElementById('pm-passive');
+  const b = document.getElementById('pm-book');
   if (a) a.classList.toggle('active', listenMode === 'active');
   if (p) p.classList.toggle('active', listenMode === 'passive');
+  if (b) b.classList.toggle('active', bookMode);
   if (TG?.HapticFeedback) TG.HapticFeedback.selectionChanged();
 }
 
@@ -1310,6 +1362,8 @@ function openPasted() {
    Без цього людина вмикає подкаст, кладе телефон у кишеню — і через
    3 хвилини плеєр каже «ти ще тут?» і закривається. */
 function applyListenMode() {
+  const panel = document.getElementById('book-loop');
+  if (panel) panel.classList.toggle('show', bookMode);
   if (listenMode !== 'passive') return;
   try {
     clearInactivityTimers();
@@ -1319,6 +1373,39 @@ function applyListenMode() {
     const b = document.getElementById('btn-loop');
     if (b) b.style.display = 'none';          /* петля у фоні не потрібна */
   } catch (e) { console.warn('passive mode', e.message); }
+}
+
+async function bookAction(action, stage, word='') {
+  const uid = TG?.initDataUnsafe?.user?.id || playerUid;
+  if (!uid || !apiBase || !videoId) return false;
+  try {
+    const response = await fetch(`${apiBase}/player_action`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({ action, stage, word, uid, video_id:videoId,
+        video_title:videoTitle || 'YouTube book', current_time:ytPlayer?.getCurrentTime?.() || 0 })
+    });
+    return response.ok;
+  } catch (_) { return false; }
+}
+
+async function bookStage(stage) {
+  if (!bookMode) return;
+  const ok = await bookAction('book_stage', stage);
+  if (ok) document.querySelector(`[data-book-stage="${stage}"]`)?.classList.add('done');
+  showToast(ok ? '✓ Етап збережено' : 'Немає з’єднання — спробуй ще раз');
+}
+
+async function bookRetell() {
+  await bookStage('retell');
+  const payload = {type:'speakchain-book-retell', title:videoTitle || 'this book excerpt', videoId};
+  if (window.parent && window.parent !== window) {
+    window.parent.postMessage(payload, window.location.origin);
+  } else {
+    const u = new URL('index_v2.html', location.href);
+    u.searchParams.set('s','s-buddy'); u.searchParams.set('context','book');
+    u.searchParams.set('topic', payload.title); u.searchParams.set('vid', videoId);
+    location.href = u.toString();
+  }
 }
 
 </script>

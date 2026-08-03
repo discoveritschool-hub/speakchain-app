@@ -3150,6 +3150,20 @@ async function openPlayer(url,positionSec){
   }
 }
 
+/* Book Loop lives inside the same YouTube player iframe. Its final action
+   returns here so the learner moves directly from listening to speaking. */
+window.addEventListener('message', async event => {
+  if (event.origin !== location.origin || event.data?.type !== 'speakchain-book-retell') return;
+  const book = event.data || {};
+  const title = String(book.title || 'this book excerpt').slice(0, 120);
+  closeOv();
+  delete PAYLOAD['s-buddy']; delete PENDING['s-buddy'];
+  await go('s-buddy');
+  try {
+    await cyLaunch(box => box?.startVideoChat?.(title, 'retell', '', [], 'book'));
+  } catch (e) { console.warn('book retell start', e.message); }
+});
+
 function minimizePlayer(){
   trackUx('player_minimize');
   const ov=$('#ov-player'), frame=$('#ov-player-host iframe');
