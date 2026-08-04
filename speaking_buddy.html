@@ -2237,16 +2237,38 @@ document.addEventListener('visibilitychange', () => {
 window.addEventListener('pagehide', endSession);
 
 // ── Маршрут «відео → Chainy»: ?context=video&topic=... ──
-function startVideoChat(topic, mode, summary, phrases, resourceKind) {
+function normalizeConversationBrief(topic, mode, summary, phrases, resourceKind, videoId) {
+  const raw = (topic && typeof topic === 'object') ? topic : {
+    topic, mode, summary, phrases, resourceKind, videoId
+  };
+  return {
+    version: 'v1',
+    video_id: String(raw.video_id || raw.videoId || '').slice(0, 32),
+    title: String(raw.title || raw.topic || 'the video you just watched').slice(0, 120),
+    mode: raw.mode === 'retell' ? 'retell' : 'discuss',
+    summary: String(raw.summary || '').slice(0, 1400),
+    phrases: (Array.isArray(raw.phrases) ? raw.phrases : []).map(String).map(v=>v.trim()).filter(Boolean).slice(0, 5),
+    resource_kind: raw.resource_kind || raw.resourceKind || 'video',
+    content_status: raw.summary ? 'grounded' : (raw.video_id || raw.videoId ? 'pending' : 'learner_report'),
+  };
+}
+
+function startVideoChat(topic, mode, summary, phrases, resourceKind, videoId) {
   stopRealtimeSession();
-  const topicTxt = (topic || 'the video you just watched').slice(0, 120);
-  const isBook = resourceKind === 'book';
+  const brief = normalizeConversationBrief(topic, mode, summary, phrases, resourceKind, videoId);
+  const topicTxt = brief.title;
+  const isBook = brief.resource_kind === 'book';
+  const isLexical = brief.resource_kind === 'lexical_topic';
   const resource = isBook ? 'book excerpt' : 'video';
   currentScenario = {
     catId: 'chainy', idx: 0,
     title: '🎬 ' + topicTxt.slice(0, 24),
     emoji: isBook ? '📚' : '🎬', desc: isBook ? 'Book Loop' : 'Video practice', video: '', isChainy: false,
-    videoPractice: { topic: topicTxt, mode: mode, summary: summary || '' },
+    videoPractice: {
+      brief_version: brief.version, video_id: brief.video_id, topic: topicTxt,
+      mode: brief.mode, summary: brief.summary, phrases: brief.phrases,
+      resource_kind: brief.resource_kind, content_status: brief.content_status,
+    },
   };
   selectedRole = 'chainy';
   history = []; msgCount = 0;
@@ -2260,9 +2282,11 @@ function startVideoChat(topic, mode, summary, phrases, resourceKind) {
   updateCounter();
   showScreen('s-chat');
 
-  const greeting = (mode === 'retell')
+  const greeting = isLexical
+    ? `Let's practise useful vocabulary for "${topicTxt}". I'll ask one natural question at a time and help you use new expressions. Ready?`
+    : (brief.mode === 'retell' || !brief.summary)
     ? `Great, you finished "${topicTxt}"! ${isBook ? '📚' : '🎬'} Tell me in your own words what the ${resource} was about — I'm listening. Take your time!`
-    : `Nice, you finished "${topicTxt}"! ${isBook ? '📚' : '🎬'} What did you think? Let's talk about it — I'll ask you a few questions to get you speaking.`;
+    : `Nice, you finished "${topicTxt}"! ${isBook ? '📚' : '🎬'} What did you think about its main idea? Let's discuss what the ${resource} actually covered.`;
   addMessage('ai', greeting, []);
   history.push({ role: 'user',      content: '[START]' });
   history.push({ role: 'assistant', content: greeting });
@@ -2270,6 +2294,13 @@ function startVideoChat(topic, mode, summary, phrases, resourceKind) {
   const vBtn = document.getElementById('voice-toggle');
   if (vBtn) { vBtn.textContent = voiceMode ? '🔊' : '🔇'; vBtn.classList.toggle('active', voiceMode); }
   setTimeout(() => speakTTS(greeting), 600);
+
+  // Resolve evidence in the background when the shell supplied a video id.
+  // Until it arrives, Chainy asks the learner for a retelling and never
+  // pretends the title proves what the video contained.
+  if (brief.video_id && !brief.summary) {
+    fetchVideoSummary(brief.video_id);
+  }
 }
 
 // Глобальний стан конспекту відео (спільний для choice і чату)
@@ -2288,6 +2319,7 @@ function fetchVideoSummary(vid) {
         videoSummaryState.summary = j.summary;
         if (currentScenario && currentScenario.videoPractice) {
           currentScenario.videoPractice.summary = j.summary;
+          currentScenario.videoPractice.content_status = 'grounded';
         }
       } else {
         // бек відповів, але конспекту немає (відео без субтитрів)
@@ -2309,8 +2341,8 @@ function showVideoChoice(topic, vid) {
     '<button id="vc-retell" style="width:100%;max-width:320px;padding:16px;margin-bottom:12px;border:none;border-radius:var(--r);background:var(--purple);color:#fff;font-size:var(--fs);font-weight:700;cursor:pointer">🗣 Переказати відео</button>' +
     '<button id="vc-discuss" style="width:100%;max-width:320px;padding:16px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg-card);color:var(--text);font-size:var(--fs);font-weight:600;cursor:pointer">💬 Обговорити тему</button>';
   document.body.appendChild(ov);
-  document.getElementById('vc-retell').onclick = () => { ov.remove(); startVideoChat(topic, 'retell', videoSummaryState.summary); };
-  document.getElementById('vc-discuss').onclick = () => { ov.remove(); startVideoChat(topic, 'discuss', videoSummaryState.summary); };
+  document.getElementById('vc-retell').onclick = () => { ov.remove(); startVideoChat({title:topic, mode:'retell', summary:videoSummaryState.summary, video_id:vid}); };
+  document.getElementById('vc-discuss').onclick = () => { ov.remove(); startVideoChat({title:topic, mode:'discuss', summary:videoSummaryState.summary, video_id:vid}); };
 }
 
 (function handleVideoContext() {

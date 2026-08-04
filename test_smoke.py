@@ -407,7 +407,12 @@ def test_shell_apps():
         ok(f"JS усіх {len(apps)} мініапів парситься")
 
     # 8b. JS оболонки
-    shell_js = src[src.rfind("<script>") + 8: src.rfind("</script>")]
+    # The APPS JSON contains complete embedded HTML/JS modules, including
+    # literal ``<script>`` text. rfind("<script>") therefore starts inside a
+    # module string and reports a false syntax error. Parse top-level script
+    # blocks and select the one that owns the shell registry.
+    scripts = re.findall(r"<script(?:\s[^>]*)?>(.*?)</script>", src, re.S | re.I)
+    shell_js = next((script for script in reversed(scripts) if "const APPS" in script), "")
     if _js_ok(shell_js):
         ok("JS оболонки парситься")
     else:
@@ -456,7 +461,8 @@ def test_shell_router():
     if os.environ.get("SKIP_SHELL") or not SHELL.exists():
         return          # вже зафейлено / свідомо пропущено
     src = SHELL.read_text(encoding="utf-8")
-    shell_js = src[src.rfind("<script>") + 8: src.rfind("</script>")]
+    scripts = re.findall(r"<script(?:\s[^>]*)?>(.*?)</script>", src, re.S | re.I)
+    shell_js = next((script for script in reversed(scripts) if "const APPS" in script), "")
 
     # 9a. act() без TG.close()
     a = shell_js.find("async function act(a,x){")
@@ -503,7 +509,13 @@ def test_shell_router():
         ok(f"усі {len(targets)} цілей роутера існують")
 
     # 9e. оверлеї монтуються у *-host, не *-body
-    for ov in re.findall(r"'(ov-[a-z]+)'", ovs.group(1) if ovs else ""):
+    raw, _, _ = _extract_apps(src)
+    mounted_apps = set(json.loads(raw)) if raw else set()
+    for ov in set(re.findall(r"'(ov-[a-z]+)'", ovs.group(1) if ovs else "")):
+        # Plain shell overlays (for example ov-plans) render directly and do
+        # not attach Shadow DOM. Only embedded APPS require a dedicated host.
+        if ov not in mounted_apps:
+            continue
         if f'id="{ov}-host"' not in src:
             fail(f"{ov}: немає {ov}-host → attachShadow на контейнері, зникне хрестик ×")
 

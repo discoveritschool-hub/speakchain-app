@@ -1,9 +1,10 @@
-const CACHE = 'speakchain-shell-v2';
+const CACHE = 'speakchain-shell-v3';
 const SHELL = [
-  './index_v2.html', './player.html', './vocab.html', './speaking_buddy.html',
+  './index_v2.html', './offline.html', './player.html', './vocab.html', './speaking_buddy.html',
   './progress.html', './tokens.css', './pwa.js', './manifest.webmanifest',
-  './speakchain_logo_transparent.png'
+  './icon-192.png', './icon-512.png'
 ];
+const SHELL_PATHS = new Set(SHELL.map(path => new URL(path, self.location.href).pathname));
 
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(SHELL)).then(() => self.skipWaiting()));
@@ -11,16 +12,26 @@ self.addEventListener('install', event => {
 self.addEventListener('activate', event => {
   event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(key => key !== CACHE).map(key => caches.delete(key)))).then(() => self.clients.claim()));
 });
+self.addEventListener('message', event => {
+  if (event.data?.type === 'SKIP_WAITING') self.skipWaiting();
+});
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
   const url = new URL(event.request.url);
-  // Never cache backend data, Telegram resources, or YouTube. Pages must be
-  // network-first: otherwise Telegram keeps an old player after a GitHub push.
   if (url.origin !== self.location.origin) return;
-  event.respondWith(fetch(event.request).then(response => {
-    if (!response.ok || response.type !== 'basic') return response;
-    const copy = response.clone();
-    caches.open(CACHE).then(cache => cache.put(event.request, copy));
-    return response;
-  }).catch(() => caches.match(event.request).then(cached => cached || caches.match('./index_v2.html'))));
+
+  if (event.request.mode === 'navigate') {
+    event.respondWith(fetch(event.request).catch(() => caches.match('./index_v2.html').then(r => r || caches.match('./offline.html'))));
+    return;
+  }
+  // Cache a fixed public shell only. Query-bearing URLs can contain lesson or
+  // user handoff data and must never become a shared browser cache entry.
+  if (!SHELL_PATHS.has(url.pathname) || url.search) return;
+  event.respondWith(caches.match(event.request).then(cached => {
+    const fresh = fetch(event.request).then(response => {
+      if (response.ok && response.type === 'basic') caches.open(CACHE).then(cache => cache.put(event.request, response.clone()));
+      return response;
+    }).catch(() => cached);
+    return cached || fresh;
+  }));
 });

@@ -19,4 +19,8 @@ jobs:
         with:
           node-version: "20"
       - name: Run automatic frontend smoke-test
-        run: python test_smoke.py
+        run: |
+          python test_smoke.py
+          node --check pwa.js
+          node --check sw.js
+          python -m json.tool manifest.webmanifest >/dev/null

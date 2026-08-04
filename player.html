@@ -710,10 +710,17 @@ async function finishSession() {
      Standalone (цей файл, без оболонки) — window.closeOv не існує,
      фолбек лишається на стару поведінку (TG.close/window.close).
      ══════════════════════════════════════════════════════════════════ */
-  if (typeof window.closeOv === 'function') {
-    window.closeOv();          // в оболонці: назад на головну, додаток живий
+  const conversationBrief = {
+    type: 'speakchain-video-context', version: 'v1', video_id: videoId || '',
+    title: videoTitle || 'the video you just watched', mode: 'discuss',
+    phrases: sessionSavedPhrases.slice(-5), resource_kind: bookMode ? 'book' : 'video'
+  };
+  if (window.parent && window.parent !== window) {
+    window.parent.postMessage(conversationBrief, window.location.origin);
+    try { window.parent.closeOv(); } catch (_) {}
     return;
   }
+  if (typeof window.closeOv === 'function') { window.closeOv(); return; }
   TG ? TG.close() : window.close();   // standalone: як було
 }
 
@@ -992,6 +999,7 @@ const practiceStep = document.getElementById("practice-step");
 const wordCardAudio = document.getElementById("word-card-audio");
 const wordCardVocab = document.getElementById("word-card-vocab");
 let selectedCaptionWord="";
+const sessionSavedPhrases=[];
 const waveWrap     = document.getElementById("waveform-wrap");
 const canvas       = document.getElementById("waveform");
 const recTimeLabel = document.getElementById("rec-time-label");
@@ -1232,6 +1240,7 @@ async function saveLoopPhrase() {
       method:"POST", headers:{"Content-Type":"application/json"},
       body:JSON.stringify({uid,init_data:TG?.initData||'',action:"save_phrase",phrase})
     });
+    if (phrase && !sessionSavedPhrases.includes(phrase)) sessionSavedPhrases.push(phrase);
     showToast("💎 Фразу збережено!");
     recAgainBtn.textContent="✅ Збережено";
     setTimeout(()=>{ recAgainBtn.textContent="💎 Зберегти фразу"; },2000);
@@ -1367,6 +1376,7 @@ async function saveCaptionWord(word) {
       method: 'POST', headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({uid, action: 'save_phrase', phrase: word}),
     });
+    if (response.ok && word && !sessionSavedPhrases.includes(word)) sessionSavedPhrases.push(word);
     return response.ok;
   } catch (_) { return false; }
 }
