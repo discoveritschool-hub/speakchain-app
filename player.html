@@ -833,8 +833,11 @@ window.onYouTubeIframeAPIReady = function() {
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
     ytPlayer = new YT.Player("yt-player", {
       height:"100%", width:"100%", videoId,
+      // Native YouTube captions are drawn inside a cross-origin iframe and
+      // cannot be tapped or translated by SpeakChain. Keep them off here so
+      // learners interact only with the SpeakChain caption layer below.
       playerVars: { autoplay:isIOS?0:1, rel:0, modestbranding:1, playsinline:1,
-                    cc_load_policy:1, cc_lang_pref:'en' },
+                    cc_load_policy:0, cc_lang_pref:'en' },
       events: {
         onReady: function(e) {
           ytReady = true;
