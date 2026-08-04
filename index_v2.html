@@ -3126,7 +3126,9 @@ async function openPlayer(url,positionSec){
   if(!vid){
     try{ vid=new URLSearchParams(location.search).get('v')||''; }catch(e){}
   }
-  const d=await load('ov-player');
+  // The video player only needs the API address and user id.  Do not block
+  // opening a lesson behind the optional ov-player screen payload.
+  const d=PAYLOAD['ov-player']||{api:BOT_API,captions_url:BOT_API+'/captions',uid:UID};
   const playerUrl=new URL('player.html',location.href);
   if(vid) playerUrl.searchParams.set('v',vid);
   const resumeAt=Number(positionSec||PAYLOAD['s-home']?.last_video_position_sec||0);
