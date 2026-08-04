@@ -372,6 +372,9 @@
       display:none;
     }
     .record-again-btn.show { display:block; }
+    .practice-step { color:var(--text2); font-size:var(--fs-sm); line-height:1.4; }
+    .compare-row { display:none; gap:8px; }
+    .compare-row.show { display:flex; }
 
     /* ── Playback progress bar ── */
     #playback-bar-wrap {
@@ -537,9 +540,11 @@
 
   <!-- Record -->
   <div style="display:flex;flex-direction:column;gap:10px">
-    <div class="panel-label">Shadowing — запиши себе</div>
+    <div class="panel-label">Практика фрази</div>
+    <div class="practice-step" id="practice-step">1. Слухай оригінал → 2. Запиши себе → 3. Порівняй</div>
+    <div class="action-row"><button class="action-btn" id="play-original">🔊 Слухати оригінал</button></div>
 
-    <button class="record-btn idle" id="record-btn">🎙 Почати запис</button>
+    <button class="record-btn idle" id="record-btn">🎙 2. Записати себе</button>
     <div class="rec-timer" id="rec-timer">● REC <span id="rec-secs">0:00</span></div>
 
     <!-- Waveform -->
@@ -554,6 +559,10 @@
     <!-- Прослухати з паузою -->
     <div class="action-row">
       <button class="action-btn" id="play-my" disabled>▶ Прослухати</button>
+    </div>
+    <div class="compare-row" id="compare-row">
+      <button class="action-btn" id="compare-original">🔊 Оригінал</button>
+      <button class="action-btn" id="compare-recording">▶ Мій запис</button>
     </div>
 
     <!-- Прогрес-бар відтворення -->
@@ -971,6 +980,11 @@ let recSec=0, recInterval=null, isRec=false;
 let audioCtx=null, analyser=null, animFrame=null;
 
 const recordBtn    = document.getElementById("record-btn");
+const playOriginalBtn = document.getElementById("play-original");
+const compareOriginalBtn = document.getElementById("compare-original");
+const compareRecordingBtn = document.getElementById("compare-recording");
+const compareRow = document.getElementById("compare-row");
+const practiceStep = document.getElementById("practice-step");
 const waveWrap     = document.getElementById("waveform-wrap");
 const canvas       = document.getElementById("waveform");
 const recTimeLabel = document.getElementById("rec-time-label");
@@ -1035,6 +1049,8 @@ recordBtn.addEventListener("click", async()=>{
       recordBtn.textContent="🎙 Записати ще раз";
       playMyBtn.disabled=false;
       recAgainBtn.classList.add("show");
+      compareRow.classList.add("show");
+      practiceStep.textContent="Готово — послухай оригінал і свій запис по черзі.";
       // Показуємо прогрес-бар
       pbWrap.classList.add("show");
       pbFill.style.width="0%";
@@ -1050,7 +1066,8 @@ recordBtn.addEventListener("click", async()=>{
     setTimeout(resizeCanvas,10);
     drawWaveform();
     recordBtn.className="record-btn recording";
-    recordBtn.textContent="⏹ Зупинити";
+    recordBtn.textContent="⏹ Зупинити запис";
+    try { if (ytPlayer&&ytReady) ytPlayer.pauseVideo(); } catch(_) {}
     if (loopActive&&ytPlayer&&ytReady) ytPlayer.seekTo(loopStart,true);
     resetInactivity();
     recInterval=setInterval(()=>{
@@ -1072,6 +1089,34 @@ function stopRec() {
   isRec=false; clearInterval(recInterval);
   if (mediaRecorder.state==="recording"){ mediaRecorder.requestData(); setTimeout(()=>mediaRecorder.stop(),80); }
 }
+
+let activeCaption=null;
+let originalLoopTimer=null;
+function getPracticeSegment(){
+  if(loopStart!=null&&loopEnd!=null&&loopEnd>loopStart) return {start:loopStart,end:loopEnd};
+  if(activeCaption) return {start:activeCaption.start,end:activeCaption.end};
+  const current=ytPlayer?.getCurrentTime?.()||0;
+  return {start:current,end:current+4};
+}
+function playOriginalSegment(){
+  if(!ytPlayer||!ytReady){showToast("Відео ще завантажується…");return;}
+  const segment=getPracticeSegment();
+  clearInterval(originalLoopTimer);
+  try{
+    ytPlayer.seekTo(segment.start,true); ytPlayer.playVideo();
+    practiceStep.textContent="Слухай фразу. Потім натисни «Записати себе».";
+    originalLoopTimer=setInterval(()=>{
+      try{
+        if(ytPlayer.getCurrentTime()>=segment.end){
+          ytPlayer.pauseVideo(); clearInterval(originalLoopTimer); originalLoopTimer=null;
+        }
+      }catch(_){clearInterval(originalLoopTimer);originalLoopTimer=null;}
+    },100);
+  }catch(_){showToast("Не вдалося відтворити фрагмент");}
+}
+playOriginalBtn.addEventListener("click",playOriginalSegment);
+compareOriginalBtn.addEventListener("click",playOriginalSegment);
+compareRecordingBtn.addEventListener("click",()=>playMyBtn.click());
 
 // ── Playback з паузою / продовженням ──
 let myAudio=null, pbInterval=null;
@@ -1168,7 +1213,7 @@ pbBar.addEventListener("click",(e)=>{
 recAgainBtn.addEventListener("click", saveLoopPhrase);
 
 async function saveLoopPhrase() {
-  const uid=TG?.initDataUnsafe?.user?.id;
+  const uid=TG?.initDataUnsafe?.user?.id || playerUid;
   if (!uid||!apiBase){ showToast("Помилка: немає з'єднання"); return; }
   const captionEl=document.getElementById("transcript-text");
   const phrase=(captionEl&&captionEl.textContent.trim())
@@ -1177,7 +1222,7 @@ async function saveLoopPhrase() {
   try {
     await fetch(`${apiBase}/player_action`,{
       method:"POST", headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({uid,action:"save_phrase",phrase})
+      body:JSON.stringify({uid,init_data:TG?.initData||'',action:"save_phrase",phrase})
     });
     showToast("💎 Фразу збережено!");
     recAgainBtn.textContent="✅ Збережено";
@@ -1221,6 +1266,7 @@ function syncCaptions(){
   // Розширений буфер пошуку — 0.5сек до і після
   let found=captions.find(c=>cur>=c.start-0.1&&cur<=c.end+0.5);
   if (found){
+    activeCaption=found;
     overlay.classList.add("show");
     if (el.textContent!==found.text){
       el.style.opacity="0";
