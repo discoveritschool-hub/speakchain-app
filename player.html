@@ -134,7 +134,13 @@
     }
 
     /* ── Video ── */
-    #video-wrap { position:relative; width:100%; background:#000; aspect-ratio:16/9; }
+    #video-wrap {
+      position:relative;
+      width:min(100%, 860px, calc(52dvh * 16 / 9));
+      margin:0 auto;
+      background:#000;
+      aspect-ratio:16/9;
+    }
     #yt-player  { width:100%; height:100%; }
     #yt-player iframe { width:100%!important; height:100%!important; border:none; }
     #play-overlay {
@@ -143,6 +149,12 @@
       background:rgba(0,0,0,0.45); cursor:pointer; z-index:10;
     }
     #play-overlay.hidden { display:none; }
+    #video-toggle {
+      position:absolute; top:12px; left:12px; z-index:30;
+      width:42px; height:42px; border:0; border-radius:50%;
+      background:rgba(13,13,20,.78); color:#fff; font-size:18px;
+      cursor:pointer; touch-action:manipulation;
+    }
     .play-circle {
       width:64px; height:64px; border-radius:50%;
       background:rgba(124,110,247,0.85);
@@ -440,6 +452,7 @@
 <div id="video-wrap">
   <div id="yt-player"></div>
   <div id="play-overlay"><div class="play-circle">▶</div></div>
+  <button id="video-toggle" type="button" aria-label="Пауза або відтворення">⏸</button>
   <div id="transcript-overlay"><div id="transcript-text"></div></div>
   <div id="video-fallback">
     <div style="color:var(--text2);font-size:var(--fs)">YouTube не завантажився</div>
@@ -589,8 +602,12 @@ if (dataRaw) {
     apiBase     = _d.api          || "";
     captionsUrl = _d.captions_url || "";
     playerUid   = _d.uid          || 0;
-  } catch(e) {}
+} catch(e) {}
 }
+// The player is also opened directly from the app shell.  It must keep
+// working when that screen-payload request is temporarily unavailable.
+apiBase = apiBase || "https://speakchain-bot-production.up.railway.app";
+captionsUrl = captionsUrl || `${apiBase}/captions`;
 
 // ── Register referral ──
 if (refCode && apiBase) {
@@ -762,6 +779,17 @@ document.getElementById("play-overlay").addEventListener("click", function(){
     if (captions.length === 0) setTimeout(loadCaptions, 1000);
   }
   resetInactivity();
+});
+
+const videoToggle = document.getElementById('video-toggle');
+videoToggle.addEventListener('click', event => {
+  event.preventDefault(); event.stopPropagation();
+  if (!ytPlayer || !ytReady) return;
+  try {
+    const playing = ytPlayer.getPlayerState() === YT.PlayerState.PLAYING;
+    if (playing) ytPlayer.pauseVideo(); else ytPlayer.playVideo();
+    videoToggle.textContent = playing ? '▶' : '⏸';
+  } catch (_) {}
 });
 
 /* Немає відео → не помилка, а екран вставки.
