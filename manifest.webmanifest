@@ -1,0 +1,17 @@
+{
+  "name": "SpeakChain",
+  "short_name": "SpeakChain",
+  "start_url": "./index_v2.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0d0d14",
+  "theme_color": "#0d0d14",
+  "icons": [
+    {
+      "src": "speakchain_logo_transparent.png",
+      "sizes": "any",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
