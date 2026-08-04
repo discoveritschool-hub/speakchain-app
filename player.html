@@ -191,6 +191,14 @@
     }
     .caption-word { border:0; padding:0 1px; background:transparent; color:inherit; font:inherit; cursor:pointer; touch-action:manipulation; }
     .caption-word:active { color:var(--gold); text-decoration:underline; }
+    .caption-word:focus-visible { outline:2px solid var(--gold); outline-offset:2px; border-radius:3px; }
+    #word-card { display:none; max-width:860px; margin:10px auto 0; padding:12px 14px; border:1px solid var(--line); border-radius:var(--r); background:var(--bg-card); }
+    #word-card.show { display:block; }
+    .word-card-head { display:flex; align-items:baseline; gap:8px; }
+    #word-card-word { font-size:var(--fs-md); font-weight:800; }
+    #word-card-phonetic { color:var(--text2); font-size:var(--fs-sm); }
+    #word-card-translation { margin-top:4px; color:var(--gold); font-weight:700; }
+    #word-card-example { margin-top:6px; color:var(--text2); font-size:var(--fs-sm); line-height:1.4; }
     #book-loop { display:none; margin:12px 16px 0; padding:14px; border:1px solid rgba(124,110,247,.32); border-radius:var(--r); background:rgba(124,110,247,.08); }
     #book-loop.show { display:block; }
     .book-title { font-weight:800; font-size:var(--fs-md); }
@@ -459,6 +467,12 @@
     <a id="yt-link" class="open-yt-btn" target="_blank">▶ Відкрити на YouTube</a>
   </div>
 </div>
+
+<aside id="word-card" aria-live="polite">
+  <div class="word-card-head"><span id="word-card-word"></span><span id="word-card-phonetic"></span></div>
+  <div id="word-card-translation"></div>
+  <div id="word-card-example"></div>
+</aside>
 
 <!-- Session bar -->
 <div id="session-bar">
@@ -1224,19 +1238,48 @@ function renderCaption(text) {
     if (/^[A-Za-z][A-Za-z'-]*$/.test(part)) {
       const button = document.createElement('button');
       button.type = 'button'; button.className = 'caption-word'; button.textContent = part;
-      button.title = 'Зберегти в SRS';
+      button.title = 'Показати переклад і зберегти в словник';
       // Never let a tap fall through to the embedded YouTube player.
       button.addEventListener('pointerdown', event => event.stopPropagation());
       button.addEventListener('touchstart', event => event.stopPropagation(), {passive: true});
       button.addEventListener('click', async event => {
         event.preventDefault();
         event.stopPropagation();
-        const word = part.toLowerCase();
-        const ok = await saveCaptionWord(word);
-        showToast(ok ? `💎 ${word} у SRS` : 'Не вдалося зберегти слово');
+        await inspectCaptionWord(part.toLowerCase());
       });
       el.appendChild(button);
     } else el.appendChild(document.createTextNode(part));
+  }
+}
+
+async function inspectCaptionWord(word) {
+  // Натискання на слово — окрема дія: ставимо відео на паузу, але не
+  // передаємо подію в YouTube. Відтворення лишається на окремій кнопці ⏯.
+  try { if (ytReady && ytPlayer?.getPlayerState?.() === YT.PlayerState.PLAYING) ytPlayer.pauseVideo(); } catch (_) {}
+  const uid = TG?.initDataUnsafe?.user?.id || playerUid;
+  const card = document.getElementById('word-card');
+  card.classList.add('show');
+  document.getElementById('word-card-word').textContent = word;
+  document.getElementById('word-card-phonetic').textContent = 'завантажую переклад…';
+  document.getElementById('word-card-translation').textContent = '';
+  document.getElementById('word-card-example').textContent = '';
+  try {
+    const response = await fetch(`${apiBase}/word_lookup`, {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({uid, init_data: TG?.initData || '', word})
+    });
+    const data = await response.json();
+    const value = data.card || {};
+    document.getElementById('word-card-word').textContent = value.word || word;
+    document.getElementById('word-card-phonetic').textContent = value.phonetic || '';
+    document.getElementById('word-card-translation').textContent = value.translation_uk || 'Переклад поки недоступний';
+    const example = value.examples?.[0];
+    document.getElementById('word-card-example').textContent = example ? `${example.en} — ${example.uk}` : (value.definition_en || '');
+    const saved = await saveCaptionWord(word);
+    showToast(saved ? `💎 ${word} збережено в словник` : 'Переклад показано, але слово не збережено');
+  } catch (_) {
+    document.getElementById('word-card-phonetic').textContent = '';
+    document.getElementById('word-card-translation').textContent = 'Не вдалося отримати переклад. Спробуй ще раз.';
   }
 }
 
