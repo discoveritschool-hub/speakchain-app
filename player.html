@@ -177,7 +177,7 @@
       font-size:var(--fs); font-weight:600; color:#fff; text-align:center; line-height:1.5;
       text-shadow:0 1px 6px rgba(0,0,0,0.9); transition:opacity 0.2s; max-width:100%;
     }
-    .caption-word { border:0; padding:0 1px; background:transparent; color:inherit; font:inherit; cursor:pointer; }
+    .caption-word { border:0; padding:0 1px; background:transparent; color:inherit; font:inherit; cursor:pointer; touch-action:manipulation; }
     .caption-word:active { color:var(--gold); text-decoration:underline; }
     #book-loop { display:none; margin:12px 16px 0; padding:14px; border:1px solid rgba(124,110,247,.32); border-radius:var(--r); background:rgba(124,110,247,.08); }
     #book-loop.show { display:block; }
@@ -567,7 +567,7 @@ const params     = new URLSearchParams(window.location.search);
 const startParam = TG?.initDataUnsafe?.start_param || "";
 let videoId      = params.get("v") || null;
 let videoTitle   = "";   // назва відео з YouTube
-let bookMode     = params.get("book") === "1";
+let bookMode     = params.get("book") === "1" || params.get("mode") === "book";
 let refCode      = null;
 const dataRaw    = params.get("d");
 
@@ -1190,7 +1190,6 @@ function syncCaptions(){
 
 function renderCaption(text) {
   const el = document.getElementById('transcript-text');
-  if (!bookMode) { el.textContent = text; return; }
   el.replaceChildren();
   for (const part of String(text).split(/([A-Za-z][A-Za-z'-]*)/g)) {
     if (!part) continue;
@@ -1198,15 +1197,31 @@ function renderCaption(text) {
       const button = document.createElement('button');
       button.type = 'button'; button.className = 'caption-word'; button.textContent = part;
       button.title = 'Зберегти в SRS';
+      // Never let a tap fall through to the embedded YouTube player.
+      button.addEventListener('pointerdown', event => event.stopPropagation());
+      button.addEventListener('touchstart', event => event.stopPropagation(), {passive: true});
       button.addEventListener('click', async event => {
+        event.preventDefault();
         event.stopPropagation();
         const word = part.toLowerCase();
-        const ok = await bookAction('book_save_word', 'repeat', word);
+        const ok = await saveCaptionWord(word);
         showToast(ok ? `💎 ${word} у SRS` : 'Не вдалося зберегти слово');
       });
       el.appendChild(button);
     } else el.appendChild(document.createTextNode(part));
   }
+}
+
+async function saveCaptionWord(word) {
+  const uid = TG?.initDataUnsafe?.user?.id || playerUid;
+  if (!uid || !apiBase) return false;
+  try {
+    const response = await fetch(`${apiBase}/player_action`, {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({uid, action: 'save_phrase', phrase: word}),
+    });
+    return response.ok;
+  } catch (_) { return false; }
 }
 
 // ── Journey strip ──
