@@ -795,7 +795,7 @@ def test_visible_feature_map_and_role_workspaces():
 
     for name in ("admin_analytics.html", "blogger.html", "strategy_dashboard.html"):
         text = (ROOT / name).read_text(encoding="utf-8")
-        if not re.search(r'<script src="pwa\\.js(?:\\?[^"#]+)?"></script>', text):
+        if not re.search(r'<script src="pwa\.js(?:\?[^"#]+)?"></script>', text):
             fail(f"{name}: PWA-сесія не підключена")
         else:
             ok(f"{name}: авторизована PWA-сесія підключена")

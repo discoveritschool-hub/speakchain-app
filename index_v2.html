@@ -1759,7 +1759,18 @@ window.addEventListener('load', function(){
     <div style="display:flex;align-items:center"><div><div class="social-kicker">Швидка розмова</div>
       <h3 id="live-title" style="margin:2px 0 0">Шукаємо партнера…</h3></div>
       <span onclick="leaveLiveMatch()" style="margin-left:auto;font-size:26px;color:var(--text2);cursor:pointer">×</span></div>
-    <div id="live-waiting" class="social-empty" style="margin-top:14px"><span class="ic">🔎</span>
+    <div id="live-setup" style="margin-top:12px">
+      <label class="field-label">Джерело розмови</label>
+      <select class="field-input" id="live-source"><option value="scenario">170 сценаріїв Chainy</option><option value="video">Відео</option><option value="book">Книга</option><option value="article">Стаття</option><option value="news">Новина</option><option value="custom">Власна тема</option><option value="any">Рекомендована тема</option></select>
+      <label class="field-label">Тема, назва або ситуація</label>
+      <input class="field-input" id="live-topic" list="live-scenario-list" maxlength="180" placeholder="Наприклад: співбесіда або розділ 2 Atomic Habits"><datalist id="live-scenario-list"></datalist>
+      <label class="field-label">Посилання на матеріал · необов’язково</label>
+      <input class="field-input" id="live-source-url" maxlength="500" placeholder="YouTube, стаття або новина">
+      <label class="field-label">Формат</label>
+      <select class="field-input" id="live-format"><option value="discussion">Обговорення</option><option value="roleplay">Рольова гра</option><option value="retell">Переказ</option><option value="debate">Дебати</option><option value="problem">Вирішення проблеми</option></select>
+      <button class="diag-cta" onclick="joinLiveMatch()">Знайти співрозмовника</button>
+    </div>
+    <div id="live-waiting" class="social-empty" style="display:none;margin-top:14px"><span class="ic">🔎</span>
       <b>Підбираємо людину твого рівня</b><span>Можеш закрити екран — ми збережемо місце в черзі.</span></div>
     <div id="live-room" style="display:none">
       <div class="live-room-head"><div class="social-avatar" id="live-avatar">S</div>
@@ -1767,8 +1778,10 @@ window.addEventListener('load', function(){
         <div class="live-timer" id="live-timer">05:00</div></div>
       <div id="live-ready-box" class="instr-note">Матч почнеться, коли обидва натиснуть «Я готова».</div>
       <button class="diag-cta" id="live-ready" onclick="readyLiveMatch()">Я готова</button>
+      <div id="live-audio-status" class="instr-note">Після готовності обох підключимо живий аудіодзвінок.</div>
+      <audio id="live-remote-audio" autoplay playsinline></audio>
       <div class="live-messages" id="live-messages"></div>
-      <button class="diag-cta" id="live-record" style="display:none" onclick="toggleLiveRecord()">🎙 Записати коротку репліку</button>
+      <button class="diag-cta" id="live-record" style="display:none" onclick="toggleLiveRecord()">🎙 Fallback: надіслати голосову репліку</button>
       <div style="display:flex;gap:6px"><button class="sn-skip" onclick="reportLiveMatch()">Поскаржитися</button>
         <button class="sn-skip" onclick="blockLivePartner()">Заблокувати</button></div>
     </div>
@@ -2886,6 +2899,7 @@ let SOCIAL={}, SOCIAL_TAB='feed', SOCIAL_PROFILE=null, SOCIAL_SETTINGS={format:'
 let COMPOSE_CTX={}, COMPOSE_VIS='private', COMPOSE_TYPE='audio', COMPOSE_REC=null;
 let COMPOSE_STREAM=null, COMPOSE_CHUNKS=[], COMPOSE_B64='', COMPOSE_MIME='', COMPOSE_TIMER=null, COMPOSE_SEC=0, COMPOSE_CONFIRMED=false;
 let LIVE_MATCH=null, LIVE_POLL=null, LIVE_TIMER_INT=null, LIVE_REC=null, LIVE_STREAM=null, LIVE_CHUNKS=[], LIVE_DEADLINE=0;
+let LIVE_PC=null,LIVE_LOCAL_STREAM=null,LIVE_SIGNAL_POLL=null,LIVE_SIGNAL_LAST='',LIVE_RTC_STARTED=false,LIVE_PENDING_CANDIDATES=[];
 let CHAINY_COMPOSE_OBSERVER=null;
 
 async function socialApi(op,extra){
@@ -3312,18 +3326,24 @@ function startRelay(){openSocialComposer({mode:'relay',topic:SOCIAL.challenge?.t
 
 async function startLiveMatch(){
   if(!SOCIAL.me?.enabled||!SOCIAL.me?.allow_live){openSocialSettings();toast('Спочатку увімкни live-матч у профілі');return;}
-  openOv('ov-live-match');$('#live-waiting').style.display='';$('#live-room').style.display='none';
-  try{const r=await socialApi('live_join',{scenario_id:'emotion_guess'});handleLiveStatus(r);startLivePolling();}
+  openOv('ov-live-match');$('#live-setup').style.display='';$('#live-waiting').style.display='none';$('#live-room').style.display='none';
+  try{const scenarios=cyData().all||[];$('#live-scenario-list').innerHTML=scenarios.map(s=>'<option value="'+esc(s.title||s.name||s.scenario||'')+'"></option>').join('');}catch(e){}
+}
+async function joinLiveMatch(){
+  const topic=$('#live-topic').value.trim(),source=$('#live-source').value,sourceUrl=$('#live-source-url').value.trim(),format=$('#live-format').value;
+  if(source!=='any'&&!topic&&!sourceUrl){toast('Додай тему, назву або посилання');return;}
+  $('#live-setup').style.display='none';$('#live-waiting').style.display='';
+  try{const r=await socialApi('live_join',{topic_text:topic||sourceUrl,topic_mode:source,topic_format:format,source_url:sourceUrl});handleLiveStatus(r);startLivePolling();}
   catch(e){closeOv();toast(e.message==='minor_live_restricted'?'Live-матч недоступний у безпечному режимі':'Не вдалося почати пошук');}
 }
 function startLivePolling(){clearInterval(LIVE_POLL);LIVE_POLL=setInterval(async()=>{try{handleLiveStatus(await socialApi('live_status'));}catch(e){}},2500);}
 function handleLiveStatus(r){
   if(r.status!=='matched'){$('#live-title').textContent='Шукаємо партнера…';return;}
   LIVE_MATCH=r.match||LIVE_MATCH;if(!LIVE_MATCH)return;
-  $('#live-waiting').style.display='none';$('#live-room').style.display='';
+  $('#live-setup').style.display='none';$('#live-waiting').style.display='none';$('#live-room').style.display='';
   $('#live-title').textContent='Партнера знайдено';
   const p=LIVE_MATCH.partner||{};$('#live-partner').textContent=p.name||'Speaking partner';$('#live-avatar').textContent=ini(p.name||'S');
-  $('#live-scenario').textContent=LIVE_MATCH.scenario?.title||'Коротка розмова англійською';
+  $('#live-scenario').textContent=LIVE_MATCH.topic_pack?.topic_title||LIVE_MATCH.scenario?.title||'Коротка розмова англійською';
   pollLiveRoom();clearInterval(LIVE_POLL);LIVE_POLL=setInterval(pollLiveRoom,1800);
   $('#live-timer').textContent='05:00';
 }
@@ -3338,6 +3358,7 @@ async function pollLiveRoom(){
     if(both&&d.deadline_ts&&Number(d.deadline_ts)!==LIVE_DEADLINE){
       LIVE_DEADLINE=Number(d.deadline_ts);startLiveTimer(LIVE_DEADLINE);
     }
+    if(both&&!LIVE_RTC_STARTED)startPeerAudio().catch(()=>setLiveAudioStatus('Живий дзвінок не підключився. Користуйтеся голосовими репліками нижче.'));
     $('#live-messages').innerHTML=(d.messages||[]).length?(d.messages||[]).map(m=>{
       const media=socialMediaUrl(m.media_url||'');
       const player=media?(m.is_video
@@ -3351,6 +3372,36 @@ async function pollLiveRoom(){
   }catch(e){}
 }
 async function readyLiveMatch(){try{handleLiveStatus(await socialApi('live_ready'));trackUx('live_match_ready');}catch(e){toast('Не вдалося підтвердити готовність');}}
+function setLiveAudioStatus(text){const el=$('#live-audio-status');if(el)el.textContent=text;}
+async function rtcSignal(kind,payload){return socialApi('rtc_signal',{room_id:LIVE_MATCH.room_id,kind,payload});}
+async function startPeerAudio(){
+  if(LIVE_RTC_STARTED||!LIVE_MATCH?.room_id)return;LIVE_RTC_STARTED=true;
+  setLiveAudioStatus('Запитуємо доступ до мікрофона…');
+  const cfg=await socialApi('rtc_config',{room_id:LIVE_MATCH.room_id});
+  LIVE_LOCAL_STREAM=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true},video:false});
+  LIVE_PC=new RTCPeerConnection({iceServers:cfg.ice_servers||[]});
+  LIVE_LOCAL_STREAM.getTracks().forEach(track=>LIVE_PC.addTrack(track,LIVE_LOCAL_STREAM));
+  LIVE_PC.ontrack=event=>{const audio=$('#live-remote-audio');audio.srcObject=event.streams[0];audio.play().catch(()=>{});};
+  LIVE_PC.onicecandidate=event=>{if(event.candidate)rtcSignal('candidate',event.candidate.toJSON()).catch(()=>{});};
+  LIVE_PC.onconnectionstatechange=()=>{
+    const state=LIVE_PC?.connectionState||'';
+    setLiveAudioStatus(state==='connected'?'🟢 Живий аудіодзвінок підключено':state==='failed'?'Не вдалося з’єднати напряму — доступні голосові репліки.':'Аудіо: '+state);
+  };
+  startRtcSignalPolling();
+  if(cfg.caller){const offer=await LIVE_PC.createOffer();await LIVE_PC.setLocalDescription(offer);await rtcSignal('offer',LIVE_PC.localDescription);}
+}
+function startRtcSignalPolling(){
+  clearInterval(LIVE_SIGNAL_POLL);LIVE_SIGNAL_POLL=setInterval(async()=>{
+    if(!LIVE_MATCH?.room_id||!LIVE_PC)return;
+    try{const r=await socialApi('rtc_poll',{room_id:LIVE_MATCH.room_id,after_id:LIVE_SIGNAL_LAST});
+      for(const signal of r.signals||[]){LIVE_SIGNAL_LAST=signal.id||LIVE_SIGNAL_LAST;const p=signal.payload;
+        if(signal.kind==='offer'){await LIVE_PC.setRemoteDescription(p);for(const c of LIVE_PENDING_CANDIDATES.splice(0))try{await LIVE_PC.addIceCandidate(c);}catch(e){}const answer=await LIVE_PC.createAnswer();await LIVE_PC.setLocalDescription(answer);await rtcSignal('answer',LIVE_PC.localDescription);}
+        else if(signal.kind==='answer'&&!LIVE_PC.currentRemoteDescription){await LIVE_PC.setRemoteDescription(p);for(const c of LIVE_PENDING_CANDIDATES.splice(0))try{await LIVE_PC.addIceCandidate(c);}catch(e){}}
+        else if(signal.kind==='candidate'){if(LIVE_PC.remoteDescription)try{await LIVE_PC.addIceCandidate(p);}catch(e){}else LIVE_PENDING_CANDIDATES.push(p);}
+        else if(signal.kind==='bye')setLiveAudioStatus('Партнер завершив дзвінок.');
+      }}catch(e){}
+  },900);
+}
 function startLiveTimer(expires){
   clearInterval(LIVE_TIMER_INT);const paint=()=>{const left=Math.max(0,Math.floor(expires-Date.now()/1000));
     $('#live-timer').textContent=String(Math.floor(left/60)).padStart(2,'0')+':'+String(left%60).padStart(2,'0');
@@ -3373,8 +3424,10 @@ async function toggleLiveRecord(){
   }catch(e){toast('Дозволь доступ до мікрофона');}
 }
 async function leaveLiveMatch(send=true){
-  clearInterval(LIVE_POLL);clearInterval(LIVE_TIMER_INT);try{LIVE_STREAM?.getTracks().forEach(t=>t.stop());}catch(e){}
-  if(send)await socialApi('live_leave').catch(()=>{});LIVE_MATCH=null;LIVE_DEADLINE=0;closeOv();
+  clearInterval(LIVE_POLL);clearInterval(LIVE_TIMER_INT);clearInterval(LIVE_SIGNAL_POLL);
+  try{if(send&&LIVE_MATCH?.room_id)await rtcSignal('bye',{});}catch(e){}
+  try{LIVE_STREAM?.getTracks().forEach(t=>t.stop());LIVE_LOCAL_STREAM?.getTracks().forEach(t=>t.stop());LIVE_PC?.close();}catch(e){}
+  if(send)await socialApi('live_leave').catch(()=>{});LIVE_MATCH=null;LIVE_DEADLINE=0;LIVE_PC=null;LIVE_LOCAL_STREAM=null;LIVE_RTC_STARTED=false;LIVE_SIGNAL_LAST='';LIVE_PENDING_CANDIDATES=[];closeOv();
 }
 function reportLiveMatch(){if(!LIVE_MATCH)return;const reason=prompt('Що сталося?');if(reason)socialApi('report',{target_uid:LIVE_MATCH.partner_uid,reason}).then(()=>{toast('Скаргу надіслано');leaveLiveMatch();}).catch(()=>{});}
 function blockLivePartner(){if(!LIVE_MATCH)return;if(confirm('Заблокувати цього користувача?'))socialApi('block',{target_uid:LIVE_MATCH.partner_uid}).then(()=>{toast('Користувача заблоковано');leaveLiveMatch();}).catch(()=>{});}

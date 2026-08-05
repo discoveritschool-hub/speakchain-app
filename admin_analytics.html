@@ -181,6 +181,18 @@ tr:hover td{background:var(--surface2)}
 /* ── Error ── */
 .error-box{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);
   border-radius:var(--r);padding:14px;color:var(--red);font-size:13px;text-align:center}
+.support-toolbar{display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+.support-toolbar select,.support-reply{background:var(--surface2);color:var(--text);border:1px solid var(--border);
+  border-radius:9px;padding:9px 11px;font:inherit}
+.support-ticket{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:13px;margin-bottom:9px;cursor:pointer}
+.support-ticket.urgent{border-color:var(--red)}.support-ticket.high{border-color:var(--amber)}
+.support-ticket-head{display:flex;gap:8px;align-items:center}.support-ticket-head b{flex:1}
+.support-chip{font-size:10px;font-weight:700;border-radius:99px;padding:3px 8px;background:var(--surface2);color:var(--text2)}
+.support-preview{font-size:12px;color:var(--text2);line-height:1.5;margin-top:8px;white-space:normal}
+.support-message{padding:10px 11px;border-radius:10px;background:var(--surface2);margin:7px 0;font-size:12px;line-height:1.5;white-space:pre-wrap}
+.support-message.out{margin-left:24px;background:rgba(79,142,247,.12)}
+.support-actions{display:flex;gap:7px;margin-top:10px}.support-actions button{border:0;border-radius:8px;padding:8px 11px;background:var(--accent);color:#fff;font-weight:700;cursor:pointer}
+.support-actions button.secondary{background:var(--surface2);color:var(--text2)}
 .blogger-switcher{display:flex;align-items:center;gap:7px;min-width:0}
 .blogger-switcher select{max-width:210px;min-width:150px;height:34px;padding:0 30px 0 10px;
   border:1px solid var(--line);border-radius:var(--r-pill);background:var(--bg-card2);
@@ -253,6 +265,18 @@ tr:hover td{background:var(--surface2)}
     <div id="students-content">
       <div class="loading"><div class="spinner"></div>Завантаження...</div>
     </div>
+  </div>
+
+  <div class="section" id="tab-support">
+    <div class="support-toolbar">
+      <select id="support-status" onchange="loadSupportInbox()">
+        <option value="open">Відкриті</option><option value="new">Нові</option>
+        <option value="assigned">У роботі</option><option value="closed">Закриті</option>
+        <option value="all">Усі</option>
+      </select>
+      <button class="learner-mode" onclick="loadSupportInbox()">↻ Оновити</button>
+    </div>
+    <div id="support-content"><div class="loading"><div class="spinner"></div>Завантаження...</div></div>
   </div>
 
   <!-- 💰 ГРОШІ — Revenue · Воронки · Дії -->
@@ -494,6 +518,7 @@ function renderSwitches() {
    Жодну функцію не видалено. */
 const NAV = [
   ['summary',  '🏠 Огляд'],
+  ['support',  '📥 Підтримка'],
   ['students', '👥 Учні'],
   ['money',    '💰 Гроші'],
   ['partners', '🤝 Блогери'],
@@ -790,12 +815,47 @@ function switchTab(tab) {
   if (_c) _c.scrollTop = 0;
   /* Система і Команди малюються навіть без data — це не аналітика */
   if (tab === 'summary') { renderSummary(); return; }   /* поля видно навіть без даних */
+  if (tab === 'support') { loadSupportInbox(); return; }
   if (tab === 'finance') { renderFinance(); return; }   /* так само */
   if (tab === 'system')  { renderSystem(); return; }
   if (tab === 'lottery') { renderLotteryTab(); return; }
   if (tab === 'cmds')    { renderCommands(); return; }
   if (data) renderTab(tab);
 }
+
+async function supportApi(op, extra){
+  const payload=Object.assign({op:op,init_data:tg?.initData||'',uid:tg?.initDataUnsafe?.user?.id||0},extra||{});
+  if(window.SC_PWA?.post) return window.SC_PWA.post('/support_api',payload);
+  const res=await fetch(BOT_API+'/support_api',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+  const json=await res.json();if(!res.ok||json.error)throw new Error(json.error||('HTTP '+res.status));return json;
+}
+async function loadSupportInbox(){
+  const box=document.getElementById('support-content');if(!box)return;
+  box.innerHTML='<div class="loading"><div class="spinner"></div>Завантаження...</div>';
+  try{
+    const status=document.getElementById('support-status')?.value||'open';
+    const result=await supportApi('list',{status:status});
+    const tickets=result.tickets||[];
+    box.innerHTML=tickets.length?tickets.map(t=>'<div class="support-ticket '+escAttr(t.priority||'normal')+'" onclick="openSupportTicket(\''+escAttr(t.id)+'\')">'
+      +'<div class="support-ticket-head"><b>'+esc(t.id)+' · '+esc(t.user_name||'Student')+'</b><span class="support-chip">'+esc(t.language||'?')+'</span><span class="support-chip">'+esc(t.category||'other')+'</span></div>'
+      +'<div class="support-preview">'+esc(t.preview||'')+'</div></div>').join('')
+      :'<div class="todo-ok">✅ У цій черзі звернень немає.</div>';
+  }catch(e){box.innerHTML='<div class="error-box">Не вдалося завантажити підтримку: '+esc(e.message)+'</div>';}
+}
+async function openSupportTicket(id){
+  const box=document.getElementById('support-content');
+  try{
+    const result=await supportApi('detail',{ticket_id:id}),t=result.ticket;
+    box.innerHTML='<button class="learner-mode" onclick="loadSupportInbox()">← До черги</button>'
+      +'<div class="support-ticket '+escAttr(t.priority||'normal')+'" style="margin-top:10px"><div class="support-ticket-head"><b>'+esc(t.id)+' · '+esc(t.user_name||'Student')+'</b><span class="support-chip">'+esc(t.language||'?')+' · '+esc(t.dialect||'')+'</span></div>'
+      +(t.messages||[]).map(m=>'<div class="support-message '+(m.direction==='out'?'out':'')+'"><b>'+(m.direction==='out'?'Команда':'Користувач')+'</b><br>'+esc(m.translated||m.original||'')+(m.translated&&m.original&&m.translated!==m.original?'<details><summary>Оригінал</summary>'+esc(m.original)+'</details>':'')+'</div>').join('')
+      +'<textarea class="support-reply" id="support-answer" rows="4" style="width:100%" placeholder="Напишіть українською — користувач отримає переклад своєю мовою"></textarea>'
+      +'<div class="support-actions"><button onclick="replySupportTicket(\''+escAttr(id)+'\')">Надіслати</button><button class="secondary" onclick="takeSupportTicket(\''+escAttr(id)+'\')">Взяти</button><button class="secondary" onclick="closeSupportTicket(\''+escAttr(id)+'\')">Закрити</button></div></div>';
+  }catch(e){box.innerHTML='<div class="error-box">'+esc(e.message)+'</div>';}
+}
+async function replySupportTicket(id){const answer=document.getElementById('support-answer')?.value.trim();if(!answer)return;await supportApi('reply',{ticket_id:id,answer:answer});openSupportTicket(id);}
+async function takeSupportTicket(id){await supportApi('take',{ticket_id:id});openSupportTicket(id);}
+async function closeSupportTicket(id){await supportApi('close',{ticket_id:id});loadSupportInbox();}
 
 // ── Гортання вкладок: стрілки В ОБИДВА БОКИ ──
 function scrollTabs(dir) {
