@@ -737,7 +737,8 @@ def test_production_assets_and_browser_chainy_auth():
         ok("standalone tokens.css використовує Pages-сумісний шлях")
 
     worker = (ROOT / "sw.js").read_text(encoding="utf-8")
-    if "'./Chainy.png'" not in worker or "speakchain-shell-v7" not in worker:
+    cache_match = re.search(r"const CACHE = 'speakchain-shell-v(\d+)'", worker)
+    if "'./Chainy.png'" not in worker or not cache_match or int(cache_match.group(1)) < 10:
         fail("service worker не оновлює/не кешує аватар Chainy")
     else:
         ok("service worker оновлює і кешує Chainy")
@@ -814,6 +815,53 @@ def test_visible_feature_map_and_role_workspaces():
             fail("vocab.html: JavaScript не парситься")
 
 
+def test_guided_native_navigation():
+    """Наступна дія адаптивна, пам'ятає стан і не закриває помилку за раз."""
+    section("PWA — керована нативна навігація і SRS помилок")
+    shell = SHELL.read_text(encoding="utf-8") if SHELL.exists() else ""
+    markers = (
+        'id="guided-card"', "const GUIDED_STATE_KEY=", "const ERROR_SRS_KEY=",
+        "function guidedRecommendation(D)", "function runGuidedAction()",
+        "function dismissGuidedAction()", "function renderGuidedNavigation(D)",
+        "function mergeErrorSrs(items)", "function dueErrors(D)",
+        "window.SC_errorReview=function", "item.success_uses>=3?'mastered':'reviewing'",
+        "action:'error_srs_review'", "function openGuidedErrors()",
+        "const errors=(recap.errors||recap.mistakes||d.recent_errors||d.errors||[])",
+        "Опрацювати помилки", "Пропонуємо зараз, бо настав час повторення за SRS.",
+    )
+    missing = [marker for marker in markers if marker not in shell]
+    if missing:
+        fail(f"керована навігація/SRS неповні: {missing}")
+    else:
+        ok("навігація пам'ятає маршрут, дає одну наступну дію і повертає помилки за SRS")
+
+
+def test_visible_lexical_streak_and_blogger_entry():
+    """Три продуктові входи не залежать від неповної відповіді backend."""
+    section("PWA — лексичні теми, Streak і фраза блогера")
+    shell = SHELL.read_text(encoding="utf-8") if SHELL.exists() else ""
+    markers = (
+        'id="s-prog"', 'id="route-lexical"', "const LEXICAL_ROUTE_FALLBACK=",
+        "function lexicalItems(D,level)", "function pgSetRoute(route)",
+        'id="home-streak-signal"', "sc.querySelector('.l').textContent='Streak'",
+        "const BLOGGER_ENTRY=", "function activateBloggerEntry(entry)",
+        "blogger_phrase_repeat", "blogger_phrase_chainy",
+        "function startBloggerPhraseChainy(entry)", "resource_kind:'blogger_phrase'",
+    )
+    missing = [marker for marker in markers if marker not in shell]
+    forbidden_home_markers = ('id="home-lexical-topics"', "function renderHomeLexical(D)")
+    leaked_home = [marker for marker in forbidden_home_markers if marker in shell]
+    fallback_levels = all(f" {level}:[[" in shell for level in ("A1", "A2", "B1", "B2", "C1", "C2"))
+    if missing or leaked_home or not fallback_levels:
+        fail(f"лексика/Streak/вхід блогера неповні: {missing}")
+        if leaked_home:
+            fail(f"лексичні теми помилково повернулися у «Сьогодні»: {leaked_home}")
+        if not fallback_levels:
+            fail("офлайн-лексичний маршрут не містить усіх рівнів A1–C2")
+    else:
+        ok("лексичні теми A1–C2 доступні офлайн лише у Прогресі; Streak і маршрут блогера збережені")
+
+
 def main():
     print("\033[1m" + "═" * 58)
     print("  SpeakChain — смоук-тести")
@@ -835,6 +883,8 @@ def main():
     test_profile_lottery_ux()
     test_production_assets_and_browser_chainy_auth()
     test_visible_feature_map_and_role_workspaces()
+    test_guided_native_navigation()
+    test_visible_lexical_streak_and_blogger_entry()
 
     print("\n" + "═" * 58)
     if FAILS:
