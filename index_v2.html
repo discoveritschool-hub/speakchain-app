@@ -1335,7 +1335,10 @@ window.addEventListener('load', function(){
 <div class="overlay" id="ov-plans">
   <div class="sheet" style="max-height:88vh;overflow-y:auto">
     <div class="grip"></div>
-    <h3 style="margin-bottom:12px">Обрати план</h3>
+    <div style="display:flex;align-items:center;margin-bottom:12px">
+      <h3 style="margin:0;flex:1">Обрати план</h3>
+      <span onclick="closeOv()" aria-label="Закрити" style="font-size:26px;color:var(--text2);cursor:pointer;line-height:1;padding:0 4px">×</span>
+    </div>
     <div id="pl-box"></div>
   </div>
 </div>
@@ -3553,7 +3556,7 @@ function renderPlans(){
     +premFeats
     +'<button class="plan-btn" style="margin-top:10px;background:linear-gradient(135deg,var(--gold),var(--orange));color:var(--bg)" onclick="payPlan(\'premium\')">Обрати Premium</button></div>'
     +sixm
-    +'<button style="width:100%;margin-top:10px;padding:12px;border-radius:var(--r-pill);border:.5px solid var(--line);background:transparent;color:var(--text2);font-size:var(--fs)" onclick="act(\'paywall_remind_later\')">Нагадати пізніше</button>';
+    +'<button style="width:100%;margin-top:10px;padding:12px;border-radius:var(--r-pill);border:.5px solid var(--line);background:transparent;color:var(--text2);font-size:var(--fs)" onclick="closeOv();act(\'paywall_remind_later\')">Нагадати пізніше</button>';
 }
 
 /* ══ ЕКРАН ЧЕЛЕНДЖУ («День N») — v13.1, пілот День 1 ══

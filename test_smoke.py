@@ -742,6 +742,21 @@ def test_production_assets_and_browser_chainy_auth():
     else:
         ok("service worker оновлює і кешує Chainy")
 
+    root_entry = ROOT / "index.html"
+    root_text = root_entry.read_text(encoding="utf-8") if root_entry.exists() else ""
+    if "index_v2.html" not in root_text or "window.location.search" not in root_text:
+        fail("корінь GitHub Pages не перенаправляє в PWA зі збереженням query")
+    else:
+        ok("корінь GitHub Pages відкриває PWA і зберігає query")
+
+    plans_start = shell.find('id="ov-plans"')
+    plans_end = shell.find('id="ov-unsub"', plans_start)
+    plans_markup = shell[plans_start:plans_end] if plans_start >= 0 and plans_end > plans_start else ""
+    if 'onclick="closeOv()"' not in plans_markup or "closeOv();act(\\'paywall_remind_later\\')" not in shell:
+        fail("paywall не можна безпечно закрити")
+    else:
+        ok("paywall має × і «Нагадати пізніше» закриває модальне вікно")
+
 
 def main():
     print("\033[1m" + "═" * 58)
