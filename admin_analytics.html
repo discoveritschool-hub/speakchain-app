@@ -413,7 +413,11 @@ let charts = {};
 let data = null;
 let activeTab = 'summary';
 function openLearnerMode(){location.assign(new URL('index_v2.html',location.href).toString());}
-function openBloggerPanel(){location.assign(new URL('blogger.html',location.href).toString());}
+function openBloggerPanel(){
+  const url = new URL('blogger.html', location.href);
+  url.searchParams.set('from', 'admin');
+  location.assign(url.toString());
+}
 
 /* ═══ 🎛 РУБИЛЬНИКИ — рендер із живих даних бота ═══ */
 function renderSwitches() {
