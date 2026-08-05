@@ -842,6 +842,19 @@ def test_blogger_panel_uses_shared_pwa_auth():
     else:
         ok("Панель блогера повторно використовує Google/PWA-сесію та перевіряє роль")
 
+    pwa = (ROOT / "pwa.js").read_text(encoding="utf-8")
+    embedded_markers = (
+        "function hasTrustedEmbeddedPayload()",
+        "page === 'blogger.html'",
+        "new URLSearchParams(location.search).has('d')",
+        "source: 'telegram-payload'",
+    )
+    missing = [marker for marker in embedded_markers if marker not in pwa]
+    if missing:
+        fail("Telegram-payload панелі блогера помилково накриє форма входу: " + ", ".join(missing))
+    else:
+        ok("готова Telegram-панель блогера не запускає повторний браузерний вхід")
+
     admin = (ROOT / "admin_analytics.html").read_text(encoding="utf-8")
     if ("openBloggerPanel()" not in admin or "📣 Відкрити панель" not in admin
             or "url.searchParams.set('from', 'admin')" not in admin):
