@@ -961,6 +961,8 @@ function openLearnerMode(){location.assign(new URL('index_v2.html',location.href
 
 const params  = new URLSearchParams(window.location.search);
 const dataRaw = params.get('d');
+const adminView = params.get('from') === 'admin';
+const selectedBlogger = (params.get('blogger') || '').trim();
 let D = {};
 if (dataRaw) {
   try { D = JSON.parse(decodeURIComponent(dataRaw)); } catch(e){}
@@ -978,6 +980,10 @@ function toast(msg) {
 
 /* ── Уніфікована відправка дії в бот (HTTP, sendData як фолбек) ── */
 async function maAction(action, extra) {
+  if (D.admin_view) {
+    toast('Перегляд адміністратора: редагування вимкнене');
+    return false;
+  }
   if (!D.uid && window.SC_PWA?.ready) {
     try {
       const session = await window.SC_PWA.ready;
@@ -1695,7 +1701,8 @@ async function initializeBloggerPanel() {
           uid,
           init_data: TG?.initData || '',
           screen: 'blogger',
-          admin_view: params.get('from') === 'admin'
+          admin_view: adminView,
+          blogger_name: adminView ? selectedBlogger : ''
         })
       });
       const payload = await response.json().catch(() => ({}));
@@ -1707,6 +1714,10 @@ async function initializeBloggerPanel() {
       }
       D = payload.d;
       D.uid = Number(D.uid || uid);
+      if (D.admin_view) {
+        const badge = document.querySelector('.badge');
+        if (badge) badge.textContent = '👁 Перегляд адміна';
+      }
     } catch (error) {
       document.body.innerHTML = '<main style="min-height:100vh;display:grid;place-items:center;padding:24px;background:#0d0d14;color:#eaeaf5;font-family:-apple-system,BlinkMacSystemFont,sans-serif">'
         + '<section style="width:min(100%,420px);padding:28px;border:1px solid #2a2a3a;border-radius:20px;background:#16161f;text-align:center">'
