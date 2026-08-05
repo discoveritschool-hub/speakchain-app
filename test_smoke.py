@@ -704,6 +704,45 @@ def test_profile_lottery_ux():
         ok("лотерея у Профілі; прогрес, купівля й колекція квитків на місці")
 
 
+def test_production_assets_and_browser_chainy_auth():
+    """Production-only regressions: case-sensitive assets and standalone PWA auth."""
+    section("Production assets — Chainy, tokens and browser session")
+    avatar = ROOT / "Chainy.png"
+    if not avatar.exists() or avatar.stat().st_size < 10_000:
+        fail("Chainy.png відсутній або знову порожній")
+    elif avatar.read_bytes()[:8] != b"\x89PNG\r\n\x1a\n":
+        fail("Chainy.png не є валідним PNG")
+    else:
+        ok("Chainy.png — валідний production PNG")
+
+    buddy = (ROOT / "speaking_buddy.html").read_text(encoding="utf-8")
+    shell = SHELL.read_text(encoding="utf-8") if SHELL.exists() else ""
+    if 'src="pwa.js"' not in buddy or "window.SC_PWA?.ready" not in buddy:
+        fail("standalone Chainy не підключає браузерну PWA-сесію")
+    else:
+        ok("standalone Chainy підключає браузерну PWA-сесію")
+    if "chainy.png" in buddy or "chainy.png" in shell:
+        fail("залишилось посилання з неправильним регістром chainy.png")
+    else:
+        ok("усі посилання використовують Chainy.png")
+
+    bad_tokens = []
+    for name in ("social_invite.html", "speakchain_prototype.html"):
+        path = ROOT / name
+        if path.exists() and '/static/tokens.css' in path.read_text(encoding="utf-8"):
+            bad_tokens.append(name)
+    if bad_tokens:
+        fail(f"неправильний абсолютний tokens.css у {bad_tokens}")
+    else:
+        ok("standalone tokens.css використовує Pages-сумісний шлях")
+
+    worker = (ROOT / "sw.js").read_text(encoding="utf-8")
+    if "'./Chainy.png'" not in worker or "speakchain-shell-v6" not in worker:
+        fail("service worker не оновлює/не кешує аватар Chainy")
+    else:
+        ok("service worker оновлює і кешує Chainy")
+
+
 def main():
     print("\033[1m" + "═" * 58)
     print("  SpeakChain — смоук-тести")
@@ -723,6 +762,7 @@ def main():
     test_analytics_dashboards()
     test_friends_stable_layers()
     test_profile_lottery_ux()
+    test_production_assets_and_browser_chainy_auth()
 
     print("\n" + "═" * 58)
     if FAILS:
