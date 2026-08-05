@@ -496,6 +496,8 @@ textarea.form-input { resize:vertical; min-height:76px; line-height:1.5; }
   opacity:0;
 }
 .fold.open .fold-b{ max-height:2200px; opacity:1; }
+.learner-mode{margin-left:auto;border:1px solid var(--line);background:var(--bg-card2);color:var(--text);
+  border-radius:var(--r-pill);padding:8px 11px;font-size:var(--fs-xs);font-weight:var(--fw-bold);cursor:pointer;white-space:nowrap}
 </style>
 <script src="pwa.js"></script>
 </head>
@@ -510,6 +512,7 @@ textarea.form-input { resize:vertical; min-height:76px; line-height:1.5; }
       <div class="header-sub" id="header-sub">Панель блогера</div>
     </div>
     <div class="badge">📣 Блогер</div>
+    <button class="learner-mode" onclick="openLearnerMode()">🎓 До навчання</button>
   </div>
 </div>
 
@@ -952,6 +955,7 @@ if (TG) { try { TG.ready(); TG.expand(); } catch(e){} }
 if (TG) { try { if (typeof TG.requestFullscreen === 'function') TG.requestFullscreen(); } catch(e){} }
 
 const BOT_API = 'https://speakchain-bot-production.up.railway.app';
+function openLearnerMode(){location.assign(new URL('index_v2.html',location.href).toString());}
 
 const params  = new URLSearchParams(window.location.search);
 const dataRaw = params.get('d');

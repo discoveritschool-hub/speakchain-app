@@ -773,7 +773,7 @@ def test_visible_feature_map_and_role_workspaces():
         "function openLexicalTopic(encoded)", "Побачила ", "Закріпила ",
         "openOv('ov-vocab')", "retellLastVideo()", "openDuelHistory()",
         'id="role-workspace"', "function verifiedWorkspaceRole(D,H)",
-        "window.open(u.toString(),'_blank','noopener')",
+        "location.assign(u.toString())",
     )
     missing = [marker for marker in markers if marker not in shell]
     if missing:
@@ -815,6 +815,121 @@ def test_visible_feature_map_and_role_workspaces():
             fail("vocab.html: JavaScript не парситься")
 
 
+def test_error_srs_practice_is_reachable_and_records_results():
+    """SRS має бути реальною вправою, а не невикликаною helper-функцією."""
+    section("PWA — повний цикл опрацювання помилок")
+    shell = SHELL.read_text(encoding="utf-8") if SHELL.exists() else ""
+    markers = (
+        "function openErrorPractice(items,index)",
+        "function errorPracticeRepeat()",
+        "function errorPracticeCheck()",
+        "function practiceErrorWithChainy()",
+        "function applyChainyErrorReviewResult(recap)",
+        "window.SC_errorReview(pending.error_id,result.correct_in_own_speech===true)",
+        "resource_kind:'error_srs'",
+        "error_srs_result",
+        "openErrorPractice(due,0)",
+        "Лише результат розмови може зарахувати SRS-повторення",
+    )
+    missing = [marker for marker in markers if marker not in shell]
+    if missing:
+        fail(f"вправа SRS не зʼєднана з результатом: {missing}")
+    else:
+        ok("помилка проходить правильний варіант, власне речення, результат і SRS")
+
+
+def test_session_minutes_change_the_actual_route():
+    """5/15/30/60 хвилин мають змінювати дії, а не лише підпис героя."""
+    section("PWA — маршрути за тривалістю сесії")
+    shell = SHELL.read_text(encoding="utf-8") if SHELL.exists() else ""
+    markers = (
+        "if(SESSION_MINUTES===5&&!dp.speak)",
+        "SESSION_MINUTES===15?",
+        "SESSION_MINUTES===30?",
+        "guidedSessionActionId('discover_vocab')",
+        "guidedSessionActionId('discover_lexical')",
+        "guidedSessionActionId('discover_match')",
+        "function guidedSessionActionId(name)",
+    )
+    missing = [marker for marker in markers if marker not in shell]
+    if missing:
+        fail(f"тривалість не перебудовує маршрут: {missing}")
+    else:
+        ok("5/15/30/60 хвилин формують різні послідовності дій")
+
+
+def test_own_video_is_visible_and_uses_the_shared_learning_loop():
+    """Власне відео має бути видимим вибором і відкривати спільний плеєр."""
+    section("PWA / Telegram — власне відео 15–60 хв")
+    shell = SHELL.read_text(encoding="utf-8") if SHELL.exists() else ""
+    player = (ROOT / "player.html").read_text(encoding="utf-8")
+    markers = (
+        "Працювати зі своїм відео",
+        "встав YouTube-посилання · 15–60 хв",
+        "function openOwnVideo()",
+        "if(SESSION_MINUTES<15)",
+        "setSessionMinutes(15)",
+        "trackUx('own_video_open'",
+        "{ic:'🔗',name:'Своє відео · 15–60 хв'",
+    )
+    player_markers = (
+        'id="paste-url"',
+        "function openPasted()",
+        "function extractYtId(raw)",
+        "type: 'speakchain-video-context'",
+        "sessionSavedPhrases.slice(-5)",
+    )
+    missing = [marker for marker in markers if marker not in shell]
+    missing += [marker for marker in player_markers if marker not in player]
+    if missing:
+        fail(f"власне відео не зʼєднане зі спільним навчальним циклом: {missing}")
+    else:
+        ok("власне відео доступне у PWA/Telegram і використовує плеєр, слова та Chainy")
+
+
+def test_contextual_learning_cycle_ends_with_result_and_next_action():
+    """Кожен навчальний вхід має повернути результат у свій маршрут."""
+    section("PWA / Telegram — контекст → Chainy → результат")
+    shell = SHELL.read_text(encoding="utf-8") if SHELL.exists() else ""
+    markers = (
+        "const LEARNING_CONTEXT_KEY=", "function setLearningContext(kind,label,extra)",
+        "setLearningContext('lexical_topic',label", "setLearningContext('grammar_topic',t",
+        "setLearningContext('vocabulary_phrase',phrase", "setLearningContext('error_srs',item.correct",
+        "setLearningContext(event.data.resource_kind||'video'", "setLearningContext('book',title",
+        "context?.kind==='lexical_topic'", "context?.kind==='grammar_topic'",
+        "primary.dataset.next='guided_next'", "target==='lexical_progress'",
+        "target==='grammar_progress'", "target==='guided_next'",
+        "delete PAYLOAD['s-home'];delete PENDING['s-home']",
+        "renderGuidedNavigation(TODAY_HOME||{})", "clearLearningContext();",
+    )
+    missing = [marker for marker in markers if marker not in shell]
+    if missing:
+        fail(f"контекстний цикл не завершений: {missing}")
+    else:
+        ok("слова, граматика, лексика, відео й SRS повертають результат і наступну дію")
+
+
+def test_staff_and_learner_modes_are_two_way():
+    """Службова роль не повинна втрачати учнівський режим або плодити вкладки."""
+    section("PWA / Telegram — учнівський і службовий режими")
+    shell = SHELL.read_text(encoding="utf-8") if SHELL.exists() else ""
+    admin = (ROOT / "admin_analytics.html").read_text(encoding="utf-8")
+    blogger = (ROOT / "blogger.html").read_text(encoding="utf-8")
+    shell_markers = (
+        "function openStaffWorkspace(page)", "location.assign(u.toString())",
+        "workspace_mode_open", "function verifiedWorkspaceRole(D,H)",
+        "role==='blogger'", "Панель адміністратора", "Панель блогера",
+    )
+    panel_markers = ("🎓 До навчання", "function openLearnerMode()", "new URL('index_v2.html',location.href)")
+    missing = [m for m in shell_markers if m not in shell]
+    missing += [f"admin:{m}" for m in panel_markers if m not in admin]
+    missing += [f"blogger:{m}" for m in panel_markers if m not in blogger]
+    if missing:
+        fail(f"двосторонній перемикач ролей неповний: {missing}")
+    else:
+        ok("адміністратор і блогер перемикаються між службовою та учнівською панелями")
+
+
 def test_guided_native_navigation():
     """Наступна дія адаптивна, пам'ятає стан і не закриває помилку за раз."""
     section("PWA — керована нативна навігація і SRS помилок")
@@ -847,6 +962,9 @@ def test_visible_lexical_streak_and_blogger_entry():
         "const BLOGGER_ENTRY=", "function activateBloggerEntry(entry)",
         "blogger_phrase_repeat", "blogger_phrase_chainy",
         "function startBloggerPhraseChainy(entry)", "resource_kind:'blogger_phrase'",
+        "function advanceBloggerEntryAfterPlayer()", "bloggerEntry.step==='context'",
+        "bloggerEntry.step==='repeat'", "bloggerEntry.step==='chainy'",
+        "updateBloggerEntry('complete')",
     )
     missing = [marker for marker in markers if marker not in shell]
     forbidden_home_markers = ('id="home-lexical-topics"', "function renderHomeLexical(D)")
@@ -883,6 +1001,11 @@ def main():
     test_profile_lottery_ux()
     test_production_assets_and_browser_chainy_auth()
     test_visible_feature_map_and_role_workspaces()
+    test_error_srs_practice_is_reachable_and_records_results()
+    test_session_minutes_change_the_actual_route()
+    test_own_video_is_visible_and_uses_the_shared_learning_loop()
+    test_contextual_learning_cycle_ends_with_result_and_next_action()
+    test_staff_and_learner_modes_are_two_way()
     test_guided_native_navigation()
     test_visible_lexical_streak_and_blogger_entry()
 
