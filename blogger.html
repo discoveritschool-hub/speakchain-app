@@ -1684,27 +1684,26 @@ async function initializeBloggerPanel() {
       const session = await window.SC_PWA?.ready;
       const uid = Number(session?.userId || window.SC_PWA?.userId?.() || 0);
       if (!uid) throw new Error('Увійдіть у SpeakChain');
-      const roleResponse = await fetch(BOT_API + '/miniapp_payload', {
-        method: 'POST', headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({uid, init_data: TG?.initData || '', screen: 's-profile'})
-      });
-      const rolePayload = await roleResponse.json().catch(() => ({}));
-      const identity = rolePayload?.d || {};
-      const verifiedRole = identity.is_super_admin ? 'super_admin'
-        : identity.is_admin ? 'admin'
-        : identity.is_blogger ? 'blogger'
-        : String(identity.staff_role || identity.role || '').toLowerCase();
-      if (!['blogger', 'admin', 'super_admin'].includes(verifiedRole)) {
-        throw new Error('Цей акаунт не має доступу до панелі блогера');
-      }
+      /* Не визначаємо службову роль через звичайний s-profile: цей екран не
+         зобов'язаний повертати admin/blogger-прапорці й раніше помилково
+         блокував підтверджених адміністраторів. Авторитетна перевірка живе на
+         сервері саме для screen=blogger та отримує захищену PWA/TG-сесію. */
       const response = await fetch(BOT_API + '/miniapp_payload', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({uid, init_data: TG?.initData || '', screen: 'blogger'})
+        body: JSON.stringify({
+          uid,
+          init_data: TG?.initData || '',
+          screen: 'blogger',
+          admin_view: params.get('from') === 'admin'
+        })
       });
       const payload = await response.json().catch(() => ({}));
       if (!response.ok || !payload?.ok || !payload?.d) {
-        throw new Error(payload?.error || 'Не вдалося завантажити панель блогера');
+        const apiError = payload?.error;
+        throw new Error(typeof apiError === 'string'
+          ? apiError
+          : apiError?.message || 'Цей акаунт не має доступу до панелі блогера');
       }
       D = payload.d;
       D.uid = Number(D.uid || uid);
