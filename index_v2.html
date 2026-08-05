@@ -828,7 +828,10 @@
   .session-picker{display:flex;gap:6px;margin:0 0 14px;overflow-x:auto;scrollbar-width:none}
   .session-picker button{flex:1;min-width:62px;border:.5px solid var(--line);border-radius:var(--r-pill);padding:9px 8px;background:var(--bg-card);color:var(--text2);font-weight:700;cursor:pointer}
   .session-picker button.on{background:var(--purple-bg);border-color:var(--purple);color:var(--purple-text)}
-  .signal-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:0 0 14px}
+  .guided-card{display:none;margin:0 0 14px;padding:14px;border:1px solid rgba(124,110,247,.35);border-radius:var(--r-lg);background:linear-gradient(135deg,rgba(124,110,247,.13),rgba(90,216,166,.06))}
+  .guided-card.on{display:block}.guided-head{display:flex;align-items:flex-start;gap:10px}.guided-ic{font-size:24px}.guided-copy{flex:1;min-width:0}.guided-title{font-weight:800;margin-bottom:3px}.guided-sub{font-size:var(--fs-sm);line-height:1.45;color:var(--text2)}
+  .guided-why{font-size:var(--fs-xs);color:var(--purple-text);margin-top:7px}.guided-actions{display:flex;gap:8px;margin-top:12px}.guided-actions button{border:0;border-radius:var(--r-pill);padding:9px 13px;font-weight:750;cursor:pointer}.guided-primary{flex:1;background:var(--purple);color:#fff}.guided-skip{background:var(--bg-card2);color:var(--text2)}
+  .signal-strip{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin:0 0 14px}
   .signal{border:.5px solid var(--line);border-radius:var(--r);background:var(--bg-card);padding:10px 7px;text-align:center;cursor:pointer}
   .signal b{display:block;font-size:var(--fs);color:var(--text)}.signal small{display:block;font-size:10px;color:var(--text2);margin-top:2px}
   .hub-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
@@ -1029,8 +1032,8 @@ window.addEventListener('load', function(){
 
   <!-- TOP BAR — висить над усіма екранами -->
   <div class="topbar" id="topbar">
-    <div class="streak-chip" id="tb-streak" onclick="openProgressArea('chain')" role="button" aria-label="Відкрити Chain">
-      <span class="f">🔥</span><span class="n">0</span><span class="l">дні</span>
+    <div class="streak-chip" id="tb-streak" onclick="openProgressArea('streak')" role="button" aria-label="Відкрити Streak">
+      <span class="f">🔥</span><span class="n">0</span><span class="l">Streak</span>
     </div>
     <div class="tb-title" id="tb-title">Сьогодні</div>
     <div class="top-right">
@@ -1048,12 +1051,20 @@ window.addEventListener('load', function(){
   <div class="s" id="hero-s">Відео, повторення і розмова · приблизно 10 хв</div>
   <button class="go" id="hero-go" onclick="flow()">Почати →</button>
 </div>
+<div class="guided-card" id="guided-card" aria-live="polite">
+  <div class="guided-head"><span class="guided-ic" id="guided-ic">✨</span><div class="guided-copy">
+    <div class="guided-title" id="guided-title">Наступний крок</div>
+    <div class="guided-sub" id="guided-sub"></div><div class="guided-why" id="guided-why"></div>
+  </div></div>
+  <div class="guided-actions"><button class="guided-primary" id="guided-go" onclick="runGuidedAction()">Продовжити →</button><button class="guided-skip" onclick="dismissGuidedAction()">Пізніше</button></div>
+</div>
 <div class="sec-h"><span class="ti">Скільки часу маєш?</span><span class="meta" id="session-choice-meta">план на сьогодні</span></div>
 <div class="session-picker" id="session-picker" aria-label="Тривалість сесії">
   <button onclick="setSessionMinutes(5)">5 хв</button><button class="on" onclick="setSessionMinutes(15)">15 хв</button>
   <button onclick="setSessionMinutes(30)">30 хв</button><button onclick="setSessionMinutes(60)">60+ хв</button>
 </div>
 <div class="signal-strip" aria-label="Короткий прогрес">
+  <div class="signal" onclick="openProgressArea('streak')"><b id="home-streak-signal">🔥 0</b><small>Streak</small></div>
   <div class="signal" onclick="openProgressArea('chain')"><b id="home-chain-signal">🔗 0</b><small>Chain</small></div>
   <div class="signal" onclick="openProgressArea('rating')"><b id="home-rank-signal">🏆 —</b><small>позиція</small></div>
   <div class="signal" onclick="go('s-social')"><b id="home-online-signal">🟢 0</b><small>онлайн</small></div>
@@ -1064,6 +1075,7 @@ window.addEventListener('load', function(){
 <div class="tiles">
   <div class="tile primary" onclick="openLessonNow()"><span class="ic">🎬</span><div class="t">Урок з відео</div><div class="s">одразу відкрити плеєр</div></div>
   <div class="tile primary" onclick="openChainyNow()"><span class="ic">🗣</span><div class="t">Поговорити з Chainy</div><div class="s">одразу почати розмову</div></div>
+  <div class="tile" style="grid-column:1/-1" onclick="openOwnVideo()"><span class="ic">🔗</span><div class="t">Працювати зі своїм відео</div><div class="s">встав YouTube-посилання · 15–60 хв</div></div>
 </div>
 <div id="inbox-wrap" style="display:none">
   <div class="inbox-hd"><span class="ti">✨ Сьогодні для тебе</span><span class="badge" id="inbox-n">0</span></div>
@@ -1488,7 +1500,7 @@ window.addEventListener('load', function(){
   <div class="cr-sub" id="chainy-recap-sub">Контекст збережено — наступного разу Chainy продовжить звідси.</div>
   <div class="cr-actions">
     <button class="cr-secondary" onclick="openChainyAgain()">Ще поговорити</button>
-    <button class="cr-primary" onclick="openRecapVocab()">Нові фрази</button>
+    <button class="cr-primary" id="chainy-recap-primary" onclick="openRecapNext()">Нові фрази</button>
   </div>
 </div>
 <div class="overlay" id="ov-player">
@@ -2047,12 +2059,10 @@ function scWatchAll(){
 function renderTop(D){
   const st=D.streak_days||0, xp=D.xp_total||0;
   const sc=$('#tb-streak'), xc=$('#tb-xp'), rc=$('#tb-rank');
-  /* Нема стріку/XP → чіп зникає, але шапка лишається (там стрілки) */
-  if(st>0){
-    sc.style.display='';
-    sc.querySelector('.n').textContent=st;
-    sc.querySelector('.l').textContent=plur(st,'день','дні','днів');
-  } else sc.style.display='none';
+  /* Streak — постійний щоденний хук, тому видимий навіть у день 0. */
+  sc.style.display='';
+  sc.querySelector('.n').textContent=st;
+  sc.querySelector('.l').textContent='Streak';
   if(xp>0){
     xc.style.display='';
     xc.innerHTML='⚡ '+xp.toLocaleString('uk')+'<span class="l">XP</span>';
@@ -2087,6 +2097,159 @@ const DAILY_STEPS=[
  {key:'speak',ic:'🗣',t:'Скажи'}];
 
 let SESSION_MINUTES=Math.max(5,Number(localStorage.getItem('speakchain.session.minutes')||15));
+const GUIDED_STATE_KEY='speakchain.guided.navigation.v1';
+const ERROR_SRS_KEY='speakchain.errors.srs.v1';
+const LEARNING_CONTEXT_KEY='speakchain.learning.context.v1';
+let GUIDED_ACTION=null;
+function readLocalJson(key,fallback){try{return JSON.parse(localStorage.getItem(key)||'null')||fallback;}catch(e){return fallback;}}
+function writeLocalJson(key,value){try{localStorage.setItem(key,JSON.stringify(value));}catch(e){}}
+function setLearningContext(kind,label,extra){
+  const value=Object.assign({kind:String(kind||'free'),label:String(label||''),started_at:Date.now()},extra||{});
+  writeLocalJson(LEARNING_CONTEXT_KEY,value);return value;
+}
+function learningContext(){
+  const value=readLocalJson(LEARNING_CONTEXT_KEY,null);
+  return value&&Date.now()-Number(value.started_at||0)<6*60*60*1000?value:null;
+}
+function clearLearningContext(){try{localStorage.removeItem(LEARNING_CONTEXT_KEY);}catch(e){}}
+function guidedState(){return readLocalJson(GUIDED_STATE_KEY,{seen:{},dismissed:{},last_action:''});}
+const LEXICAL_ROUTE_FALLBACK={
+ A1:[['daily_routine','Щоденні справи'],['family_people','Люди й сімʼя'],['food_drinks','Їжа та напої'],['home_city','Дім і місто'],['time_plans','Час і плани']],
+ A2:[['travel_transport','Подорожі й транспорт'],['work_study','Робота й навчання'],['health_body','Здоровʼя'],['shopping_services','Покупки й послуги'],['feelings_opinions','Почуття й думки']],
+ B1:[['career_goals','Карʼєра й цілі'],['relationships','Стосунки'],['media_culture','Медіа й культура'],['problems_solutions','Проблеми й рішення'],['experiences_stories','Досвід та історії']],
+ B2:[['business_negotiation','Бізнес і переговори'],['society_change','Суспільство й зміни'],['ideas_arguments','Ідеї та аргументи'],['leadership_teamwork','Лідерство й команда'],['nuance_emotion','Нюанси та емоції']],
+ C1:[['strategy_influence','Стратегія і вплив'],['academic_discussion','Академічна дискусія'],['complex_decisions','Складні рішення'],['culture_identity','Культура й ідентичність'],['precision_style','Точність і стиль']],
+ C2:[['rhetoric_persuasion','Риторика й переконання'],['idioms_register','Ідіоми й регістр'],['pragmatics','Прагматика'],['abstract_reasoning','Абстрактне мислення'],['native_precision','Природна точність']]
+};
+function lexicalItems(D,level){
+  const remote=(D?.lexical_route||{})[level];
+  if(Array.isArray(remote)&&remote.length)return remote;
+  return (LEXICAL_ROUTE_FALLBACK[level]||[]).map((x,i)=>({id:x[0],label:x[1],known:0,confidence_goal:5,status:'not_started',next_outcome:i?'Відкрити тему й активувати ключові фрази.':'Почати з 5 ключових фраз і використати їх у розмові.'}));
+}
+function openLexicalRoute(){return go('s-prog').then(()=>pgSetRoute('lexical'));}
+function errorSrs(){return readLocalJson(ERROR_SRS_KEY,{items:[]});}
+function errorKey(item){return String(item.id||item.error_id||item.phrase||item.wrong||item.error||'').trim().toLowerCase();}
+function mergeErrorSrs(items){
+  const store=errorSrs(),now=Date.now();
+  (items||[]).forEach(raw=>{
+    const key=errorKey(raw);if(!key)return;
+    let item=store.items.find(x=>x.key===key);
+    if(!item){item={key,state:'new',success_uses:0,repetitions:0,next_review_at:now,created_at:now};store.items.push(item);}
+    Object.assign(item,{wrong:raw.phrase||raw.wrong||raw.error||item.wrong||'',correct:raw.correction||raw.correct||item.correct||'',explanation:raw.explanation||raw.rule||item.explanation||'',topic:raw.topic||item.topic||'grammar',updated_at:now});
+    if(raw.next_review_at)item.next_review_at=Date.parse(raw.next_review_at)||Number(raw.next_review_at)||item.next_review_at;
+    if(raw.state)item.state=raw.state;
+    if(Number.isFinite(Number(raw.success_uses)))item.success_uses=Number(raw.success_uses);
+  });
+  store.items=store.items.slice(-100);writeLocalJson(ERROR_SRS_KEY,store);return store;
+}
+function dueErrors(D){
+  const remote=[...(D?.due_errors||[]),...(D?.errors_due||[])];
+  if(remote.length)mergeErrorSrs(remote);
+  const now=Date.now();return errorSrs().items.filter(x=>x.state!=='mastered'&&Number(x.next_review_at||0)<=now);
+}
+function guidedSessionActionId(name){const d=new Date(),day=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');return name+':'+day+':'+SESSION_MINUTES;}
+function guidedRecommendation(D){
+  const due=dueErrors(D);if(due.length)return{id:'review_errors',ic:'🧠',title:'Опрацювати помилки',sub:'На повторення чекає '+due.length+' '+plur(due.length,'помилка','помилки','помилок')+' · приблизно 3 хв',why:'Пропонуємо зараз, бо настав час повторення за SRS.',cta:'Опрацювати',run:()=>openGuidedErrors()};
+  const dp=D?.daily_progress||{};
+  const bloggerEntry=guidedState().blogger_entry;
+  if(bloggerEntry?.phrase&&bloggerEntry.step==='context')return{id:'blogger_phrase_context',ic:'🎬',title:'Фраза від '+(bloggerEntry.blogger||'блогера'),sub:'«'+bloggerEntry.phrase+'»',why:'Спочатку почуємо фразу в її контексті.',cta:bloggerEntry.video?'Відкрити відео':'Почати практику',run:()=>openBloggerPhraseContext(bloggerEntry)};
+  if(bloggerEntry?.phrase&&bloggerEntry.step==='repeat')return{id:'blogger_phrase_repeat',ic:'🎙',title:'Повтори фразу блогера',sub:'«'+bloggerEntry.phrase+'»',why:'Ти вже почула контекст — тепер перенеси фразу в активне мовлення.',cta:'Повторити',run:()=>openBloggerPhraseRepeat(bloggerEntry)};
+  if(bloggerEntry?.phrase&&bloggerEntry.step==='chainy')return{id:'blogger_phrase_chainy',ic:'🗣',title:'Використай фразу з Chainy',sub:'Скажи власну думку з фразою «'+bloggerEntry.phrase+'».',why:'Після повторення наступний крок — самостійно використати фразу в розмові.',cta:'Говорити',run:()=>startBloggerPhraseChainy(bloggerEntry)};
+  if(SESSION_MINUTES===5&&!dp.speak)return{id:'quick_chainy',ic:'⚡',title:'Одна коротка розмова',sub:'5 хвилин із Chainy на твою актуальну тему.',why:'Для короткої сесії одразу переходимо до активного мовлення.',cta:'Говорити',run:()=>openChainyNow()};
+  if(!dp.watch)return{id:'discover_video',ic:'🎬',title:'Почати з короткого відео',sub:'Послухай живу англійську й вибери фрази для практики.',why:'Це перший крок сьогоднішньої сесії.',cta:'Відкрити відео',run:()=>openLessonNow()};
+  if(!dp.repeat)return{id:'discover_shadowing',ic:'🎙',title:'Тепер повтори вголос',sub:'Shadowing допоможе перенести почуту фразу у власне мовлення.',why:'Ти вже подивилася відео — час активувати фрази.',cta:'Повторити',run:()=>openPlayer()};
+  if(!dp.speak)return{id:'discover_chainy',ic:'🗣',title:'Обговорити це з Chainy',sub:'Використай щойно почуті фрази у короткій розмові.',why:'Розмова закріплює матеріал краще за пасивний перегляд.',cta:'Говорити',run:()=>retellLastVideo()};
+  const state=guidedState(),tour=SESSION_MINUTES===5?[
+    {id:guidedSessionActionId('discover_progress'),ic:'🔥',title:'Зберегти сьогоднішній результат',sub:'Подивись оновлений Streak і прогрес.',why:'Коротку розмовну дію завершено — зафіксуй результат.',cta:'Мій прогрес',run:()=>go('s-prog')}
+  ]:SESSION_MINUTES===15?[
+    {id:guidedSessionActionId('discover_progress'),ic:'📊',title:'Подивитися, що вже змінилося',sub:'Граматика, лексика, Streak і помилки зібрані в одному місці.',why:'Базову сесію завершено — доречно показати результат.',cta:'Мій прогрес',run:()=>go('s-prog')}
+  ]:SESSION_MINUTES===30?[
+    {id:guidedSessionActionId('discover_vocab'),ic:'📚',title:'Закріпити нові фрази',sub:'Словник поверне їх у потрібний день.',why:'У 30-хвилинній сесії після розмови закріплюємо активну лексику.',cta:'Відкрити словник',run:()=>openOv('ov-vocab')},
+    {id:guidedSessionActionId('discover_progress'),ic:'🔥',title:'Завершити сесію результатом',sub:'Перевір Streak, XP і маршрут.',why:'Основна практика й закріплення виконані.',cta:'Мій прогрес',run:()=>go('s-prog')}
+  ]:[
+    {id:guidedSessionActionId('discover_vocab'),ic:'📚',title:'Закріпити нові фрази',sub:'Повтори нову лексику після розмови.',why:'Довга сесія включає окремий блок закріплення.',cta:'Відкрити словник',run:()=>openOv('ov-vocab')},
+    {id:guidedSessionActionId('discover_lexical'),ic:'🧭',title:'Пройти крок лексичного маршруту',sub:'Обери наступну тему свого рівня.',why:'У довгій сесії є час системно рухатися A1–C2.',cta:'Лексичні теми',run:()=>openLexicalRoute()},
+    {id:guidedSessionActionId('discover_match'),ic:'🟢',title:'Спробувати розмову з людиною',sub:'Знайдемо співрозмовника за темою та рівнем.',why:'Після підготовки з Chainy можна перейти до живого діалогу.',cta:'Знайти людину',run:()=>go('s-social')},
+    {id:guidedSessionActionId('discover_progress'),ic:'🔥',title:'Підсумувати довгу сесію',sub:'Перевір Streak, XP, помилки й маршрут.',why:'Усі блоки довгої практики завершено.',cta:'Мій прогрес',run:()=>go('s-prog')}
+  ];
+  return tour.find(x=>!state.seen[x.id]&&!state.dismissed[x.id])||null;
+}
+function updateBloggerEntry(step){const state=guidedState();if(!state.blogger_entry)return null;state.blogger_entry.step=step;state.blogger_entry.updated_at=Date.now();writeLocalJson(GUIDED_STATE_KEY,state);renderGuidedNavigation(TODAY_HOME||{});return state.blogger_entry;}
+function openBloggerPhraseContext(entry){if(entry.video){updateBloggerEntry('context_open');openPlayer();}else{updateBloggerEntry('repeat');openLessonNow();}}
+function openBloggerPhraseRepeat(){updateBloggerEntry('repeat_open');openPlayer();}
+function advanceBloggerEntryAfterPlayer(){const entry=guidedState().blogger_entry;if(!entry?.phrase)return;if(entry.step==='context_open')updateBloggerEntry('repeat');else if(entry.step==='repeat_open')updateBloggerEntry('chainy');}
+async function startBloggerPhraseChainy(entry){
+  updateBloggerEntry('chainy_open');
+  setLearningContext('blogger_phrase',entry.phrase,{blogger:entry.blogger||''});
+  await go('s-buddy');
+  await cyLaunch(w=>w.startVideoChat&&w.startVideoChat({title:'Фраза від '+(entry.blogger||'блогера'),mode:'discuss',phrases:[entry.phrase],resource_kind:'blogger_phrase',summary:'Help the learner use this blogger phrase naturally in a personal answer: '+entry.phrase}));
+}
+function renderGuidedNavigation(D){
+  GUIDED_ACTION=guidedRecommendation(D||TODAY_HOME||{});const card=$('#guided-card');if(!card)return;
+  if(!GUIDED_ACTION){card.classList.remove('on');return;}
+  $('#guided-ic').textContent=GUIDED_ACTION.ic;$('#guided-title').textContent=GUIDED_ACTION.title;$('#guided-sub').textContent=GUIDED_ACTION.sub;$('#guided-why').textContent=GUIDED_ACTION.why;$('#guided-go').textContent=GUIDED_ACTION.cta+' →';card.classList.add('on');
+}
+function runGuidedAction(){if(!GUIDED_ACTION)return;const state=guidedState();state.seen[GUIDED_ACTION.id]=Date.now();state.last_action=GUIDED_ACTION.id;writeLocalJson(GUIDED_STATE_KEY,state);trackUx('guided_action_open',{action:GUIDED_ACTION.id});GUIDED_ACTION.run();}
+function dismissGuidedAction(){if(!GUIDED_ACTION)return;const state=guidedState();state.dismissed[GUIDED_ACTION.id]=Date.now();writeLocalJson(GUIDED_STATE_KEY,state);trackUx('guided_action_later',{action:GUIDED_ACTION.id});GUIDED_ACTION=null;$('#guided-card')?.classList.remove('on');}
+function openGuidedErrors(){
+  const state=guidedState();state.seen.review_errors=Date.now();writeLocalJson(GUIDED_STATE_KEY,state);
+  go('s-prog').then(()=>{
+    pgSetRoute('grammar');
+    const due=dueErrors(TODAY_HOME||{});
+    if(!due.length){toast('На сьогодні всі заплановані повторення виконано.');return;}
+    openErrorPractice(due,0);
+  });
+}
+function errorPracticeHost(){
+  let ov=$('#ov-error-practice');
+  if(ov)return ov;
+  ov=document.createElement('div');ov.className='overlay';ov.id='ov-error-practice';
+  ov.innerHTML='<div class="sheet" style="max-height:92vh;overflow:auto"><div class="grip"></div><button class="x" onclick="closeErrorPractice()" aria-label="Закрити">×</button><div id="error-practice-body"></div></div>';
+  document.body.appendChild(ov);return ov;
+}
+function closeErrorPractice(){const ov=$('#ov-error-practice');if(ov)ov.classList.remove('on');renderGuidedNavigation(TODAY_HOME||{});}
+function openErrorPractice(items,index){
+  const list=Array.isArray(items)?items:dueErrors(TODAY_HOME||{}),i=Math.max(0,Number(index)||0),item=list[i];
+  if(!item){closeErrorPractice();toast('Повторення завершено. Наступні помилки зʼявляться за розкладом SRS.');return;}
+  const ov=errorPracticeHost(),body=$('#error-practice-body'),wrong=esc(item.wrong||'Помилка з розмови'),correct=esc(item.correct||'Правильний варіант'),why=esc(item.explanation||'Зверни увагу на правильну форму й використай її у власному реченні.');
+  body.innerHTML='<div style="font-size:12px;color:var(--text2);font-weight:700;margin-bottom:6px">ПОМІЛКА '+(i+1)+' З '+list.length+'</div>'+
+    '<h3 style="margin-bottom:14px">Опрацюємо її за 3 хвилини</h3>'+
+    '<div class="card" style="margin-bottom:10px"><div style="font-size:12px;color:var(--red);margin-bottom:5px">Було</div><div style="font-size:16px">'+wrong+'</div></div>'+
+    '<div class="card" style="margin-bottom:10px;border-color:rgba(90,216,166,.35)"><div style="font-size:12px;color:var(--green);margin-bottom:5px">Правильно</div><div style="font-size:17px;font-weight:700">'+correct+'</div><div style="font-size:13px;color:var(--text2);margin-top:8px;line-height:1.45">'+why+'</div></div>'+
+    '<button class="btn btn-full" id="error-repeat-btn" onclick="errorPracticeRepeat()">🔊 Я повторила правильний варіант</button>'+
+    '<div id="error-own-step" style="display:none;margin-top:14px"><div style="font-size:13px;font-weight:700;margin-bottom:7px">Склади власне речення з правильною формою</div><textarea class="form-input" id="error-own-sentence" rows="3" placeholder="Напиши або проговори власне речення…"></textarea><button class="btn btn-full" style="margin-top:9px" onclick="errorPracticeCheck()">Перевірити й використати →</button></div>'+
+    '<div id="error-result-step" style="display:none;margin-top:14px"><div class="card" style="margin-bottom:10px"><div style="font-weight:700;margin-bottom:5px">Тепер використай це з Chainy</div><div style="font-size:13px;color:var(--text2);line-height:1.45">Chainy створить нову ситуацію й перевірить, чи правильна форма вже зʼявляється у твоєму мовленні. Лише результат розмови може зарахувати SRS-повторення.</div></div><button class="btn btn-full" onclick="practiceErrorWithChainy()">🗣 Використати в розмові →</button></div>';
+  ov.dataset.items=JSON.stringify(list.map(x=>x.key));ov.dataset.index=String(i);ov.dataset.errorKey=item.key;ov.classList.add('on');
+}
+function errorPracticeRepeat(){const a=$('#error-repeat-btn'),b=$('#error-own-step');if(a)a.style.display='none';if(b)b.style.display='block';$('#error-own-sentence')?.focus();}
+function errorPracticeCheck(){const input=$('#error-own-sentence'),value=String(input?.value||'').trim();if(value.length<3){toast('Спочатку склади власне речення.');return;}const step=$('#error-result-step');if(step)step.style.display='block';if(input)input.disabled=true;}
+async function practiceErrorWithChainy(){
+  const ov=$('#ov-error-practice'),key=ov?.dataset.errorKey||'',item=errorSrs().items.find(x=>x.key===key);if(!item)return;
+  const state=guidedState();state.pending_error_review={error_id:key,own_sentence:String($('#error-own-sentence')?.value||'').trim(),started_at:Date.now()};writeLocalJson(GUIDED_STATE_KEY,state);
+  setLearningContext('error_srs',item.correct,{error_id:key});
+  closeErrorPractice();await go('s-buddy');
+  await cyLaunch(w=>w.startVideoChat&&w.startVideoChat({title:'Опрацювання помилки',mode:'discuss',phrases:[item.correct],resource_kind:'error_srs',error_id:key,own_sentence:state.pending_error_review.own_sentence,summary:'Create a new situation. Verify whether the learner independently uses this corrected form: '+item.correct+'. Previous error: '+item.wrong}));
+}
+function applyChainyErrorReviewResult(recap){
+  const state=guidedState(),pending=state.pending_error_review,result=recap?.error_srs_result;
+  if(!pending||!result||String(result.error_id||'').trim().toLowerCase()!==pending.error_id)return null;
+  const reviewed=window.SC_errorReview(pending.error_id,result.correct_in_own_speech===true);
+  delete state.pending_error_review;writeLocalJson(GUIDED_STATE_KEY,state);return reviewed;
+}
+/* Міст для вправ у «Прогресі». Одна правильна відповідь не закриває
+   помилку: потрібні щонайменше три успішні використання у різних
+   повтореннях. Повторна помилка повертає її на завтра. Backend отримує
+   ту саму подію і лишається джерелом істини між Telegram та PWA. */
+window.SC_errorReview=function(errorId,correctInOwnSpeech){
+  const store=errorSrs(),key=String(errorId||'').trim().toLowerCase(),item=store.items.find(x=>x.key===key);if(!item)return;
+  const ok=!!correctInOwnSpeech,now=Date.now(),day=86400000;
+  item.repetitions=Number(item.repetitions||0)+1;
+  if(ok){item.success_uses=Number(item.success_uses||0)+1;const intervals=[1,3,7,14];item.next_review_at=now+intervals[Math.min(item.success_uses-1,intervals.length-1)]*day;item.state=item.success_uses>=3?'mastered':'reviewing';}
+  else{item.success_uses=0;item.next_review_at=now+day;item.state='reviewing';}
+  item.updated_at=now;writeLocalJson(ERROR_SRS_KEY,store);
+  fetch(BOT_API+'/miniapp_action',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({uid:UID,init_data:IDT,action:'error_srs_review',error_id:errorId,correct_in_own_speech:ok,repetitions:item.repetitions,success_uses:item.success_uses,next_review_at:new Date(item.next_review_at).toISOString(),state:item.state})}).catch(()=>{});
+  return{state:item.state,success_uses:item.success_uses,next_review_at:item.next_review_at};
+};
 function setSessionMinutes(minutes,quiet){
   SESSION_MINUTES=[5,15,30,60].includes(Number(minutes))?Number(minutes):15;
   try{localStorage.setItem('speakchain.session.minutes',String(SESSION_MINUTES));}catch(e){}
@@ -2104,7 +2267,10 @@ async function renderHome(){
   TODAY_HOME=D||{};
   renderTop(D);
   setSessionMinutes(Number(D.session_minutes||D.time_per_day||SESSION_MINUTES),true);
+  mergeErrorSrs(D.due_errors||D.errors_due||[]);
+  renderGuidedNavigation(D);
   const rank=Number(D.rank_position||D.leaderboard_position||D.my_rank||0);
+  $('#home-streak-signal').textContent='🔥 '+Number(D.streak_days||0);
   $('#home-chain-signal').textContent='🔗 '+Number(D.chain_length||0);
   $('#home-rank-signal').textContent='🏆 '+(rank?('#'+rank):'—');
   $('#home-online-signal').textContent='🟢 '+Number(D.online_count||D.people_online||0);
@@ -2412,6 +2578,17 @@ async function openLessonNow(){
   await go('s-listen');
   await openPlayer();
 }
+async function openOwnVideo(){
+  if(SESSION_MINUTES<15){
+    setSessionMinutes(15);
+    toast('Для свого відео встановлено мінімальну сесію 15 хв');
+  }
+  trackUx('own_video_open',{source:'home_or_features',minutes:SESSION_MINUTES});
+  HIST.length=0;
+  LMODE='active';
+  await go('s-listen');
+  await openPlayer();
+}
 async function openChainyNow(){
   trackUx('chainy_open',{source:'home_or_nav'});
   HIST.length=0;
@@ -2427,6 +2604,7 @@ function lessonToPeople(){
 /* ══════════ ПРОГРЕС ══════════ */
 const FEATURE_REGISTRY=[
   {ic:'🎬',name:'Відеоурок і shadowing',where:'Практика',go:()=>{closeOv();go('s-listen');}},
+  {ic:'🔗',name:'Своє відео · 15–60 хв',where:'Практика',go:()=>{closeOv();openOwnVideo();}},
   {ic:'🌙',name:'Фонове слухання',where:'Практика',go:()=>{closeOv();go('s-listen').then(()=>setMode('passive'));}},
   {ic:'📚',name:'Book Loop',where:'Практика',go:()=>{closeOv();go('s-listen').then(()=>setMode('book'));}},
   {ic:'🗣',name:'Chainy: вільна розмова',where:'Chainy',go:()=>{closeOv();go('s-buddy');}},
@@ -2454,6 +2632,7 @@ function runFeature(index){FEATURE_REGISTRY[index]?.go?.();}
 async function openProgressArea(area){
   if(area==='rating'){await openOv('ov-rating');return;}
   if(area==='chain'){await openOv('ov-chain');return;}
+  if(area==='streak'){await go('s-prog');toast('🔥 Streak показує твою щоденну серію. Зроби одну розмовну дію сьогодні, щоб продовжити її.');return;}
   await go('s-prog');
 }
 
@@ -2530,11 +2709,11 @@ async function renderProg(){
   $('#route-grammar')?.classList.toggle('on',pgRoute==='grammar');
   $('#route-lexical')?.classList.toggle('on',pgRoute==='lexical');
   if(pgRoute==='lexical'){
-    const items=(D.lexical_route||{})[pgLvl]||[];
+    const items=lexicalItems(D,pgLvl);
     const confident=items.filter(x=>x.status==='confident').length;
     $('#lvl-title').textContent='Лексичні теми рівня '+pgLvl;
     $('#lvl-count').textContent=confident+' / '+items.length+' впевнено';
-    $('#topics').innerHTML=items.length?items.map(item=>{
+    $('#topics').innerHTML=items.map(item=>{
       const pct=Math.min(100,Math.round((Number(item.known)||0)/(Number(item.confidence_goal)||5)*100));
       const cls=item.status==='confident'?'g-green':item.status==='in_progress'?'g-yellow':'g-gray';
       const status=item.status==='confident'?'впевнено':item.status==='in_progress'?'в процесі':'не почато';
@@ -2543,7 +2722,7 @@ async function renderProg(){
         +'<div class="them"><div class="nm">'+esc(item.label)+(recommended?' <span style="color:var(--purple);font-size:var(--fs-xs)">НАСТУПНА</span>':'')+'</div>'
         +'<div class="rv"><div class="rl"><i class="'+cls+'" style="width:'+pct+'%"></i></div>'
         +'<span class="rr '+cls+'">'+status+'</span></div><div style="font-size:var(--fs-xs);color:var(--text2);margin-top:4px">'+item.known+' активних слів</div></div><span class="ch">›</span></div>';
-    }).join(''):'<div class="instr-note">Теми цього рівня готуються.</div>';
+    }).join('');
     return;
   }
 
@@ -2588,6 +2767,7 @@ function openLexicalTopic(encoded){
 }
 async function startLexicalTopic(id,label){
   trackUx('lexical_topic_open',{topic_id:id,level:pgLvl});
+  setLearningContext('lexical_topic',label,{topic_id:id,level:pgLvl});
   await go('s-buddy');
   await cyLaunch(w=>w.startVideoChat&&w.startVideoChat({
     title:label,mode:'discuss',phrases:[],resource_kind:'lexical_topic',
@@ -2595,6 +2775,7 @@ async function startLexicalTopic(id,label){
   }));
 }
 async function pgTopic(t){
+  setLearningContext('grammar_topic',t,{level:pgLvl});
   const ov=$('#ov-prog'); ov.classList.add('on'); tgBack(true);
   const win=await mountApp('s-prog',$('#ov-prog-host'),'s-prog');
   try{ win.openTopic(t); }catch(e){ console.warn('topic',e.message); }
@@ -3389,16 +3570,19 @@ window.addEventListener('message', async event => {
     closeOv();
     await go('s-buddy');
     const phrase=String(event.data.phrase||''),topic=String(event.data.topic||'Vocabulary practice');
+    setLearningContext('vocabulary_phrase',phrase,{topic});
     await cyLaunch(w=>w.startVideoChat&&w.startVideoChat({title:topic,mode:'discuss',phrases:phrase?[phrase]:[],resource_kind:'lexical_topic',summary:'Use the selected phrase naturally in a personal answer.'}));
     return;
   }
   if (event.data?.type === 'speakchain-video-context') {
     LAST_CONVERSATION_BRIEF=conversationBrief(event.data);
+    setLearningContext(event.data.resource_kind||'video',event.data.title||'',{phrases:(event.data.phrases||[]).slice(0,5)});
     return;
   }
   if (event.data?.type !== 'speakchain-book-retell') return;
   const book = event.data || {};
   const title = String(book.title || 'this book excerpt').slice(0, 120);
+  setLearningContext('book',title,{video_id:book.videoId||''});
   closeOv();
   delete PAYLOAD['s-buddy']; delete PENDING['s-buddy'];
   await go('s-buddy');
@@ -3486,7 +3670,8 @@ function verifiedWorkspaceRole(D,H){
 }
 function openStaffWorkspace(page){
   const u=new URL(page,location.href);u.searchParams.set('api',BOT_API);
-  window.open(u.toString(),'_blank','noopener');
+  trackUx('workspace_mode_open',{page});
+  location.assign(u.toString());
 }
 function renderRoleWorkspace(D,H){
   const role=verifiedWorkspaceRole(D,H),box=$('#role-workspace'),host=$('#role-workspace-menu');
@@ -4371,6 +4556,7 @@ function closeOv(fromHistory){
      Слухати без говоріння не дає прогресу. Маршрут «відео → Chainy»
      (startVideoChat) уже існує в мініапі — але його ніхто не кликав. */
   if(wasPlayer) offerSpeak();
+  if(wasPlayer) advanceBloggerEntryAfterPlayer();
   if(wasBuddy){
     trackUx('chainy_session_close');
     setTimeout(showChainyRecap,1200);
@@ -4394,12 +4580,32 @@ async function showChainyRecap(){
   const d=await load('s-buddy');
   const recap=d.recap||{};
   const phrases=(recap.target||d.recent_phrases||[]).slice(0,3);
+  const errors=(recap.errors||recap.mistakes||d.recent_errors||d.errors||[]).slice(0,20);
+  if(errors.length)mergeErrorSrs(errors);
+  const errorReview=applyChainyErrorReviewResult(recap);
+  const context=learningContext();
+  const bloggerEntry=guidedState().blogger_entry;
+  if(bloggerEntry?.step==='chainy_open')updateBloggerEntry('complete');
   const used=Number(recap.used_count||0);
   const sub=$('#chainy-recap-sub');
-  if(sub) sub.textContent=phrases.length
-    ? ('Ти використала '+used+' із '+phrases.length+' фраз. '
+  if(sub) sub.textContent=errorReview
+    ? (errorReview.state==='mastered'?'Правильну форму використано стабільно — помилку закріплено 🎉':'Правильне використання зараховано. Помилка повернеться за наступним інтервалом SRS.')
+    : errors.length
+    ? (errors.length+' '+plur(errors.length,'помилку','помилки','помилок')+' збережено у «Прогрес». Опрацюй пріоритетні зараз або повернися до них за розкладом SRS.')
+    : phrases.length ? ('Ти використала '+used+' із '+phrases.length+' фраз. '
       +(used===phrases.length?'Усі закріплено в живій розмові 🎉':'Решта чекає на повторення у словнику.'))
     : 'Контекст збережено — наступного разу Chainy продовжить звідси.';
+  const primary=$('#chainy-recap-primary');
+  if(primary){
+    if(errors.length){primary.textContent='Опрацювати помилки';primary.dataset.next='errors';}
+    else if(context?.kind==='lexical_topic'){primary.textContent='Побачити прогрес теми';primary.dataset.next='lexical_progress';}
+    else if(context?.kind==='grammar_topic'||context?.kind==='error_srs'){primary.textContent='Побачити прогрес граматики';primary.dataset.next='grammar_progress';}
+    else if((context?.kind==='video'||context?.kind==='book')&&phrases.length){primary.textContent='Закріпити нові фрази';primary.dataset.next='vocab';}
+    else{primary.textContent='Наступна дія';primary.dataset.next='guided_next';}
+  }
+  delete PAYLOAD['s-home'];delete PENDING['s-home'];
+  load('s-home').then(home=>{TODAY_HOME=home||TODAY_HOME;renderTop();renderGuidedNavigation(TODAY_HOME||{});}).catch(()=>{});
+  clearLearningContext();
   const el=$('#chainy-recap');
   if(!el)return;
   el.style.display='';
@@ -4414,10 +4620,14 @@ async function openChainyAgain(){
   trackUx('chainy_reopen');
   await openChainyNow();
 }
-function openRecapVocab(){
+function openRecapNext(){
   hideChainyRecap();
-  trackUx('chainy_vocab_open');
-  openOv('ov-vocab');
+  const target=$('#chainy-recap-primary')?.dataset.next||'vocab';
+  if(target==='errors'){trackUx('chainy_errors_open');openGuidedErrors();return;}
+  if(target==='lexical_progress'){trackUx('chainy_lexical_result_open');openLexicalRoute();return;}
+  if(target==='grammar_progress'){trackUx('chainy_grammar_result_open');go('s-prog').then(()=>pgSetRoute('grammar'));return;}
+  if(target==='guided_next'){trackUx('chainy_next_action_open');window.SC_next();return;}
+  trackUx('chainy_vocab_open');openOv('ov-vocab');
 }
 
 /* Місток «подивилась → поговори». Показуємо ОДИН раз за сесію,
@@ -4612,6 +4822,21 @@ const OVERLAY_START_KEYS = [
   'ov-vocab','ov-invite','ov-challenge','ov-player',
   'ov-diagnostic','ov-onboarding'
 ];
+const BLOGGER_ENTRY=(function(){
+  try{
+    const p=new URLSearchParams(location.search),phrase=(p.get('phrase')||'').trim();
+    if(!phrase)return null;
+    return{phrase:phrase.slice(0,240),blogger:(p.get('blogger')||p.get('ref')||'').trim().slice(0,80),video:(p.get('v')||p.get('video')||'').trim().slice(0,200)};
+  }catch(e){return null;}
+})();
+function activateBloggerEntry(entry){
+  if(!entry)return;
+  const state=guidedState();state.blogger_entry={...entry,opened_at:Date.now(),step:'context'};writeLocalJson(GUIDED_STATE_KEY,state);
+  TODAY_HOME.blogger_phrase={text:entry.phrase,source:entry.blogger||'блогера',video:entry.video};
+  GUIDED_ACTION={id:'blogger_phrase_context',ic:'🎬',title:entry.blogger?'Фраза від '+entry.blogger:'Твоя фраза від блогера',sub:'«'+entry.phrase+'»',why:'Спочатку почуємо фразу в контексті, потім повторимо її і використаємо з Chainy.',cta:entry.video?'Відкрити відео':'Почати практику',run:()=>openBloggerPhraseContext(entry)};
+  const card=$('#guided-card');if(card){$('#guided-ic').textContent='🎬';$('#guided-title').textContent=entry.blogger?'Фраза від '+entry.blogger:'Твоя фраза від блогера';$('#guided-sub').textContent='«'+entry.phrase+'»';$('#guided-why').textContent='Почуємо її в контексті → повторимо → використаємо з Chainy → збережемо прогрес.';$('#guided-go').textContent=(entry.video?'Відкрити відео':'Почати практику')+' →';card.classList.add('on');}
+  trackUx('blogger_phrase_entry',{blogger:entry.blogger,has_video:!!entry.video});
+}
 (async function bootSpeakChain(){
   // In an installed PWA, refresh the short access token before the first
   // payload request. Telegram Mini App resolves immediately through initData.
@@ -4627,6 +4852,7 @@ const OVERLAY_START_KEYS = [
     await openOv(START);
   } else {
     await go(R[START] ? START : 's-home');
+    if(BLOGGER_ENTRY){await go('s-home');activateBloggerEntry(BLOGGER_ENTRY);}
     if(START==='s-social'&&new URLSearchParams(location.search).get('invite')){
       SOCIAL_TAB='challenges';
       setTimeout(()=>socialTab('challenges'),350);
