@@ -737,7 +737,7 @@ def test_production_assets_and_browser_chainy_auth():
         ok("standalone tokens.css використовує Pages-сумісний шлях")
 
     worker = (ROOT / "sw.js").read_text(encoding="utf-8")
-    if "'./Chainy.png'" not in worker or "speakchain-shell-v6" not in worker:
+    if "'./Chainy.png'" not in worker or "speakchain-shell-v7" not in worker:
         fail("service worker не оновлює/не кешує аватар Chainy")
     else:
         ok("service worker оновлює і кешує Chainy")
@@ -756,6 +756,62 @@ def test_production_assets_and_browser_chainy_auth():
         fail("paywall не можна безпечно закрити")
     else:
         ok("paywall має × і «Нагадати пізніше» закриває модальне вікно")
+
+
+def test_visible_feature_map_and_role_workspaces():
+    """Ключові функції мають прямі входи, а staff-панелі — role gate."""
+    section("PWA — видимі функції, лексичний маршрут і рольові панелі")
+    shell = SHELL.read_text(encoding="utf-8") if SHELL.exists() else ""
+    markers = (
+        'id="session-picker"', "function setSessionMinutes(minutes,quiet)",
+        'id="home-chain-signal"', 'id="home-rank-signal"', 'id="home-online-signal"',
+        'id="md-book"', "playerUrl.searchParams.set('minutes'",
+        'id="ov-features"', "const FEATURE_REGISTRY=[", "renderFeatureRegistry()",
+        'id="ov-chain"', "openProgressArea('chain')", "openProgressArea('rating')",
+        'id="route-grammar"', 'id="route-lexical"', 'id="ov-lexical-topic"',
+        "function openLexicalTopic(encoded)", "Побачила ", "Закріпила ",
+        "openOv('ov-vocab')", "retellLastVideo()", "openDuelHistory()",
+        'id="role-workspace"', "function verifiedWorkspaceRole(D,H)",
+        "window.open(u.toString(),'_blank','noopener')",
+    )
+    missing = [marker for marker in markers if marker not in shell]
+    if missing:
+        fail(f"карта можливостей/ролей неповна: {missing}")
+    else:
+        ok("ключові функції мають видимі входи, лексика — власний екран")
+
+    for name in ("admin_analytics.html", "blogger.html", "strategy_dashboard.html"):
+        text = (ROOT / name).read_text(encoding="utf-8")
+        if '<script src="pwa.js"></script>' not in text:
+            fail(f"{name}: PWA-сесія не підключена")
+        else:
+            ok(f"{name}: авторизована PWA-сесія підключена")
+
+    vocab = (ROOT / "vocab.html").read_text(encoding="utf-8")
+    vocab_markers = ("На повторення", "У процесі", "Закріплені", "Усі лексичні теми",
+                     "function phraseState(p)", "speakchain-practice-phrase",
+                     "Побачила ${seen", "Закріпила ${fixed", '<script src="pwa.js"></script>')
+    missing_vocab = [marker for marker in vocab_markers if marker not in vocab]
+    if missing_vocab:
+        fail(f"словник не підключений до лексичного маршруту: {missing_vocab}")
+    else:
+        ok("словник має тематичні/SRS-фільтри й чотири стани засвоєння")
+    raw_apps, _, _ = _extract_apps(shell)
+    try:
+        embedded_vocab = json.loads(raw_apps or "{}").get("ov-vocab", {})
+        embedded_text = embedded_vocab.get("html", "") + embedded_vocab.get("js", "")
+        if all(marker in embedded_text for marker in ("На повторення", "function phraseState(p)", "speakchain-practice-phrase")):
+            ok("оновлений словник синхронізований у PWA-оболонку")
+        else:
+            fail("vocab.html оновлено, але вбудований ov-vocab залишився старим")
+    except Exception as exc:
+        fail(f"не вдалося перевірити вбудований словник: {exc}")
+    if _has_node():
+        scripts = re.findall(r"<script[^>]*>(.*?)</script>", vocab, re.S | re.I)
+        if all(not script.strip() or _js_ok(script) for script in scripts):
+            ok("vocab.html: JavaScript парситься")
+        else:
+            fail("vocab.html: JavaScript не парситься")
 
 
 def main():
@@ -778,6 +834,7 @@ def main():
     test_friends_stable_layers()
     test_profile_lottery_ux()
     test_production_assets_and_browser_chainy_auth()
+    test_visible_feature_map_and_role_workspaces()
 
     print("\n" + "═" * 58)
     if FAILS:

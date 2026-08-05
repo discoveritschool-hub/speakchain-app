@@ -155,7 +155,14 @@ html,body{height:100%;background:var(--bg);color:var(--text);
 .spinner{width:28px;height:28px;border:2px solid var(--line);border-top-color:var(--purple);
   border-radius:50%;animation:spin 1s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
+.vocab-filters{display:flex;gap:6px;padding:0 16px 7px;overflow-x:auto;scrollbar-width:none;flex-shrink:0}
+.vocab-filter{border:1px solid var(--line);border-radius:999px;padding:7px 11px;background:var(--bg-card);color:var(--text2);white-space:nowrap;font-size:var(--fs-xs);font-weight:700;cursor:pointer}
+.vocab-filter.on{border-color:var(--purple);background:var(--purple-bg);color:var(--purple-text)}
+.topic-filter{margin:0 16px 8px;width:calc(100% - 32px);border:1px solid var(--line);border-radius:var(--r-sm);padding:9px 11px;background:var(--bg-card);color:var(--text);font-size:var(--fs-sm);flex-shrink:0}
+.phrase-meta{font-size:var(--fs-xs);color:var(--text2);margin-top:5px}.phrase-stages{font-size:10px;color:var(--text3);margin-top:4px}
+.phrase-practice{border:0;background:none;color:var(--purple-text);font-size:var(--fs-xs);font-weight:700;cursor:pointer;padding:5px 0 0}
 </style>
+<script src="pwa.js"></script>
 </head>
 <body style="display:flex;flex-direction:column;height:100vh;overflow:hidden">
 
@@ -169,6 +176,14 @@ html,body{height:100%;background:var(--bg);color:var(--text);
 <div class="search-wrap">
   <input class="search-input" id="search" placeholder="🔍 Пошук фраз..." oninput="filterPhrases()">
 </div>
+
+<div class="vocab-filters" id="vocab-filters">
+  <button class="vocab-filter on" onclick="setVocabFilter('all',this)">Усі</button>
+  <button class="vocab-filter" onclick="setVocabFilter('due',this)">На повторення</button>
+  <button class="vocab-filter" onclick="setVocabFilter('learning',this)">У процесі</button>
+  <button class="vocab-filter" onclick="setVocabFilter('mastered',this)">Закріплені</button>
+</div>
+<select class="topic-filter" id="topic-filter" onchange="filterPhrases()"><option value="">Усі лексичні теми</option></select>
 
 <div class="phrase-list" id="phrase-list">
   <div class="loading"><div class="spinner"></div>Завантаження...</div>
@@ -223,6 +238,7 @@ let isRecording = false;
 let mediaStream = null;
 let sessionCount = 0;   // опрацьовано слів за сесію
 let beaconSent  = false;
+let activeFilter = 'all';
 
 // ── Load data ──
 async function loadData() {
@@ -235,6 +251,7 @@ async function loadData() {
     const d = await res.json();
     allPhrases = d.phrases || [];
     duePhrases = d.due    || [];
+    renderTopicFilter();
     renderList(allPhrases);
     updateDueBadge();
   } catch(e) {
@@ -247,6 +264,24 @@ function updateDueBadge() {
   const n = duePhrases.length;
   document.getElementById('due-badge').textContent = n;
   document.getElementById('repeat-btn').disabled = n === 0;
+}
+
+function phraseTopic(p){return p.lexical_topic||p.topic_label||p.topic||p.grammar_topic||'Без теми';}
+function phraseState(p){
+  if(p.mastery_status==='mastered'||p.consolidated||p.mastered)return 'mastered';
+  if(duePhrases.some(d=>d.phrase===p.phrase))return 'due';
+  return 'learning';
+}
+function renderTopicFilter(){
+  const el=document.getElementById('topic-filter'),current=el.value;
+  const topics=[...new Set(allPhrases.map(phraseTopic).filter(Boolean))].sort();
+  el.innerHTML='<option value="">Усі лексичні теми</option>'+topics.map(t=>`<option value="${escHtml(t)}">${escHtml(t)}</option>`).join('');
+  if(topics.includes(current))el.value=current;
+}
+function setVocabFilter(filter,button){
+  activeFilter=filter;
+  document.querySelectorAll('.vocab-filter').forEach(b=>b.classList.toggle('on',b===button));
+  filterPhrases();
 }
 
 // ── Render list ──
@@ -263,8 +298,13 @@ function renderList(phrases) {
   el.innerHTML = phrases.map((p, i) => {
     const isDue = duePhrases.some(d => d.phrase === p.phrase);
     const ytId  = extractYTId(p.video_url);
+    const state=phraseState(p),topic=phraseTopic(p);
+    const seen=Number(p.seen||p.encounters||1),said=Number(p.said||p.pronounced||0),used=Number(p.used||p.applied||0),fixed=state==='mastered'||Number(p.consolidated||0)>0;
     return `<div class="phrase-row ${isDue ? 'due' : ''}" id="row-${i}">
-      <div class="phrase-text">${escHtml(p.phrase)}</div>
+      <div style="flex:1;min-width:0"><div class="phrase-text">${escHtml(p.phrase)}</div>
+      <div class="phrase-meta">${escHtml(topic)}${p.level?' · '+escHtml(p.level):''}</div>
+      <div class="phrase-stages">Побачила ${seen?'✓':'○'} · Сказала ${said?'✓':'○'} · Використала ${used?'✓':'○'} · Закріпила ${fixed?'✓':'○'}</div>
+      <button class="phrase-practice" onclick="practicePhrase('${escAttr(p.phrase)}','${escAttr(topic)}')">Використати у своїй відповіді →</button></div>
       <div class="phrase-actions">
         <div class="icon-btn" onclick="speakTTS('${escAttr(p.phrase)}')" title="Послухати">🔊</div>
         <div class="icon-btn" id="mic-${i}" onclick="toggleRecord(${i}, '${escAttr(p.phrase)}')" title="Проговорити">🎤</div>
@@ -283,8 +323,13 @@ function renderList(phrases) {
 // ── Filter ──
 function filterPhrases() {
   const q = document.getElementById('search').value.toLowerCase().trim();
-  const filtered = q ? allPhrases.filter(p => p.phrase.toLowerCase().includes(q)) : allPhrases;
+  const topic=document.getElementById('topic-filter').value;
+  const filtered=allPhrases.filter(p=>(!q||p.phrase.toLowerCase().includes(q))&&(!topic||phraseTopic(p)===topic)&&(activeFilter==='all'||phraseState(p)===activeFilter));
   renderList(filtered);
+}
+
+function practicePhrase(phrase,topic){
+  window.parent.postMessage({type:'speakchain-practice-phrase',phrase,topic},location.origin);
 }
 
 // ── TTS ──
