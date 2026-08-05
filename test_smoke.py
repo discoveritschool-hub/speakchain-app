@@ -829,8 +829,8 @@ def test_blogger_panel_uses_shared_pwa_auth():
     markers = (
         'src="pwa.js"', 'window.SC_PWA?.ready',
         "screen: 'blogger'", "pwa.js додає токен",
-        "screen: 's-profile'", "['blogger', 'admin', 'super_admin']",
-        "Цей акаунт не має доступу до панелі блогера", "initializeBloggerPanel()",
+        "admin_view: params.get('from') === 'admin'",
+        "Авторитетна перевірка живе на", "initializeBloggerPanel()",
     )
     missing = [marker for marker in markers if marker not in blogger]
     if missing:
@@ -839,7 +839,8 @@ def test_blogger_panel_uses_shared_pwa_auth():
         ok("Панель блогера повторно використовує Google/PWA-сесію та перевіряє роль")
 
     admin = (ROOT / "admin_analytics.html").read_text(encoding="utf-8")
-    if "openBloggerPanel()" not in admin or "📣 Панель блогера" not in admin:
+    if ("openBloggerPanel()" not in admin or "📣 Панель блогера" not in admin
+            or "url.searchParams.set('from', 'admin')" not in admin):
         fail("з кабінету адміністратора немає прямого входу в панель блогера")
     else:
         ok("адміністратор має прямий захищений вхід у панель блогера")
