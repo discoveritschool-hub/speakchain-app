@@ -795,7 +795,7 @@ def test_visible_feature_map_and_role_workspaces():
 
     for name in ("admin_analytics.html", "blogger.html", "strategy_dashboard.html"):
         text = (ROOT / name).read_text(encoding="utf-8")
-        if '<script src="pwa.js"></script>' not in text:
+        if not re.search(r'<script src="pwa\\.js(?:\\?[^"#]+)?"></script>', text):
             fail(f"{name}: PWA-сесія не підключена")
         else:
             ok(f"{name}: авторизована PWA-сесія підключена")
@@ -831,7 +831,7 @@ def test_blogger_panel_uses_shared_pwa_auth():
     section("Blogger panel — shared Google/PWA session")
     blogger = (ROOT / "blogger.html").read_text(encoding="utf-8")
     markers = (
-        'src="pwa.js"', 'window.SC_PWA?.ready',
+        'src="pwa.js?v=20260805-auth1"', 'window.SC_PWA?.ready',
         "screen: 'blogger'", "pwa.js додає токен",
         "admin_view: adminView",
         "Авторитетна перевірка живе на", "initializeBloggerPanel()",
