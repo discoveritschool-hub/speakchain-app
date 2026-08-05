@@ -36,6 +36,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Chainy</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="https://accounts.google.com/gsi/client" async></script>
+<script src="pwa.js"></script>
 <script src="https://discoveritschool-hub.github.io/speakchain-app/toast_rewards.js"></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -528,7 +530,13 @@ if (tg) { tg.ready(); tg.expand(); }
 
 const BOT_API = 'https://speakchain-bot-production.up.railway.app';
 
-const UID = tg?.initDataUnsafe?.user?.id || 0;
+let UID = tg?.initDataUnsafe?.user?.id || 0;
+/* Standalone browser launch uses the same short-lived PWA session as the
+   main shell. The global fetch wrapper adds the signed token to every API
+   call; adopting its user id also keeps non-fetch UI actions consistent. */
+window.SC_PWA?.ready?.then(session => {
+  if (session?.userId) UID = Number(session.userId);
+}).catch(() => {});
 const USER_LEVEL = 'intermediate';
 
 const CATEGORIES = [
@@ -540,8 +548,8 @@ const CATEGORIES = [
   { id: 'move',    label: '🌍 Переїзд',          color: 'var(--red)', bg: 'var(--red)' },
 ];
 
-// Chainy — аватар SVG (людина з ланцюжком)
-const CHAINY_AVATAR_SVG = '<img src="https://discoveritschool-hub.github.io/speakchain-app/chainy.png" alt="Chainy" style="width:36px;height:36px;border-radius:50%;object-fit:cover">';
+// Chainy — branded production avatar.
+const CHAINY_AVATAR_SVG = '<img src="Chainy.png" alt="Chainy" style="width:36px;height:36px;border-radius:50%;object-fit:cover">';
 
 
 const CHAINY_GREETINGS = [
@@ -868,7 +876,7 @@ function renderScenarios() {
     list.innerHTML = `
       <div style="display:flex;flex-direction:column;align-items:center;padding:24px 16px;gap:16px">
         <div style="width:120px;height:120px;background:var(--purple-bg);border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 0 40px rgba(124,110,247,.4)">
-          <img src="https://discoveritschool-hub.github.io/speakchain-app/chainy.png" alt="Chainy" style="width:90px;height:90px;object-fit:contain">
+          <img src="Chainy.png" alt="Chainy" style="width:90px;height:90px;border-radius:50%;object-fit:cover">
         </div>
         <div style="text-align:center">
           <div style="font-size:var(--fs-lg);font-weight:700;letter-spacing:-.3px;color:var(--text)">Chainy</div>
