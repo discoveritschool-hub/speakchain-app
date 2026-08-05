@@ -437,6 +437,14 @@ def test_pwa_identity_handoff():
     else:
         ok("Google/PWA userId підхоплюється до першого payload-запиту")
 
+    pwa = (ROOT / "pwa.js").read_text(encoding="utf-8")
+    if "AbortController" not in pwa or "session_timeout" not in pwa:
+        fail("PWA-вхід не має тайм-ауту та зрозумілого повідомлення при недоступному backend")
+    elif "getBoundingClientRect().width" not in pwa:
+        fail("Google-кнопка не підлаштовується під ширину вікна")
+    else:
+        ok("Google-вхід має тайм-аут, видиму помилку й адаптивну кнопку")
+
 
 def _has_node():
     try:

@@ -32,10 +32,24 @@
     const exp = Date.parse(read(EXP_KEY));
     return Boolean(read(ACCESS_KEY) && read(USER_KEY) && Number.isFinite(exp) && exp > Date.now() + 30000);
   }
-  async function jsonPost(path, body) {
-    const response = await nativeFetch(apiBase() + path, {
-      method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body || {})
-    });
+  async function jsonPost(path, body, options) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), Number(options?.timeout || 15000));
+    let response;
+    try {
+      response = await nativeFetch(apiBase() + path, {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(body || {}), signal: controller.signal
+      });
+    } catch (error) {
+      const unavailable = new Error(error?.name === 'AbortError'
+        ? 'Сервер входу не відповідає. Спробуйте ще раз.'
+        : 'Немає звʼязку із сервером входу.');
+      unavailable.code = error?.name === 'AbortError' ? 'session_timeout' : 'session_network';
+      throw unavailable;
+    } finally {
+      clearTimeout(timeout);
+    }
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {
       const error = new Error(data?.error?.message || ('session_' + response.status));
@@ -94,6 +108,7 @@
   async function googleLogin(response) {
     authStatus('Перевіряємо Google…');
     try {
+      if (!response?.credential) throw new Error('Google не передав дані акаунта. Спробуйте ще раз.');
       return finishAuth(await jsonPost('/api/v1/session/google', {credential: response?.credential || ''}), 'google');
     } catch (error) {
       authStatus(error.message || 'Не вдалося увійти через Google.', true);
@@ -113,7 +128,8 @@
       return;
     }
     window.google.accounts.id.initialize({client_id: clientId, callback: googleLogin, auto_select: false});
-    window.google.accounts.id.renderButton(host, {theme: 'filled_black', size: 'large', shape: 'pill', width: 300, text: 'continue_with'});
+    const availableWidth = Math.max(220, Math.min(360, Math.floor(host.getBoundingClientRect().width || 300)));
+    window.google.accounts.id.renderButton(host, {theme: 'filled_black', size: 'large', shape: 'pill', width: availableWidth, text: 'continue_with'});
   }
   function renderTelegramButton(username) {
     const host = document.getElementById('sc-telegram-login');
@@ -136,21 +152,23 @@
     const mount = async () => {
       if (document.getElementById('sc-auth-gate')) return;
       let config = {};
-      try { config = await jsonPost('/api/v1/session/config', {}); } catch (_) {}
+      let configError = null;
+      try { config = await jsonPost('/api/v1/session/config', {}, {timeout: 12000}); } catch (error) { configError = error; }
       authConfig = config;
       const gate = document.createElement('div');
       gate.id = 'sc-auth-gate';
       gate.innerHTML = '<style>\n'
-        + '#sc-auth-gate{position:fixed;inset:0;z-index:10000;background:#0d0d14;color:#eaeaf5;display:grid;place-items:center;padding:24px;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",sans-serif}\n'
-        + '.sc-auth-card{width:min(100%,390px);background:#16161f;border:1px solid #2a2a3a;border-radius:24px;padding:28px 22px;text-align:center;box-shadow:0 20px 70px rgba(0,0,0,.45)}\n'
+        + '#sc-auth-gate{position:fixed;inset:0;z-index:10000;background:#0d0d14;color:#eaeaf5;display:grid;place-items:center;padding:clamp(12px,3vw,32px);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",sans-serif;overflow:auto}\n'
+        + '.sc-auth-card{width:min(100%,420px);background:#16161f;border:1px solid #2a2a3a;border-radius:clamp(18px,3vw,24px);padding:clamp(20px,4vh,32px) clamp(16px,3vw,28px);text-align:center;box-shadow:0 20px 70px rgba(0,0,0,.45)}\n'
         + '.sc-auth-logo{width:72px;height:72px;border-radius:20px;margin-bottom:16px}.sc-auth-card h1{font-size:25px;margin:0 0 8px}.sc-auth-card p{font-size:14px;line-height:1.5;color:#8888a8;margin:0 0 22px}\n'
-        + '.sc-auth-provider{min-height:44px;display:flex;justify-content:center;align-items:center;margin:10px 0}.sc-auth-disabled{width:300px;max-width:100%;height:42px;border:1px solid #2a2a3a;border-radius:999px;background:#1e1e2a;color:#8888a8;font-weight:700}\n'
+        + '.sc-auth-provider{width:100%;min-height:44px;display:flex;justify-content:center;align-items:center;margin:10px 0}.sc-auth-provider>div,.sc-auth-provider iframe{max-width:100%!important}.sc-auth-disabled{width:min(100%,360px);min-height:44px;padding:10px 16px;border:1px solid #2a2a3a;border-radius:999px;background:#1e1e2a;color:#8888a8;font-weight:700}\n'
         + '.sc-auth-divider{display:flex;align-items:center;gap:10px;color:#5a5a72;font-size:12px;margin:12px 0}.sc-auth-divider:before,.sc-auth-divider:after{content:"";height:1px;background:#2a2a3a;flex:1}\n'
         + '#sc-auth-status{min-height:20px;margin-top:13px;font-size:12px}.sc-auth-note{font-size:11px!important;margin:15px 0 0!important;color:#5a5a72!important}\n'
         + '</style><div class="sc-auth-card"><img class="sc-auth-logo" src="icon-192.png" alt="SpeakChain"><h1>Увійдіть у SpeakChain</h1><p>Ваш прогрес, Chain і підписка залишаться з вами в браузері та застосунку.</p><div id="sc-google-login" class="sc-auth-provider"></div><div class="sc-auth-divider">або</div><div id="sc-telegram-login" class="sc-auth-provider"></div><div id="sc-auth-status"></div><p class="sc-auth-note">Вже користувалися SpeakChain у Telegram? Оберіть Telegram, щоб відкрити той самий профіль.</p></div>';
       document.body.appendChild(gate);
       renderGoogleButton(config.google_client_id || '', 0);
       renderTelegramButton(config.telegram_bot_username || 'SpeakChain_bot');
+      if (configError) authStatus(configError.message || 'Сервер входу тимчасово недоступний. Оновіть сторінку й спробуйте ще раз.', true);
     };
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mount, {once: true});
     else mount();

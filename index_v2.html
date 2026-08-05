@@ -959,6 +959,14 @@ html,body{height:100%;overflow:hidden}
    автоматично, щойно вікно має достатню ширину (від 900px).
    ══════════════════════════════════════════════════════════════ */
 .desktop-rail{display:none}
+/* Інтерактивні елементи масштабуються разом із вікном: комфортні для миші,
+   але не займають непропорційно багато місця у невисокому desktop-вікні. */
+button,.btn,[role="button"]{max-width:100%}
+.go,.plan-btn,.diag-cta,.sn-go,.sn-skip,.cr-primary,.cr-secondary{
+  min-height:clamp(40px,5.4vh,52px);
+  padding-block:clamp(9px,1.45vh,14px);
+  font-size:clamp(12px,1.45vh,15px)
+}
 @media (min-width:900px){
   :root{--desktop-nav:232px;--desktop-rail:304px}
   body{background:
@@ -978,7 +986,7 @@ html,body{height:100%;overflow:hidden}
     background:rgba(22,22,31,.96);box-shadow:12px 0 36px rgba(0,0,0,.12)}
   .nav::before{content:'SpeakChain';position:absolute;left:22px;top:24px;font-size:20px;font-weight:900;letter-spacing:-.5px;color:#fff}
   .nav::after{content:'SPEAK. CONNECT. GROW.';position:absolute;left:23px;top:51px;font-size:8px;font-weight:800;letter-spacing:.15em;color:var(--purple-text)}
-  .nav button{flex:0 0 auto;min-height:48px;padding:0 13px;flex-direction:row;justify-content:flex-start;gap:13px;border-radius:12px;text-align:left}
+  .nav button{flex:0 0 auto;min-height:clamp(40px,5.6vh,50px);padding:0 clamp(10px,1vw,14px);flex-direction:row;justify-content:flex-start;gap:clamp(9px,1vw,13px);border-radius:12px;text-align:left}
   .nav button:hover{background:var(--bg-card2);color:var(--text)}
   .nav button.on{background:linear-gradient(90deg,rgba(124,110,247,.22),rgba(124,110,247,.07));color:var(--purple-text);box-shadow:inset 3px 0 var(--purple)}
   .nav button .ic{font-size:20px;width:25px;text-align:center}.nav button .lbl{font-size:14px;font-weight:700}
@@ -989,7 +997,7 @@ html,body{height:100%;overflow:hidden}
   .desktop-progress{display:flex;align-items:center;gap:12px}.desktop-progress-ring{width:50px;height:50px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(var(--green) 0 72%,var(--bg-card3) 72%);position:relative;font-size:11px;font-weight:900}
   .desktop-progress-ring::before{content:'';position:absolute;inset:5px;border-radius:50%;background:var(--bg-card)}.desktop-progress-ring span{position:relative}
   .desktop-progress-copy{font-size:13px;line-height:1.45;color:var(--text2)}.desktop-progress-copy b{display:block;color:var(--text);font-size:15px}
-  .desktop-quick{display:grid;gap:7px}.desktop-quick button{display:flex;align-items:center;gap:10px;width:100%;border:.5px solid var(--line);border-radius:11px;background:var(--bg-card2);color:var(--text);padding:11px 12px;font:inherit;font-size:13px;font-weight:700;cursor:pointer;text-align:left}
+  .desktop-quick{display:grid;gap:clamp(5px,1vh,8px)}.desktop-quick button{display:flex;align-items:center;gap:10px;width:100%;min-height:clamp(38px,5vh,46px);border:.5px solid var(--line);border-radius:11px;background:var(--bg-card2);color:var(--text);padding:clamp(8px,1.2vh,12px);font:inherit;font-size:clamp(12px,1.4vh,14px);font-weight:700;cursor:pointer;text-align:left}
   .desktop-quick button:hover{border-color:rgba(124,110,247,.55);transform:translateY(-1px)}.desktop-quick button span{font-size:18px}
   .desktop-tip{font-size:13px;line-height:1.5;color:var(--text2)}.desktop-tip b{color:var(--green)}
   .hero{padding:26px 28px}.hero .t{font-size:26px}.hero .go{width:auto;min-width:190px;padding:12px 24px}
@@ -999,6 +1007,12 @@ html,body{height:100%;overflow:hidden}
   .overlay .grip{display:none}#ov-player{left:var(--desktop-nav);bottom:0}#ov-player .sheet{width:100%;max-width:none;border-radius:0!important}
   #speak-nudge,#chainy-recap{left:calc(var(--desktop-nav) + 30px);right:calc(var(--desktop-rail) + 48px);bottom:24px}
   #sc-skeleton{padding-left:var(--desktop-nav)}#sc-skeleton .sk-nav{position:absolute;left:0;top:0;bottom:0;width:var(--desktop-nav);height:auto;flex-direction:column;border-right:.5px solid var(--line);border-top:0}
+}
+@media (min-width:900px) and (max-height:720px){
+  :root{--desktop-nav:216px;--desktop-rail:280px}
+  .nav{padding-top:68px;gap:3px}.nav::before{top:17px}.nav::after{top:43px}
+  .topbar{padding-top:10px;padding-bottom:10px}.desktop-rail{top:66px;bottom:12px;gap:8px}
+  .desktop-card{padding:12px}.scroll{padding-top:16px;padding-bottom:24px}
 }
 
 /* Єдина словникова картка поверх Уроку й Chainy. */
