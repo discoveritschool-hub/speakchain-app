@@ -31,6 +31,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);
   border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px}
 .learner-mode{border:1px solid var(--border);background:var(--surface);color:var(--text);
   border-radius:999px;padding:8px 12px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap}
+.header-actions{display:flex;align-items:center;gap:7px;flex-wrap:wrap;justify-content:flex-end}
 
 /* ── Layout: бічна панель зліва + основний контент ──
    Було: горизонтальний рядок вкладок, який гортався і ховав частину
@@ -204,7 +205,10 @@ tr:hover td{background:var(--surface2)}
         <div class="header-sub" id="last-updated">Завантаження...</div>
       </div>
       <div style="display:flex;gap:8px">
-        <button class="learner-mode" onclick="openLearnerMode()">🎓 До навчання</button>
+        <div class="header-actions">
+          <button class="learner-mode" onclick="openBloggerPanel()">📣 Панель блогера</button>
+          <button class="learner-mode" onclick="openLearnerMode()">🎓 До навчання</button>
+        </div>
         <div class="refresh-btn" onclick="goStrategy()" title="Командний центр: пульс, дорожня карта, принципи">🧭</div>
         <div class="refresh-btn" onclick="loadData()">↻</div>
       </div>
@@ -409,6 +413,7 @@ let charts = {};
 let data = null;
 let activeTab = 'summary';
 function openLearnerMode(){location.assign(new URL('index_v2.html',location.href).toString());}
+function openBloggerPanel(){location.assign(new URL('blogger.html',location.href).toString());}
 
 /* ═══ 🎛 РУБИЛЬНИКИ — рендер із живих даних бота ═══ */
 function renderSwitches() {

@@ -795,7 +795,6 @@ def test_visible_feature_map_and_role_workspaces():
             fail(f"{name}: PWA-сесія не підключена")
         else:
             ok(f"{name}: авторизована PWA-сесія підключена")
-
     vocab = (ROOT / "vocab.html").read_text(encoding="utf-8")
     vocab_markers = ("На повторення", "У процесі", "Закріплені", "Усі лексичні теми",
                      "function phraseState(p)", "speakchain-practice-phrase",
@@ -821,6 +820,29 @@ def test_visible_feature_map_and_role_workspaces():
             ok("vocab.html: JavaScript парситься")
         else:
             fail("vocab.html: JavaScript не парситься")
+
+
+def test_blogger_panel_uses_shared_pwa_auth():
+    """Direct browser access must reuse Google/PWA auth and load protected data."""
+    section("Blogger panel — shared Google/PWA session")
+    blogger = (ROOT / "blogger.html").read_text(encoding="utf-8")
+    markers = (
+        'src="pwa.js"', 'window.SC_PWA?.ready',
+        "screen: 'blogger'", "pwa.js додає токен",
+        "screen: 's-profile'", "['blogger', 'admin', 'super_admin']",
+        "Цей акаунт не має доступу до панелі блогера", "initializeBloggerPanel()",
+    )
+    missing = [marker for marker in markers if marker not in blogger]
+    if missing:
+        fail("Панель блогера не підхоплює захищену PWA-сесію: " + ", ".join(missing))
+    else:
+        ok("Панель блогера повторно використовує Google/PWA-сесію та перевіряє роль")
+
+    admin = (ROOT / "admin_analytics.html").read_text(encoding="utf-8")
+    if "openBloggerPanel()" not in admin or "📣 Панель блогера" not in admin:
+        fail("з кабінету адміністратора немає прямого входу в панель блогера")
+    else:
+        ok("адміністратор має прямий захищений вхід у панель блогера")
 
 
 def test_error_srs_practice_is_reachable_and_records_results():
@@ -1029,6 +1051,7 @@ def main():
     test_profile_lottery_ux()
     test_production_assets_and_browser_chainy_auth()
     test_visible_feature_map_and_role_workspaces()
+    test_blogger_panel_uses_shared_pwa_auth()
     test_error_srs_practice_is_reachable_and_records_results()
     test_session_minutes_change_the_actual_route()
     test_own_video_is_visible_and_uses_the_shared_learning_loop()

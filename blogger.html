@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
   <title>SpeakChain — Панель блогера</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="https://accounts.google.com/gsi/client" async></script>
+  <script>window.SC_BOT_API='https://speakchain-bot-production.up.railway.app';</script>
   <style>
 /* ═══════════════════════════════════════════════════════════════
    ДИЗАЙН-ТОКЕНИ — вшиті в файл.
@@ -976,6 +978,12 @@ function toast(msg) {
 
 /* ── Уніфікована відправка дії в бот (HTTP, sendData як фолбек) ── */
 async function maAction(action, extra) {
+  if (!D.uid && window.SC_PWA?.ready) {
+    try {
+      const session = await window.SC_PWA.ready;
+      D.uid = Number(session?.userId || window.SC_PWA?.userId?.() || 0);
+    } catch(e) {}
+  }
   const body = Object.assign({
     action: action,
     uid: TG?.initDataUnsafe?.user?.id || D.uid || 0,
@@ -1666,7 +1674,53 @@ function plural(n, one, few, many) {
   return many;
 }
 
-fill();
+async function initializeBloggerPanel() {
+  /* Telegram відкриває панель із готовим payload у параметрі d. У браузері
+     Google-сесія живе у pwa.js, тому панель повинна дочекатися її та сама
+     завантажити захищені дані блогера. window.fetch у pwa.js додає токен і
+     uid та один раз оновлює прострочену сесію. */
+  if (!dataRaw) {
+    try {
+      const session = await window.SC_PWA?.ready;
+      const uid = Number(session?.userId || window.SC_PWA?.userId?.() || 0);
+      if (!uid) throw new Error('Увійдіть у SpeakChain');
+      const roleResponse = await fetch(BOT_API + '/miniapp_payload', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({uid, init_data: TG?.initData || '', screen: 's-profile'})
+      });
+      const rolePayload = await roleResponse.json().catch(() => ({}));
+      const identity = rolePayload?.d || {};
+      const verifiedRole = identity.is_super_admin ? 'super_admin'
+        : identity.is_admin ? 'admin'
+        : identity.is_blogger ? 'blogger'
+        : String(identity.staff_role || identity.role || '').toLowerCase();
+      if (!['blogger', 'admin', 'super_admin'].includes(verifiedRole)) {
+        throw new Error('Цей акаунт не має доступу до панелі блогера');
+      }
+      const response = await fetch(BOT_API + '/miniapp_payload', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({uid, init_data: TG?.initData || '', screen: 'blogger'})
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok || !payload?.ok || !payload?.d) {
+        throw new Error(payload?.error || 'Не вдалося завантажити панель блогера');
+      }
+      D = payload.d;
+      D.uid = Number(D.uid || uid);
+    } catch (error) {
+      document.body.innerHTML = '<main style="min-height:100vh;display:grid;place-items:center;padding:24px;background:#0d0d14;color:#eaeaf5;font-family:-apple-system,BlinkMacSystemFont,sans-serif">'
+        + '<section style="width:min(100%,420px);padding:28px;border:1px solid #2a2a3a;border-radius:20px;background:#16161f;text-align:center">'
+        + '<div style="font-size:38px;margin-bottom:12px">📣</div><h1 style="font-size:22px;margin:0 0 10px">Панель блогера недоступна</h1>'
+        + '<p style="color:#8888a8;line-height:1.5;margin:0 0 18px">' + String(error?.message || 'Не вдалося підтвердити доступ').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])) + '</p>'
+        + '<button onclick="location.href=\'index_v2.html\'" style="width:100%;min-height:44px;border:0;border-radius:12px;background:#7c6ef7;color:white;font-weight:700;cursor:pointer">Повернутися до SpeakChain</button></section></main>';
+      return;
+    }
+  }
+  fill();
+}
+
+initializeBloggerPanel();
 
 /* ── ЗГОРТАЙКИ ──────────────────────────────────────────
    Одна відкрита за раз. Клік по відкритій — закриває.
