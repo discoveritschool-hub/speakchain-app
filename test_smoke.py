@@ -608,7 +608,13 @@ def test_analytics_dashboards():
     files = {
         "admin_analytics.html": (
             "function renderSpeakingSocial()",
+            "function renderSupportOperations()",
+            "function renderProductAdoption()",
             "data.social",
+            "data.support",
+            "data.product_adoption",
+            "Voice fallback",
+            "avg_match_wait_sec",
             "by_feature",
             "by_provider",
             "by_model",
