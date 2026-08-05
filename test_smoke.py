@@ -980,6 +980,26 @@ def test_visible_lexical_streak_and_blogger_entry():
         ok("лексичні теми A1–C2 доступні офлайн лише у Прогресі; Streak і маршрут блогера збережені")
 
 
+def test_desktop_shell_keeps_mobile_navigation_intact():
+    """Desktop має власну композицію, але не замінює mobile/Telegram DOM."""
+    section("PWA — повноцінна desktop-композиція")
+    shell = SHELL.read_text(encoding="utf-8") if SHELL.exists() else ""
+    markers = (
+        "@media (min-width:900px)", "--desktop-nav:232px", "--desktop-rail:304px",
+        "TG_DESKTOP_PLATFORMS", "document.documentElement.classList.add('telegram-desktop')",
+        'class="desktop-rail"', 'aria-label="Швидка панель"',
+        'id="desktop-progress-ring"', "const dailyDone=D?.nudge?.kind==='done'",
+        "openLessonNow()", "openChainyNow()", "openOwnVideo()",
+        '<div class="nav">', 'data-s="s-home"', 'data-s="s-listen"',
+        'data-s="s-buddy"', 'data-s="s-social"', 'data-s="s-prog"',
+    )
+    missing = [marker for marker in markers if marker not in shell]
+    if missing:
+        fail(f"desktop-композиція або мобільна навігація неповні: {missing}")
+    else:
+        ok("desktop має ліве меню, широку робочу зону й праву панель; mobile-nav збережено")
+
+
 def main():
     print("\033[1m" + "═" * 58)
     print("  SpeakChain — смоук-тести")
@@ -1008,6 +1028,7 @@ def main():
     test_staff_and_learner_modes_are_two_way()
     test_guided_native_navigation()
     test_visible_lexical_streak_and_blogger_entry()
+    test_desktop_shell_keeps_mobile_navigation_intact()
 
     print("\n" + "═" * 58)
     if FAILS:
