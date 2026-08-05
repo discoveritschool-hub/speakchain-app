@@ -1838,8 +1838,18 @@ async function load(scr){
   if(PAYLOAD[scr])return PAYLOAD[scr];
   if(PENDING[scr])return PENDING[scr];
   PENDING[scr]=(async()=>{
+    /* Browser PWA auth resolves asynchronously. The shell used to inspect the
+       Telegram-only UID first and show a false "Open in Telegram" banner even
+       after a successful Google login. Wait for the shared PWA session and
+       adopt its stable user id before deciding that the user is anonymous. */
+    if(!UID&&window.SC_PWA?.ready){
+      try{
+        const session=await window.SC_PWA.ready;
+        UID=Number(session?.userId||window.SC_PWA?.userId?.()||0);
+      }catch(e){}
+    }
     if(!UID){
-      showOfflineBanner(scr,'Відкрий застосунок кнопкою Open у Telegram');
+      showOfflineBanner(scr,'Увійдіть у SpeakChain, щоб завантажити дані');
       PAYLOAD[scr]={};return PAYLOAD[scr];
     }
     let lastError='';

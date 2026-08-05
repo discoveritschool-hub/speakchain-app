@@ -419,6 +419,25 @@ def test_shell_apps():
         fail("JS оболонки зламано")
 
 
+def test_pwa_identity_handoff():
+    """Browser login must hydrate the shell before its first payload request."""
+    section("PWA — Google/Telegram identity handoff")
+    if not SHELL.exists():
+        return
+    src = SHELL.read_text(encoding="utf-8")
+    load_start = src.find("async function load(scr){")
+    load_end = src.find("function showOfflineBanner", load_start)
+    load_src = src[load_start:load_end] if load_start >= 0 and load_end > load_start else ""
+    if "await window.SC_PWA.ready" not in load_src:
+        fail("load() не чекає PWA-сесію перед перевіркою UID")
+    elif load_src.find("await window.SC_PWA.ready") > load_src.find("if(!UID){", 50):
+        fail("PWA-сесія читається запізно — після anonymous-перевірки")
+    elif "session?.userId" not in load_src:
+        fail("UID оболонки не підхоплюється з PWA-сесії")
+    else:
+        ok("Google/PWA userId підхоплюється до першого payload-запиту")
+
+
 def _has_node():
     try:
         subprocess.run(["node", "--version"], capture_output=True, timeout=5)
@@ -699,6 +718,7 @@ def main():
     test_timezone_exactly_once()
     test_promise_kept()
     test_shell_apps()
+    test_pwa_identity_handoff()
     test_shell_router()
     test_analytics_dashboards()
     test_friends_stable_layers()
