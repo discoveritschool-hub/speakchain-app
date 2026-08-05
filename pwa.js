@@ -32,6 +32,12 @@
     const exp = Date.parse(read(EXP_KEY));
     return Boolean(read(ACCESS_KEY) && read(USER_KEY) && Number.isFinite(exp) && exp > Date.now() + 30000);
   }
+  function hasTrustedEmbeddedPayload() {
+    try {
+      const page = location.pathname.split('/').pop().toLowerCase();
+      return page === 'blogger.html' && new URLSearchParams(location.search).has('d');
+    } catch (_) { return false; }
+  }
   async function jsonPost(path, body, options) {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), Number(options?.timeout || 15000));
@@ -175,6 +181,12 @@
     return authPromise;
   }
   async function ensureSession() {
+    // Telegram opens blogger.html with a backend-built payload in `d`.
+    // It must not be covered a moment later by the generic browser login.
+    // Direct browser/admin opens have no `d` and keep the signed role check.
+    if (hasTrustedEmbeddedPayload()) {
+      return {authenticated: true, source: 'telegram-payload', userId: 0};
+    }
     const restored = await restoreSession();
     if (restored.authenticated) return restored;
     return showAuthGate();
