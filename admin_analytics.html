@@ -1072,6 +1072,13 @@ function renderTab(tab) {
     el.innerHTML =
         renderTodo()
       + acc('a-over', '📊', 'Огляд', 'Юзери, активні, платні, тріал', renderOverview(), {open:true})
+      + acc('a-sup', '📬', 'Підтримка і запити', 'Черга · SLA · категорії · мови',
+            renderSupportOperations(), {
+              badge: ((data.support || {}).urgent_open || (data.support || {}).sla_breached)
+                ? (((data.support || {}).urgent_open || 0) + ((data.support || {}).sla_breached || 0)) + ' ⚠️'
+                : null,
+              badgeBg:'rgba(239,68,68,.15)', badgeFg:'var(--red)'
+            })
       + acc('a-ai',   '🤖', 'AI-аналіз системи', 'Клікни — бот подумає й напише', aiSlot())
       + acc('a-ab',   '🧪', 'A/B-гіпотези', 'Що тестувати далі — з воронки', abSlot())
       + acc('a-tz',   '📋', 'ТЗ для Claude', 'Готовий бриф — скопіювати й вставити', tzSlot());
@@ -1112,6 +1119,8 @@ function renderTab(tab) {
         acc('a-spk', '🎙', 'Speaking / Social loop',
             'Перша фраза · стрічка · відповіді · естафети · live',
             renderSpeakingSocial(), {open:true})
+      + acc('a-adopt', '🧭', 'Покриття ключових функцій',
+            'Book Loop · SRS · відео → Chainy', renderProductAdoption())
       + acc('a-cnt', '🔥', 'Що працює', 'Що реально практикують — лічильники',
             renderContent())
       + acc('a-phr', '💬', 'Фрази', 'Що ЗАЛУЧАЄ — демо-воронка', renderPhraseRanking())
@@ -2082,6 +2091,7 @@ const SKELETON = {
   today: [
     ['🎯 Що робити зараз', 'Бот сам знаходить гострі проблеми: хто кинув, хто застряг, борги блогерам. Тицяєш — веде туди, де лікується.'],
     ['📊 Огляд', 'Юзери · нові сьогодні/7д/30д · активні · платні · тріал · зриви ланцюжка · середній ланцюжок'],
+    ['📬 Підтримка і запити', 'Відкриті · термінові · без відповіді · SLA · категорії · мови. Повторювані теми входять в AI-рекомендації.'],
     ['🤖 AI-аналіз', 'Клікаєш — бот дивиться на всі цифри й пише, що з ними не так'],
     ['🧪 A/B-гіпотези', 'Бот пропонує, що тестувати — з кривої відвалу'],
     ['📋 ТЗ для Claude', 'Збирає повний бриф проєкту — копіюєш і даєш мені'],
@@ -2113,6 +2123,8 @@ const SKELETON = {
     ['➕ Новий блогер', 'Як створити посилання: /gen_ref ІМ\'Я'],
   ],
   content: [
+    ['🎙 Speaking / Social loop', 'Кімнати · live WebRTC · voice fallback · очікування партнера · формати й джерела тем · естафети.'],
+    ['🧭 Покриття ключових функцій', 'Book Loop · словник/SRS · передавання відеоконтексту й фраз у Chainy.'],
     ['🔥 Що працює', 'Реальні лічильники: що учні ПРАКТИКУЮТЬ. У розрізі блогера — що резонує в його аудиторії.'],
     ['💬 Фрази', 'Що ЗАЛУЧАЄ — демо-воронка. Які фрази ведуть до реєстрації.'],
     ['🗣 Chainy / Buddy', 'Сесії AI-репетитора · глибина розмов · популярні теми · фідбек'],
@@ -4532,6 +4544,70 @@ function cBars(items, color) {
   }).join('');
 }
 
+function renderSupportOperations() {
+  const s = data.support || {};
+  const duration = minutes => {
+    if (minutes === null || minutes === undefined) return '—';
+    if (minutes < 60) return Math.round(minutes) + ' хв';
+    return (minutes / 60).toFixed(1) + ' год';
+  };
+  const risk = (s.urgent_open || 0) + (s.sla_breached || 0) + (s.unanswered_open || 0);
+  return `
+    <div class="cards">
+      <div class="card ${risk ? 'red' : 'green'}">
+        <div class="card-label">Відкрито</div>
+        <div class="card-value" style="color:${risk ? 'var(--red)' : 'var(--green)'}">${fmt(s.open || 0)}</div>
+        <div class="card-delta delta-flat">${fmt(s.new || 0)} нових · ${fmt(s.unassigned_open || 0)} без відповідального</div>
+      </div>
+      <div class="card red">
+        <div class="card-label">Термінові / SLA</div>
+        <div class="card-value" style="color:var(--red)">${fmt(s.urgent_open || 0)} / ${fmt(s.sla_breached || 0)}</div>
+        <div class="card-delta delta-flat">${fmt(s.unanswered_open || 0)} ще без відповіді</div>
+      </div>
+      <div class="card purple">
+        <div class="card-label">Перша відповідь</div>
+        <div class="card-value" style="color:var(--purple)">${duration(s.avg_first_response_min)}</div>
+        <div class="card-delta delta-flat">середній час</div>
+      </div>
+      <div class="card accent">
+        <div class="card-label">Закриття</div>
+        <div class="card-value" style="color:var(--accent)">${duration(s.avg_resolution_min)}</div>
+        <div class="card-delta delta-flat">${fmt(s.closed || 0)} закрито з ${fmt(s.total || 0)}</div>
+      </div>
+    </div>
+    ${sTitle('Про що пишуть', 'Повторювані категорії = сигнал, що треба виправити в продукті')}
+    ${cBars(s.categories || [], 'var(--accent)')}
+    ${sTitle('Мови звернень', 'Оригінал зберігається; оператор бачить переклад')}
+    ${cBars(s.languages || [], 'var(--purple)')}
+    <div style="font-size:11px;color:var(--text3);margin-top:10px">
+      AI-аналіз у цій же вкладці використовує ці агрегати й дає рекомендації без передачі текстів приватних повідомлень.
+    </div>`;
+}
+
+function renderProductAdoption() {
+  const p = data.product_adoption || {};
+  const b = p.book_loop || {};
+  const v = p.vocabulary_srs || {};
+  const c = p.video_to_chainy || {};
+  return `
+    <div class="cards">
+      <div class="card purple"><div class="card-label">Book Loop</div>
+        <div class="card-value" style="color:var(--purple)">${fmt(b.users || 0)}</div>
+        <div class="card-delta delta-flat">${b.adoption_rate || 0}% · ${fmt(b.completed_books || 0)} книг завершено</div></div>
+      <div class="card accent"><div class="card-label">Словник / SRS</div>
+        <div class="card-value" style="color:var(--accent)">${fmt(v.users || 0)}</div>
+        <div class="card-delta delta-flat">${fmt(v.words || 0)} слів · ${fmt(v.due_words || 0)} до повторення</div></div>
+      <div class="card green"><div class="card-label">Відео → Chainy</div>
+        <div class="card-value" style="color:var(--green)">${fmt(c.context_users || 0)}</div>
+        <div class="card-delta delta-flat">${c.context_rate || 0}% мають відеоконтекст</div></div>
+      <div class="card amber"><div class="card-label">Фрази з відео</div>
+        <div class="card-value" style="color:var(--amber)">${fmt(c.phrase_users || 0)}</div>
+        <div class="card-delta delta-flat">${c.phrase_rate || 0}% зберегли фрази для розмови</div></div>
+    </div>
+    ${sTitle('Book Loop: проходження етапів', 'Де люди зупиняються: read/listen → repeat → listen-only → retell')}
+    ${cBars(b.stages || [], 'var(--purple)')}`;
+}
+
 function renderSpeakingSocial() {
   const s = data.social || {};
   const ns = s.north_star || {};
@@ -4540,6 +4616,7 @@ function renderSpeakingSocial() {
   const hr = s.human_response || {};
   const rl = s.relays || {};
   const lv = s.live || {};
+  const rooms = s.rooms || {};
   const rt = s.retention || {};
   const cm = s.community || {};
   const sf = s.safety || {};
@@ -4638,6 +4715,19 @@ function renderSpeakingSocial() {
       sCell('Live match стартували', value(lv.started), value(lv.waiting_now) + ' зараз у черзі'),
       sCell('Live match завершили', value(lv.completed), pct(lv.completion_rate), 'var(--green)'),
     ], 2)}
+
+    ${sRow([
+      sCell('Підтвердили live', pct(lv.confirmed_rate), value(lv.abandoned_before_start) + ' покинули до старту'),
+      sCell('WebRTC кімнат', value(lv.rtc_rooms), 'є signaling'),
+      sCell('Voice fallback', value(lv.fallback_rooms), pct(lv.fallback_rate) + ' від стартів',
+        (lv.fallback_rate || 0) > 25 ? 'var(--amber)' : null),
+      sCell('Очікування партнера', duration(lv.avg_match_wait_sec), 'середнє'),
+    ], 2)}
+    ${sTitle('Які кімнати обирають', 'Джерела тем і формати універсальних розмов')}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div><div class="table-title">Джерело теми</div>${cBars(rooms.sources || [], 'var(--accent)')}</div>
+      <div><div class="table-title">Формат</div>${cBars(rooms.formats || [], 'var(--purple)')}</div>
+    </div>
 
     ${sTitle('Спільнота й безпека', 'Публічність лише за opt-in; скарги й блокування видно поруч із ростом')}
     ${sRow([
