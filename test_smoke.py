@@ -620,6 +620,10 @@ def test_analytics_dashboards():
             'id="socialfunnelbars"',
             "LIVE_SOCIAL",
             "function buildSocialFunnel()",
+            "PWA + Telegram + спільна авторизація",
+            "Redis і PostgreSQL у production",
+            "Навантажувальне тестування",
+            "@media(min-width:921px) and (max-height:720px)",
         ),
     }
     for filename, markers in files.items():

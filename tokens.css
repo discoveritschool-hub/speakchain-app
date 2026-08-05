@@ -116,6 +116,26 @@
   --ease:          cubic-bezier(.4, 0, .2, 1);
 }
 
+/* Compact desktop scale shared by standalone web screens. Mobile keeps the
+   original touch-first sizing; wide/short windows use their height better. */
+@media (min-width:900px) {
+  :root {
+    --fs-xs:10px;
+    --fs-sm:11px;
+    --fs:clamp(12px,1.45vh,14px);
+    --fs-md:clamp(14px,1.8vh,16px);
+    --fs-lg:clamp(17px,2.35vh,20px);
+    --fs-xl:clamp(22px,3.2vh,28px);
+    --sp:clamp(9px,1.35vh,12px);
+    --sp-md:clamp(12px,1.8vh,16px);
+    --sp-lg:clamp(17px,2.6vh,24px);
+  }
+  .sc-card{padding:var(--sp-md)}
+  .sc-btn{padding-block:clamp(10px,1.6vh,14px)}
+  .sc-btn-ghost{padding-block:clamp(9px,1.4vh,12px)}
+  .sc-menu-item{padding-block:clamp(9px,1.45vh,13px)}
+}
+
 
 /* ============================================================
    БАЗОВІ КЛАСИ — спільні для всіх міні-аппів
