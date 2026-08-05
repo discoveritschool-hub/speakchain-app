@@ -49,6 +49,14 @@ html,body{height:100%;background:var(--bg);color:var(--text);
 .side-tab .side-lbl{font-size:9px;font-weight:600;text-align:center;line-height:1.15;
   letter-spacing:-.1px}
 .side-tab.active{background:var(--accent);color:#fff}
+.side-more{margin-top:auto;position:sticky;bottom:0;background:var(--surface)}
+.side-menu{display:none;position:fixed;left:70px;bottom:10px;z-index:80;
+  min-width:190px;padding:6px;background:var(--surface2);border:1px solid var(--border);
+  border-radius:12px;box-shadow:0 12px 30px rgba(0,0,0,.45)}
+.side-menu.open{display:block}
+.side-menu-item{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:8px;
+  color:var(--text2);font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap}
+.side-menu-item:hover,.side-menu-item.active{background:var(--surface);color:var(--text)}
 .main{flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden}
 
 /* ── Tabs: старий горизонтальний рядок — лишено на випадок відкату,
@@ -173,6 +181,11 @@ tr:hover td{background:var(--surface2)}
 /* ── Error ── */
 .error-box{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);
   border-radius:var(--r);padding:14px;color:var(--red);font-size:13px;text-align:center}
+.blogger-switcher{display:flex;align-items:center;gap:7px;min-width:0}
+.blogger-switcher select{max-width:210px;min-width:150px;height:34px;padding:0 30px 0 10px;
+  border:1px solid var(--line);border-radius:var(--r-pill);background:var(--bg-card2);
+  color:var(--text);font-size:var(--fs-xs);font-weight:var(--fw-bold);cursor:pointer}
+@media(max-width:760px){.blogger-switcher select{max-width:145px;min-width:110px}}
 </style>
 <script src="pwa.js"></script>
 </head>
@@ -206,7 +219,12 @@ tr:hover td{background:var(--surface2)}
       </div>
       <div style="display:flex;gap:8px">
         <div class="header-actions">
-          <button class="learner-mode" onclick="openBloggerPanel()">📣 Панель блогера</button>
+          <div class="blogger-switcher">
+            <select id="blogger-panel-select" aria-label="Вибрати блогера" onchange="syncBloggerPanelButton()">
+              <option value="">Оберіть блогера</option>
+            </select>
+            <button class="learner-mode" id="open-blogger-panel" onclick="openBloggerPanel()" disabled>📣 Відкрити панель</button>
+          </div>
           <button class="learner-mode" onclick="openLearnerMode()">🎓 До навчання</button>
         </div>
         <div class="refresh-btn" onclick="goStrategy()" title="Командний центр: пульс, дорожня карта, принципи">🧭</div>
@@ -414,9 +432,29 @@ let data = null;
 let activeTab = 'summary';
 function openLearnerMode(){location.assign(new URL('index_v2.html',location.href).toString());}
 function openBloggerPanel(){
+  const select = document.getElementById('blogger-panel-select');
+  const blogger = select ? select.value : '';
+  if (!blogger) { alert('Спочатку оберіть блогера зі списку'); return; }
   const url = new URL('blogger.html', location.href);
   url.searchParams.set('from', 'admin');
+  url.searchParams.set('blogger', blogger);
   location.assign(url.toString());
+}
+function syncBloggerPanelButton(){
+  const select = document.getElementById('blogger-panel-select');
+  const button = document.getElementById('open-blogger-panel');
+  if (button) button.disabled = !(select && select.value);
+}
+function populateBloggerPanelSelect(){
+  const select = document.getElementById('blogger-panel-select');
+  if (!select) return;
+  const current = select.value;
+  const stats = (((data || {}).bloggers || {}).blogger_stats || []).slice()
+    .sort((a,b) => String(a.name || '').localeCompare(String(b.name || ''), 'uk'));
+  select.innerHTML = '<option value="">' + (stats.length ? 'Оберіть блогера (' + stats.length + ')' : 'Блогерів ще немає') + '</option>'
+    + stats.map(b => '<option value="' + escAttr(String(b.name || '')) + '">@' + esc(String(b.name || '')) + '</option>').join('');
+  if (stats.some(b => String(b.name || '') === current)) select.value = current;
+  syncBloggerPanelButton();
 }
 
 /* ═══ 🎛 РУБИЛЬНИКИ — рендер із живих даних бота ═══ */
@@ -450,21 +488,23 @@ function renderSwitches() {
 }
 
 
-/* ═══ НАВІГАЦІЯ — ОДИН РІВЕНЬ ═══
-   Було: група → вкладка (2 тапи) + 17 вкладок, які треба гортати вбік.
-   Стало: 6 вкладок. Колишні вкладки — акордеони всередині.
-   Жодну функцію не викинуто, усі 34 render-* на місці. */
+/* ═══ НАВІГАЦІЯ — БЕЗ ДУБЛІВ ═══
+   У постійному меню лишаються шість робочих напрямів. Службові екрани,
+   які дублювали їх за змістом, доступні через один компактний пункт «Ще».
+   Жодну функцію не видалено. */
 const NAV = [
-  ['summary',  '📊 Зведення'],
-  ['today',    '🏠 Сьогодні'],
+  ['summary',  '🏠 Огляд'],
   ['students', '👥 Учні'],
   ['money',    '💰 Гроші'],
-  ['finance',  '🧾 Бухгалтерія'],
   ['partners', '🤝 Блогери'],
   ['content',  '🔥 Контент'],
-  ['lottery',  '🎟️ Лотерея'],
   ['system',   '⚙️ Система'],
-  ['cmds',     '⌨️ Команди'],
+];
+const MORE_NAV = [
+  ['today',   '✅ Що робити сьогодні'],
+  ['finance', '🧾 Детальна бухгалтерія'],
+  ['lottery', '🎟️ Керування лотереєю'],
+  ['cmds',    '⌨️ Довідник команд'],
 ];
 
 /* Куди їде кожна колишня вкладка. Ключ — стара назва, значення — нова. */
@@ -480,7 +520,7 @@ const OLD_TO_NEW = {
 function renderNav(){
   const tr = document.getElementById('tabs-row');
   if (!tr) return;
-  tr.innerHTML = NAV.map(([id,label]) => {
+  const primary = NAV.map(([id,label]) => {
     // label формату "📊 Зведення" — розділяємо іконку й текст,
     // щоб показати їх окремо: іконка зверху, коротка підпис знизу.
     const sp  = label.indexOf(' ');
@@ -492,7 +532,33 @@ function renderNav(){
       + '<span class="side-lbl">' + txt + '</span>'
       + '</div>';
   }).join('');
+  const moreActive = MORE_NAV.some(([id]) => id === activeTab);
+  const moreItems = MORE_NAV.map(([id,label]) => '<div class="side-menu-item'
+    + (id === activeTab ? ' active' : '') + '" onclick="openMoreTab(\'' + id + '\')">'
+    + label + '</div>').join('');
+  tr.innerHTML = primary
+    + '<div class="side-tab side-more' + (moreActive ? ' active' : '')
+    + '" onclick="toggleMoreNav(event)" title="Додаткові інструменти">'
+    + '<span class="side-ic">•••</span><span class="side-lbl">Ще</span></div>'
+    + '<div class="side-menu" id="side-more-menu">' + moreItems + '</div>';
 }
+
+function toggleMoreNav(event){
+  if(event) event.stopPropagation();
+  const menu=document.getElementById('side-more-menu');
+  if(menu) menu.classList.toggle('open');
+}
+function openMoreTab(tab){
+  const menu=document.getElementById('side-more-menu');
+  if(menu) menu.classList.remove('open');
+  switchTab(tab);
+}
+document.addEventListener('click',event=>{
+  const menu=document.getElementById('side-more-menu');
+  if(menu&&menu.classList.contains('open')&&!event.target.closest('.side-more')&&!event.target.closest('.side-menu')){
+    menu.classList.remove('open');
+  }
+});
 
 /* ═══ АКОРДЕОН ═══
    Один відкритий за раз усередині вкладки — щоб не було стіни.
@@ -884,6 +950,7 @@ async function loadData() {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     data = await res.json();
     if (data.error) throw new Error(data.error);
+    populateBloggerPanelSelect();
 
     /* Ховаємо фінанси від розробника — тепер це ЦІЛІ вкладки «Гроші» і «Блогери» */
     if (data.is_dev) {
