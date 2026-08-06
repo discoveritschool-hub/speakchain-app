@@ -3914,6 +3914,7 @@ function renderRoleWorkspace(D,H){
     :role==='developer'
       ?[{ic:'🛠',t:'Панель девелопера',s:'API, jobs, помилки, flags і тестові режими',p:'admin_analytics.html'}]
       :[{ic:'🛡',t:'Панель адміністратора',s:'продукт, користувачі, контент і операції',p:'admin_analytics.html'},
+         {ic:'📣',t:'Панелі блогерів',s:'вибір будь-якого блогера і безпечний перегляд його панелі',p:'admin_analytics.html?mode=blogger'},
          {ic:'🧭',t:'Стратегічна панель',s:'воронка, навчальні й продуктові метрики',p:'strategy_dashboard.html'}];
   host.innerHTML=items.map(x=>'<div class="mi" onclick="openStaffWorkspace('+JSON.stringify(x.p)+')"><span class="ic">'+x.ic+'</span><div class="body"><div class="t">'+x.t+'</div><div class="s">'+x.s+'</div></div><span class="ch">›</span></div>').join('');
 }
