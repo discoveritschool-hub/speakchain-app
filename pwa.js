@@ -122,7 +122,8 @@
   function telegramReturnUser() {
     try {
       const params = new URLSearchParams(location.search);
-      if (params.get('telegram_auth') !== '1' || !params.get('id') || !params.get('hash')) return null;
+      const callbackPage = location.pathname.toLowerCase().endsWith('/telegram_auth_callback.html');
+      if ((!callbackPage && params.get('telegram_auth') !== '1') || !params.get('id') || !params.get('hash')) return null;
       return Object.fromEntries(
         ['id', 'first_name', 'last_name', 'username', 'photo_url', 'auth_date', 'hash']
           .filter(key => params.has(key))
@@ -188,8 +189,7 @@
     // cross-window callback. Some browsers close the OAuth popup but block
     // the callback to its opener; the same-origin return can always persist
     // the session in shared localStorage.
-    const authUrl = new URL('index_v2.html', location.href);
-    authUrl.searchParams.set('telegram_auth', '1');
+    const authUrl = new URL('telegram_auth_callback.html', location.href);
     script.setAttribute('data-auth-url', authUrl.href);
     host.replaceChildren(script);
   }

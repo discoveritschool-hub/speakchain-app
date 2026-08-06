@@ -463,7 +463,8 @@ def test_pwa_identity_handoff():
         "function telegramReturnUser()",
         "function sessionFromTelegramLoginReturn()",
         "script.setAttribute('data-auth-url', authUrl.href)",
-        "authUrl.searchParams.set('telegram_auth', '1')",
+        "new URL('telegram_auth_callback.html', location.href)",
+        "endsWith('/telegram_auth_callback.html')",
         "window.opener?.postMessage({type: 'speakchain-auth-complete'}",
         "resumeStoredSession('telegram-return')",
         "history.replaceState({}, document.title",
@@ -476,8 +477,16 @@ def test_pwa_identity_handoff():
     else:
         ok("Telegram popup повертає підписані дані на same-origin URL і відновлює головне вікно")
 
+    telegram_callback = (ROOT / "telegram_auth_callback.html").read_text(encoding="utf-8")
+    callback_markers = ('<script src="pwa.js"></script>', 'window.SC_PWA.ready', "location.replace('index_v2.html')")
+    missing = [marker for marker in callback_markers if marker not in telegram_callback]
+    if missing:
+        fail(f"окрема Telegram callback-сторінка не завершує повернення: {missing}")
+    else:
+        ok("Telegram має окремий callback path без крихкого query-маркера")
+
     sw = (ROOT / "sw.js").read_text(encoding="utf-8")
-    if "speakchain-shell-v12" not in sw:
+    if "speakchain-shell-v13" not in sw or "telegram_auth_callback.html" not in sw:
         fail("service worker не оновив cache version для auth-виправлення")
     else:
         ok("service worker примусово оновлює PWA auth-код після деплою")

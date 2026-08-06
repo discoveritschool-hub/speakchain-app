@@ -1,6 +1,6 @@
-const CACHE = 'speakchain-shell-v12';
+const CACHE = 'speakchain-shell-v13';
 const SHELL = [
-  './index_v2.html', './offline.html', './player.html', './vocab.html', './speaking_buddy.html',
+  './index_v2.html', './telegram_auth_callback.html', './offline.html', './player.html', './vocab.html', './speaking_buddy.html',
   './progress.html', './tokens.css', './pwa.js', './manifest.webmanifest',
   './icon-192.png', './icon-512.png', './Chainy.png', './toast_rewards.js'
 ];
