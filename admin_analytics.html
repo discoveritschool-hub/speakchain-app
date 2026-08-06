@@ -193,11 +193,11 @@ tr:hover td{background:var(--surface2)}
 .support-message.out{margin-left:24px;background:rgba(79,142,247,.12)}
 .support-actions{display:flex;gap:7px;margin-top:10px}.support-actions button{border:0;border-radius:8px;padding:8px 11px;background:var(--accent);color:#fff;font-weight:700;cursor:pointer}
 .support-actions button.secondary{background:var(--surface2);color:var(--text2)}
-.blogger-switcher{display:flex;align-items:center;gap:7px;min-width:0}
-.blogger-switcher select{max-width:210px;min-width:150px;height:34px;padding:0 30px 0 10px;
+.workspace-switcher,.blogger-switcher{display:flex;align-items:center;gap:7px;min-width:0}
+.workspace-switcher select,.blogger-switcher select{max-width:210px;min-width:150px;height:34px;padding:0 30px 0 10px;
   border:1px solid var(--line);border-radius:var(--r-pill);background:var(--bg-card2);
   color:var(--text);font-size:var(--fs-xs);font-weight:var(--fw-bold);cursor:pointer}
-@media(max-width:760px){.blogger-switcher select{max-width:145px;min-width:110px}}
+@media(max-width:760px){.workspace-switcher select,.blogger-switcher select{max-width:145px;min-width:110px}}
 </style>
 <script src="pwa.js"></script>
 </head>
@@ -231,13 +231,18 @@ tr:hover td{background:var(--surface2)}
       </div>
       <div style="display:flex;gap:8px">
         <div class="header-actions">
-          <div class="blogger-switcher">
-            <select id="blogger-panel-select" aria-label="Вибрати блогера" onchange="syncBloggerPanelButton()">
+          <div class="workspace-switcher">
+            <select id="workspace-mode-select" aria-label="Перемкнути режим" onchange="switchWorkspaceMode()">
+              <option value="learner">🎓 Режим учня</option>
+              <option value="admin" selected>👑 Режим адміна</option>
+              <option value="blogger">📣 Режим блогера</option>
+            </select>
+          </div>
+          <div class="blogger-switcher" id="blogger-switcher" hidden>
+            <select id="blogger-panel-select" aria-label="Вибрати блогера" onchange="openSelectedBloggerPanel()">
               <option value="">Оберіть блогера</option>
             </select>
-            <button class="learner-mode" id="open-blogger-panel" onclick="openBloggerPanel()" disabled>📣 Відкрити панель</button>
           </div>
-          <button class="learner-mode" onclick="openLearnerMode()">🎓 До навчання</button>
         </div>
         <div class="refresh-btn" onclick="goStrategy()" title="Командний центр: пульс, дорожня карта, принципи">🧭</div>
         <div class="refresh-btn" onclick="loadData()">↻</div>
@@ -454,31 +459,50 @@ if (tg && typeof tg.requestFullscreen === 'function') { try { tg.requestFullscre
 let charts = {};
 let data = null;
 let activeTab = 'summary';
+const WORKSPACE_MODE_KEY = 'sc_workspace_mode';
+const ADMIN_BLOGGER_KEY = 'sc_admin_selected_blogger';
+const ADMIN_BLOGGER_LIST_KEY = 'sc_admin_blogger_list';
 function openLearnerMode(){location.assign(new URL('index_v2.html',location.href).toString());}
-function openBloggerPanel(){
+function switchWorkspaceMode(){
+  const mode = document.getElementById('workspace-mode-select')?.value || 'admin';
+  try { localStorage.setItem(WORKSPACE_MODE_KEY, mode); } catch(e) {}
+  if (mode === 'learner') { openLearnerMode(); return; }
+  const switcher = document.getElementById('blogger-switcher');
+  if (switcher) switcher.hidden = mode !== 'blogger';
+}
+function initializeWorkspaceMode(){
+  const select = document.getElementById('workspace-mode-select');
+  if (!select) return;
+  const requested = new URLSearchParams(location.search).get('mode');
+  select.value = requested === 'blogger' ? 'blogger' : 'admin';
+  switchWorkspaceMode();
+}
+function openSelectedBloggerPanel(){
   const select = document.getElementById('blogger-panel-select');
   const blogger = select ? select.value : '';
-  if (!blogger) { alert('Спочатку оберіть блогера зі списку'); return; }
+  if (!blogger) return;
+  try {
+    localStorage.setItem(WORKSPACE_MODE_KEY, 'blogger');
+    localStorage.setItem(ADMIN_BLOGGER_KEY, blogger);
+  } catch(e) {}
   const url = new URL('blogger.html', location.href);
   url.searchParams.set('from', 'admin');
   url.searchParams.set('blogger', blogger);
   location.assign(url.toString());
 }
-function syncBloggerPanelButton(){
-  const select = document.getElementById('blogger-panel-select');
-  const button = document.getElementById('open-blogger-panel');
-  if (button) button.disabled = !(select && select.value);
-}
 function populateBloggerPanelSelect(){
   const select = document.getElementById('blogger-panel-select');
   if (!select) return;
-  const current = select.value;
+  let saved = '';
+  try { saved = localStorage.getItem(ADMIN_BLOGGER_KEY) || ''; } catch(e) {}
+  const current = select.value || saved;
   const stats = (((data || {}).bloggers || {}).blogger_stats || []).slice()
     .sort((a,b) => String(a.name || '').localeCompare(String(b.name || ''), 'uk'));
   select.innerHTML = '<option value="">' + (stats.length ? 'Оберіть блогера (' + stats.length + ')' : 'Блогерів ще немає') + '</option>'
     + stats.map(b => '<option value="' + escAttr(String(b.name || '')) + '">@' + esc(String(b.name || '')) + '</option>').join('');
   if (stats.some(b => String(b.name || '') === current)) select.value = current;
-  syncBloggerPanelButton();
+  try { localStorage.setItem(ADMIN_BLOGGER_LIST_KEY, JSON.stringify(stats.map(b => String(b.name || '')).filter(Boolean))); } catch(e) {}
+  switchWorkspaceMode();
 }
 
 /* ═══ 🎛 РУБИЛЬНИКИ — рендер із живих даних бота ═══ */
@@ -5348,6 +5372,7 @@ function pct(a, b) {
   return Math.round((a / b) * 100) + '%';
 }
 
+initializeWorkspaceMode();
 loadData();
 </script>
 </body>
