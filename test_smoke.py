@@ -680,6 +680,12 @@ def test_analytics_dashboards():
             "PWA + Telegram + спільна авторизація",
             "Redis і PostgreSQL у production",
             "Навантажувальне тестування",
+            "function loadImplementationRoadmap()",
+            "function renderLiveRoadmap(payload)",
+            "/implementation_status",
+            "road-search",
+            "ROADMAP_FILTER='active'",
+            "завершені пункти не видаляються",
             "@media(min-width:921px) and (max-height:720px)",
         ),
     }
