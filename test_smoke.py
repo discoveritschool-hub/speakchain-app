@@ -491,7 +491,7 @@ def test_pwa_identity_handoff():
         ok("головна і callback-сторінки одразу завантажують версіонований auth-код")
 
     sw = (ROOT / "sw.js").read_text(encoding="utf-8")
-    if "speakchain-shell-v13" not in sw or "telegram_auth_callback.html" not in sw:
+    if "speakchain-shell-v14" not in sw or "telegram_auth_callback.html" not in sw:
         fail("service worker не оновив cache version для auth-виправлення")
     else:
         ok("service worker примусово оновлює PWA auth-код після деплою")
@@ -1240,6 +1240,25 @@ def test_desktop_shell_keeps_mobile_navigation_intact():
         ok("desktop має ліве меню, широку робочу зону й праву панель; mobile-nav збережено")
 
 
+def test_live_rooms_fail_closed_until_two_account_gate():
+    """Rooms stay hidden and blocked until the two-account production proof exists."""
+    section("L0-7 — live rooms fail-closed gate")
+    pwa = (ROOT / "pwa.js").read_text(encoding="utf-8")
+    sw = (ROOT / "sw.js").read_text(encoding="utf-8")
+    markers = (
+        "const LIVE_ROOMS_ENABLED = false",
+        "window.SC_FEATURES = Object.assign({}, window.SC_FEATURES, {liveRooms: LIVE_ROOMS_ENABLED})",
+        "sc-live-rooms-gate",
+        "startLiveMatch",
+        "joinLiveMatch",
+    )
+    missing = [marker for marker in markers if marker not in pwa]
+    if missing or "speakchain-shell-v14" not in sw:
+        fail(f"rooms gate або cache rollover неповні: {missing}")
+    else:
+        ok("live rooms приховані client-side; backend gate лишається авторитетним")
+
+
 def main():
     print("\033[1m" + "═" * 58)
     print("  SpeakChain — смоук-тести")
@@ -1272,6 +1291,7 @@ def main():
     test_guided_native_navigation()
     test_visible_lexical_streak_and_blogger_entry()
     test_desktop_shell_keeps_mobile_navigation_intact()
+    test_live_rooms_fail_closed_until_two_account_gate()
 
     print("\n" + "═" * 58)
     if FAILS:
