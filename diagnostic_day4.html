@@ -184,6 +184,14 @@
     color:var(--muted); font-size:14px; text-decoration:underline; cursor:pointer; padding:8px;}
   .debug{margin-top:20px; font-size:11px; color:#aab4c8; text-align:left; background:#fbfcfe;
     border:1px dashed var(--line); border-radius:10px; padding:10px 12px; line-height:1.7;}
+  .answer-explanation{margin-top:14px;padding:12px 14px;border-radius:12px;background:#eef6ff;color:#24415f;font-size:14px;line-height:1.55;border-left:4px solid var(--brand);}
+  .grammar-roadmap{margin:18px 0;text-align:left;}
+  .roadmap-title{padding:16px;border-radius:14px;background:#eef6ff;margin-bottom:12px;}
+  .roadmap-title h3{margin:0 0 6px;}.roadmap-title p{margin:0;color:var(--muted);line-height:1.5;}
+  .roadmap-topic-list{margin:0;padding:0;list-style:none;display:grid;gap:8px;}
+  .roadmap-topic-list li{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border:1px solid var(--line);border-left:5px solid var(--brand);border-radius:12px;background:#fff;font-weight:800;color:var(--brand-deep);}
+  .roadmap-topic-list small{flex:none;background:#fff3cd;color:#7a5810;border-radius:999px;padding:4px 8px;font-size:12px;font-weight:800;}
+  .roadmap-success{padding:16px;border-radius:14px;background:#e9f9ef;color:#185c32;font-weight:700;line-height:1.55;}
 </style>
 </head>
 <body>
@@ -225,6 +233,7 @@
     <div class="plan" id="plan">
       <h3 id="planTitle">Ваш маршрут далі</h3>
       <p id="planText"></p>
+      <div class="grammar-roadmap" id="grammarRoadmap"></div>
       <button class="cta plan-cta" id="goProgress">🗺️ Дивитись мою карту прогресу</button>
       <button class="retry-btn" onclick="location.reload()">Пройти діагностику знову</button>
     </div>
@@ -258,289 +267,39 @@ const WORDS = {
 };
 const PSEUDO = ["blemter","tortion","grivance","plaunt","mordable","flenty","snurge","brelish","quander","twindle","prolice","gorbish","vasten"];
 
-// ── ГРАМАТИКА: скринінг (2/рівень) + поглиблення (6/рівень) ──
-const G_SCREEN = [
-  {level:"A1", topic:"present_simple",     name:"Present Simple",     q:"She ___ coffee every morning.",           opts:["drink","drinks","drinking","drank"], correct:1},
-  {level:"A1", topic:"article_a_an",       name:"Артикль a/an",        q:"He is ___ engineer.",                      opts:["a","an","the","—"], correct:1},
-  {level:"A2", topic:"past_simple",        name:"Past Simple",        q:"We ___ to New York last summer.",          opts:["go","goes","went","have gone"], correct:2},
-  {level:"A2", topic:"present_continuous", name:"Present Continuous", q:"Look! The baby ___ right now.",            opts:["sleep","sleeps","is sleeping","slept"], correct:2},
-  {level:"B1", topic:"present_perfect",    name:"Present Perfect",    q:"I ___ this film three times already.",     opts:["saw","have seen","see","was seeing"], correct:1},
-  {level:"B1", topic:"conditional_1",      name:"Перша умовна",       q:"If it rains, we ___ at home.",             opts:["stay","stayed","will stay","would stay"], correct:2},
-  {level:"B2", topic:"conditional_2",      name:"Друга умовна",       q:"If I ___ more time, I would travel more.", opts:["have","had","would have","has"], correct:1},
-  {level:"B2", topic:"past_perfect",       name:"Past Perfect",       q:"The report ___ by the time we arrived.",   opts:["was finished","has finished","had been finished","is finished"], correct:2},
-  {level:"C1", topic:"inversion",          name:"Інверсія",           q:"Not only ___ the deadline, she exceeded it.", opts:["she met","did she meet","she did meet","has she met"], correct:1},
-  {level:"C1", topic:"mixed_conditionals", name:"Змішані умовні",     q:"If I ___ harder then, I'd be richer now.",  opts:["studied","had studied","study","would study"], correct:1},
-];
-const G_DEEP = {
-  A1:[
-    {topic:"noun_plural",           name:"Множина",           q:"I have three ___ in my bag.",       opts:["box","boxs","boxes","boxies"], correct:2},
-    {topic:"modal_can_could",       name:"can",               q:"___ you swim?",                     opts:["Do","Are","Can","Is"], correct:2},
-    {topic:"prepositions_place",    name:"Прийменники місця", q:"The cat is ___ the table.",         opts:["on","in","at","of"], correct:0},
-    {topic:"adjectives_comparison", name:"Ступені",           q:"This box is ___ than that one.",    opts:["big","bigger","biggest","more big"], correct:1},
-    {topic:"present_simple",        name:"Present Simple",    q:"They ___ football on Sundays.",     opts:["plays","play","playing","is play"], correct:1},
-    {topic:"article_a_an",          name:"Артиклі",           q:"I see ___ apple on the plate.",     opts:["a","an","the","—"], correct:1},
-  ],
-  A2:[
-    {topic:"future_going_to",       name:"going to",          q:"Look at the clouds! It ___ rain.",  opts:["will","is going to","goes to","going"], correct:1},
-    {topic:"pronouns_some_any",     name:"some/any",          q:"Is there ___ milk in the fridge?",  opts:["some","any","no","a"], correct:1},
-    {topic:"prepositions_time",     name:"Прийменники часу",  q:"My birthday is ___ July.",          opts:["at","on","in","by"], correct:2},
-    {topic:"modal_must_have_to",    name:"have to",           q:"You ___ wear a seatbelt in the car.", opts:["have to","has to","having to","to have"], correct:0},
-    {topic:"past_simple",           name:"Past Simple",       q:"She ___ her keys yesterday.",       opts:["lose","losed","lost","has lost"], correct:2},
-    {topic:"present_continuous",    name:"Present Continuous", q:"They ___ TV at the moment.",        opts:["watch","watches","are watching","watched"], correct:2},
-  ],
-  B1:[
-    {topic:"passive_simple",        name:"Пасив",             q:"This bridge ___ in 1990.",          opts:["built","was built","is building","has built"], correct:1},
-    {topic:"used_to",               name:"used to",           q:"I ___ live in London as a child.",  opts:["use to","used to","was used","am used to"], correct:1},
-    {topic:"modal_should",          name:"should",            q:"You look tired. You ___ rest.",     opts:["should","must to","shoulds","ought"], correct:0},
-    {topic:"reported_statements",   name:"Непряма мова",      q:"He said he ___ tired.",             opts:["is","was","be","been"], correct:1},
-    {topic:"present_perfect",       name:"Present Perfect",   q:"They have just ___ dinner.",        opts:["finish","finished","finishing","finishes"], correct:1},
-    {topic:"conditional_1",         name:"Перша умовна",      q:"If you heat ice, it ___.",          opts:["melts","will melt","melted","would melt"], correct:1},
-  ],
-  B2:[
-    {topic:"present_perfect_continuous", name:"Perfect Continuous", q:"She ___ for two hours.",       opts:["waits","has waited","has been waiting","is waiting"], correct:2},
-    {topic:"passive_continuous",    name:"Пасив (тривалий)",  q:"The road ___ right now.",           opts:["is repairing","is being repaired","repairs","was repaired"], correct:1},
-    {topic:"gerund_vs_infinitive",  name:"Герундій/інфінітив", q:"I enjoy ___ books.",               opts:["read","to read","reading","reads"], correct:2},
-    {topic:"reported_questions",    name:"Непрямі питання",   q:"She asked where I ___.",            opts:["live","do live","lived","was live"], correct:2},
-    {topic:"conditional_2",         name:"Друга умовна",      q:"If I were you, I ___ that.",        opts:["will do","would do","did","do"], correct:1},
-    {topic:"past_perfect",          name:"Past Perfect",      q:"When I arrived, the train ___.",    opts:["left","has left","had left","was leaving"], correct:2},
-  ],
-  C1:[
-    {topic:"conditional_3",         name:"Третя умовна",      q:"If I ___ earlier, I'd have caught the bus.", opts:["left","had left","would leave","have left"], correct:1},
-    {topic:"mixed_conditionals",    name:"Змішані умовні",    q:"If she ___ the job, she'd be happier now.",  opts:["took","had taken","takes","would take"], correct:1},
-    {topic:"inversion",             name:"Інверсія",          q:"Never ___ such a beautiful sunset.", opts:["I have seen","have I seen","I saw","did I saw"], correct:1},
-    {topic:"modal_perfect",         name:"Модальні перфектні", q:"He ___ have missed the train; he left late.", opts:["must","should","might","can"], correct:2},
-    {topic:"question_tags",         name:"Питальні хвости",   q:"You've met her, ___?",              opts:["did you","have you","haven't you","don't you"], correct:2},
-    {topic:"present_perfect_continuous", name:"Perfect Continuous", q:"It ___ raining since morning.", opts:["is","was","has been","have been"], correct:2},
-  ],
+// ── ГРАМАТИКА: повна діагностика 36 питань / 12 тем ──
+const TOPIC_DIFFICULTY = {
+    "Articles & Nouns": { order: 1, title: "Артиклі та іменники", levelName: "A1–A2", focus: "a/an/the, нульовий артикль, злічувані й незлічувані іменники" },
+    "Prepositions": { order: 2, title: "Прийменники", levelName: "A1–A2", focus: "in/on/at, since/for та сталі словосполучення" },
+    "Present & Past Tenses": { order: 3, title: "Теперішні й минулі часи", levelName: "A2–B1", focus: "Simple/Continuous і вибір часу за контекстом" },
+    "Future Forms": { order: 4, title: "Форми майбутнього часу", levelName: "A2–B1", focus: "will, be going to, Present Continuous та розклад" },
+    "Perfect Tenses": { order: 5, title: "Perfect Tenses", levelName: "B1", focus: "Present/Past Perfect, результат, досвід і послідовність подій" },
+    "Passive Voice": { order: 6, title: "Пасивний стан", levelName: "B1", focus: "be + V3 у різних часах і перетворення активних речень" },
+    "Modal Verbs": { order: 7, title: "Модальні дієслова", levelName: "B1–B2", focus: "обов’язок, заборона, ймовірність і модальні форми минулого" },
+    "Reported Speech": { order: 8, title: "Непряма мова", levelName: "B1–B2", focus: "узгодження часів, зміна маркерів часу, накази та поради" },
+    "Gerund & Infinitive": { order: 9, title: "Герундій та інфінітив", levelName: "B2", focus: "verb + -ing/to do, зміна значення та конструкції після прийменників" },
+    "Conditionals & Wish": { order: 10, title: "Умовні речення та wish", levelName: "B2", focus: "0–3 типи, змішані умови й жаль про минуле" },
+    "Complex Object": { order: 11, title: "Complex Object", levelName: "B2–C1", focus: "object + infinitive після make, see, expect та подібних дієслів" },
+    "Complex Subject & Prep. Inf.": { order: 12, title: "Complex Subject та інфінітивні комплекси", levelName: "C1", focus: "is said to, seems to have та for + object + to do" }
 };
 
-// ── READING (PET) ──
-const READING = [
-  {level:"A1", sign:{cls:"green", html:"Keep off<br>the grass"},
-   q:"What does the sign mean?", opts:["You can sit on the grass","You must not walk on the grass","The grass is for picnics"], correct:1},
-  {level:"A2", sign:{cls:"notice", html:"Restaurant<span class='sub-line'>Free parking at rear</span>"},
-   q:"What can visitors do?", opts:["Park in front of the restaurant","Park behind the restaurant","Park next to the restaurant"], correct:1},
-  {level:"A2", sign:{cls:"plain", html:"No smoking<br>in this area"},
-   q:"What are you not allowed to do here?", opts:["Eat food","Smoke","Take photos"], correct:1},
-  {level:"B1", sign:{cls:"plain", html:"Dogs must be<br>kept on leads"},
-   q:"What does the sign mean?", opts:["You can let your dog run free","You must keep your dog under control","You must leave your dog outside"], correct:1},
-  {level:"A2", sign:{cls:"yellow", html:"Please queue<br>here"},
-   q:"What should you do?", opts:["Wait in line","Pay at the desk","Come back later"], correct:0},
-  {level:"B1", sign:{cls:"info", html:"If you take this journey regularly, you can save money with our Super Weekly Saver Ticket."},
-   q:"What does the message say?", opts:["A special ticket is required to travel","Frequent travellers can pay less","All tickets are cheaper this week"], correct:1},
-  {level:"B1", sign:{cls:"notice", html:"Out of order<span class='sub-line'>Please use the stairs</span>"},
-   q:"What does this notice mean?", opts:["The lift is not working","The stairs are closed","The area is under repair until Monday"], correct:0},
-  {level:"A2", sign:{cls:"yellow", html:"CAUTION<span class='small'>Wet floor — please walk carefully</span>"},
-   q:"Why should you be careful?", opts:["The floor is slippery","The floor is being painted","The area is closed"], correct:0},
-];
-
-// ── LISTENING (тексти/відповіді з PLACEMENT_QUESTIONS) ──
-const LISTENING = [
-  {level:"A1", audio:"audio_a1.mp3", q:"Where does Sarah work?", opts:["A school","A hospital","A coffee shop","A bank"], correct:2},
-  {level:"A2", audio:"audio_a2.mp3", q:"How did the family travel to the Grand Canyon?", opts:["By plane","By train","By bus","By car"], correct:3},
-  {level:"B1", audio:"audio_b1.mp3", q:"What challenge do managers face with remote work?", opts:["Hiring new people","Managing office space","Building team culture remotely","Buying equipment"], correct:2},
-  {level:"B2", audio:"audio_b2.mp3", q:"Where do emotionally intelligent people perform better?", opts:["In technical roles","In creative roles","In leadership roles","In manual jobs"], correct:2},
-  {level:"C1", audio:"audio_c1.mp3", q:"What does the speaker say about globalization?", opts:["Benefits are shared equally","Benefits mostly go to elites","They help workers most","They can't be measured"], correct:1},
-];
-
-// ── МОВЛЕННЯ (опційний блок; запис через нативний Telegram) ──
-const SPEAKING_ENABLED = true;
-const SPEAKING_TOPICS = {
-  A1:[
-    "Tell me about your family. Who are they and what do they do?",
-    "Describe your typical day from morning to evening.",
-    "Talk about your favourite food and why you like it.",
-    "Describe the city or town where you live.",
-    "Tell me about your hobby. What do you like doing in your free time?",
-    "Describe your best friend. What is he or she like?"
-  ],
-  A2:[
-    "Describe a trip or holiday you enjoyed. Where did you go?",
-    "Talk about your favourite film or TV series. What is it about?",
-    "Describe how you usually spend your weekends.",
-    "Tell me about a person you admire and why.",
-    "Describe your dream house. What would it look like?",
-    "Talk about a typical celebration or holiday in your country."
-  ],
-  B1:[
-    "Describe your dream job. Why would it suit you?",
-    "How has technology changed our daily life? Give examples.",
-    "Talk about a book that made an impression on you.",
-    "Describe a skill you would like to learn and why.",
-    "What are the advantages and disadvantages of living in a big city?",
-    "Talk about a memorable event in your life."
-  ],
-  B2:[
-    "Do you think university education is necessary for success? Why?",
-    "Compare living in the city and living in the countryside.",
-    "Should people work fewer hours? Give your opinion with reasons.",
-    "How do you think travel changes a person?",
-    "Talk about an environmental problem and possible solutions.",
-    "Is it better to be a specialist or a generalist? Explain."
-  ],
-  C1:[
-    "Do social media make us more connected or more lonely? Discuss.",
-    "What will the future of work look like in twenty years?",
-    "Should governments regulate artificial intelligence? Argue your view.",
-    "To what extent does culture shape our identity?",
-    "Is economic growth always a sign of progress? Discuss.",
-    "How should society balance privacy and security?"
-  ]
-};
-
-const TOPIC_LABELS = {
-  present_simple:"Present Simple", article_a_an:"Артиклі a/an", noun_plural:"Множина іменників",
-  modal_can_could:"can / could", prepositions_place:"Прийменники місця", adjectives_comparison:"Ступені порівняння",
-  past_simple:"Past Simple", present_continuous:"Present Continuous", future_going_to:"going to",
-  pronouns_some_any:"some / any", prepositions_time:"Прийменники часу", modal_must_have_to:"must / have to",
-  present_perfect:"Present Perfect", conditional_1:"Перша умовна", passive_simple:"Пасив",
-  used_to:"used to", modal_should:"should", reported_statements:"Непряма мова",
-  conditional_2:"Друга умовна", past_perfect:"Past Perfect", present_perfect_continuous:"Perfect Continuous",
-  passive_continuous:"Пасив (тривалий)", gerund_vs_infinitive:"Герундій / інфінітив", reported_questions:"Непрямі питання",
-  conditional_3:"Третя умовна", mixed_conditionals:"Змішані умовні", inversion:"Інверсія", modal_perfect:"Модальні перфектні",
-  question_tags:"Питальні хвости"
-};
-
-// ═══════════════════════════════════════════════════════════
-//  СТАН + ПОСЛІДОВНІСТЬ
-// ═══════════════════════════════════════════════════════════
-function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
-
-let STIM = [];
-LEVELS.forEach(lvl => WORDS[lvl].forEach(w => STIM.push({w, lvl, real:true})));
-PSEUDO.forEach(w => STIM.push({w, lvl:null, real:false}));
-shuffle(STIM);
-
-// розбивка слів на сторінки по 18 (кілька екранів замість одного довгого)
-const WORDS_PER_PAGE = 18;
-const LEX_PAGES = Math.ceil(STIM.length / WORDS_PER_PAGE);
-
-let PHASES = [];
-for(let pg=0; pg<LEX_PAGES; pg++) PHASES.push({type:"lexicon", eyebrow:"Лексика", page:pg});
-G_SCREEN.forEach((g,i)=>PHASES.push({type:"choice", cat:"gram_screen", eyebrow:"Граматика", item:g, key:"gs"+i}));
-
-let deepInserted = false;
-let workingLevel = "A1";
-const answers = {};        // key → {ans, correct}
-const picked = new Set();
-let phase = 0;
-
-const stage    = document.getElementById("stage");
-const eyebrow   = document.getElementById("eyebrow");
-const prog      = document.getElementById("prog");
-const cta       = document.getElementById("cta");
-const backBtn   = document.getElementById("back");
-
-// ═══════════════════════════════════════════════════════════
-//  АДАПТИВНА ЛОГІКА
-// ═══════════════════════════════════════════════════════════
-function screeningLevel(){
-  const per = {}; LEVELS.forEach(l=>per[l]={c:0,t:0});
-  G_SCREEN.forEach((g,i)=>{ const a=answers["gs"+i]; per[g.level].t++; if(a&&a.correct)per[g.level].c++; });
-  let lvl="A1"; for(const l of LEVELS){ if(per[l].t && per[l].c/per[l].t>=0.5) lvl=l; }
-  return lvl;
-}
-
-function insertDeep(){
-  const li = LEVELS.indexOf(workingLevel);
-  const own = (G_DEEP[workingLevel]||[]).map((g,i)=>({...g, level:workingLevel, key:"gd_"+workingLevel+"_"+i}));
-  let ceil = [];
-  if(li < LEVELS.length-1){
-    const nl = LEVELS[li+1];
-    ceil = (G_DEEP[nl]||[]).slice(0,3).map((g,i)=>({...g, level:nl, key:"gc_"+nl+"_"+i}));
-  }
-  const deepPhases = own.concat(ceil).map(g=>({type:"choice", cat:"gram_deep", eyebrow:"Граматика", item:g, key:g.key}));
-  const afterScreen = LEX_PAGES + G_SCREEN.length;
-  const readPhases = READING.map((r,i)=>({type:"choice", cat:"reading", eyebrow:"Читання", item:r, key:"rd"+i}));
-  const listenPhases = LISTENING_ENABLED ? LISTENING.map((l,i)=>({type:"choice", cat:"listen", eyebrow:"Аудіювання", item:l, key:"ls"+i})) : [];
-  // мовлення — опційна фаза в кінці, тема за робочим рівнем
-  const speakPhases = SPEAKING_ENABLED ? [{type:"speaking", eyebrow:"Мовлення", key:"speak"}] : [];
-  PHASES = PHASES.slice(0, afterScreen).concat(deepPhases, readPhases, listenPhases, speakPhases);
-  deepInserted = true;
-}
-
-// ═══════════════════════════════════════════════════════════
-//  РЕНДЕР
-// ═══════════════════════════════════════════════════════════
-function setProg(){ prog.style.width = Math.min(100, (phase/PHASES.length)*100 + 5) + "%"; }
-
-function render(){
-  const p = PHASES[phase];
-  eyebrow.textContent = p.eyebrow;
-  setProg();
-  backBtn.style.visibility = phase === 0 ? "hidden" : "visible";
-  if(p.type === "lexicon") return renderLexicon(p.page);
-  if(p.type === "choice")  return renderChoice(p);
-  if(p.type === "speaking") return renderSpeaking(p);
-}
-
-function renderLexicon(page){
-  const start = page * WORDS_PER_PAGE;
-  const end = Math.min(STIM.length, start + WORDS_PER_PAGE);
-  let tiles = "";
-  for(let i=start; i<end; i++){
-    tiles += `<span class="tile ${picked.has(i)?'on':''}" data-i="${i}">${STIM[i].w}</span>`;
-  }
-  const head = page===0
-    ? `<h1>Які з цих слів Ви знаєте?</h1>
-       <p class="sub">Торкніться слів, значення яких <b>точно</b> знаєте. Тут є й вигадані — будьте чесні із собою.</p>`
-    : `<h1>Продовжуємо</h1>
-       <p class="sub">Позначте ще ті, що <b>точно</b> знаєте. Екран ${page+1} з ${LEX_PAGES}.</p>`;
-  stage.innerHTML =
-    `${head}
-     <div class="tiles">${tiles}</div>
-     <p class="hint" id="counter">Обрано: ${picked.size}</p>`;
-  stage.querySelectorAll(".tile").forEach(t=>{
-    t.onclick = ()=>{
-      const i=+t.dataset.i;
-      if(picked.has(i)){picked.delete(i); t.classList.remove("on");}
-      else{picked.add(i); t.classList.add("on");}
-      document.getElementById("counter").textContent = "Обрано: " + picked.size;
-    };
-  });
-  cta.textContent = "Далі";
-  cta.disabled = false;
-  cta.onclick = next;
-}
-
-function renderChoice(p){
-  const item = p.item;
-  const prev = answers[p.key];
-  const locked = !!prev;
-
-  let extra = "";
-  if(p.cat === "reading"){
-    extra = `<div class="sign-stage"><div class="sign ${item.sign.cls}">${item.sign.html}</div></div>`;
-  } else if(p.cat === "listen"){
-    extra = `<div class="audio-stage"><div class="audio-card"><div style="font-size:26px">🎧</div>
-      <audio controls preload="none" src="${AUDIO_BASE + item.audio}"></audio>
-      <div class="replay-note">Можна прослухати кілька разів</div></div></div>`;
-  }
-
-  const opts = item.opts.map((o,i)=>{
-    let cls="opt";
-    let inlineState="";
-    let inlineText="";
-    if(locked){ cls+=" diag-locked";
-      if(i===item.correct){
-        cls+=" diag-correct";
-        inlineState="background:#dcfce7!important;border-color:#22c55e!important;color:#14532d!important;-webkit-text-fill-color:#14532d!important;opacity:1!important";
-        inlineText="color:#14532d!important;-webkit-text-fill-color:#14532d!important;opacity:1!important";
-      }
-      else if(i===prev.ans){
-        cls+=" diag-wrong";
-        inlineState="background:#fee2e2!important;border-color:#ef4444!important;color:#7f1d1d!important;-webkit-text-fill-color:#7f1d1d!important;opacity:1!important";
-        inlineText="color:#7f1d1d!important;-webkit-text-fill-color:#7f1d1d!important;opacity:1!important";
-      }
-    }
-    return `<div class="${cls}" data-i="${i}"${inlineState?` style="${inlineState}"`:""}><span class="dot"></span><span${inlineText?` style="${inlineText}"`:""}>${o}</span></div>`;
-  }).join("");
-
-  stage.innerHTML =
-    `${extra}
-     <div class="qcard">
-       <p class="qtext">${item.q}</p>
-       ${item.name?`<p class="qtopic">${item.name}</p>`:""}
+// База даних питань
+const questions = [
+    // 1. Articles & Nouns
+    {
+        topic: "Articles & Nouns",
+        question: "I’ve been playing ___ guitar since I was ten, but I rarely listen to ___ pop music.",
+        options: ["a / the", "the / —", "— / the", "the / the"],
+        correct: 1,
+        explanation: "З музичними інструментами використовується артикль 'the' (play the guitar), а з загальними стилями музики артикль НЕ вживається."
+    },
+    {
+        topic: "Articles & Nouns",
+        question: "All the ___ in this library ___ up-to-date.",
+        options: ["informations is", "information are", "information is", "informations are"],
+        correct: 2,
+        explanation: "Слово 'information' є незлічуваним (без -s) і завжди узгоджується з дієслово…6735 tokens truncated…lass="qtopic">${item.name}</p>`:""}` +
+       `${locked && item.explanation?`<div class="answer-explanation"><b>Пояснення:</b> ${item.explanation}</div>`:""}
        <div class="opts">${opts}</div>
      </div>
      ${locked?"":`<button class="skip" id="skipBtn">Не знаю — пропустити</button>`}`;
@@ -565,9 +324,8 @@ function renderChoice(p){
 
 function onChoiceNext(){
   const p = PHASES[phase];
-  if(!deepInserted && p.cat === "gram_screen" && p.key === "gs"+(G_SCREEN.length-1)){
-    workingLevel = screeningLevel();
-    insertDeep();
+  if(p.cat === "grammar" && p.key === G_FULL[G_FULL.length-1].key){
+    workingLevel = calcGrammar().glevel;
   }
   next();
 }
@@ -613,7 +371,7 @@ function renderSpeaking(p){
 function collectGaps(){
   const gram=calcGrammar();
   const level=combineLevel(calcLexicon().vlevel, gram.glevel);
-  return gram.gaps.filter(g=>g.level===level).map(g=>g.topic);
+  return gram.gaps.map(g=>g.topic);
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -656,18 +414,28 @@ function calcLexicon(){
 }
 
 function calcGrammar(){
-  let correct=0,total=0; const gaps=[]; const perLvl={};
-  LEVELS.forEach(l=>perLvl[l]={c:0,t:0});
+  let correct=0;
+  const topicScores={};
+  G_FULL.forEach(g=>{ topicScores[g.topic]={correct:0,total:0}; });
   PHASES.forEach(p=>{
-    if(p.type!=="choice") return;
-    if(p.cat!=="gram_screen" && p.cat!=="gram_deep") return;
-    total++; const lvl=p.item.level; if(perLvl[lvl])perLvl[lvl].t++;
+    if(p.type!=="choice" || p.cat!=="grammar") return;
+    topicScores[p.item.topic].total++;
     const a=answers[p.key];
-    if(a&&a.correct){correct++; if(perLvl[lvl])perLvl[lvl].c++;}
-    else{ if(p.item.topic) gaps.push({topic:p.item.topic, level:lvl}); }
+    if(a&&a.correct){ correct++; topicScores[p.item.topic].correct++; }
   });
-  let glevel="A1"; for(const l of LEVELS){const p=perLvl[l]; if(p.t && p.c/p.t>=0.6)glevel=l;}
-  return {correct,total,gaps,glevel,perLvl};
+  const total=G_FULL.length;
+  const percentage=Math.round(correct/total*100);
+  const glevel=percentage>=85?"C1":percentage>=70?"B2":percentage>=50?"B1":percentage>=30?"A2":"A1";
+  const gaps=[];
+  Object.entries(topicScores).forEach(([topic,data])=>{
+    if(data.correct<data.total){
+      const mistakes=G_FULL.filter(g=>g.topic===topic && !(answers[g.key]&&answers[g.key].correct))
+        .map(g=>({question:g.q,answer:g.opts[g.correct]}));
+      gaps.push({topic,level:TOPIC_LEVEL[topic],correct:data.correct,total:data.total,mistakes,...TOPIC_DIFFICULTY[topic]});
+    }
+  });
+  gaps.sort((a,b)=>a.order-b.order);
+  return {correct,total,gaps,glevel,percentage,topicScores};
 }
 
 function calcSimple(cat){
@@ -752,15 +520,15 @@ function showResult(){
                 : `<div class="brk-row"><span class="lbl">Аудіювання<small>додамо незабаром</small></span><span class="val muted">—</span></div>`;
   document.getElementById("brk").innerHTML = brk;
 
-  const gapTopics = new Set(gram.gaps.filter(g=>g.level===level).map(g=>g.topic));
+  const gapTopics = new Set(gram.gaps.map(g=>g.topic));
   const tested = [];
-  PHASES.forEach(p=>{ if(p.type==="choice" && (p.cat==="gram_screen"||p.cat==="gram_deep") && p.item.level===level && p.item.topic) tested.push(p.item.topic); });
+  PHASES.forEach(p=>{ if(p.type==="choice" && p.cat==="grammar" && p.item.topic) tested.push(p.item.topic); });
   const uniqueTested = [...new Set(tested)];
   document.getElementById("gapsLead").textContent =
     `На рівні ${level} — теми, які перевірили. ○ варто підтягнути, ✓ вже впевнено:`;
   document.getElementById("chipRow").innerHTML = uniqueTested.map(t=>{
     const isGap = gapTopics.has(t);
-    return `<span class="chip ${isGap?'':'ok'}">${isGap?'○ ':'✓ '}${TOPIC_LABELS[t]||t}</span>`;
+    return `<span class="chip ${isGap?'':'ok'}">${isGap?'○ ':'✓ '}${t}</span>`;
   }).join("") || `<span class="chip ok">✓ основне на рівні ${level}</span>`;
 
   const [vt,vx]=VERDICTS[level];
@@ -768,7 +536,7 @@ function showResult(){
   document.getElementById("vText").textContent = vx;
 
   // ── план методиста: закрити поточний рівень → перейти до наступного ──
-  const gapNames = uniqueTested.filter(t=>gapTopics.has(t)).map(t=>TOPIC_LABELS[t]||t);
+  const gapNames = uniqueTested.filter(t=>gapTopics.has(t));
   const li = LEVELS.indexOf(level);
   const nextLvl = li<LEVELS.length-1 ? LEVELS[li+1] : null;
   let planTxt;
@@ -788,6 +556,16 @@ function showResult(){
   }
   document.getElementById("planText").innerHTML = planTxt;
 
+
+  const roadmap = document.getElementById("grammarRoadmap");
+  if(roadmap){
+    const weeks=Math.max(1,Math.ceil(gram.gaps.length/2));
+    const weekWord=weeks===1?"тиждень":weeks<5?"тижні":"тижнів";
+    const cards=gram.gaps.length
+      ? `<ol class="roadmap-topic-list">${gram.gaps.map(g=>`<li><span>${g.topic}</span><small>${g.correct}/${g.total}</small></li>`).join("")}</ol>`
+      : `<div class="roadmap-success">Усі 12 граматичних тем пройдено без помилок. Наступний крок — перевірити їх у письмі та говорінні.</div>`;
+    roadmap.innerHTML=`<div class="roadmap-title"><h3>Детальна граматична дорожня карта</h3><p>Результат: <b>${gram.correct}/${gram.total}</b> (${gram.percentage}%). План: ${weeks} ${weekWord}, по дві теми на тиждень.</p></div>${cards}`;
+  }
   document.getElementById("startpt").textContent =
     "Це Ваша точка старту. За тиждень ми порівняємо — і Ви почуєте різницю у власному голосі.";
 
@@ -795,7 +573,7 @@ function showResult(){
     `<b>debug (методисту):</b><br>`+
     `ЛЕКСИКА h=${lex.h.toFixed(2)} f=${lex.f.toFixed(2)} score=${lex.score.toFixed(3)} → ${lex.vlevel}, ≈${lex.words}<br>`+
     `псевдо: ${lex.pH}/${lex.pT} ${lex.f>0.3?'⚠':'✓'}<br>`+
-    `СКРИНІНГ → робочий рівень ${workingLevel}<br>`+
+    `ПОВНА ГРАМАТИКА → робочий рівень ${workingLevel}<br>`+
     `ГРАМАТИКА ${gram.correct}/${gram.total} → ${gram.glevel} · прогалини: ${gram.gaps.map(g=>g.topic).join(", ")||"—"}<br>`+
     `ЧИТАННЯ ${read.correct}/${read.total} → ${read.glevel}<br>`+
     (listen?`АУДІО ${listen.correct}/${listen.total} → ${listen.glevel}<br>`:`АУДІО вимкнено<br>`)+
@@ -829,3 +607,4 @@ render();
 </script>
 </body>
 </html>
+
