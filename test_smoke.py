@@ -1111,6 +1111,26 @@ def test_scoped_support_and_finance_workspaces():
         ok("підтримка й фінанси мають вузькі панелі та повернення до навчання")
 
 
+def test_admin_staff_panel_links_and_railway_role_note():
+    """Адмін має прямі входи у вузькі панелі та пам'ятку про призначення UID."""
+    section("Адмін — підтримка, фінанси та Railway UID")
+    admin = (ROOT / "admin_analytics.html").read_text(encoding="utf-8")
+    support = (ROOT / "support_workspace.html").read_text(encoding="utf-8")
+    finance = (ROOT / "finance_workspace.html").read_text(encoding="utf-8")
+    admin_markers = (
+        "SUPPORT_IDS", "FINANCE_IDS", "Railway → Variables", "Кілька UID вказуй через кому",
+        "support_workspace.html", "finance_workspace.html", "url.searchParams.set('from', 'admin')",
+    )
+    return_markers = ("get('from')==='admin'", "admin_analytics.html", "👑 Режим адміна")
+    missing = [f"admin:{m}" for m in admin_markers if m not in admin]
+    missing += [f"support:{m}" for m in return_markers if m not in support]
+    missing += [f"finance:{m}" for m in return_markers if m not in finance]
+    if missing:
+        fail("службові панелі або пам'ятка про UID неповні: " + ", ".join(missing))
+    else:
+        ok("адмін відкриває обидві службові панелі й бачить інструкцію SUPPORT_IDS / FINANCE_IDS")
+
+
 def test_guided_native_navigation():
     """Наступна дія адаптивна, пам'ятає стан і не закриває помилку за раз."""
     section("PWA — керована нативна навігація і SRS помилок")
@@ -1209,6 +1229,7 @@ def main():
     test_contextual_learning_cycle_ends_with_result_and_next_action()
     test_staff_and_learner_modes_are_two_way()
     test_scoped_support_and_finance_workspaces()
+    test_admin_staff_panel_links_and_railway_role_note()
     test_guided_native_navigation()
     test_visible_lexical_streak_and_blogger_entry()
     test_desktop_shell_keeps_mobile_navigation_intact()

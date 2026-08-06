@@ -236,6 +236,8 @@ tr:hover td{background:var(--surface2)}
               <option value="learner">🎓 Режим учня</option>
               <option value="admin" selected>👑 Режим адміна</option>
               <option value="blogger">📣 Режим блогера</option>
+              <option value="support">🎧 Панель підтримки</option>
+              <option value="finance">💼 Панель бухгалтера-фіндиректора</option>
             </select>
           </div>
           <div class="blogger-switcher" id="blogger-switcher" hidden>
@@ -467,6 +469,13 @@ function switchWorkspaceMode(){
   const mode = document.getElementById('workspace-mode-select')?.value || 'admin';
   try { localStorage.setItem(WORKSPACE_MODE_KEY, mode); } catch(e) {}
   if (mode === 'learner') { openLearnerMode(); return; }
+  if (mode === 'support' || mode === 'finance') {
+    const page = mode === 'support' ? 'support_workspace.html' : 'finance_workspace.html';
+    const url = new URL(page, location.href);
+    url.searchParams.set('from', 'admin');
+    location.assign(url.toString());
+    return;
+  }
   const switcher = document.getElementById('blogger-switcher');
   if (switcher) switcher.hidden = mode !== 'blogger';
 }
@@ -476,7 +485,8 @@ function configureWorkspaceModes(role){
   const normalized = role === 'dev' ? 'developer' : role;
   const options = normalized === 'developer'
     ? [['learner','🎓 Режим учня'],['developer','🛠 Режим девелопера']]
-    : [['learner','🎓 Режим учня'],['admin','👑 Режим адміна'],['blogger','📣 Режим блогера']];
+    : [['learner','🎓 Режим учня'],['admin','👑 Режим адміна'],['blogger','📣 Режим блогера'],
+       ['support','🎧 Панель підтримки'],['finance','💼 Панель бухгалтера-фіндиректора']];
   const requested = new URLSearchParams(location.search).get('mode');
   select.innerHTML = options.map(([value,label]) => '<option value="'+value+'">'+label+'</option>').join('');
   select.value = options.some(([value]) => value === requested)
@@ -487,7 +497,7 @@ function initializeWorkspaceMode(){
   const select = document.getElementById('workspace-mode-select');
   if (!select) return;
   const requested = new URLSearchParams(location.search).get('mode');
-  select.value = requested === 'blogger' ? 'blogger' : 'admin';
+  select.value = ['blogger','support','finance'].includes(requested) ? requested : 'admin';
   switchWorkspaceMode();
 }
 function openSelectedBloggerPanel(){
@@ -2537,6 +2547,7 @@ const CMDS = [
    {c:'/setup_live_group', a:'посилання|ID', d:'Прив\'язати Premium-групу.', t:'soon'},
  ]},
  {g:'👤 Доступи', items:[
+   {c:'Railway → Variables', a:'SUPPORT_IDS / FINANCE_IDS', d:'Щоб призначити конкретних працівників, спочатку дізнайся їхній Telegram UID командою /myid. Додай UID підтримки у SUPPORT_IDS, а UID бухгалтера-фіндиректора — у FINANCE_IDS. Кілька UID вказуй через кому. Адміну обидві панелі доступні через перемикач режимів угорі.', t:'railway', where:'Railway → backend SpeakChain → Variables'},
    {c:'/add_admin', a:'USER_ID', d:'Супер-адмін додає під-адміна.', t:'soon'},
    {c:'/remove_admin', a:'USER_ID', d:'Відкликати права під-адміна.', t:'soon'},
    {c:'/list_admins', a:'', d:'Показати всіх адмінів.', t:'soon'},
@@ -2564,6 +2575,7 @@ const CMDS = [
 const CMD_T = {
   chat:  {l:'тільки в чаті', bg:'rgba(139,148,178,.15)', fg:'var(--text2)'},
   panel: {l:'вже в панелі',  bg:'rgba(62,207,142,.15)',  fg:'var(--green)'},
+  railway:{l:'Railway-змінні', bg:'rgba(79,142,247,.15)', fg:'var(--accent)'},
   soon:  {l:'можна перенести', bg:'rgba(124,110,247,.15)', fg:'var(--purple)'},
   test:  {l:'тест',          bg:'rgba(245,158,11,.15)',  fg:'var(--amber)'},
 };
