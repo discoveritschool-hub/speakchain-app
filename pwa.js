@@ -6,11 +6,39 @@
   const REFRESH_KEY = 'speakchain.pwa.refresh.v1';
   const EXP_KEY = 'speakchain.pwa.access.exp.v1';
   const USER_KEY = 'speakchain.pwa.user.v1';
+  const LIVE_ROOMS_ENABLED = false;
   const nativeFetch = window.fetch.bind(window);
   let installPrompt = null;
   let authResolve = null;
   let authPromise = null;
   let authConfig = null;
+
+  function applyFeatureGates() {
+    window.SC_FEATURES = Object.assign({}, window.SC_FEATURES, {liveRooms: LIVE_ROOMS_ENABLED});
+    if (LIVE_ROOMS_ENABLED) return;
+    const hideRooms = () => {
+      if (!document.getElementById('sc-live-rooms-gate')) {
+        const style = document.createElement('style');
+        style.id = 'sc-live-rooms-gate';
+        style.textContent = '[onclick*="startLiveMatch"],[onclick*="joinLiveMatch"]{display:none!important}';
+        (document.head || document.documentElement).appendChild(style);
+      }
+      document.querySelectorAll('[onclick*="startLiveMatch"],[onclick*="joinLiveMatch"]').forEach(control => {
+        control.hidden = true;
+        control.setAttribute('aria-hidden', 'true');
+      });
+    };
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', hideRooms, {once: true});
+    else hideRooms();
+    document.addEventListener('click', event => {
+      const control = event.target?.closest?.('[onclick*="startLiveMatch"],[onclick*="joinLiveMatch"]');
+      if (!control) return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    }, true);
+  }
+
+  applyFeatureGates();
 
   function apiBase() {
     try { if (window.SC_BOT_API) return String(window.SC_BOT_API).replace(/\/$/, ''); } catch (_) {}
