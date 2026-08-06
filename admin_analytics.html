@@ -470,6 +470,19 @@ function switchWorkspaceMode(){
   const switcher = document.getElementById('blogger-switcher');
   if (switcher) switcher.hidden = mode !== 'blogger';
 }
+function configureWorkspaceModes(role){
+  const select = document.getElementById('workspace-mode-select');
+  if (!select) return;
+  const normalized = role === 'dev' ? 'developer' : role;
+  const options = normalized === 'developer'
+    ? [['learner','🎓 Режим учня'],['developer','🛠 Режим девелопера']]
+    : [['learner','🎓 Режим учня'],['admin','👑 Режим адміна'],['blogger','📣 Режим блогера']];
+  const requested = new URLSearchParams(location.search).get('mode');
+  select.innerHTML = options.map(([value,label]) => '<option value="'+value+'">'+label+'</option>').join('');
+  select.value = options.some(([value]) => value === requested)
+    ? requested : normalized === 'developer' ? 'developer' : 'admin';
+  switchWorkspaceMode();
+}
 function initializeWorkspaceMode(){
   const select = document.getElementById('workspace-mode-select');
   if (!select) return;
@@ -1034,6 +1047,7 @@ async function loadData() {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     data = await res.json();
     if (data.error) throw new Error(data.error);
+    configureWorkspaceModes(data.staff_role || (data.is_dev ? 'developer' : 'admin'));
     populateBloggerPanelSelect();
 
     /* Ховаємо фінанси від розробника — тепер це ЦІЛІ вкладки «Гроші» і «Блогери» */

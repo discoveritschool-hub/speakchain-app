@@ -1077,7 +1077,10 @@ def test_staff_and_learner_modes_are_two_way():
     shell_markers = (
         "function openStaffWorkspace(page)", "location.assign(u.toString())",
         "workspace_mode_open", "function verifiedWorkspaceRole(D,H)",
-        "role==='blogger'", "Панель адміністратора", "Панель блогера", "Панелі блогерів",
+        "role==='blogger'", "role==='developer'", "role==='support'", "role==='finance'",
+        "Панель адміністратора", "Панель блогера", "Панелі блогерів",
+        "Панель підтримки", "Фінансова панель", "Фінансовий директор / бухгалтер",
+        "support_workspace.html", "finance_workspace.html",
         "admin_analytics.html?mode=blogger",
     )
     panel_markers = ("Режим учня", "function openLearnerMode()", "new URL('index_v2.html',location.href)",
@@ -1088,7 +1091,24 @@ def test_staff_and_learner_modes_are_two_way():
     if missing:
         fail(f"двосторонній перемикач ролей неповний: {missing}")
     else:
-        ok("адміністратор і блогер перемикаються між службовою та учнівською панелями")
+        ok("кожна працівницька роль має власну панель і повний режим учня")
+
+
+def test_scoped_support_and_finance_workspaces():
+    """Підтримка й фінанси не повинні відкривати повну адмінку."""
+    section("PWA — окремі робочі місця підтримки та фінансів")
+    support = (ROOT / "support_workspace.html").read_text(encoding="utf-8")
+    finance = (ROOT / "finance_workspace.html").read_text(encoding="utf-8")
+    markers = (
+        (support, ("support_api", "Панель підтримки", "Режим учня", "function openLearnerMode()")),
+        (finance, ("admin_analytics", "Фінансовий директор / бухгалтер", "Режим учня",
+                   "function openLearnerMode()", "data.finance", "data.revenue")),
+    )
+    missing = [needle for source, needles in markers for needle in needles if needle not in source]
+    if missing:
+        fail(f"окремі staff-workspaces неповні: {missing}")
+    else:
+        ok("підтримка й фінанси мають вузькі панелі та повернення до навчання")
 
 
 def test_guided_native_navigation():
@@ -1188,6 +1208,7 @@ def main():
     test_own_video_is_visible_and_uses_the_shared_learning_loop()
     test_contextual_learning_cycle_ends_with_result_and_next_action()
     test_staff_and_learner_modes_are_two_way()
+    test_scoped_support_and_finance_workspaces()
     test_guided_native_navigation()
     test_visible_lexical_streak_and_blogger_entry()
     test_desktop_shell_keeps_mobile_navigation_intact()

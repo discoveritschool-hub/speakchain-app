@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>SpeakChain · Підтримка</title><link rel="stylesheet" href="tokens.css">
+  <style>
+    *{box-sizing:border-box}body{margin:0;background:var(--bg,#0d0d14);color:var(--text,#eaeaf5);font-family:system-ui,-apple-system,sans-serif}
+    header{position:sticky;top:0;z-index:3;display:flex;gap:12px;align-items:center;padding:14px 18px;background:rgba(13,13,20,.94);border-bottom:1px solid var(--line,#2a2a3a)}
+    header div{flex:1}h1{font-size:18px;margin:0}.sub{font-size:12px;color:var(--text2,#8888a8);margin-top:2px}
+    select,button,textarea{font:inherit;border:1px solid var(--line,#2a2a3a);border-radius:10px;background:var(--bg-card2,#1e1e2a);color:var(--text,#eaeaf5)}
+    select,button{padding:9px 11px}button{cursor:pointer}.primary{background:var(--purple,#7c6ef7);border-color:transparent;color:#fff;font-weight:700}
+    main{max-width:920px;margin:auto;padding:18px}.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}.toolbar select{flex:1;min-width:160px}
+    .ticket,.empty,.error{padding:14px;border:1px solid var(--line,#2a2a3a);border-radius:14px;background:var(--bg-card,#16161f);margin-bottom:9px}
+    .ticket{cursor:pointer}.ticket.urgent{border-color:#f76e6e}.ticket.high{border-color:#f7a35c}.row{display:flex;gap:8px;align-items:center}.row b{flex:1}
+    .chip{font-size:11px;padding:3px 8px;border-radius:99px;background:var(--bg-card2,#1e1e2a);color:var(--text2,#8888a8)}
+    .preview{font-size:13px;color:var(--text2,#8888a8);margin-top:9px;line-height:1.5}.message{padding:11px;border-radius:10px;background:var(--bg-card2,#1e1e2a);margin:8px 0;white-space:pre-wrap}
+    .message.out{margin-left:28px;background:rgba(124,110,247,.15)}textarea{width:100%;padding:12px;resize:vertical;min-height:100px}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:9px}
+    @media(max-width:620px){header{align-items:flex-start;flex-wrap:wrap}header select{width:100%}main{padding:12px}}
+  </style>
+  <script src="pwa.js?v=20260806-staff1"></script>
+</head>
+<body>
+<header><div><h1>🎧 Панель підтримки</h1><div class="sub">Звернення клієнтів і відповіді</div></div>
+  <select id="workspace-mode" onchange="switchMode()"><option value="support">🎧 Підтримка</option><option value="learner">🎓 Режим учня</option></select></header>
+<main><div class="toolbar"><select id="status" onchange="loadInbox()"><option value="open">Відкриті</option><option value="assigned">В роботі</option><option value="closed">Закриті</option></select><button onclick="loadInbox()">↻ Оновити</button></div><div id="content" class="empty">Завантаження…</div></main>
+<script>
+const $=s=>document.querySelector(s), esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function openLearnerMode(){location.assign(new URL('index_v2.html',location.href).toString())}
+function switchMode(){if($('#workspace-mode').value==='learner')openLearnerMode()}
+async function supportApi(op,extra={}){if(!window.SC_PWA?.post)throw new Error('Сесія не готова');return SC_PWA.post('/support_api',{op,...extra})}
+async function loadInbox(){const box=$('#content');box.className='empty';box.textContent='Завантаження…';try{const r=await supportApi('list',{status:$('#status').value});const a=r.tickets||[];box.className='';box.innerHTML=a.length?a.map(t=>`<article class="ticket ${esc(t.priority||'normal')}" onclick="openTicket('${esc(t.id)}')"><div class="row"><b>${esc(t.id)} · ${esc(t.user_name||'Користувач')}</b><span class="chip">${esc(t.language||'?')}</span><span class="chip">${esc(t.category||'other')}</span></div><div class="preview">${esc(t.preview||'')}</div></article>`).join(''):'<div class="empty">Звернень у цій черзі немає.</div>'}catch(e){box.className='error';box.textContent='Не вдалося відкрити підтримку: '+e.message}}
+async function openTicket(id){const box=$('#content');box.className='empty';box.textContent='Завантаження…';try{const r=await supportApi('detail',{ticket_id:id}),t=r.ticket;box.className='';box.innerHTML=`<button onclick="loadInbox()">← До черги</button><article class="ticket" style="margin-top:10px"><div class="row"><b>${esc(t.id)} · ${esc(t.user_name||'Користувач')}</b><span class="chip">${esc(t.language||'?')}</span></div>${(t.messages||[]).map(m=>`<div class="message ${m.direction==='out'?'out':''}"><b>${m.direction==='out'?'Команда':'Користувач'}</b><br>${esc(m.translated||m.original||'')}</div>`).join('')}<textarea id="answer" placeholder="Напишіть відповідь українською — користувач отримає її своєю мовою"></textarea><div class="actions"><button class="primary" onclick="reply('${esc(id)}')">Надіслати</button><button onclick="act('${esc(id)}','take')">Взяти</button><button onclick="act('${esc(id)}','close')">Закрити</button></div></article>`}catch(e){box.className='error';box.textContent='Не вдалося відкрити звернення: '+e.message}}
+async function reply(id){const answer=$('#answer').value.trim();if(!answer)return;await supportApi('reply',{ticket_id:id,answer});openTicket(id)}
+async function act(id,op){await supportApi(op,{ticket_id:id});op==='close'?loadInbox():openTicket(id)}
+loadInbox();
+</script></body></html>
