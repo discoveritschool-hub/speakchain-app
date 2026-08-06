@@ -811,6 +811,9 @@ let msgCount = 0;
 let maxMsgs = DAILY_LIMIT;
 let sessionMsgCount = 0;   // сумарно за всю сесію (не скидається між сценаріями)
 let beaconSent = false;    // анти-дубль для sendBeacon
+const sessionId = (globalThis.crypto && typeof globalThis.crypto.randomUUID === 'function')
+  ? globalThis.crypto.randomUUID()
+  : `chainy-${Date.now()}-${Math.random().toString(36).slice(2, 14)}`;
 let history = [];
 let isLoading = false;
 let pixabayCache = {};
@@ -2294,6 +2297,7 @@ function endSession() {
     const payload = JSON.stringify({
       uid:       UID,
       init_data: tg?.initData || '',
+      session_id: sessionId,
       messages:  sessionMsgCount,
       voice:     !!voiceMode,
     });
@@ -2475,6 +2479,7 @@ renderScenarios();
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           uid: UID, init_data: tg?.initData || '',
+          session_id: sessionId,
           messages: sessionMsgCount, voice: !!voiceMode,
         }),
       });

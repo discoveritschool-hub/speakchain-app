@@ -796,6 +796,16 @@ def test_production_assets_and_browser_chainy_auth():
         fail("standalone Chainy не підключає браузерну PWA-сесію")
     else:
         ok("standalone Chainy підключає браузерну PWA-сесію")
+    session_contract = (
+        "crypto.randomUUID" in buddy
+        and buddy.count("session_id: sessionId") >= 2
+        and "crypto.randomUUID" in shell
+        and shell.count("session_id: sessionId") >= 2
+    )
+    if not session_contract:
+        fail("Chainy session_id відсутній у standalone або PWA payload")
+    else:
+        ok("Chainy передає стабільний session_id у fetch/beacon і PWA")
     if "chainy.png" in buddy or "chainy.png" in shell:
         fail("залишилось посилання з неправильним регістром chainy.png")
     else:
