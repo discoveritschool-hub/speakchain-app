@@ -776,6 +776,12 @@ def test_production_assets_and_browser_chainy_auth():
     else:
         ok("paywall має × і «Нагадати пізніше» закриває модальне вікно")
 
+    explicit_finish = 'aria-label="Завершити на сьогодні">✓ Завершити</button>'
+    if explicit_finish not in buddy or explicit_finish.replace('"', '\\"') not in shell:
+        fail("Chainy знову має неочевидну кнопку завершення замість явної дії")
+    else:
+        ok("Chainy має явну кнопку «Завершити» у standalone та PWA")
+
 
 def test_visible_feature_map_and_role_workspaces():
     """Ключові функції мають прямі входи, а staff-панелі — role gate."""
@@ -814,11 +820,37 @@ def test_visible_feature_map_and_role_workspaces():
         fail(f"словник не підключений до лексичного маршруту: {missing_vocab}")
     else:
         ok("словник має тематичні/SRS-фільтри й чотири стани засвоєння")
+
+    language_bridge_markers = (
+        "function showPhrasePopover(phrase, context = '')",
+        "requestPhraseTranslation(pendingPhraseSave, context)",
+        "translation: pendingPhraseTranslation",
+        "function togglePhraseTranslation(index, button)",
+        "Сховати переклад",
+        "speakPendingPhrase()",
+    )
+    buddy = (ROOT / "speaking_buddy.html").read_text(encoding="utf-8")
+    language_surface = buddy + vocab
+    missing_bridge = [marker for marker in language_bridge_markers if marker not in language_surface]
+    if missing_bridge:
+        fail(f"переклад/збереження фраз Chainy не завершені: {missing_bridge}")
+    else:
+        ok("виділена фраза Chainy має переклад, озвучення і збереження у словник")
     raw_apps, _, _ = _extract_apps(shell)
     try:
         embedded_vocab = json.loads(raw_apps or "{}").get("ov-vocab", {})
+        embedded_buddy = json.loads(raw_apps or "{}").get("s-buddy", {})
         embedded_text = embedded_vocab.get("html", "") + embedded_vocab.get("js", "")
-        if all(marker in embedded_text for marker in ("На повторення", "function phraseState(p)", "speakchain-practice-phrase")):
+        embedded_buddy_text = embedded_buddy.get("html", "") + embedded_buddy.get("js", "")
+        embedded_markers = (
+            "На повторення", "function phraseState(p)", "speakchain-practice-phrase",
+            "function togglePhraseTranslation(index, button)", "Сховати переклад",
+        )
+        buddy_markers = ("sc_phrase_select", "captureSelection", "Завершити на сьогодні")
+        shell_markers = ("function speakWordCard()", "translation:WORD_CARD.translation_uk", "d.type==='sc_phrase_select'")
+        if (all(marker in embedded_text for marker in embedded_markers)
+                and all(marker in embedded_buddy_text for marker in buddy_markers)
+                and all(marker in shell for marker in shell_markers)):
             ok("оновлений словник синхронізований у PWA-оболонку")
         else:
             fail("vocab.html оновлено, але вбудований ov-vocab залишився старим")
