@@ -445,6 +445,26 @@ def test_pwa_identity_handoff():
     else:
         ok("Google-вхід має тайм-аут, видиму помилку й адаптивну кнопку")
 
+    continuity_markers = (
+        "function resumeStoredSession(source)",
+        "window.addEventListener('storage'",
+        "resumeStoredSession('storage')",
+        "window.addEventListener('focus'",
+        "resumeStoredSession('visibility')",
+        "session_storage_failed",
+    )
+    missing = [marker for marker in continuity_markers if marker not in pwa]
+    if missing:
+        fail(f"PWA-сесія не відновлюється після входу в іншій вкладці: {missing}")
+    else:
+        ok("Google/Telegram-вхід відновлює стару вкладку й явно ловить незбережену сесію")
+
+    sw = (ROOT / "sw.js").read_text(encoding="utf-8")
+    if "speakchain-shell-v11" not in sw:
+        fail("service worker не оновив cache version для auth-виправлення")
+    else:
+        ok("service worker примусово оновлює PWA auth-код після деплою")
+
 
 def _has_node():
     try:
