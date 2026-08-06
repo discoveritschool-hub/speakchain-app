@@ -119,6 +119,33 @@
       throw error;
     }
   }
+  function telegramReturnUser() {
+    try {
+      const params = new URLSearchParams(location.search);
+      if (params.get('telegram_auth') !== '1' || !params.get('id') || !params.get('hash')) return null;
+      return Object.fromEntries(
+        ['id', 'first_name', 'last_name', 'username', 'photo_url', 'auth_date', 'hash']
+          .filter(key => params.has(key))
+          .map(key => [key, params.get(key)])
+      );
+    } catch (_) { return null; }
+  }
+  async function sessionFromTelegramLoginReturn() {
+    const user = telegramReturnUser();
+    if (!user) return null;
+    try {
+      const result = await telegramLogin(user);
+      try { history.replaceState({}, document.title, new URL('index_v2.html', location.href).href); } catch (_) {}
+      try {
+        window.opener?.postMessage({type: 'speakchain-auth-complete'}, location.origin);
+        window.close();
+      } catch (_) {}
+      return result;
+    } catch (error) {
+      try { history.replaceState({}, document.title, new URL('index_v2.html', location.href).href); } catch (_) {}
+      return null;
+    }
+  }
   async function googleLogin(response) {
     authStatus('Перевіряємо Google…');
     try {
@@ -157,7 +184,13 @@
     script.setAttribute('data-radius', '12');
     script.setAttribute('data-userpic', 'false');
     script.setAttribute('data-request-access', 'write');
-    script.setAttribute('data-onauth', 'SC_PWA.telegramLogin(user)');
+    // Redirect back to our own origin instead of relying on Telegram's
+    // cross-window callback. Some browsers close the OAuth popup but block
+    // the callback to its opener; the same-origin return can always persist
+    // the session in shared localStorage.
+    const authUrl = new URL('index_v2.html', location.href);
+    authUrl.searchParams.set('telegram_auth', '1');
+    script.setAttribute('data-auth-url', authUrl.href);
     host.replaceChildren(script);
   }
   async function showAuthGate() {
@@ -195,6 +228,8 @@
     if (hasTrustedEmbeddedPayload()) {
       return {authenticated: true, source: 'telegram-payload', userId: 0};
     }
+    const telegramReturn = await sessionFromTelegramLoginReturn();
+    if (telegramReturn) return telegramReturn;
     const restored = await restoreSession();
     if (restored.authenticated) return restored;
     return showAuthGate();
@@ -250,6 +285,11 @@
     }
   });
   window.addEventListener('focus', () => resumeStoredSession('focus'));
+  window.addEventListener('message', event => {
+    if (event.origin === location.origin && event.data?.type === 'speakchain-auth-complete') {
+      resumeStoredSession('telegram-return');
+    }
+  });
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') resumeStoredSession('visibility');
   });
