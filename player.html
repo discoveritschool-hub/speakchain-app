@@ -174,17 +174,17 @@
       font-size:var(--fs); font-weight:700; cursor:pointer; text-decoration:none;
     }
 
-    /* ── Interactive SpeakChain transcript — separate from YouTube iframe ── */
-    #interactive-transcript { display:none; max-width:860px; margin:10px auto 0; padding:12px 14px; border:1px solid var(--line); border-radius:var(--r); background:var(--bg-card); }
+    /* ── Clickable captions rendered above the cross-origin YouTube iframe ── */
+    #interactive-transcript { display:none; position:absolute; z-index:25; left:5%; right:5%; bottom:46px; padding:8px 12px; border-radius:var(--r); background:rgba(8,8,13,.86); backdrop-filter:blur(5px); pointer-events:auto; }
     #interactive-transcript.show { display:block; }
-    .transcript-label { color:var(--text2); font-size:var(--fs-xs); font-weight:700; text-transform:uppercase; letter-spacing:.05em; margin-bottom:7px; }
+    .transcript-label { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); }
     #transcript-overlay { min-height:32px; }
     #transcript-text {
-      font-size:var(--fs); font-weight:600; color:var(--text); text-align:left; line-height:1.6;
+      font-size:clamp(15px,2.4vw,22px); font-weight:700; color:#fff; text-align:center; line-height:1.45;
       transition:opacity 0.2s; max-width:100%;
     }
-    .caption-word { border:0; padding:0 1px; background:transparent; color:inherit; font:inherit; cursor:pointer; touch-action:manipulation; }
-    .caption-word:active { color:var(--gold); text-decoration:underline; }
+    .caption-word { position:relative; z-index:1; border:0; padding:1px 2px; background:transparent; color:inherit; font:inherit; cursor:pointer; touch-action:manipulation; }
+    .caption-word:hover, .caption-word:active { color:var(--gold); text-decoration:underline; }
     .caption-word:focus-visible { outline:2px solid var(--gold); outline-offset:2px; border-radius:3px; }
     #word-card { display:none; max-width:860px; margin:10px auto 0; padding:12px 14px; border:1px solid var(--line); border-radius:var(--r); background:var(--bg-card); }
     #word-card.show { display:block; }
@@ -466,12 +466,11 @@
     <div style="color:var(--text2);font-size:var(--fs)">YouTube не завантажився</div>
     <a id="yt-link" class="open-yt-btn" target="_blank">▶ Відкрити на YouTube</a>
   </div>
+  <section id="interactive-transcript" aria-live="polite">
+    <div class="transcript-label">Інтерактивні субтитри SpeakChain</div>
+    <div id="transcript-overlay"><div id="transcript-text"></div></div>
+  </section>
 </div>
-
-<section id="interactive-transcript" aria-live="polite">
-  <div class="transcript-label">Інтерактивні субтитри SpeakChain</div>
-  <div id="transcript-overlay"><div id="transcript-text"></div></div>
-</section>
 
 <aside id="word-card" aria-live="polite">
   <div class="word-card-head"><span id="word-card-word"></span><span id="word-card-phonetic"></span></div>
@@ -1253,6 +1252,7 @@ btnSaveLoop.addEventListener("click", saveLoopPhrase);
 
 // ── Subtitles ──
 let captions=[];
+let captionSyncTimer=null;
 async function loadCaptions(){
   // Використовуємо явний captions_url якщо переданий, інакше будуємо з apiBase
   const capBase = captionsUrl || (apiBase ? apiBase + "/captions" : "");
@@ -1269,7 +1269,7 @@ async function loadCaptions(){
       .filter(e=>e.text.length>0);
     if (captions.length>0){
       document.getElementById("interactive-transcript").classList.add("show");
-      setInterval(syncCaptions,150); // 150ms для плавніших субтитрів
+      if (!captionSyncTimer) captionSyncTimer=setInterval(syncCaptions,150);
     } else showTranscriptNotice('У цього відео немає доступних англійських субтитрів.');
   } catch(e){ showTranscriptNotice('Не вдалося завантажити інтерактивні субтитри. Спробуй ще раз.'); }
 }
@@ -1316,14 +1316,14 @@ function renderCaption(text) {
       button.addEventListener('click', async event => {
         event.preventDefault();
         event.stopPropagation();
-        await inspectCaptionWord(part.toLowerCase());
+        await inspectCaptionWord(part.toLowerCase(), text);
       });
       el.appendChild(button);
     } else el.appendChild(document.createTextNode(part));
   }
 }
 
-async function inspectCaptionWord(word) {
+async function inspectCaptionWord(word, context='') {
   // Натискання на слово — окрема дія: ставимо відео на паузу, але не
   // передаємо подію в YouTube. Відтворення лишається на окремій кнопці ⏯.
   try { if (ytReady && ytPlayer?.getPlayerState?.() === YT.PlayerState.PLAYING) ytPlayer.pauseVideo(); } catch (_) {}
@@ -1338,7 +1338,7 @@ async function inspectCaptionWord(word) {
   try {
     const response = await fetch(`${apiBase}/word_lookup`, {
       method: 'POST', headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({uid, init_data: TG?.initData || '', word})
+      body: JSON.stringify({uid, init_data: TG?.initData || '', word, context})
     });
     const data = await response.json();
     const value = data.card || {};
