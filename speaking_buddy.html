@@ -1560,7 +1560,7 @@ async function sendMessage() {
   const text = input.value.trim();
   if (!text || isLoading || msgCount >= maxMsgs) return;
 
-  addMessage('user', text);
+  const userBubble = addMessage('user', text);
   history.push({ role: 'user', content: text });
   input.value = '';
   input.style.height = 'auto';
@@ -1603,10 +1603,20 @@ async function sendMessage() {
 
   showTyping();
 
+  let requestTimer = null;
+  const restoreFailedTurn = () => {
+    if (history.at(-1)?.role === 'user' && history.at(-1)?.content === text) history.pop();
+    input.value = text;
+    autoResize(input);
+    userBubble?.remove();
+  };
   try {
+    const controller = new AbortController();
+    requestTimer = setTimeout(() => controller.abort(), 32000);
     const res = await fetch(BOT_API + '/buddy_chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      signal: controller.signal,
       body: JSON.stringify({
         uid:           UID,
         scenario:      currentScenario.title,
@@ -1625,6 +1635,8 @@ async function sendMessage() {
       })
     });
 
+    clearTimeout(requestTimer);
+    requestTimer = null;
     const data = await res.json();
     removeTyping();
 
@@ -1633,6 +1645,7 @@ async function sendMessage() {
       addMessage('ai', data.reply || 'Щоб продовжити — приєднайся до SpeakChain 🚀', []);
       showTrialCTA();
     } else if (data.error) {
+      if (data.retryable) restoreFailedTurn();
       addMessage('ai', data.error, []);
     } else {
       msgCount++;
@@ -1648,8 +1661,10 @@ async function sendMessage() {
       if (data.grammar_card) showGrammarCard(data.grammar_card);
     }
   } catch (e) {
+    if (requestTimer) clearTimeout(requestTimer);
+    restoreFailedTurn();
     removeTyping();
-    addMessage('ai', 'Something went wrong. Please try again.', []);
+    addMessage('ai', 'Chainy не встигла відповісти. Твій текст збережено — натисни «Надіслати» ще раз.', []);
   }
 
   isLoading = false;

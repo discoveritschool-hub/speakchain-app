@@ -806,6 +806,17 @@ def test_production_assets_and_browser_chainy_auth():
         fail("Chainy session_id відсутній у standalone або PWA payload")
     else:
         ok("Chainy передає стабільний session_id у fetch/beacon і PWA")
+    reliability_contract = (
+        buddy.count("new AbortController()") >= 1
+        and buddy.count("controller.abort()") >= 1
+        and buddy.count("restoreFailedTurn") >= 3
+        and shell.count("new AbortController()") >= 1
+        and shell.count("restoreFailedTurn") >= 3
+    )
+    if not reliability_contract:
+        fail("Chainy frontend timeout/retry recovery відсутній у standalone або PWA")
+    else:
+        ok("Chainy має client timeout і чисте відновлення тексту для retry")
     if "chainy.png" in buddy or "chainy.png" in shell:
         fail("залишилось посилання з неправильним регістром chainy.png")
     else:
