@@ -69,6 +69,9 @@ html,body{height:100%;background:var(--bg);color:var(--text);
   background:var(--bg-card);border-radius:var(--r-sm);border:1px solid var(--line)}
 .phrase-row.due{border-color:rgba(79,142,247,.3);background:rgba(79,142,247,.05)}
 .phrase-text{flex:1;font-size:var(--fs);font-weight:500;color:var(--text);line-height:1.4}
+.phrase-translation-toggle{margin-top:7px;border:0;background:none;color:var(--purple-text);font-size:var(--fs-xs);font-weight:700;cursor:pointer;padding:0}
+.phrase-translation{display:none;margin-top:6px;padding:8px 10px;border-radius:var(--r-sm);background:var(--purple-bg);color:var(--purple-text);font-size:var(--fs-sm);line-height:1.4}
+.phrase-translation.show{display:block}
 .phrase-actions{display:flex;gap:4px;flex-shrink:0}
 .icon-btn{width:34px;height:34px;border-radius:50%;border:1px solid var(--line);
   background:var(--bg-card2);display:flex;align-items:center;justify-content:center;
@@ -302,6 +305,8 @@ function renderList(phrases) {
     const seen=Number(p.seen||p.encounters||1),said=Number(p.said||p.pronounced||0),used=Number(p.used||p.applied||0),fixed=state==='mastered'||Number(p.consolidated||0)>0;
     return `<div class="phrase-row ${isDue ? 'due' : ''}" id="row-${i}">
       <div style="flex:1;min-width:0"><div class="phrase-text">${escHtml(p.phrase)}</div>
+      <button class="phrase-translation-toggle" onclick="togglePhraseTranslation(${i},this)" aria-expanded="false">Переклад</button>
+      <div class="phrase-translation" id="translation-${i}"></div>
       <div class="phrase-meta">${escHtml(topic)}${p.level?' · '+escHtml(p.level):''}</div>
       <div class="phrase-stages">Побачила ${seen?'✓':'○'} · Сказала ${said?'✓':'○'} · Використала ${used?'✓':'○'} · Закріпила ${fixed?'✓':'○'}</div>
       <button class="phrase-practice" onclick="practicePhrase('${escAttr(p.phrase)}','${escAttr(topic)}')">Використати у своїй відповіді →</button></div>
@@ -330,6 +335,36 @@ function filterPhrases() {
 
 function practicePhrase(phrase,topic){
   window.parent.postMessage({type:'speakchain-practice-phrase',phrase,topic},location.origin);
+}
+
+async function togglePhraseTranslation(index, button) {
+  const phrase = allPhrases[index];
+  const box = document.getElementById(`translation-${index}`);
+  if (!phrase || !box) return;
+  if (box.classList.contains('show')) {
+    box.classList.remove('show');
+    button.setAttribute('aria-expanded', 'false');
+    button.textContent = 'Переклад';
+    return;
+  }
+  box.classList.add('show');
+  button.setAttribute('aria-expanded', 'true');
+  button.textContent = 'Сховати переклад';
+  let translation = String(phrase.translation_uk || phrase.translation || '').trim();
+  if (!translation) {
+    box.textContent = 'Перекладаю…';
+    try {
+      const res = await fetch(`${API}/word_lookup`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({uid: UID, init_data: INIT_DATA, text: phrase.phrase, context: phrase.phrase}),
+      });
+      const data = await res.json();
+      translation = String(data.translation_uk || data.card?.translation_uk || '').trim();
+      if (translation) phrase.translation_uk = translation;
+    } catch(e) {}
+  }
+  box.textContent = translation || 'Переклад поки недоступний';
 }
 
 // ── TTS ──
