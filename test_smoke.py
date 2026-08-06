@@ -459,8 +459,25 @@ def test_pwa_identity_handoff():
     else:
         ok("Google/Telegram-вхід відновлює стару вкладку й явно ловить незбережену сесію")
 
+    telegram_return_markers = (
+        "function telegramReturnUser()",
+        "function sessionFromTelegramLoginReturn()",
+        "script.setAttribute('data-auth-url', authUrl.href)",
+        "authUrl.searchParams.set('telegram_auth', '1')",
+        "window.opener?.postMessage({type: 'speakchain-auth-complete'}",
+        "resumeStoredSession('telegram-return')",
+        "history.replaceState({}, document.title",
+    )
+    forbidden_telegram_markers = ("data-onauth", "SC_PWA.telegramLogin(user)")
+    missing = [marker for marker in telegram_return_markers if marker not in pwa]
+    forbidden = [marker for marker in forbidden_telegram_markers if marker in pwa]
+    if missing or forbidden:
+        fail(f"Telegram popup не має надійного same-origin callback: missing={missing}, forbidden={forbidden}")
+    else:
+        ok("Telegram popup повертає підписані дані на same-origin URL і відновлює головне вікно")
+
     sw = (ROOT / "sw.js").read_text(encoding="utf-8")
-    if "speakchain-shell-v11" not in sw:
+    if "speakchain-shell-v12" not in sw:
         fail("service worker не оновив cache version для auth-виправлення")
     else:
         ok("service worker примусово оновлює PWA auth-код після деплою")
