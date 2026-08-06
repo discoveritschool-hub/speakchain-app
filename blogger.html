@@ -500,6 +500,11 @@ textarea.form-input { resize:vertical; min-height:76px; line-height:1.5; }
 .fold.open .fold-b{ max-height:2200px; opacity:1; }
 .learner-mode{margin-left:auto;border:1px solid var(--line);background:var(--bg-card2);color:var(--text);
   border-radius:var(--r-pill);padding:8px 11px;font-size:var(--fs-xs);font-weight:var(--fw-bold);cursor:pointer;white-space:nowrap}
+.workspace-switcher{margin-left:auto;display:flex;align-items:center;gap:7px;min-width:0}
+.workspace-switcher select{max-width:180px;min-width:128px;height:34px;padding:0 28px 0 10px;
+  border:1px solid var(--line);border-radius:var(--r-pill);background:var(--bg-card2);color:var(--text);
+  font-size:var(--fs-xs);font-weight:var(--fw-bold);cursor:pointer}
+@media(max-width:600px){.workspace-switcher{width:100%;margin-left:0}.workspace-switcher select{flex:1;min-width:0}}
 </style>
 <script src="pwa.js?v=20260805-auth1"></script>
 </head>
@@ -514,7 +519,13 @@ textarea.form-input { resize:vertical; min-height:76px; line-height:1.5; }
       <div class="header-sub" id="header-sub">Панель блогера</div>
     </div>
     <div class="badge">📣 Блогер</div>
-    <button class="learner-mode" onclick="openLearnerMode()">🎓 До навчання</button>
+    <div class="workspace-switcher">
+      <select id="workspace-mode-select" aria-label="Перемкнути режим" onchange="switchWorkspaceMode()">
+        <option value="learner">🎓 Режим учня</option>
+        <option value="blogger" selected>📣 Режим блогера</option>
+      </select>
+      <select id="admin-blogger-select" aria-label="Вибрати блогера" onchange="switchAdminBlogger()" hidden></select>
+    </div>
   </div>
 </div>
 
@@ -958,6 +969,9 @@ if (TG) { try { if (typeof TG.requestFullscreen === 'function') TG.requestFullsc
 
 const BOT_API = 'https://speakchain-bot-production.up.railway.app';
 function openLearnerMode(){location.assign(new URL('index_v2.html',location.href).toString());}
+const WORKSPACE_MODE_KEY = 'sc_workspace_mode';
+const ADMIN_BLOGGER_KEY = 'sc_admin_selected_blogger';
+const ADMIN_BLOGGER_LIST_KEY = 'sc_admin_blogger_list';
 
 const params  = new URLSearchParams(window.location.search);
 const dataRaw = params.get('d');
@@ -966,6 +980,45 @@ const selectedBlogger = (params.get('blogger') || '').trim();
 let D = {};
 if (dataRaw) {
   try { D = JSON.parse(decodeURIComponent(dataRaw)); } catch(e){}
+}
+
+function switchWorkspaceMode(){
+  const mode = document.getElementById('workspace-mode-select')?.value || 'blogger';
+  try { localStorage.setItem(WORKSPACE_MODE_KEY, mode); } catch(e) {}
+  if (mode === 'learner') { openLearnerMode(); return; }
+  if (mode === 'admin') { location.assign(new URL('admin_analytics.html', location.href).toString()); return; }
+  const bloggerSelect = document.getElementById('admin-blogger-select');
+  if (bloggerSelect) bloggerSelect.hidden = !adminView;
+}
+function switchAdminBlogger(){
+  if (!adminView) return;
+  const blogger = document.getElementById('admin-blogger-select')?.value || '';
+  if (!blogger || blogger === selectedBlogger) return;
+  try { localStorage.setItem(ADMIN_BLOGGER_KEY, blogger); } catch(e) {}
+  const url = new URL('blogger.html', location.href);
+  url.searchParams.set('from', 'admin');
+  url.searchParams.set('blogger', blogger);
+  location.assign(url.toString());
+}
+function initializeWorkspaceSwitcher(){
+  const modeSelect = document.getElementById('workspace-mode-select');
+  const bloggerSelect = document.getElementById('admin-blogger-select');
+  if (!modeSelect || !bloggerSelect) return;
+  if (adminView) {
+    modeSelect.insertAdjacentHTML('afterbegin', '<option value="admin">👑 Режим адміна</option>');
+    let bloggers = [];
+    try { bloggers = JSON.parse(localStorage.getItem(ADMIN_BLOGGER_LIST_KEY) || '[]'); } catch(e) {}
+    if (selectedBlogger && !bloggers.includes(selectedBlogger)) bloggers.push(selectedBlogger);
+    bloggers = bloggers.filter(Boolean).sort((a,b) => String(a).localeCompare(String(b), 'uk'));
+    bloggerSelect.innerHTML = bloggers.map(name => '<option value="' + esc(name) + '">@' + esc(name) + '</option>').join('');
+    bloggerSelect.value = selectedBlogger;
+    bloggerSelect.hidden = false;
+  }
+  modeSelect.value = 'blogger';
+  try {
+    localStorage.setItem(WORKSPACE_MODE_KEY, 'blogger');
+    if (selectedBlogger) localStorage.setItem(ADMIN_BLOGGER_KEY, selectedBlogger);
+  } catch(e) {}
 }
 
 /* ── Тост ── */
@@ -1727,6 +1780,7 @@ async function initializeBloggerPanel() {
       return;
     }
   }
+  initializeWorkspaceSwitcher();
   fill();
 }
 
