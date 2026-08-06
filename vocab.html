@@ -164,6 +164,48 @@ html,body{height:100%;background:var(--bg);color:var(--text);
 .topic-filter{margin:0 16px 8px;width:calc(100% - 32px);border:1px solid var(--line);border-radius:var(--r-sm);padding:9px 11px;background:var(--bg-card);color:var(--text);font-size:var(--fs-sm);flex-shrink:0}
 .phrase-meta{font-size:var(--fs-xs);color:var(--text2);margin-top:5px}.phrase-stages{font-size:10px;color:var(--text3);margin-top:4px}
 .phrase-practice{border:0;background:none;color:var(--purple-text);font-size:var(--fs-xs);font-weight:700;cursor:pointer;padding:5px 0 0}
+.collection-tabs{display:grid;grid-template-columns:1fr 1fr;gap:0;padding:0 16px 10px;flex-shrink:0;border-bottom:1px solid var(--line)}
+.collection-tab{min-height:42px;border:0;border-bottom:2px solid transparent;background:transparent;color:var(--text2);font:inherit;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px}
+.collection-tab.on{color:var(--text);border-bottom-color:var(--purple)}
+.collection-count{min-width:20px;padding:1px 6px;border-radius:999px;background:var(--bg-card2);font-size:var(--fs-xs);color:var(--text2)}
+.collection-tab.on .collection-count{background:var(--purple-bg);color:var(--purple-text)}
+.word-row{cursor:pointer;transition:border-color var(--dur),background var(--dur)}
+.word-row:hover,.word-row.selected{border-color:rgba(124,110,247,.55);background:var(--purple-bg)}
+.word-translation{margin-top:3px;color:var(--purple-text);font-size:var(--fs-sm)}
+.word-detail{position:fixed;z-index:80;top:0;right:0;bottom:0;width:min(390px,42vw);display:flex;flex-direction:column;background:var(--bg-card);border-left:1px solid var(--line);box-shadow:-12px 0 40px rgba(0,0,0,.36);transform:translateX(105%);transition:transform .24s var(--ease)}
+.word-detail.show{transform:translateX(0)}
+.word-detail-head{display:flex;align-items:center;gap:10px;min-height:58px;padding:10px 14px;border-bottom:1px solid var(--line)}
+.word-detail-close{width:36px;height:36px;border:1px solid var(--line);border-radius:50%;background:var(--bg-card2);color:var(--text);font-size:20px;cursor:pointer}
+.word-detail-title{flex:1;min-width:0;font-size:var(--fs-md);font-weight:800;color:var(--gold);overflow:hidden;text-overflow:ellipsis}
+.word-detail-speak{width:38px;height:38px;border:0;border-radius:50%;background:var(--purple-bg);color:var(--purple-text);font-size:18px;cursor:pointer}
+.word-detail-body{padding:16px;overflow-y:auto;overscroll-behavior:contain}
+.word-detail-phonetic{color:var(--text2);margin-bottom:8px}
+.word-detail-translation{font-size:var(--fs-md);font-weight:700;line-height:1.45;margin-bottom:8px}
+.word-detail-definition{color:var(--text2);line-height:1.5;margin-bottom:16px}
+.word-detail-label{margin:12px 0 7px;padding:6px 8px;background:var(--bg-card2);color:var(--text2);font-size:var(--fs-xs);font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+.word-example{padding:11px 8px;border-bottom:1px solid var(--line);font-size:var(--fs);line-height:1.55}
+.word-example-uk{display:block;color:var(--text2);font-size:var(--fs-sm);margin-top:4px}
+.example-word{border:0;padding:0 1px;background:transparent;color:inherit;font:inherit;cursor:pointer}
+.example-word:hover,.example-word:active{background:rgba(124,110,247,.23);color:var(--purple-text);border-radius:3px}
+.word-detail-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px}
+.word-detail-action{padding:11px;border:1px solid var(--line);border-radius:var(--r-sm);background:var(--bg-card2);color:var(--text);font:inherit;font-weight:700;cursor:pointer}
+.word-detail-action.primary{border-color:var(--purple);background:var(--purple);color:#fff}
+.detail-loading{padding:32px 16px;text-align:center;color:var(--text2)}
+@media (min-width:900px){
+  body.word-detail-open .header,body.word-detail-open .collection-tabs,body.word-detail-open .search-wrap,body.word-detail-open .vocab-filters,body.word-detail-open .topic-filter,body.word-detail-open .phrase-list{margin-right:min(390px,42vw)}
+  body.word-detail-open .add-btn{right:calc(min(390px,42vw) + 20px)}
+}
+@media (max-width:899px){
+  .word-detail{top:auto;left:0;width:100%;height:min(62dvh,560px);border-left:0;border-top:1px solid var(--line);border-radius:var(--r-lg) var(--r-lg) 0 0;box-shadow:var(--shadow-sheet);transform:translateY(105%);padding-bottom:env(safe-area-inset-bottom)}
+  .word-detail.show{transform:translateY(0)}
+}
+@media (max-width:520px){
+  .header{padding:10px 12px 8px}.header-title{font-size:var(--fs)}.repeat-btn{padding:7px 10px;font-size:var(--fs-sm)}
+  .collection-tabs{padding:0 8px 8px}.collection-tab{font-size:var(--fs-sm)}
+  .search-wrap,.vocab-filters{padding-left:10px;padding-right:10px}.topic-filter{margin-left:10px;margin-right:10px;width:calc(100% - 20px)}
+  .phrase-list{padding-left:8px;padding-right:8px}.phrase-row{padding:11px 10px}.phrase-actions{gap:2px}.icon-btn{width:32px;height:32px}
+  .word-detail{height:min(78dvh,680px)}
+}
 </style>
 <script src="pwa.js"></script>
 </head>
@@ -176,8 +218,13 @@ html,body{height:100%;background:var(--bg);color:var(--text);
   </button>
 </div>
 
+<nav class="collection-tabs" aria-label="Розділи словника">
+  <button class="collection-tab on" id="tab-words" onclick="setCollectionTab('words',this)">🔖 Збережені слова <span class="collection-count" id="words-count">0</span></button>
+  <button class="collection-tab" id="tab-phrases" onclick="setCollectionTab('phrases',this)">★ Збережені фрази <span class="collection-count" id="phrases-count">0</span></button>
+</nav>
+
 <div class="search-wrap">
-  <input class="search-input" id="search" placeholder="🔍 Пошук фраз..." oninput="filterPhrases()">
+  <input class="search-input" id="search" placeholder="🔍 Пошук слів..." oninput="filterPhrases()">
 </div>
 
 <div class="vocab-filters" id="vocab-filters">
@@ -191,6 +238,15 @@ html,body{height:100%;background:var(--bg);color:var(--text);
 <div class="phrase-list" id="phrase-list">
   <div class="loading"><div class="spinner"></div>Завантаження...</div>
 </div>
+
+<aside class="word-detail" id="word-detail" aria-live="polite" aria-label="Картка слова">
+  <div class="word-detail-head">
+    <button class="word-detail-close" onclick="closeWordDetail()" aria-label="Закрити">×</button>
+    <div class="word-detail-title" id="detail-word">Слово</div>
+    <button class="word-detail-speak" onclick="speakTTS(selectedDetailWord)" aria-label="Прослухати">🔊</button>
+  </div>
+  <div class="word-detail-body" id="word-detail-body"><div class="detail-loading">Обери слово зі списку</div></div>
+</aside>
 
 <button class="add-btn" onclick="openAddModal()" title="Додати фразу">+</button>
 
@@ -242,6 +298,27 @@ let mediaStream = null;
 let sessionCount = 0;   // опрацьовано слів за сесію
 let beaconSent  = false;
 let activeFilter = 'all';
+let activeCollection = 'words';
+let selectedDetailWord = '';
+
+function isSavedWord(item) {
+  return /^[A-Za-z][A-Za-z'-]*$/.test(String(item?.phrase || '').trim());
+}
+
+function setCollectionTab(collection, button) {
+  activeCollection = collection;
+  document.querySelectorAll('.collection-tab').forEach(tab => tab.classList.toggle('on', tab === button));
+  const search = document.getElementById('search');
+  search.placeholder = collection === 'words' ? '🔍 Пошук слів...' : '🔍 Пошук фраз...';
+  closeWordDetail();
+  filterPhrases();
+}
+
+function updateCollectionCounts() {
+  const words = allPhrases.filter(isSavedWord).length;
+  document.getElementById('words-count').textContent = words;
+  document.getElementById('phrases-count').textContent = allPhrases.length - words;
+}
 
 // ── Load data ──
 async function loadData() {
@@ -255,7 +332,8 @@ async function loadData() {
     allPhrases = d.phrases || [];
     duePhrases = d.due    || [];
     renderTopicFilter();
-    renderList(allPhrases);
+    updateCollectionCounts();
+    filterPhrases();
     updateDueBadge();
   } catch(e) {
     document.getElementById('phrase-list').innerHTML =
@@ -303,22 +381,23 @@ function renderList(phrases) {
     const ytId  = extractYTId(p.video_url);
     const state=phraseState(p),topic=phraseTopic(p);
     const seen=Number(p.seen||p.encounters||1),said=Number(p.said||p.pronounced||0),used=Number(p.used||p.applied||0),fixed=state==='mastered'||Number(p.consolidated||0)>0;
-    return `<div class="phrase-row ${isDue ? 'due' : ''}" id="row-${i}">
+    const wordMode=isSavedWord(p), phraseValue=String(p.phrase||''), sourceIndex=allPhrases.indexOf(p);
+    return `<div class="phrase-row ${isDue ? 'due' : ''} ${wordMode?'word-row':''}" id="row-${i}" ${wordMode?`onclick="openWordDetail('${escAttr(phraseValue)}','${escAttr(phraseValue)}',this)"`:''}>
       <div style="flex:1;min-width:0"><div class="phrase-text">${escHtml(p.phrase)}</div>
-      <button class="phrase-translation-toggle" onclick="togglePhraseTranslation(${i},this)" aria-expanded="false">Переклад</button>
-      <div class="phrase-translation" id="translation-${i}"></div>
+      ${wordMode&&p.translation_uk?`<div class="word-translation">${escHtml(p.translation_uk)}</div>`:`<button class="phrase-translation-toggle" onclick="event.stopPropagation();togglePhraseTranslation(${sourceIndex},this)" aria-expanded="false">Переклад</button>`}
+      <div class="phrase-translation" id="translation-${sourceIndex}"></div>
       <div class="phrase-meta">${escHtml(topic)}${p.level?' · '+escHtml(p.level):''}</div>
       <div class="phrase-stages">Побачила ${seen?'✓':'○'} · Сказала ${said?'✓':'○'} · Використала ${used?'✓':'○'} · Закріпила ${fixed?'✓':'○'}</div>
-      <button class="phrase-practice" onclick="practicePhrase('${escAttr(p.phrase)}','${escAttr(topic)}')">Використати у своїй відповіді →</button></div>
+      ${wordMode?'':`<button class="phrase-practice" onclick="practicePhrase('${escAttr(p.phrase)}','${escAttr(topic)}')">Використати у своїй відповіді →</button>`}</div>
       <div class="phrase-actions">
-        <div class="icon-btn" onclick="speakTTS('${escAttr(p.phrase)}')" title="Послухати">🔊</div>
+        <div class="icon-btn" onclick="event.stopPropagation();speakTTS('${escAttr(p.phrase)}')" title="Послухати">🔊</div>
         <div class="icon-btn" id="mic-${i}" onclick="toggleRecord(${i}, '${escAttr(p.phrase)}')" title="Проговорити">🎤</div>
         ${ytId ? `<div class="icon-btn" onclick="openYT('${ytId}')" title="Відкрити відео">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="var(--red)">
             <path d="M23 7s-.3-2-1.2-2.8c-1.1-1.2-2.4-1.2-3-1.3C16.2 2.8 12 2.8 12 2.8s-4.2 0-6.8.1c-.6.1-1.9.1-3 1.3C1.3 5 1 7 1 7S.7 9.1.7 11.2v2c0 2.1.3 4.2.3 4.2s.3 2 1.2 2.8c1.1 1.2 2.6 1.1 3.3 1.2C7.3 21.6 12 21.6 12 21.6s4.2 0 6.8-.2c.6-.1 1.9-.1 3-1.3.9-.8 1.2-2.8 1.2-2.8s.3-2.1.3-4.2v-2C23.3 9.1 23 7 23 7zM9.7 15.5V8.4l6.6 3.6-6.6 3.5z"/>
           </svg>
         </div>` : ''}
-        <div class="icon-btn" onclick="deletePhrase('${escAttr(p.phrase)}')" title="Видалити"
+        <div class="icon-btn" onclick="event.stopPropagation();deletePhrase('${escAttr(p.phrase)}')" title="Видалити"
           style="font-size:var(--fs);color:var(--text3)">✕</div>
       </div>
     </div>`;
@@ -329,8 +408,72 @@ function renderList(phrases) {
 function filterPhrases() {
   const q = document.getElementById('search').value.toLowerCase().trim();
   const topic=document.getElementById('topic-filter').value;
-  const filtered=allPhrases.filter(p=>(!q||p.phrase.toLowerCase().includes(q))&&(!topic||phraseTopic(p)===topic)&&(activeFilter==='all'||phraseState(p)===activeFilter));
+  const filtered=allPhrases.filter(p=>(activeCollection==='words'?isSavedWord(p):!isSavedWord(p))&&(!q||p.phrase.toLowerCase().includes(q))&&(!topic||phraseTopic(p)===topic)&&(activeFilter==='all'||phraseState(p)===activeFilter));
   renderList(filtered);
+}
+
+async function openWordDetail(word, context='', row=null) {
+  selectedDetailWord = String(word || '').toLowerCase();
+  if (!selectedDetailWord) return;
+  document.querySelectorAll('.word-row').forEach(item => item.classList.toggle('selected', item === row));
+  document.body.classList.add('word-detail-open');
+  document.getElementById('word-detail').classList.add('show');
+  document.getElementById('detail-word').textContent = selectedDetailWord;
+  const body = document.getElementById('word-detail-body');
+  body.innerHTML = '<div class="detail-loading"><div class="spinner" style="margin:0 auto 10px"></div>Завантажую картку…</div>';
+  try {
+    const response = await fetch(`${API}/word_lookup`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({uid:UID,init_data:INIT_DATA,word:selectedDetailWord,context})
+    });
+    const data = await response.json();
+    const card = data.card || {};
+    if (!response.ok || !card.word) throw new Error(data.error || 'lookup_failed');
+    selectedDetailWord = card.word || selectedDetailWord;
+    document.getElementById('detail-word').textContent = selectedDetailWord;
+    body.replaceChildren();
+    const phonetic=document.createElement('div'); phonetic.className='word-detail-phonetic'; phonetic.textContent=card.phonetic||'';
+    const translation=document.createElement('div'); translation.className='word-detail-translation'; translation.textContent=card.translation_uk||'Переклад недоступний';
+    const definition=document.createElement('div'); definition.className='word-detail-definition'; definition.textContent=card.definition_en||'';
+    body.append(phonetic,translation,definition);
+    const label=document.createElement('div'); label.className='word-detail-label'; label.textContent='Приклади'; body.appendChild(label);
+    renderWordExamples(body,card.examples||[]);
+    const actions=document.createElement('div'); actions.className='word-detail-actions';
+    const listen=document.createElement('button'); listen.className='word-detail-action'; listen.textContent='🔊 Слухати'; listen.onclick=()=>speakTTS(selectedDetailWord);
+    const save=document.createElement('button'); save.className='word-detail-action primary'; save.textContent='🔖 Зберегти'; save.onclick=()=>saveDetailWord(selectedDetailWord);
+    actions.append(listen,save); body.appendChild(actions);
+  } catch (_) {
+    body.innerHTML='<div class="empty"><div class="empty-icon">⚠️</div>Не вдалося завантажити картку слова</div>';
+  }
+}
+
+function renderWordExamples(container, examples) {
+  const values=Array.isArray(examples)?examples:[];
+  if (!values.length) { const empty=document.createElement('div'); empty.className='word-example'; empty.textContent='Прикладів поки немає.'; container.appendChild(empty); return; }
+  values.forEach(example=>{
+    const row=document.createElement('div'); row.className='word-example';
+    const sentence=String(example?.en||'');
+    sentence.split(/([A-Za-z][A-Za-z'-]*)/g).filter(Boolean).forEach(part=>{
+      if (/^[A-Za-z][A-Za-z'-]*$/.test(part)) {
+        const button=document.createElement('button'); button.className='example-word'; button.textContent=part;
+        button.onclick=()=>openWordDetail(part,sentence); row.appendChild(button);
+      } else row.appendChild(document.createTextNode(part));
+    });
+    if (example?.uk) { const uk=document.createElement('span'); uk.className='word-example-uk'; uk.textContent=example.uk; row.appendChild(uk); }
+    container.appendChild(row);
+  });
+}
+
+function closeWordDetail() {
+  document.body.classList.remove('word-detail-open');
+  document.getElementById('word-detail')?.classList.remove('show');
+  document.querySelectorAll('.word-row.selected').forEach(item=>item.classList.remove('selected'));
+}
+
+async function saveDetailWord(word) {
+  if (!word) return;
+  await fetch(`${API}/vocab_update`, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({uid:UID,init_data:INIT_DATA,action:'add',phrase:word})});
+  await loadData();
 }
 
 function practicePhrase(phrase,topic){
@@ -500,6 +643,8 @@ async function deletePhrase(phrase) {
     allPhrases  = allPhrases.filter(p => p.phrase !== phrase);
     duePhrases  = duePhrases.filter(p => p.phrase !== phrase);
     filterPhrases();
+    updateCollectionCounts();
+    if (selectedDetailWord === String(phrase).toLowerCase()) closeWordDetail();
     updateDueBadge();
   } catch(e) {}
 }
