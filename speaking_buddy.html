@@ -2276,7 +2276,15 @@ function showGrammarCard(card) {
   grammarCardTimer = setTimeout(() => el.classList.remove('show'), 5000);
 }
 
-// ── Сповіщення після сесії: при закритті мініаппу шлемо beacon ──
+// Завершення — лише явною кнопкою ✓. Навігація або згортання лише
+// призупиняють медіа: інакше випадковий swipe нараховує XP та ланку.
+function pauseSession() {
+  stopRealtimeSession();
+  stopLegacyListening();
+  clearInactivityTimers();
+}
+
+// Сумісність для явного завершення з PWA-оболонки.
 function endSession() {
   stopRealtimeSession();
   if (beaconSent) return;
@@ -2295,9 +2303,9 @@ function endSession() {
 }
 
 document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'hidden') endSession();
+  if (document.visibilityState === 'hidden') pauseSession();
 });
-window.addEventListener('pagehide', endSession);
+window.addEventListener('pagehide', pauseSession);
 
 // ── Маршрут «відео → Chainy»: ?context=video&topic=... ──
 function normalizeConversationBrief(topic, mode, summary, phrases, resourceKind, videoId) {

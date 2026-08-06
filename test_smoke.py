@@ -839,6 +839,18 @@ def test_production_assets_and_browser_chainy_auth():
     else:
         ok("Chainy має явну кнопку «Завершити» у standalone та PWA")
 
+    lifecycle_regressions = (
+        "if (document.visibilityState === 'hidden') endSession()",
+        "window.addEventListener('pagehide', endSession)",
+        "typeof b.endSession === 'function') b.endSession()",
+    )
+    if any(marker in buddy or marker in shell for marker in lifecycle_regressions):
+        fail("навігація або згортання Chainy знову неявно завершують сесію")
+    elif "function pauseSession()" not in buddy or "typeof b.pauseSession === 'function'" not in shell:
+        fail("Chainy не має явного pause-шляху для навігації та згортання")
+    else:
+        ok("навігація і згортання лише ставлять Chainy на паузу")
+
 
 def test_visible_feature_map_and_role_workspaces():
     """Ключові функції мають прямі входи, а staff-панелі — role gate."""
