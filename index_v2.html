@@ -3894,9 +3894,14 @@ function verifiedWorkspaceRole(D,H){
   if(D?.is_super_admin||H?.is_super_admin)return 'super_admin';
   if(D?.is_admin||H?.is_admin)return 'admin';
   if(D?.is_dev||H?.is_dev)return 'developer';
+  if(D?.is_finance||H?.is_finance)return 'finance';
+  if(D?.is_support||H?.is_support)return 'support';
   if(D?.is_blogger||H?.is_blogger)return 'blogger';
   const raw=String(D?.staff_role||H?.staff_role||D?.role||H?.role||'').toLowerCase();
-  return ['super_admin','admin','developer','blogger'].includes(raw)?raw:'';
+  const aliases={dev:'developer',support_assistant:'support',support_agent:'support',
+    accountant:'finance',finance_director:'finance',finance_accountant:'finance'};
+  const role=aliases[raw]||raw;
+  return ['super_admin','admin','developer','support','finance','blogger'].includes(role)?role:'';
 }
 function openStaffWorkspace(page){
   const u=new URL(page,location.href);u.searchParams.set('api',BOT_API);
@@ -3907,12 +3912,17 @@ function renderRoleWorkspace(D,H){
   const role=verifiedWorkspaceRole(D,H),box=$('#role-workspace'),host=$('#role-workspace-menu');
   if(!box||!host||!role){if(box)box.classList.remove('on');return;}
   box.classList.add('on');
-  const labels={super_admin:'Super Admin',admin:'Адміністратор',developer:'Девелопер',blogger:'Блогер'};
+  const labels={super_admin:'Super Admin',admin:'Адміністратор',developer:'Девелопер',
+    support:'Асистент підтримки',finance:'Фінансовий директор / бухгалтер',blogger:'Блогер'};
   $('#role-workspace-label').textContent=labels[role];
   const items=role==='blogger'
     ?[{ic:'📣',t:'Панель блогера',s:'аудиторія, контент, конверсія, виплати',p:'blogger.html'}]
     :role==='developer'
-      ?[{ic:'🛠',t:'Панель девелопера',s:'API, jobs, помилки, flags і тестові режими',p:'admin_analytics.html'}]
+      ?[{ic:'🛠',t:'Панель девелопера',s:'API, jobs, помилки, flags і тестові режими',p:'admin_analytics.html?mode=developer'}]
+    :role==='support'
+      ?[{ic:'🎧',t:'Панель підтримки',s:'звернення клієнтів, відповіді, пріоритети й статуси',p:'support_workspace.html'}]
+    :role==='finance'
+      ?[{ic:'💼',t:'Фінансова панель',s:'доходи, витрати, податки, виплати й звітність',p:'finance_workspace.html'}]
       :[{ic:'🛡',t:'Панель адміністратора',s:'продукт, користувачі, контент і операції',p:'admin_analytics.html'},
          {ic:'📣',t:'Панелі блогерів',s:'вибір будь-якого блогера і безпечний перегляд його панелі',p:'admin_analytics.html?mode=blogger'},
          {ic:'🧭',t:'Стратегічна панель',s:'воронка, навчальні й продуктові метрики',p:'strategy_dashboard.html'}];
