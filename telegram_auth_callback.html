@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Вхід у SpeakChain</title>
+  <style>
+    html,body{height:100%;margin:0;background:#0d0d14;color:#eaeaf5;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",sans-serif}
+    body{display:grid;place-items:center;text-align:center;padding:24px;box-sizing:border-box}
+    .card{width:min(100%,360px);padding:28px;border:1px solid #2a2a3a;border-radius:20px;background:#16161f}
+    img{width:64px;height:64px;border-radius:18px}.title{margin:16px 0 6px;font-size:20px;font-weight:800}.note{color:#8888a8;font-size:14px;line-height:1.5}
+  </style>
+</head>
+<body>
+  <main class="card">
+    <img src="icon-192.png" alt="SpeakChain">
+    <div class="title">Завершуємо вхід…</div>
+    <div class="note">Це вікно закриється автоматично.</div>
+  </main>
+  <script src="pwa.js"></script>
+  <script>
+    window.SC_PWA.ready.then(session => {
+      if (session?.authenticated) setTimeout(() => location.replace('index_v2.html'), 400);
+    }).catch(() => {
+      document.querySelector('.note').textContent = 'Не вдалося завершити вхід. Закрийте це вікно й спробуйте ще раз.';
+    });
+  </script>
+</body>
+</html>
