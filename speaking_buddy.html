@@ -150,7 +150,7 @@
   .dot:nth-child(3) { animation-delay: 0.3s; }
   @keyframes bounce { 0%,80%,100%{transform:translateY(0)} 40%{transform:translateY(-5px)} }
   .chat-input-area { padding: 10px 12px; border-top: 1px solid var(--line); display: flex; gap: 8px; align-items: flex-end; flex-shrink: 0; background: var(--bg-card); }
-  .finish-btn { margin-left: 6px; width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--green); background: var(--green-bg); color: var(--green); font-size: var(--fs-md); font-weight: 700; cursor: pointer; flex-shrink: 0; }
+  .finish-btn { margin-left: 6px; min-height: 34px; border-radius: var(--r-pill); border: 1px solid var(--green); background: var(--green-bg); color: var(--green); padding: 7px 11px; font-size: var(--fs-xs); font-weight: 700; cursor: pointer; flex-shrink: 0; white-space: nowrap; }
   .finish-btn:active { transform: scale(0.92); }
   .chat-input-area textarea { flex: 1; background: var(--bg-card2); border: 1px solid var(--line); border-radius: var(--r-lg); padding: 10px 14px; font-size: var(--fs); color: var(--text); resize: none; max-height: 100px; min-height: 40px; font-family: inherit; line-height: 1.4; outline: none; }
   .chat-input-area textarea::placeholder { color: var(--text3); }
@@ -169,11 +169,16 @@
   .voice-toggle.active { background: rgba(62,207,142,.15); }
   .clickable-word { cursor: pointer; border-radius: 4px; transition: background .12s; }
   .clickable-word:active { background: rgba(124,110,247,.22); }
-  #phrase-save-bar { position: fixed; left: 12px; right: 12px; bottom: calc(14px + env(safe-area-inset-bottom)); z-index: 1600; display: none; align-items: center; gap: 10px; padding: 12px; border: 1px solid var(--line); border-radius: var(--r); background: var(--bg-card); box-shadow: 0 10px 34px rgba(0,0,0,.28); }
-  #phrase-save-bar.show { display: flex; }
-  #phrase-save-text { min-width: 0; flex: 1; color: var(--text); font-size: var(--fs-sm); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  #phrase-save-confirm { border: 0; border-radius: var(--r-sm); background: var(--purple); color: #fff; padding: 9px 12px; font-weight: 700; cursor: pointer; }
-  #phrase-save-cancel { border: 0; background: transparent; color: var(--text2); padding: 7px; cursor: pointer; }
+  #phrase-popover { position: fixed; inset: 0; z-index: 1600; display: none; align-items: flex-end; justify-content: center; padding: 16px; background: rgba(5,5,10,.58); backdrop-filter: blur(5px); }
+  #phrase-popover.show { display: flex; }
+  .phrase-popover-card { width: min(100%,460px); padding: 18px; border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--bg-card); box-shadow: 0 16px 48px rgba(0,0,0,.42); }
+  .phrase-popover-label { color: var(--text3); font-size: var(--fs-xs); font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
+  #phrase-popover-original { margin-top: 6px; color: var(--text); font-size: var(--fs-md); line-height: 1.45; }
+  #phrase-popover-translation { min-height: 22px; margin-top: 12px; color: var(--purple-text); font-size: var(--fs); line-height: 1.45; }
+  .phrase-popover-actions { display: grid; grid-template-columns: auto 1fr auto; gap: 8px; margin-top: 16px; }
+  .phrase-popover-btn { border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--bg-card2); color: var(--text); padding: 10px 12px; font-weight: 700; cursor: pointer; }
+  #phrase-save-confirm { border-color: var(--purple); background: var(--purple); color: #fff; }
+  #phrase-save-confirm:disabled { opacity: .55; }
 
   /* 20.07 (рішення власниці): перемикач режиму Chainy прибрано —
      м'яка корекція тепер дефолт скрізь, окрім Strict Teacher (він
@@ -500,7 +505,7 @@
     </div>
     <div class="voice-toggle" id="voice-toggle" onclick="toggleVoiceMode()" title="Голосовий режим">🔊</div>
     <div class="chat-counter" id="chat-counter"></div>
-    <button class="finish-btn" id="finish-btn" onclick="finishSessionWithCard()" title="Завершити сесію">✓</button>
+    <button class="finish-btn" id="finish-btn" onclick="finishSessionWithCard()" title="Завершити сесію" aria-label="Завершити на сьогодні">✓ Завершити</button>
   </div>
   <div class="chat-messages" id="chat-messages"></div>
   <div class="limit-banner" id="limit-banner">
@@ -518,10 +523,18 @@
 </div>
 
 <!-- Additive Sentence Mining UI. It calls the existing save_phrase action. -->
-<div id="phrase-save-bar" role="dialog" aria-label="Зберегти у словник">
-  <div id="phrase-save-text"></div>
-  <button id="phrase-save-confirm" onclick="confirmPhraseSave()">＋ Словник</button>
-  <button id="phrase-save-cancel" onclick="hidePhraseSave()">✕</button>
+<div id="phrase-popover" role="dialog" aria-modal="true" aria-label="Переклад і словник" onclick="if(event.target===this)hidePhrasePopover()">
+  <div class="phrase-popover-card">
+    <div class="phrase-popover-label">Оригінал</div>
+    <div id="phrase-popover-original"></div>
+    <div class="phrase-popover-label" style="margin-top:14px">Переклад</div>
+    <div id="phrase-popover-translation">Перекладаю…</div>
+    <div class="phrase-popover-actions">
+      <button class="phrase-popover-btn" onclick="speakPendingPhrase()" title="Послухати англійською">🔊</button>
+      <button class="phrase-popover-btn" id="phrase-save-confirm" onclick="confirmPhraseSave()">＋ Зберегти у словник</button>
+      <button class="phrase-popover-btn" onclick="hidePhrasePopover()" aria-label="Закрити">✕</button>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -1366,28 +1379,69 @@ async function goToTrial() {
 }
 
 let pendingPhraseSave = '';
+let pendingPhraseTranslation = '';
+let pendingPhraseTranslationRequest = null;
 
-function showPhraseSave(phrase) {
-  pendingPhraseSave = String(phrase || '').replace(/\s+/g, ' ').trim().slice(0, 300);
-  if (pendingPhraseSave.length < 2) return;
-  const button = document.getElementById('phrase-save-confirm');
-  if (button) {
-    button.disabled = false;
-    button.textContent = '＋ Словник';
-  }
-  document.getElementById('phrase-save-text').textContent = `“${pendingPhraseSave}”`;
-  document.getElementById('phrase-save-bar').classList.add('show');
+async function requestPhraseTranslation(phrase, context = '') {
+  const res = await fetch(BOT_API + '/word_lookup', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      uid: UID,
+      init_data: tg?.initData || '',
+      text: phrase,
+      context: context || phrase,
+    }),
+  });
+  const data = await res.json();
+  if (!res.ok || data.ok === false) throw new Error('translation_failed');
+  return String(data.translation_uk || data.card?.translation_uk || '').trim();
 }
 
-function hidePhraseSave() {
+function showPhrasePopover(phrase, context = '') {
+  pendingPhraseSave = String(phrase || '').replace(/\s+/g, ' ').trim().slice(0, 300);
+  if (pendingPhraseSave.length < 2) return;
+  pendingPhraseTranslation = '';
+  const button = document.getElementById('phrase-save-confirm');
+  if (button) {
+    button.disabled = true;
+    button.textContent = 'Перекладаю…';
+  }
+  document.getElementById('phrase-popover-original').textContent = pendingPhraseSave;
+  document.getElementById('phrase-popover-translation').textContent = 'Перекладаю…';
+  document.getElementById('phrase-popover').classList.add('show');
+  pendingPhraseTranslationRequest = requestPhraseTranslation(pendingPhraseSave, context)
+    .then(translation => {
+      pendingPhraseTranslation = translation;
+      document.getElementById('phrase-popover-translation').textContent = translation || 'Переклад недоступний';
+      return translation;
+    })
+    .catch(() => {
+      document.getElementById('phrase-popover-translation').textContent = 'Не вдалося перекласти. Фразу все одно можна зберегти.';
+      return '';
+    })
+    .finally(() => {
+      button.disabled = false;
+      button.textContent = '＋ Зберегти у словник';
+    });
+}
+
+function hidePhrasePopover() {
   pendingPhraseSave = '';
-  document.getElementById('phrase-save-bar')?.classList.remove('show');
+  pendingPhraseTranslation = '';
+  pendingPhraseTranslationRequest = null;
+  document.getElementById('phrase-popover')?.classList.remove('show');
   try { window.getSelection()?.removeAllRanges(); } catch (e) {}
+}
+
+function speakPendingPhrase() {
+  if (pendingPhraseSave) speakTTS(pendingPhraseSave);
 }
 
 async function confirmPhraseSave() {
   const phrase = pendingPhraseSave;
   if (!phrase) return;
+  if (pendingPhraseTranslationRequest) await pendingPhraseTranslationRequest;
   const btn = document.getElementById('phrase-save-confirm');
   btn.disabled = true;
   btn.textContent = 'Зберігаю…';
@@ -1400,13 +1454,14 @@ async function confirmPhraseSave() {
         init_data: tg?.initData || '',
         action: 'save_phrase',
         phrase,
+        translation: pendingPhraseTranslation,
         source: 'speaking_buddy_transcript',
       }),
     });
     const data = await res.json();
     if (!res.ok || data.ok === false) throw new Error('save_failed');
     btn.textContent = '✓ Збережено';
-    setTimeout(hidePhraseSave, 750);
+    setTimeout(hidePhrasePopover, 750);
   } catch (e) {
     btn.textContent = 'Спробувати ще';
     addSystemNote('Не вдалося зберегти фразу. Спробуй ще раз.');
@@ -1427,7 +1482,7 @@ function makeTranscriptClickable(bubble, text) {
         const selected = String(window.getSelection?.() || '').trim();
         if (selected) return;
         event.stopPropagation();
-        showPhraseSave(part);
+        showPhrasePopover(part, text);
       });
       bubble.appendChild(word);
     } else {
@@ -1440,7 +1495,7 @@ function makeTranscriptClickable(bubble, text) {
     const phrase = String(selection || '').replace(/\s+/g, ' ').trim();
     if (!phrase || phrase.length < 2 || phrase.length > 300 || !selection.rangeCount) return;
     const range = selection.getRangeAt(0);
-    if (bubble.contains(range.commonAncestorContainer)) showPhraseSave(phrase);
+    if (bubble.contains(range.commonAncestorContainer)) showPhrasePopover(phrase, text);
   }, 30);
   bubble.addEventListener('mouseup', captureSelection);
   bubble.addEventListener('touchend', captureSelection, { passive: true });

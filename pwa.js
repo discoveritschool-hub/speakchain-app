@@ -28,6 +28,14 @@
   function clearSession() {
     try { [ACCESS_KEY, REFRESH_KEY, EXP_KEY, USER_KEY].forEach(key => localStorage.removeItem(key)); } catch (_) {}
   }
+  function resumeStoredSession(source) {
+    if (!accessValid()) return null;
+    const result = {authenticated: true, source: source || 'pwa', userId: Number(read(USER_KEY))};
+    document.getElementById('sc-auth-gate')?.remove();
+    if (authResolve) authResolve(result);
+    authResolve = null;
+    return result;
+  }
   function accessValid() {
     const exp = Date.parse(read(EXP_KEY));
     return Boolean(read(ACCESS_KEY) && read(USER_KEY) && Number.isFinite(exp) && exp > Date.now() + 30000);
@@ -96,11 +104,11 @@
   }
   function finishAuth(data, source) {
     writeSession(data);
-    document.getElementById('sc-auth-gate')?.remove();
-    const result = {authenticated: true, source, userId: Number(data.user_id)};
-    if (authResolve) authResolve(result);
-    authResolve = null;
-    return result;
+    const result = resumeStoredSession(source);
+    if (result) return result;
+    const error = new Error('Не вдалося зберегти вхід у цьому браузері. Дозвольте зберігання даних сайту й спробуйте ще раз.');
+    error.code = 'session_storage_failed';
+    throw error;
   }
   async function telegramLogin(user) {
     authStatus('Перевіряємо Telegram…');
@@ -231,6 +239,20 @@
     window.dispatchEvent(new CustomEvent('speakchain-install-ready'));
   });
   window.addEventListener('appinstalled', () => { installPrompt = null; });
+
+  // Google/Telegram login may complete in another tab. The previous tab used
+  // to keep its already-mounted auth gate forever even though the shared
+  // localStorage session was valid. Resume the pending boot as soon as that
+  // session becomes visible, and also re-check when the tab regains focus.
+  window.addEventListener('storage', event => {
+    if ([ACCESS_KEY, REFRESH_KEY, EXP_KEY, USER_KEY].includes(event.key)) {
+      resumeStoredSession('storage');
+    }
+  });
+  window.addEventListener('focus', () => resumeStoredSession('focus'));
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') resumeStoredSession('visibility');
+  });
 
   async function install() {
     if (!installPrompt) return false;
