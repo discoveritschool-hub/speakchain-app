@@ -945,7 +945,7 @@ def test_blogger_panel_uses_shared_pwa_auth():
         ok("готова Telegram-панель блогера не запускає повторний браузерний вхід")
 
     admin = (ROOT / "admin_analytics.html").read_text(encoding="utf-8")
-    if ("openBloggerPanel()" not in admin or "📣 Відкрити панель" not in admin
+    if ("openSelectedBloggerPanel()" not in admin or "📣 Режим блогера" not in admin
             or "url.searchParams.set('from', 'admin')" not in admin):
         fail("з кабінету адміністратора немає прямого входу в панель блогера")
     else:
@@ -954,7 +954,8 @@ def test_blogger_panel_uses_shared_pwa_auth():
     selector_markers = (
         'id="blogger-panel-select"', 'function populateBloggerPanelSelect()',
         "url.searchParams.set('blogger', blogger)", "blogger_name: adminView ? selectedBlogger : ''",
-        "if (D.admin_view)",
+        "if (D.admin_view)", "ADMIN_BLOGGER_LIST_KEY", "function switchAdminBlogger()",
+        'id="workspace-mode-select"', "function switchWorkspaceMode()",
     )
     missing = [marker for marker in selector_markers if marker not in admin + blogger]
     if missing:
@@ -1076,9 +1077,11 @@ def test_staff_and_learner_modes_are_two_way():
     shell_markers = (
         "function openStaffWorkspace(page)", "location.assign(u.toString())",
         "workspace_mode_open", "function verifiedWorkspaceRole(D,H)",
-        "role==='blogger'", "Панель адміністратора", "Панель блогера",
+        "role==='blogger'", "Панель адміністратора", "Панель блогера", "Панелі блогерів",
+        "admin_analytics.html?mode=blogger",
     )
-    panel_markers = ("🎓 До навчання", "function openLearnerMode()", "new URL('index_v2.html',location.href)")
+    panel_markers = ("Режим учня", "function openLearnerMode()", "new URL('index_v2.html',location.href)",
+                     'id="workspace-mode-select"', "function switchWorkspaceMode()")
     missing = [m for m in shell_markers if m not in shell]
     missing += [f"admin:{m}" for m in panel_markers if m not in admin]
     missing += [f"blogger:{m}" for m in panel_markers if m not in blogger]
