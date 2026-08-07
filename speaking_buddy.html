@@ -404,6 +404,30 @@
   .memory-meta { color:var(--text3); font-size:var(--fs-xs); text-transform:uppercase; letter-spacing:.05em; }
   .memory-text { margin-top:7px; color:var(--text); line-height:1.5; overflow-wrap:anywhere; white-space:pre-wrap; }
   .memory-danger-zone { margin-top:20px; padding-top:16px; border-top:1px solid var(--line); }
+  .interest-panel { width:min(100%,420px); padding:14px; border:1px solid var(--line);
+    border-radius:var(--r); background:var(--bg-card); text-align:left; }
+  .interest-title { font-size:var(--fs-md); font-weight:800; color:var(--text); }
+  .interest-help, .interest-status { margin-top:5px; color:var(--text2); font-size:var(--fs-sm); line-height:1.45; }
+  .interest-status.error { color:var(--red); }
+  .interest-recommended { margin-top:12px; padding:10px; border-radius:var(--r-sm);
+    background:var(--purple-bg); color:var(--purple-text); font-size:var(--fs-sm); line-height:1.4; }
+  .interest-catalog { display:flex; flex-direction:column; gap:8px; margin-top:10px; }
+  .interest-topic { padding:10px; border:1px solid var(--line); border-radius:var(--r-sm); background:var(--bg-card2); }
+  .interest-topic.selected { border-color:var(--purple); box-shadow:var(--glow-purple); }
+  .interest-topic-row { display:flex; align-items:center; gap:8px; }
+  .interest-topic-label { flex:1; min-width:0; color:var(--text); font-weight:700; overflow-wrap:anywhere; }
+  .interest-actions { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+  .interest-btn { min-height:38px; padding:8px 11px; border:1px solid var(--line); border-radius:var(--r-sm);
+    background:var(--bg-card3); color:var(--text); font:700 var(--fs-xs)/1.2 inherit; cursor:pointer; }
+  .interest-btn.primary, .interest-btn[aria-pressed="true"] { border-color:var(--purple); background:var(--purple); color:#fff; }
+  .interest-btn.danger { color:var(--red); border-color:rgba(247,110,110,.45); }
+  .interest-btn:disabled { opacity:.5; cursor:wait; }
+  .interest-custom { display:flex; gap:7px; margin-top:12px; }
+  .interest-custom input { flex:1; min-width:0; padding:10px 11px; border:1px solid var(--line);
+    border-radius:var(--r-sm); background:var(--bg-card2); color:var(--text); font:inherit; }
+  .interest-custom input:focus-visible, .interest-btn:focus-visible { outline:3px solid var(--purple); outline-offset:2px; }
+  .sr-only { position:absolute!important; width:1px!important; height:1px!important; padding:0!important;
+    margin:-1px!important; overflow:hidden!important; clip:rect(0,0,0,0)!important; white-space:nowrap!important; border:0!important; }
   @media (min-width:700px) {
     .memory-overlay { align-items:center; padding:24px; }
     .memory-sheet { border-radius:var(--r-lg); }
@@ -1006,7 +1030,26 @@ function renderScenarios() {
         <button class="memory-entry" type="button" onclick="openChainyMemory()" aria-haspopup="dialog">
           ⚙️ Пам’ять Chainy
         </button>
+        <section class="interest-panel" id="chainy-interest-panel" aria-labelledby="chainy-interest-title">
+          <h3 class="interest-title" id="chainy-interest-title">Про що поговоримо?</h3>
+          <p class="interest-help">Обери тему для наступної розмови або запропонуй власну лише для цієї сесії.</p>
+          <div class="interest-status" id="chainy-interest-status" role="status" aria-live="polite">Завантажуємо теми…</div>
+          <div id="chainy-interest-consent" hidden></div>
+          <div id="chainy-interest-content" hidden>
+            <div class="interest-recommended" id="chainy-interest-recommended" hidden></div>
+            <div class="interest-catalog" id="chainy-interest-catalog" aria-label="Теми Chainy"></div>
+            <form class="interest-custom" id="chainy-interest-custom-form">
+              <label for="chainy-interest-custom" class="sr-only">Власна тема на цю сесію</label>
+              <input id="chainy-interest-custom" type="text" maxlength="120" autocomplete="off" placeholder="Власна тема на цю сесію">
+              <button class="interest-btn primary" type="submit">Почати</button>
+            </form>
+            <div class="interest-actions">
+              <button class="interest-btn danger" type="button" id="chainy-interest-reset">Скинути вподобання</button>
+            </div>
+          </div>
+        </section>
       </div>`;
+    window.SC_CHAINY_INTEREST?.mount?.();
     return;
   }
   const allScenarios = SCENARIOS[currentCat] || [];
@@ -1113,6 +1156,7 @@ function startChainyChat() {
     video:    '',
     isChainy: true,
   };
+  window.SC_CHAINY_INTEREST?.attachSessionTopic?.(currentScenario);
   selectedRole  = 'chainy';
   history       = [];
   msgCount      = 0;
@@ -1692,6 +1736,7 @@ async function sendMessage() {
     userBubble?.remove();
   };
   try {
+    const interestContext = window.SC_CHAINY_INTEREST?.payloadContext?.(currentScenario) || {};
     const controller = new AbortController();
     requestTimer = setTimeout(() => controller.abort(), 32000);
     const res = await fetch(BOT_API + '/buddy_chat', {
@@ -1701,7 +1746,7 @@ async function sendMessage() {
       body: JSON.stringify({
         uid:           UID,
         scenario:      currentScenario.title,
-        scenario_desc: currentScenario.desc,
+        scenario_desc: interestContext.scenario_desc || currentScenario.desc,
         role:          selectedRole,
         level:         selectedLevel,
         history:       history.slice(-8),
@@ -1713,6 +1758,7 @@ async function sendMessage() {
            усе інше = м'яка корекція за замовчуванням). */
         my_situation:  currentScenario.mySituation || null,
         video_practice: currentScenario.videoPractice || null,
+        interest_topic: interestContext.interest_topic || null,
       })
     });
 
@@ -1802,16 +1848,18 @@ function setVoiceStatus(text) {
 }
 
 function realtimePayload() {
+  const interestContext = window.SC_CHAINY_INTEREST?.payloadContext?.(currentScenario) || {};
   return {
     uid: UID,
     init_data: tg?.initData || '',
     scenario: currentScenario?.title || 'General conversation',
-    scenario_desc: currentScenario?.desc || '',
+    scenario_desc: interestContext.scenario_desc || currentScenario?.desc || '',
     role: selectedRole,
     level: selectedLevel,
     is_chainy: !!currentScenario?.isChainy,
     my_situation: currentScenario?.mySituation || null,
     video_practice: currentScenario?.videoPractice || null,
+    interest_topic: interestContext.interest_topic || null,
   };
 }
 
@@ -2744,5 +2792,6 @@ renderScenarios();
 })();
 </script>
 <script src="chainy_memory.js"></script>
+<script src="chainy_interest.js"></script>
 </body>
 </html>

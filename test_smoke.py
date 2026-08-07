@@ -491,7 +491,7 @@ def test_pwa_identity_handoff():
         ok("головна і callback-сторінки одразу завантажують версіонований auth-код")
 
     sw = (ROOT / "sw.js").read_text(encoding="utf-8")
-    if "speakchain-shell-v18" not in sw or "telegram_auth_callback.html" not in sw:
+    if "speakchain-shell-v19" not in sw or "telegram_auth_callback.html" not in sw:
         fail("service worker не оновив cache version для auth-виправлення")
     else:
         ok("service worker примусово оновлює PWA auth-код після деплою")
@@ -1258,7 +1258,7 @@ def test_live_rooms_fail_closed_until_two_account_gate():
         "joinLiveMatch",
     )
     missing = [marker for marker in markers if marker not in pwa]
-    if missing or "speakchain-shell-v18" not in sw:
+    if missing or "speakchain-shell-v19" not in sw:
         fail(f"rooms gate або cache rollover неповні: {missing}")
     else:
         ok("live rooms приховані client-side; backend gate лишається авторитетним")
@@ -1346,14 +1346,73 @@ def test_chainy_memory_controls_contract():
         fail(f"керування пам’яттю неповне/небезпечне: {missing}")
     else:
         ok("view/consent/confirm/edit/delete/purge/disable мають auth і безпечний DOM-render")
-    if "speakchain-shell-v18" not in worker or "'./chainy_memory.js'" not in worker:
+    if "speakchain-shell-v19" not in worker or "'./chainy_memory.js'" not in worker:
         fail("новий memory controller не включений у rollover service worker")
     else:
-        ok("memory controller включений у cache v18")
+        ok("memory controller включений у cache v19")
     if _has_node() and memory and not _js_ok(memory):
         fail("chainy_memory.js: JavaScript не парситься")
     else:
         ok("chainy_memory.js: JavaScript парситься")
+
+
+def test_chainy_interest_ui_contract():
+    """Adaptive topics are authenticated, consent-safe and subordinate to explicit context."""
+    section("Chainy — адаптивні теми розмови")
+    buddy = (ROOT / "speaking_buddy.html").read_text(encoding="utf-8")
+    interest_path = ROOT / "chainy_interest.js"
+    interest = interest_path.read_text(encoding="utf-8") if interest_path.exists() else ""
+    worker = (ROOT / "sw.js").read_text(encoding="utf-8")
+    buddy_markers = (
+        'id="chainy-interest-panel"', "Про що поговоримо?",
+        'id="chainy-interest-custom" type="text" maxlength="120"',
+        'id="chainy-interest-status" role="status" aria-live="polite"',
+        "window.SC_CHAINY_INTEREST?.mount?.()",
+        "window.SC_CHAINY_INTEREST?.attachSessionTopic?.(currentScenario)",
+        "window.SC_CHAINY_INTEREST?.payloadContext?.(currentScenario)",
+        "interest_topic: interestContext.interest_topic || null",
+        '<script src="chainy_interest.js"></script>',
+    )
+    interest_markers = (
+        "apiBase() + '/chainy_interest'", "function authPayload()", "init_data: initData",
+        "pwa_access_token: token", "headers: authHeaders()", "request('view')",
+        "mutate('prefer', { topic_key: item.topic_key, preference }",
+        "mutate('delete', { topic_id: item.topic_id }", "mutate('reset', {}",
+        "const PREFERENCES = ['like', 'dislike', 'avoid', 'neutral']",
+        "item.eligible !== false", "state.catalog = []", "renderConsentOff()",
+        "До згоди приховані теми не показуються й не використовуються.",
+        "Скинути приховані вподобання", "function resetPreferences()",
+        "state.pendingCustomTopic = custom", "window.startChainyChat?.()",
+        "scenario?.mySituation || scenario?.videoPractice", "interest_topic: null",
+        "allowed ? state.selectedKey : null", "label.textContent = item.label_uk",
+        "list.replaceChildren()", "queueMicrotask(mount)",
+        "speakchain:memory-control-changed",
+    )
+    missing = [f"html:{marker}" for marker in buddy_markers if marker not in buddy]
+    missing += [f"js:{marker}" for marker in interest_markers if marker not in interest]
+    if buddy.count("interest_topic: interestContext.interest_topic || null") < 2:
+        missing.append("html:text and realtime payloads both need interest_topic")
+    if re.search(r"\buid\b", interest, re.I):
+        missing.append("js:interest request must never use uid")
+    if "innerHTML" in interest:
+        missing.append("js:server/user topic renderer must not use innerHTML")
+    if "breakdown" in interest or "reason" in interest:
+        missing.append("js:hidden recommendation evidence must not be rendered")
+    memory = (ROOT / "chainy_memory.js").read_text(encoding="utf-8")
+    if "speakchain:memory-control-changed" not in memory:
+        missing.append("js:interest catalog must hide immediately after memory disable")
+    if missing:
+        fail(f"адаптивні теми неповні/небезпечні: {missing}")
+    else:
+        ok("catalog/preference/custom-topic мають auth, consent gate і безпечний DOM")
+    if "speakchain-shell-v19" not in worker or "'./chainy_interest.js'" not in worker:
+        fail("interest controller не включений у rollover service worker")
+    else:
+        ok("interest controller включений у cache v19")
+    if _has_node() and interest and not _js_ok(interest):
+        fail("chainy_interest.js: JavaScript не парситься")
+    else:
+        ok("chainy_interest.js: JavaScript парситься")
 
 
 def main():
@@ -1391,6 +1450,7 @@ def main():
     test_live_rooms_fail_closed_until_two_account_gate()
     test_interactive_captions_and_vocabulary_workspace()
     test_chainy_memory_controls_contract()
+    test_chainy_interest_ui_contract()
 
     print("\n" + "═" * 58)
     if FAILS:

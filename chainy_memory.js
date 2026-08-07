@@ -101,6 +101,9 @@
     if (state.enabled) renderMemoryItems();
     else list?.replaceChildren();
     setStatus('');
+    window.dispatchEvent(new CustomEvent('speakchain:memory-control-changed', {
+      detail: { enabled: state.enabled },
+    }));
   }
   function makeButton(label, action, extraClass, ariaLabel) {
     const button = document.createElement('button');
