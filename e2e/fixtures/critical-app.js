@@ -80,12 +80,20 @@ function postData(request) {
   try { return request.postDataJSON() || {}; } catch { return {}; }
 }
 
-function sdkStub(url) {
-  const hostname = url.hostname;
-  if (hostname === 'telegram.org') return 'window.Telegram = window.Telegram || undefined;';
-  if (hostname === 'www.youtube.com') return 'window.YT = window.YT || { Player: function(){} };';
-  if (hostname === 'accounts.google.com') return 'window.google = window.google || undefined;';
-  if (hostname === 'discoveritschool-hub.github.io') return '';
+function sdkStub(request, url) {
+  if (request.method() !== 'GET') return null;
+  const resource = `${url.hostname}${url.pathname}`;
+  if (resource === 'telegram.org/js/telegram-web-app.js'
+      || resource === 'telegram.org/js/telegram-widget.js') {
+    return 'window.Telegram = window.Telegram || undefined;';
+  }
+  if (resource === 'www.youtube.com/iframe_api') {
+    return 'window.YT = window.YT || { Player: function(){} };';
+  }
+  if (resource === 'accounts.google.com/gsi/client') {
+    return 'window.google = window.google || undefined;';
+  }
+  if (resource === 'discoveritschool-hub.github.io/speakchain-app/toast_rewards.js') return '';
   return null;
 }
 
@@ -128,11 +136,18 @@ const test = base.extend({
       requests: [],
       unexpected: [],
       payloadFailures: new Map(),
-      sessionMode: 'success'
+      sessionMode: 'success',
+      pageErrors: [],
+      consoleErrors: [],
+      expectedHttpConsoleErrors: 0
     });
   },
 
   appPage: async ({ page, context, scenario }, use) => {
+    page.on('pageerror', error => scenario.pageErrors.push(error.message));
+    page.on('console', message => {
+      if (message.type() === 'error') scenario.consoleErrors.push(message.text());
+    });
     await context.addInitScript(fixed => {
       const NativeDate = Date;
       const fixedMs = NativeDate.parse(fixed);
@@ -154,7 +169,7 @@ const test = base.extend({
         return;
       }
 
-      const stub = sdkStub(url);
+      const stub = sdkStub(request, url);
       if (stub !== null) {
         await route.fulfill({ status: 200, contentType: 'text/javascript; charset=utf-8', body: stub });
         return;
@@ -227,6 +242,18 @@ const test = base.extend({
 
     await use(page);
     expect(scenario.unexpected, 'Every non-local request must be explicitly mocked').toEqual([]);
+    expect(
+      scenario.requests.filter(request => /\/(?:pay|checkout|wayforpay|lottery_buy_ticket|admin_nudge_send)(?:\/|$)/.test(request.path)),
+      'E2E must never submit payments or learner/admin messages'
+    ).toEqual([]);
+    expect(scenario.pageErrors, 'Production app paths must not raise uncaught page errors').toEqual([]);
+    expect(
+      scenario.consoleErrors,
+      'Only explicitly induced fixture HTTP failures may reach the console'
+    ).toHaveLength(scenario.expectedHttpConsoleErrors);
+    for (const message of scenario.consoleErrors) {
+      expect(message).toMatch(/^Failed to load resource: the server responded with a status of 503 /);
+    }
   }
 });
 

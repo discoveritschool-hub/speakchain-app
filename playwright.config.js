@@ -8,7 +8,9 @@ module.exports = defineConfig({
   testMatch: '**/*.spec.js',
   fullyParallel: true,
   forbidOnly: Boolean(process.env.CI),
-  retries: process.env.CI ? 1 : 0,
+  // Critical paths must be green on their first execution. A retry would turn
+  // an intermittent auth/navigation race into a passing required check.
+  retries: 0,
   workers: 2,
   timeout: 60_000,
   expect: { timeout: 7_000 },

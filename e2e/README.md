@@ -3,10 +3,11 @@
 This harness exercises the checked-out static app without contacting production.
 
 - A local Node server serves repository assets with `no-store` responses.
-- Every non-local request is intercepted. Known SDK scripts receive inert stubs, known backend routes receive deterministic fixtures, and every other request fails the test.
+- Every non-local request is intercepted. Exact known SDK resources receive inert stubs, known backend routes receive deterministic fixtures, and every other request fails the test.
 - The browser clock, learner identity, Telegram `initData`, session tokens and payloads are fixed.
 - The same critical paths run in desktop Chromium and a mobile Chromium viewport.
 - Service workers are blocked so cached responses cannot bypass the network allowlist.
+- Runtime page/console errors fail the test, and CI never retries a failed critical path.
 
 Run locally:
 

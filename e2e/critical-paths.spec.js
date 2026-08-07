@@ -16,8 +16,13 @@ test('browser Telegram callback persists and resumes one PWA session', async ({ 
     .toBe('access-callback');
 
   const callback = scenario.requests.find(request => request.path === '/api/v1/session/telegram');
-  expect(callback?.body).toMatchObject({
-    user: { id: '7001', hash: 'signed-e2e' }
+  expect(callback?.body).toEqual({
+    user: {
+      id: '7001',
+      first_name: 'Browser',
+      auth_date: '1786104000',
+      hash: 'signed-e2e'
+    }
   });
 
   await page.reload();
@@ -29,6 +34,7 @@ test('browser Telegram callback persists and resumes one PWA session', async ({ 
 
 test('Telegram initData remains the authenticated fallback when session handoff is unavailable', async ({ appPage: page, context, scenario }) => {
   scenario.sessionMode = 'unavailable';
+  scenario.expectedHttpConsoleErrors = 1;
   await installTelegramMiniApp(context);
 
   await page.goto('/index_v2.html');
@@ -37,6 +43,8 @@ test('Telegram initData remains the authenticated fallback when session handoff 
   await expect(page.locator('#s-home')).toHaveClass(/\bon\b/);
   await expect.poll(() => page.evaluate(async () => (await window.SC_PWA.ready).source))
     .toBe('telegram-initdata');
+  await expect.poll(() => page.evaluate(() => localStorage.getItem('speakchain.pwa.access.v1')))
+    .toBeNull();
 
   const handoff = scenario.requests.find(request => request.path === '/api/v1/session');
   expect(handoff?.body).toEqual({ init_data: TELEGRAM_INIT_DATA });
@@ -57,7 +65,9 @@ test('native keyboard navigation reaches Chainy, Progress and Profile', async ({
   await expect(page.locator('#tb-title')).toHaveText('Chainy');
 
   const progress = page.locator('.nav button[data-s="s-prog"]');
-  await progress.focus();
+  await page.keyboard.press('Tab');
+  await expect(page.locator('.nav button[data-s="s-social"]')).toBeFocused();
+  await page.keyboard.press('Tab');
   await expect(progress).toBeFocused();
   await progress.press('Enter');
   await expect(page.locator('#s-prog')).toHaveClass(/\bon\b/);
@@ -73,6 +83,7 @@ test('native keyboard navigation reaches Chainy, Progress and Profile', async ({
 
 test('failed payload retries surface a recovery control and recover without reload', async ({ appPage: page, context, scenario }) => {
   scenario.payloadFailures.set('s-home', 2);
+  scenario.expectedHttpConsoleErrors = 2;
   await installBrowserSession(context);
   await page.goto('/index_v2.html');
 

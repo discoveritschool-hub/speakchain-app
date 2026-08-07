@@ -16,7 +16,13 @@ const types = {
 };
 
 const server = createServer((request, response) => {
-  const pathname = decodeURIComponent(new URL(request.url || '/', 'http://localhost').pathname);
+  let pathname;
+  try {
+    pathname = decodeURIComponent(new URL(request.url || '/', 'http://localhost').pathname);
+  } catch {
+    response.writeHead(400, { 'Content-Type': 'text/plain; charset=utf-8' }).end('bad request');
+    return;
+  }
   const relative = pathname === '/' ? 'index_v2.html' : pathname.replace(/^\/+/, '');
   const file = resolve(root, relative);
   if (file !== root && !file.startsWith(root + sep)) {
