@@ -119,7 +119,7 @@
   </style>
   <link rel="stylesheet" href="tokens.css">
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>SpeakChain Player</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
@@ -151,9 +151,34 @@
     #play-overlay.hidden { display:none; }
     #video-toggle {
       position:absolute; top:12px; left:12px; z-index:30;
-      width:42px; height:42px; border:0; border-radius:50%;
+      width:44px; height:44px; border:0; border-radius:50%;
       background:rgba(13,13,20,.78); color:#fff; font-size:18px;
       cursor:pointer; touch-action:manipulation;
+    }
+    #video-wrap:focus-visible, #video-toggle:focus-visible, .seek-button:focus-visible {
+      outline:3px solid var(--gold); outline-offset:3px;
+    }
+    #seek-gesture-layer { position:absolute; inset:0; z-index:20; pointer-events:none; }
+    .seek-gesture-zone {
+      position:absolute; z-index:20; border:0; padding:0; background:transparent;
+      pointer-events:auto; touch-action:manipulation;
+    }
+    #seek-feedback {
+      position:absolute; z-index:35; left:50%; top:50%; transform:translate(-50%,-50%) scale(.94);
+      min-width:132px; min-height:44px; padding:11px 16px; border-radius:999px;
+      display:flex; align-items:center; justify-content:center; pointer-events:none;
+      background:rgba(13,13,20,.88); color:#fff; font-size:var(--fs); font-weight:800;
+      opacity:0; transition:opacity .16s ease, transform .16s ease;
+    }
+    #seek-feedback.show { opacity:1; transform:translate(-50%,-50%) scale(1); }
+    .seek-controls {
+      width:min(100%,860px); margin:8px auto 0; padding:0 12px;
+      display:flex; justify-content:center; gap:12px;
+    }
+    .seek-button {
+      min-width:112px; min-height:44px; padding:8px 16px; border:1px solid var(--line);
+      border-radius:var(--r-lg); background:var(--bg-card); color:var(--text);
+      font:inherit; font-weight:800; cursor:pointer; touch-action:manipulation;
     }
     .play-circle {
       width:64px; height:64px; border-radius:50%;
@@ -458,10 +483,15 @@
 </div>
 
 <!-- Video -->
-<div id="video-wrap">
+<div id="video-wrap" tabindex="0" aria-label="Відеоплеєр. Стрілки ліворуч і праворуч перемотують на 10 секунд">
   <div id="yt-player"></div>
   <div id="play-overlay"><div class="play-circle">▶</div></div>
   <button id="video-toggle" type="button" aria-label="Пауза або відтворення">⏸</button>
+  <div id="seek-gesture-layer" aria-hidden="true" hidden>
+    <div class="seek-gesture-zone" data-seek-direction="left"></div>
+    <div class="seek-gesture-zone" data-seek-direction="right"></div>
+  </div>
+  <div id="seek-feedback" role="status" aria-live="polite" aria-atomic="true"></div>
   <div id="video-fallback">
     <div style="color:var(--text2);font-size:var(--fs)">YouTube не завантажився</div>
     <a id="yt-link" class="open-yt-btn" target="_blank">▶ Відкрити на YouTube</a>
@@ -470,6 +500,10 @@
     <div class="transcript-label">Інтерактивні субтитри SpeakChain</div>
     <div id="transcript-overlay"><div id="transcript-text"></div></div>
   </section>
+</div>
+<div class="seek-controls" role="group" aria-label="Перемотування відео">
+  <button class="seek-button" id="seek-back" type="button" aria-label="Назад на 10 секунд">−10 с</button>
+  <button class="seek-button" id="seek-forward" type="button" aria-label="Вперед на 10 секунд">+10 с</button>
 </div>
 
 <aside id="word-card" aria-live="polite">
@@ -585,6 +619,7 @@
 
 <div class="toast" id="toast"></div>
 
+<script src="player_seek.js"></script>
 <script>
 /* canvas не розуміє var() — читаємо реальний колір із tokens.css */
 const _cssVarCache={};
@@ -817,8 +852,53 @@ resetInactivity();
 let ytPlayer=null, ytReady=false;
 let loopStart=null, loopEnd=null, loopActive=false, loopTimer=null;
 const apiTimeout = setTimeout(()=>{ if(!ytReady) showFallback(); }, 8000);
+const seekGestureLayer = document.getElementById('seek-gesture-layer');
+const seekFeedback = document.getElementById('seek-feedback');
+const SEEK_FEEDBACK_TEXT = Object.freeze({
+  backward: 'Назад на 10 секунд',
+  forward: 'Вперед на 10 секунд',
+  unavailable: 'Перемотування зараз недоступне'
+});
+let seekFeedbackTimer = null;
+let seekFeedbackFrame = null;
+
+function announceSeek(code) {
+  const message = SEEK_FEEDBACK_TEXT[code] || SEEK_FEEDBACK_TEXT.unavailable;
+  clearTimeout(seekFeedbackTimer);
+  if (seekFeedbackFrame !== null) cancelAnimationFrame(seekFeedbackFrame);
+  seekFeedback.classList.remove('show');
+  seekFeedback.textContent = '';
+  seekFeedbackFrame = requestAnimationFrame(() => {
+    seekFeedbackFrame = null;
+    seekFeedback.textContent = message;
+    seekFeedback.classList.add('show');
+    seekFeedbackTimer = setTimeout(() => seekFeedback.classList.remove('show'), 900);
+  });
+}
+
+const seekController = SpeakChainSeek.createSeekController({
+  getPlayer: () => ytPlayer,
+  isReady: () => ytReady,
+  announce: announceSeek
+});
+
+function seekRelative(deltaSeconds) {
+  return seekController.seekRelative(deltaSeconds);
+}
+
+SpeakChainSeek.applyGestureBounds(seekGestureLayer);
+SpeakChainSeek.bindSeekControls({
+  controller: seekController,
+  backButton: document.getElementById('seek-back'),
+  forwardButton: document.getElementById('seek-forward'),
+  keyboardTarget: document.getElementById('video-wrap'),
+  leftZone: seekGestureLayer.querySelector('[data-seek-direction="left"]'),
+  rightZone: seekGestureLayer.querySelector('[data-seek-direction="right"]'),
+  now: () => performance.now()
+});
 
 function showFallback() {
+  seekGestureLayer.hidden = true;
   document.getElementById("yt-player").style.display="none";
   document.getElementById("play-overlay").classList.add("hidden");
   document.getElementById("video-fallback").classList.add("show");
@@ -881,6 +961,7 @@ window.onYouTubeIframeAPIReady = function() {
       events: {
         onReady: function(e) {
           ytReady = true;
+          seekGestureLayer.hidden = false;
           // Зберігаємо назву відео
           try { videoTitle = e.target.getVideoData().title || ""; } catch(_){}
           if (!(/iPad|iPhone|iPod/.test(navigator.userAgent))) {
