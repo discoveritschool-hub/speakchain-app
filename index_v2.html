@@ -4970,8 +4970,10 @@ function leaveBuddy(){
 }
 
 async function go(sid, isBack, fromHistory, videoChainyGeneration){
-  if(videoChainyGeneration==null)++VIDEO_CHAINY_GENERATION;
-  else if(videoChainyGeneration!==VIDEO_CHAINY_GENERATION)return;
+  const generation=videoChainyGeneration==null
+    ? ++VIDEO_CHAINY_GENERATION
+    : videoChainyGeneration;
+  if(generation!==VIDEO_CHAINY_GENERATION)return;
   sid=SCREEN_ALIASES[sid]||sid;
   if(!R[sid]){
     console.warn('Unknown screen:',sid);
@@ -4994,7 +4996,7 @@ async function go(sid, isBack, fromHistory, videoChainyGeneration){
   tgBack(sid!=='s-home' || HIST.length>0);
 
   if(R[sid]) await R[sid]();
-  if(videoChainyGeneration!=null&&videoChainyGeneration!==VIDEO_CHAINY_GENERATION)return;
+  if(generation!==VIDEO_CHAINY_GENERATION)return;
   if(BROWSER_NAV&&!fromHistory){
     const initial=!history.state?.speakchain;
     commitBrowserState(sid,'',initial);
