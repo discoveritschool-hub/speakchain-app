@@ -101,11 +101,24 @@
     return data;
   }
   async function sessionFromTelegramMiniApp() {
-    const initData = window.Telegram?.WebApp?.initData || '';
+    const webApp = window.Telegram?.WebApp;
+    const initData = webApp?.initData || '';
     if (!initData) return null;
-    const data = await jsonPost('/api/v1/session', {init_data: initData});
-    writeSession(data);
-    return {authenticated: true, source: 'telegram', userId: Number(data.user_id)};
+    const telegramUserId = Number(webApp?.initDataUnsafe?.user?.id || 0);
+    try {
+      const data = await jsonPost('/api/v1/session', {init_data: initData});
+      writeSession(data);
+      return {authenticated: true, source: 'telegram', userId: Number(data.user_id || telegramUserId)};
+    } catch (error) {
+      // PWA sessions are an optional migration layer. Protected legacy
+      // requests still carry init_data and verify its HMAC on the backend, so
+      // an unavailable session handoff must not lock a Telegram learner out.
+      const authRejected = ['telegram_auth_failed', 'session_401', 'session_403'].includes(error?.code);
+      if (telegramUserId && !authRejected) {
+        return {authenticated: true, source: 'telegram-initdata', userId: telegramUserId};
+      }
+      throw error;
+    }
   }
   async function restoreSession() {
     try {

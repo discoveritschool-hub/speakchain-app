@@ -438,6 +438,16 @@ def test_pwa_identity_handoff():
         ok("Google/PWA userId підхоплюється до першого payload-запиту")
 
     pwa = (ROOT / "pwa.js").read_text(encoding="utf-8")
+    telegram_fallback_markers = (
+        "source: 'telegram-initdata'",
+        "initDataUnsafe?.user?.id",
+        "const authRejected = ['telegram_auth_failed', 'session_401', 'session_403']",
+    )
+    missing = [marker for marker in telegram_fallback_markers if marker not in pwa]
+    if missing:
+        fail(f"Telegram Mini App has no initData fallback when the optional PWA session API is unavailable: {missing}")
+    else:
+        ok("Telegram Mini App keeps initData authentication when the optional PWA session API is unavailable")
     if "AbortController" not in pwa or "session_timeout" not in pwa:
         fail("PWA-вхід не має тайм-ауту та зрозумілого повідомлення при недоступному backend")
     elif "getBoundingClientRect().width" not in pwa:
@@ -478,7 +488,7 @@ def test_pwa_identity_handoff():
         ok("Telegram popup повертає підписані дані на same-origin URL і відновлює головне вікно")
 
     telegram_callback = (ROOT / "telegram_auth_callback.html").read_text(encoding="utf-8")
-    versioned_pwa = 'pwa.js?v=20260806-telegram-callback'
+    versioned_pwa = 'pwa.js?v=20260807-login-repair'
     callback_markers = (versioned_pwa, 'window.SC_PWA.ready', "location.replace('index_v2.html')")
     missing = [marker for marker in callback_markers if marker not in telegram_callback]
     if missing:
