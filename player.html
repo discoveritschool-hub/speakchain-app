@@ -635,6 +635,27 @@ if (dataRaw) {
 apiBase = apiBase || "https://speakchain-bot-production.up.railway.app";
 captionsUrl = captionsUrl || `${apiBase}/captions`;
 
+function captionAuthHeaders(targetUrl){
+  const headers = {};
+  try {
+    const target = new URL(targetUrl, location.href);
+    const backend = new URL(apiBase, location.href);
+    if (target.origin !== backend.origin) return headers;
+  } catch (_) { return headers; }
+  try {
+    const initData = TG?.initData || window.parent?.Telegram?.WebApp?.initData || '';
+    if (initData) {
+      headers['X-Telegram-Init-Data'] = initData;
+      return headers;
+    }
+  } catch (_) {}
+  try {
+    const accessToken = localStorage.getItem('speakchain.pwa.access.v1') || '';
+    if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
+  } catch (_) {}
+  return headers;
+}
+
 // ── Register referral ──
 if (refCode && apiBase) {
   const uid = TG?.initDataUnsafe?.user?.id;
@@ -1258,7 +1279,10 @@ async function loadCaptions(){
   const capBase = captionsUrl || (apiBase ? apiBase + "/captions" : "");
   if (!videoId || !capBase) return;
   try {
-    const res=await fetch(`${capBase}?v=${videoId}&lang=en`,{signal:AbortSignal.timeout(6000)});
+    const capUrl = `${capBase}?v=${encodeURIComponent(videoId)}&lang=en`;
+    const res=await fetch(capUrl,{
+      headers:captionAuthHeaders(capUrl), signal:AbortSignal.timeout(6000)
+    });
     if (!res.ok) return;
     const data=await res.json();
     if (!data.events) { showTranscriptNotice('Для цього відео YouTube не віддав доступних англійських субтитрів.'); return; }
