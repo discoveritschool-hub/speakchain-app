@@ -1380,7 +1380,7 @@ def test_chainy_memory_controls_contract():
     if "speakchain-shell-v28" not in worker or "'./chainy_memory.js'" not in worker:
         fail("новий memory controller не включений у rollover service worker")
     else:
-        ok("memory controller включений у cache v24")
+        ok("memory controller включений у cache v26")
     if _has_node() and memory and not _js_ok(memory):
         fail("chainy_memory.js: JavaScript не парситься")
     else:
@@ -1443,7 +1443,7 @@ def test_chainy_interest_ui_contract():
     if "speakchain-shell-v28" not in worker or "'./chainy_interest.js'" not in worker:
         fail("interest controller не включений у rollover service worker")
     else:
-        ok("interest controller включений у cache v24")
+        ok("interest controller включений у cache v26")
     if _has_node() and interest and not _js_ok(interest):
         fail("chainy_interest.js: JavaScript не парситься")
     else:
@@ -1506,7 +1506,7 @@ def test_day1_onboarding_accessibility_contract():
     if "speakchain-shell-v28" not in worker or "'./index_v2.html'" not in worker:
         fail("accessible embedded onboarding is not covered by the cache rollover")
     else:
-        ok("cache v24 publishes the accessible embedded onboarding")
+        ok("cache v26 publishes the accessible embedded onboarding")
 
 
 def test_progress_security_accessibility_contract():

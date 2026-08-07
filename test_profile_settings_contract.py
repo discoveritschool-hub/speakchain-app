@@ -79,17 +79,21 @@ def test_profile_mutations_match_the_authenticated_bounded_backend_contract():
         "PROFILE_NOTIFICATION_PREFS=new Set(['evening','on_request','off'])",
         "offset< -12||offset>14",
         "action:'profile_settings_update'",
-        "settings:result.patch",
+        "settings:request.patch",
+        "mutation_id:request.mutationId",
+        "expected_revision:request.expectedRevision",
         "init_data:initData",
         "pwa_access_token:token",
-        "saved[key]===value",
+        "payload.settings[key]===value",
+        "saved.profile_settings_revision===revision",
         "PROFILE_SETTINGS_SAVE_TIMEOUT_MS=8000",
         "new AbortController()",
         "signal:controller.signal",
         "generation!==PROFILE_SETTINGS_STATE.generation",
         "if(PROFILE_SETTINGS_STATE.saving)return",
-        "save.textContent='Спробувати ще раз'",
-        "PAYLOAD['s-profile']=Object.assign({},PAYLOAD['s-profile']||{},saved)",
+        "save.textContent='Перевірити й повторити'",
+        "PROFILE_SETTINGS_STATE.retryRequest=request",
+        "applyAuthoritativeProfileSettings(payload.settings)",
     )
     missing = [marker for marker in required if marker not in INDEX]
     assert not missing, f"profile mutation contract is incomplete: {missing}"
@@ -98,8 +102,11 @@ def test_profile_mutations_match_the_authenticated_bounded_backend_contract():
     end = INDEX.index("function renderProfileSettings(", start)
     mutation = INDEX[start:end]
     assert "uid:" not in mutation and "uid=" not in mutation, "profile mutation must not send body uid"
+    body_start = mutation.index("body:JSON.stringify(")
+    body_end = mutation.index("signal:controller.signal", body_start)
+    request_body = mutation[body_start:body_end]
     for unsupported in ("session_minutes", "profile_video_url", "level", "timezone"):
-        assert unsupported not in mutation, f"unsupported profile mutation leaked: {unsupported}"
+        assert unsupported not in request_body, f"unsupported profile mutation leaked: {unsupported}"
 
 
 def test_profile_release_bumps_public_shell_cache():

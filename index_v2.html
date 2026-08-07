@@ -4150,7 +4150,7 @@ const PROFILE_PWA_ACCESS_KEY='speakchain.pwa.access.v1';
 const PROFILE_SETTINGS_SAVE_TIMEOUT_MS=8000;
 const PROFILE_SETTINGS_STATE={
   utcOffset:null,notificationPref:null,saving:false,generation:0,
-  controller:null,pendingDraft:null
+  revision:0,controller:null,pendingDraft:null,retryRequest:null
 };
 function profileSettingsSaveTimeout(){
   const override=Number(window.__SPEAKCHAIN_E2E_PROFILE_SAVE_TIMEOUT_MS);
@@ -4221,6 +4221,18 @@ function profileMutableNotification(source){
   const value=source.notification_pref;
   return typeof value==='string'&&PROFILE_NOTIFICATION_PREFS.has(value)?value:null;
 }
+function profileMutableRevision(source){
+  if(!source||!Object.prototype.hasOwnProperty.call(source,'profile_settings_revision'))return 0;
+  const value=source.profile_settings_revision;
+  return typeof value==='number'&&Number.isInteger(value)&&value>=0&&value<=2147483647?value:0;
+}
+function newProfileMutationId(){
+  try{
+    if(typeof crypto?.randomUUID==='function')return crypto.randomUUID();
+    const bytes=new Uint8Array(16);crypto.getRandomValues(bytes);
+    return 'profile-'+Array.from(bytes,b=>b.toString(16).padStart(2,'0')).join('');
+  }catch(e){return '';}
+}
 function setProfileSettingsStatus(message,kind=''){
   const status=$('#profile-settings-status');
   if(!status)return;
@@ -4285,7 +4297,7 @@ function setProfileSettingsSaving(saving,draft=null){
   }
 }
 function profileSettingsChanged(){
-  if(PROFILE_SETTINGS_STATE.saving)return;
+  if(PROFILE_SETTINGS_STATE.saving||PROFILE_SETTINGS_STATE.retryRequest)return;
   const result=profileSettingsPatch();
   const save=$('#profile-settings-save');
   if(result.error){
@@ -4310,8 +4322,20 @@ function renderProfileMutationControls(D){
     setProfileSettingsStatus('Зберігаємо…');
     return;
   }
+  if(PROFILE_SETTINGS_STATE.retryRequest){
+    const draft=PROFILE_SETTINGS_STATE.pendingDraft||{};
+    const offset=$('#profile-utc-offset');
+    const notification=$('#profile-notification-pref');
+    const save=$('#profile-settings-save');
+    if(offset){offset.value=draft.utcOffset??'';offset.disabled=true;}
+    if(notification){notification.value=draft.notificationPref??'';notification.disabled=true;}
+    if(save){save.disabled=false;save.textContent='Перевірити й повторити';}
+    setProfileSettingsStatus('Попередній запит має невизначений результат. Безпечно перевірте його ще раз.','error');
+    return;
+  }
   PROFILE_SETTINGS_STATE.utcOffset=profileMutableOffset(D);
   PROFILE_SETTINGS_STATE.notificationPref=profileMutableNotification(D);
+  PROFILE_SETTINGS_STATE.revision=profileMutableRevision(D);
   const offset=$('#profile-utc-offset');
   const notification=$('#profile-notification-pref');
   if(offset){offset.disabled=false;offset.value=PROFILE_SETTINGS_STATE.utcOffset===null?'':String(PROFILE_SETTINGS_STATE.utcOffset);}
@@ -4335,12 +4359,40 @@ function profileSaveError(response,payload){
   }
   return 'Не вдалося зберегти. Перевірте інтернет і спробуйте ще раз.';
 }
+function applyAuthoritativeProfileSettings(saved){
+  const next=Object.assign({},PAYLOAD['s-profile']||{});
+  for(const key of ['level','current_plan','utc_offset','notification_pref','premium_until','basic_until','billing_term','profile_settings_revision']){
+    if(Object.prototype.hasOwnProperty.call(saved,key))next[key]=saved[key];
+    else if(['utc_offset','notification_pref','premium_until','basic_until','billing_term'].includes(key))delete next[key];
+  }
+  PAYLOAD['s-profile']=next;
+  renderProfileSettings(next,PAYLOAD['s-home']||{});
+}
+function profileAuthoritativeResponse(payload){
+  const saved=payload?.settings;
+  const revision=payload?.revision;
+  return saved&&typeof saved==='object'&&!Array.isArray(saved)&&
+    typeof revision==='number'&&Number.isInteger(revision)&&revision>=0&&revision<=2147483647&&
+    saved.profile_settings_revision===revision;
+}
 async function saveProfileSettings(event){
   event?.preventDefault?.();
   if(PROFILE_SETTINGS_STATE.saving)return;
-  const result=profileSettingsPatch();
-  if(result.error||!result.patch||Object.keys(result.patch).length===0){
-    profileSettingsChanged();return;
+  let request=PROFILE_SETTINGS_STATE.retryRequest;
+  if(!request){
+    const result=profileSettingsPatch();
+    if(result.error||!result.patch||Object.keys(result.patch).length===0){
+      profileSettingsChanged();return;
+    }
+    const mutationId=newProfileMutationId();
+    if(!mutationId){
+      setProfileSettingsStatus('Не вдалося безпечно створити ідентифікатор зміни. Оновіть сторінку.','error');return;
+    }
+    request={
+      patch:result.patch,mutationId,
+      expectedRevision:PROFILE_SETTINGS_STATE.revision,
+      draft:profileSettingsDraft()
+    };
   }
   const auth=profileSettingsAuth();
   if(!auth){
@@ -4349,29 +4401,45 @@ async function saveProfileSettings(event){
   const generation=++PROFILE_SETTINGS_STATE.generation;
   const controller=new AbortController();
   PROFILE_SETTINGS_STATE.controller=controller;
-  const draft=profileSettingsDraft();
-  setProfileSettingsSaving(true,draft);
+  PROFILE_SETTINGS_STATE.retryRequest=request;
+  setProfileSettingsSaving(true,request.draft);
   setProfileSettingsStatus('Зберігаємо…');
   const timeout=setTimeout(()=>controller.abort(),profileSettingsSaveTimeout());
   try{
     const response=await fetch(BOT_API+'/miniapp_action',{
       method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify(Object.assign({action:'profile_settings_update',settings:result.patch},auth)),
+      body:JSON.stringify(Object.assign({
+        action:'profile_settings_update',settings:request.patch,
+        mutation_id:request.mutationId,expected_revision:request.expectedRevision
+      },auth)),
       signal:controller.signal
     });
     const payload=await response.json().catch(()=>({}));
     if(controller.signal.aborted)throw new DOMException('Profile settings save timed out','AbortError');
     if(generation!==PROFILE_SETTINGS_STATE.generation)return;
-    const saved=payload?.settings;
-    const validSaved=saved&&typeof saved==='object'&&!Array.isArray(saved)&&
-      Object.entries(result.patch).every(([key,value])=>saved[key]===value);
-    if(!response.ok||payload?.ok!==true||!validSaved)throw {response,payload};
+    if(response.status===409&&payload?.outcome==='conflict'&&profileAuthoritativeResponse(payload)){
+      PROFILE_SETTINGS_STATE.saving=false;
+      PROFILE_SETTINGS_STATE.controller=null;
+      PROFILE_SETTINGS_STATE.pendingDraft=null;
+      PROFILE_SETTINGS_STATE.retryRequest=null;
+      applyAuthoritativeProfileSettings(payload.settings);
+      setProfileSettingsStatus('Профіль змінився в іншій сесії. Актуальний стан завантажено — внесіть зміну ще раз.','error');
+      return;
+    }
+    const authoritative=profileAuthoritativeResponse(payload);
+    const exactAtMutation=authoritative&&payload?.mutation_revision===payload?.revision&&
+      Object.entries(request.patch).every(([key,value])=>payload.settings[key]===value);
+    const supersededReplay=authoritative&&payload?.replayed===true&&
+      Number.isInteger(payload?.mutation_revision)&&payload.mutation_revision<payload.revision;
+    if(!response.ok||payload?.ok!==true||(!exactAtMutation&&!supersededReplay))throw {response,payload};
     PROFILE_SETTINGS_STATE.saving=false;
     PROFILE_SETTINGS_STATE.controller=null;
     PROFILE_SETTINGS_STATE.pendingDraft=null;
-    PAYLOAD['s-profile']=Object.assign({},PAYLOAD['s-profile']||{},saved);
-    renderProfileSettings(PAYLOAD['s-profile'],PAYLOAD['s-home']||{});
-    setProfileSettingsStatus('Налаштування збережено.','success');
+    PROFILE_SETTINGS_STATE.retryRequest=null;
+    applyAuthoritativeProfileSettings(payload.settings);
+    setProfileSettingsStatus(supersededReplay
+      ?'Актуальний стан профілю підтверджено.'
+      :'Налаштування збережено.','success');
   }catch(error){
     if(generation!==PROFILE_SETTINGS_STATE.generation)return;
     PROFILE_SETTINGS_STATE.saving=false;
@@ -4379,12 +4447,22 @@ async function saveProfileSettings(event){
     const save=$('#profile-settings-save');
     const offset=$('#profile-utc-offset');
     const notification=$('#profile-notification-pref');
-    if(offset)offset.disabled=false;
-    if(notification)notification.disabled=false;
-    if(save){save.disabled=false;save.textContent='Спробувати ще раз';}
-    setProfileSettingsStatus(error?.name==='AbortError'
-      ?'Не вдалося зберегти вчасно. Спробуйте ще раз.'
-      :profileSaveError(error?.response,error?.payload),'error');
+    const definite=error?.response?.status===400||error?.response?.status===401||error?.response?.status===409;
+    if(definite){
+      PROFILE_SETTINGS_STATE.pendingDraft=null;
+      PROFILE_SETTINGS_STATE.retryRequest=null;
+      if(offset)offset.disabled=false;
+      if(notification)notification.disabled=false;
+      if(save){save.disabled=false;save.textContent='Спробувати ще раз';}
+      setProfileSettingsStatus(profileSaveError(error?.response,error?.payload),'error');
+    }else{
+      if(offset)offset.disabled=true;
+      if(notification)notification.disabled=true;
+      if(save){save.disabled=false;save.textContent='Перевірити й повторити';}
+      setProfileSettingsStatus(error?.name==='AbortError'
+        ?'Не вдалося зберегти вчасно. Безпечно перевірте цей самий запит ще раз.'
+        :'Результат запиту невідомий. Безпечно перевірте цей самий запит ще раз.','error');
+    }
   }finally{
     clearTimeout(timeout);
   }
