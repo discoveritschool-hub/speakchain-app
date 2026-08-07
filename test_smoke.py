@@ -501,7 +501,7 @@ def test_pwa_identity_handoff():
         ok("головна і callback-сторінки одразу завантажують версіонований auth-код")
 
     sw = (ROOT / "sw.js").read_text(encoding="utf-8")
-    if "speakchain-shell-v23" not in sw or "telegram_auth_callback.html" not in sw:
+    if "speakchain-shell-v24" not in sw or "telegram_auth_callback.html" not in sw:
         fail("service worker не оновив cache version для auth-виправлення")
     else:
         ok("service worker примусово оновлює PWA auth-код після деплою")
@@ -1268,7 +1268,7 @@ def test_live_rooms_fail_closed_until_two_account_gate():
         "joinLiveMatch",
     )
     missing = [marker for marker in markers if marker not in pwa]
-    if missing or "speakchain-shell-v23" not in sw:
+    if missing or "speakchain-shell-v24" not in sw:
         fail(f"rooms gate або cache rollover неповні: {missing}")
     else:
         ok("live rooms приховані client-side; backend gate лишається авторитетним")
@@ -1281,17 +1281,19 @@ def test_interactive_captions_and_vocabulary_workspace():
     vocab = (ROOT / "vocab.html").read_text(encoding="utf-8")
     player_markers = (
         'id="interactive-transcript"', 'className = \'caption-word\'',
-        "cc_load_policy:1", "cc_lang_pref:'en'",
+        "cc_load_policy:0", "cc_lang_pref:'en'",
         "event.stopPropagation()", "inspectCaptionWord(part.toLowerCase(), text)",
         "body: JSON.stringify({uid, init_data: TG?.initData || '', word, context})",
-        "AbortSignal.timeout(6000)", "if (!captionSyncTimer)",
+        "const controller=new AbortController()", "if(!captionSyncTimer)",
         "function captionAuthHeaders(targetUrl)", "X-Telegram-Init-Data",
         "speakchain.pwa.access.v1", "headers:captionAuthHeaders(capUrl)",
         'id="word-card-audio"', 'id="word-card-vocab"',
         "window.speechSynthesis.speak(utterance)", "saveCaptionWord(word)",
         "window.parent.minimizePlayer()", "window.parent.openOv('ov-vocab')",
         "init_data: TG?.initData || ''",
-        "У цього відео немає доступних англійських субтитрів.",
+        "Для цього уроку інтерактивний текст ще готується.",
+        "playerData.caption_events||playerData.captions?.events",
+        "CAPTION_CACHE_TTL", "toggleOwnPlayback(true)",
     )
     vocab_markers = (
         'id="tab-words"', 'id="tab-phrases"', 'id="word-detail"',
@@ -1358,7 +1360,7 @@ def test_chainy_memory_controls_contract():
         fail(f"керування пам’яттю неповне/небезпечне: {missing}")
     else:
         ok("view/consent/confirm/edit/delete/purge/disable мають auth і безпечний DOM-render")
-    if "speakchain-shell-v23" not in worker or "'./chainy_memory.js'" not in worker:
+    if "speakchain-shell-v24" not in worker or "'./chainy_memory.js'" not in worker:
         fail("новий memory controller не включений у rollover service worker")
     else:
         ok("memory controller включений у cache v23")
@@ -1421,7 +1423,7 @@ def test_chainy_interest_ui_contract():
         fail(f"адаптивні теми неповні/небезпечні: {missing}")
     else:
         ok("catalog/preference/custom-topic мають auth, consent gate і безпечний DOM")
-    if "speakchain-shell-v23" not in worker or "'./chainy_interest.js'" not in worker:
+    if "speakchain-shell-v24" not in worker or "'./chainy_interest.js'" not in worker:
         fail("interest controller не включений у rollover service worker")
     else:
         ok("interest controller включений у cache v23")
@@ -1484,7 +1486,7 @@ def test_day1_onboarding_accessibility_contract():
         ok("native choices, ARIA state, visible focus and focus recovery are present")
 
     worker = (ROOT / "sw.js").read_text(encoding="utf-8")
-    if "speakchain-shell-v23" not in worker or "'./index_v2.html'" not in worker:
+    if "speakchain-shell-v24" not in worker or "'./index_v2.html'" not in worker:
         fail("accessible embedded onboarding is not covered by the cache rollover")
     else:
         ok("cache v23 publishes the accessible embedded onboarding")
@@ -1532,7 +1534,7 @@ def test_progress_security_accessibility_contract():
         ok("progress uses safe DOM, native disabled controls and dialog focus lifecycle")
 
     worker = (ROOT / "sw.js").read_text(encoding="utf-8")
-    if "speakchain-shell-v23" not in worker or "'./progress.html'" not in worker:
+    if "speakchain-shell-v24" not in worker or "'./progress.html'" not in worker:
         fail("hardened progress module is not covered by cache v23")
     else:
         ok("cache v23 publishes hardened progress")
@@ -1579,7 +1581,7 @@ def test_player_bounded_seek_behavior():
     else:
         ok("player exposes accessible controls, fixed live feedback and protected gesture layers")
 
-    if "speakchain-shell-v23" not in worker or "'./player_seek.js'" not in worker:
+    if "speakchain-shell-v24" not in worker or "'./player_seek.js'" not in worker:
         fail("player seek helper is not covered by cache v23")
     else:
         ok("cache v23 publishes the player seek helper")

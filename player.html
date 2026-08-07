@@ -221,9 +221,9 @@
     .caption-word { position:relative; z-index:1; border:0; padding:5px 3px; margin:-3px 0; background:transparent; color:inherit; font:inherit; cursor:pointer; touch-action:manipulation; }
     .caption-word:hover, .caption-word:active { color:var(--gold); text-decoration:underline; }
     .caption-word:focus-visible { outline:2px solid var(--gold); outline-offset:2px; border-radius:3px; }
-    .phrase-nav { display:grid; grid-template-columns:44px 1fr 1fr 44px; gap:8px; margin-top:10px; }
+    .phrase-nav { display:grid; grid-template-columns:44px minmax(0,1fr) 44px; gap:8px; margin-top:10px; }
     .phrase-nav button { min-height:44px; border:1px solid var(--line); border-radius:var(--r); background:var(--bg-card2); color:var(--text); font:inherit; font-size:var(--fs-sm); font-weight:700; cursor:pointer; touch-action:manipulation; }
-    .phrase-nav .primary { background:var(--purple-bg); border-color:rgba(124,110,247,.55); color:var(--purple-text); }
+    .phrase-nav .primary { background:var(--grad-purple); border-color:transparent; color:#fff; font-size:var(--fs); box-shadow:0 8px 20px rgba(91,75,196,.28); }
     .caption-help { margin-top:9px; color:var(--text2); font-size:var(--fs-xs); line-height:1.4; text-align:center; }
     #word-card { display:none; max-width:860px; margin:10px auto 0; padding:12px 14px; border:1px solid var(--line); border-radius:var(--r); background:var(--bg-card); }
     #word-card.show { display:block; }
@@ -247,7 +247,7 @@
     /* ── Session bar ── */
     #session-bar {
       background:var(--bg-card); padding:8px 16px;
-      display:flex; align-items:center; justify-content:space-between;
+      display:none; align-items:center; justify-content:space-between;
       border-bottom:0.5px solid var(--line);
     }
     .session-time-wrap { display:flex; align-items:center; gap:8px; }
@@ -358,8 +358,11 @@
       color:#fff; animation:pulse 1.2s infinite;
     }
     .record-btn.has-audio {
-      background:var(--bg-card2); color:var(--text2); border:1.5px solid var(--line);
+      background:linear-gradient(135deg,rgba(90,216,166,.18),rgba(124,110,247,.18));
+      color:var(--text); border:1.5px solid rgba(90,216,166,.45);
     }
+    .record-btn.playing { border-color:var(--orange); color:var(--orange); background:rgba(247,163,92,.1); }
+    .record-btn.paused { border-color:var(--green); color:var(--green); background:rgba(90,216,166,.1); }
     @keyframes pulse {
       0%,100% { box-shadow:0 4px 16px rgba(247,110,110,0.35); }
       50%      { box-shadow:0 4px 28px rgba(247,110,110,0.6); }
@@ -377,7 +380,7 @@
     #waveform-wrap.visible { display:block; }
     #waveform { width:100%; height:100%; display:block; }
     .rec-pulse { position:absolute; top:8px; left:10px; width:8px; height:8px; border-radius:50%; background:var(--red); animation:blink 1s infinite; }
-    .rec-time  { position:absolute; top:5px; right:10px; font-size:var(--fs-xs); color:var(--text2); font-weight:600; }
+    .rec-time  { display:none; }
     @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
 
     /* ── Action buttons (after recording) ── */
@@ -407,6 +410,11 @@
       display:none;
     }
     .record-again-btn.show { display:block; }
+    .voice-retake {
+      display:none; align-self:center; padding:7px 10px; border:0; background:transparent;
+      color:var(--purple-text); font:inherit; font-size:var(--fs-sm); font-weight:700; cursor:pointer;
+    }
+    .voice-retake.show { display:inline-flex; }
     .practice-step { color:var(--text2); font-size:var(--fs-sm); line-height:1.4; }
     .compare-row { display:none; gap:8px; }
     .compare-row.show { display:flex; }
@@ -425,7 +433,6 @@
       #video-toggle { width:46px; height:46px; }
       #interactive-transcript { padding:12px; }
       .phrase-nav { grid-template-columns:44px 1fr 44px; }
-      #phrase-repeat { display:none; }
       .practice-actions { grid-template-columns:1fr; }
       .action-btn,.record-btn,.chainy-btn { min-height:54px; }
       .loop-row { gap:8px; }
@@ -446,7 +453,7 @@
       border-radius:var(--r-sm); transition:width 0.1s linear;
     }
     .playback-times {
-      display:flex; justify-content:space-between;
+      display:none; justify-content:space-between;
       font-size:var(--fs-xs); color:var(--text2); font-weight:600;
     }
 
@@ -543,8 +550,7 @@
   <div id="transcript-overlay"><div id="transcript-text" role="button" tabindex="0" aria-label="Перекласти всю репліку">Увімкни відео — тут з’явиться поточна репліка</div></div>
   <div class="phrase-nav" aria-label="Керування реплікою">
     <button type="button" id="phrase-prev" aria-label="Попередня репліка">‹</button>
-    <button type="button" class="primary" id="phrase-listen">🔊 Оригінал</button>
-    <button type="button" id="phrase-repeat">🔁 Повторити</button>
+    <button type="button" class="primary" id="phrase-repeat">🔁 Повторити фразу</button>
     <button type="button" id="phrase-next" aria-label="Наступна репліка">›</button>
   </div>
   <div class="caption-help" id="caption-help">Торкнися слова для перекладу слова або репліки — для перекладу всієї фрази.</div>
@@ -621,13 +627,13 @@
   <!-- Record -->
   <div style="display:flex;flex-direction:column;gap:10px">
     <div class="panel-label">Практика фрази</div>
-    <div class="practice-step" id="practice-step">1. Слухай оригінал → 2. Запиши себе → 3. Порівняй</div>
+    <div class="practice-step" id="practice-step">1. Повтори фразу → 2. Запиши себе → 3. Послухай себе</div>
     <div class="practice-actions">
-      <button class="action-btn" id="play-original">🔊 Оригінал</button>
       <button class="record-btn idle" id="record-btn">🎙 Записати себе</button>
-      <button class="action-btn" id="play-my" disabled>▶ Прослухати себе</button>
-      <button class="action-btn" id="save-practice-phrase">💎 У словник</button>
+      <button class="action-btn" id="play-my" disabled hidden aria-hidden="true">▶ Почути себе</button>
+      <button class="chainy-btn" id="speak-with-chainy">💬 Проговорити з Chainy</button>
     </div>
+    <button class="voice-retake" id="voice-retake">↻ Записати ще раз</button>
     <div class="rec-timer" id="rec-timer">● REC <span id="rec-secs">0:00</span></div>
 
     <!-- Waveform -->
@@ -640,8 +646,7 @@
     <div class="mic-error" id="mic-error"></div>
 
     <!-- Прослухати з паузою -->
-    <div class="compare-row" id="compare-row">
-      <button class="action-btn" id="compare-original">🔊 Оригінал</button>
+    <div class="compare-row" id="compare-row" hidden aria-hidden="true">
       <button class="action-btn" id="compare-recording" disabled>▶ Мій запис</button>
     </div>
 
@@ -655,8 +660,7 @@
     </div>
 
     <!-- Записати ще / Зберегти фразу -->
-    <button class="record-again-btn" id="record-again-btn">💎 Зберегти фразу</button>
-    <button class="chainy-btn" id="speak-with-chainy">💬 Проговорити з Chainy</button>
+    <button class="record-again-btn" id="record-again-btn" hidden aria-hidden="true">💎 Зберегти фразу</button>
   </div>
 
 </div>
@@ -701,9 +705,11 @@ if (!videoId && startParam) {
 let apiBase = "";
 let captionsUrl = "";
 let playerUid = 0;
+let playerData = {};
 if (dataRaw) {
   try {
     const _d = JSON.parse(decodeURIComponent(dataRaw));
+    playerData  = _d;
     apiBase     = _d.api          || "";
     captionsUrl = _d.captions_url || "";
     playerUid   = _d.uid          || 0;
@@ -997,11 +1003,10 @@ window.onYouTubeIframeAPIReady = function() {
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
     ytPlayer = new YT.Player("yt-player", {
       height:"100%", width:"100%", videoId,
-      // YouTube remains the visual source of truth for captions. SpeakChain's
-      // separate phrase desk below the iframe adds interaction when text is
-      // available, but never hides native captions when the proxy is blocked.
+      // SpeakChain renders the learning text outside the cross-origin iframe,
+      // where every word remains reliably tappable on mobile and desktop.
       playerVars: { autoplay:isIOS?0:1, rel:0, modestbranding:1, playsinline:1,
-                    cc_load_policy:1, cc_lang_pref:'en', hl:'en' },
+                    cc_load_policy:0, cc_lang_pref:'en', hl:'en' },
       events: {
         onReady: function(e) {
           ytReady = true;
@@ -1136,8 +1141,6 @@ let recSec=0, recInterval=null, isRec=false;
 let audioCtx=null, analyser=null, animFrame=null;
 
 const recordBtn    = document.getElementById("record-btn");
-const playOriginalBtn = document.getElementById("play-original");
-const compareOriginalBtn = document.getElementById("compare-original");
 const compareRecordingBtn = document.getElementById("compare-recording");
 const compareRow = document.getElementById("compare-row");
 const practiceStep = document.getElementById("practice-step");
@@ -1154,7 +1157,7 @@ const recTimeLabel = document.getElementById("rec-time-label");
 const micError     = document.getElementById("mic-error");
 const playMyBtn    = document.getElementById("play-my");
 const recAgainBtn  = document.getElementById("record-again-btn");
-const savePracticePhraseBtn = document.getElementById("save-practice-phrase");
+const voiceRetakeBtn = document.getElementById("voice-retake");
 const speakWithChainyBtn = document.getElementById("speak-with-chainy");
 const pbWrap       = document.getElementById("playback-bar-wrap");
 const pbFill       = document.getElementById("playback-fill");
@@ -1162,9 +1165,7 @@ const pbBar        = document.getElementById("playback-bar");
 const pbCurrent    = document.getElementById("pb-current");
 const pbTotal      = document.getElementById("pb-total");
 
-document.getElementById('phrase-listen').addEventListener('click', playOriginalSegment);
 document.getElementById('phrase-repeat').addEventListener('click', playOriginalSegment);
-savePracticePhraseBtn.addEventListener('click', saveLoopPhrase);
 speakWithChainyBtn.addEventListener('click', speakCurrentPhraseWithChainy);
 
 function speakCurrentPhraseWithChainy(){
@@ -1218,11 +1219,14 @@ function drawWaveform() {
 
 recordBtn.addEventListener("click", async()=>{
   if (isRec){ stopRec(); return; }
+  if (audioURL){ toggleOwnPlayback(); return; }
+  await startVoiceRecording();
+});
+
+async function startVoiceRecording(){
   if (!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){
     micError.textContent="Мікрофон недоступний."; micError.classList.add("visible"); return;
   }
-  // Якщо є запис — скидаємо його перед новим
-  if (audioURL) { resetPlayback(); }
   try {
     const stream=await navigator.mediaDevices.getUserMedia({audio:true,video:false});
     const mime=getSupportedMime();
@@ -1241,19 +1245,22 @@ recordBtn.addEventListener("click", async()=>{
       cancelAnimationFrame(animFrame);
       waveWrap.classList.remove("visible");
       recordBtn.className="record-btn has-audio";
-      recordBtn.textContent="🎙 Записати ще раз";
+      recordBtn.textContent="Готуємо прослуховування…";
+      recordBtn.disabled=true;
       playMyBtn.disabled=false;
       compareRecordingBtn.disabled=false;
-      recAgainBtn.classList.add("show");
-      compareRow.classList.add("show");
-      practiceStep.textContent="Готово — послухай оригінал і свій запис по черзі.";
+      voiceRetakeBtn.classList.add("show");
+      practiceStep.textContent="Зараз ти почуєш свій запис.";
       // Показуємо прогрес-бар
       pbWrap.classList.add("show");
       pbFill.style.width="0%";
       pbCurrent.textContent="0:00";
       pbTotal.textContent=fmt(recSec);
       audioDuration=recSec;
-      showToast("✅ Запис готовий!");
+      setTimeout(()=>{
+        recordBtn.disabled=false;
+        toggleOwnPlayback(true);
+      },300);
       resetInactivity();
     });
     mediaRecorder.start(100); isRec=true; recSec=0;
@@ -1269,7 +1276,7 @@ recordBtn.addEventListener("click", async()=>{
     recInterval=setInterval(()=>{
       recSec++;
       recTimeLabel.textContent=Math.floor(recSec/60)+":"+String(recSec%60).padStart(2,"0");
-      if (recSec>=120) stopRec();
+      if (recSec>=15) stopRec();
     },1000);
   } catch(err){
     let msg="Дозволь доступ до мікрофону 🎙";
@@ -1278,7 +1285,7 @@ recordBtn.addEventListener("click", async()=>{
     micError.textContent=msg; micError.classList.add("visible");
     showToast(msg,3000);
   }
-});
+}
 
 function stopRec() {
   if (!mediaRecorder||!isRec) return;
@@ -1300,7 +1307,7 @@ function playOriginalSegment(){
   clearInterval(originalLoopTimer);
   try{
     ytPlayer.seekTo(segment.start,true); ytPlayer.playVideo();
-    practiceStep.textContent="Слухай фразу. Потім натисни «Записати себе».";
+    practiceStep.textContent="Повтори фразу вголос. Потім натисни «Записати себе».";
     originalLoopTimer=setInterval(()=>{
       try{
         if(ytPlayer.getCurrentTime()>=segment.end){
@@ -1310,8 +1317,6 @@ function playOriginalSegment(){
     },100);
   }catch(_){showToast("Не вдалося відтворити фрагмент");}
 }
-playOriginalBtn.addEventListener("click",playOriginalSegment);
-compareOriginalBtn.addEventListener("click",playOriginalSegment);
 compareRecordingBtn.addEventListener("click",()=>playMyBtn.click());
 
 // ── Playback з паузою / продовженням ──
@@ -1326,7 +1331,7 @@ function resetPlayback() {
   pbFill.style.width="0%";
   pbCurrent.textContent="0:00";
   playMyBtn.className="action-btn";
-  playMyBtn.textContent="▶ Прослухати";
+  playMyBtn.textContent="▶ Почути себе";
   playMyBtn.disabled=!audioURL;
 }
 
@@ -1341,7 +1346,9 @@ function startPbProgress() {
   },100);
 }
 
-playMyBtn.addEventListener("click",()=>{
+playMyBtn.addEventListener("click",()=>toggleOwnPlayback());
+
+function toggleOwnPlayback(autoPlay=false){
   if (!audioURL) return;
 
   // ── Якщо ще немає об'єкта або він закінчив грати ──
@@ -1352,7 +1359,10 @@ playMyBtn.addEventListener("click",()=>{
       pbState='idle';
       stopPlaybackTick();          // зупиняємо лічильник
       playMyBtn.className="action-btn";
-      playMyBtn.textContent="▶ Прослухати";
+      playMyBtn.textContent="▶ Почути себе";
+      recordBtn.className="record-btn has-audio";
+      recordBtn.textContent="▶ Почути себе ще раз";
+      practiceStep.textContent="Почула себе? Можеш прослухати ще раз або перезаписати.";
       pbFill.style.width="100%";
       clearInterval(pbInterval);
     };
@@ -1360,9 +1370,16 @@ playMyBtn.addEventListener("click",()=>{
       pbState='playing';
       playMyBtn.className="action-btn playing";
       playMyBtn.textContent="⏸ Пауза";
+      recordBtn.className="record-btn playing";
+      recordBtn.textContent="⏸ Пауза";
+      practiceStep.textContent=autoPlay?'Слухаєш свій запис.':'Слухаєш себе ще раз.';
       startPbProgress();
       startPlaybackTick();         // рахуємо час слухання
-    }).catch(()=>showToast("Натисни ще раз"));
+    }).catch(()=>{
+      recordBtn.className="record-btn has-audio";
+      recordBtn.textContent="▶ Почути себе";
+      practiceStep.textContent="Запис готовий — натисни, щоб почути себе.";
+    });
     resetInactivity();
     return;
   }
@@ -1375,6 +1392,8 @@ playMyBtn.addEventListener("click",()=>{
     stopPlaybackTick();            // зупиняємо лічильник
     playMyBtn.className="action-btn paused";
     playMyBtn.textContent="▶ Продовжити";
+    recordBtn.className="record-btn paused";
+    recordBtn.textContent="▶ Продовжити";
     resetInactivity();
     return;
   }
@@ -1385,13 +1404,15 @@ playMyBtn.addEventListener("click",()=>{
       pbState='playing';
       playMyBtn.className="action-btn playing";
       playMyBtn.textContent="⏸ Пауза";
+      recordBtn.className="record-btn playing";
+      recordBtn.textContent="⏸ Пауза";
       startPbProgress();
       startPlaybackTick();         // продовжуємо лічильник
     }).catch(()=>showToast("Натисни ще раз"));
     resetInactivity();
     return;
   }
-});
+}
 
 // Клік по прогрес-бару — перемотка
 pbBar.addEventListener("click",(e)=>{
@@ -1448,46 +1469,127 @@ function setCaptionStatus(message,ready=false){
   captionStatus.classList.toggle('ready',ready);
 }
 
+voiceRetakeBtn.addEventListener('click',async()=>{
+  clearOwnRecording();
+  await startVoiceRecording();
+});
+
+function clearOwnRecording(){
+  if(myAudio){ myAudio.pause(); myAudio.src=''; myAudio=null; }
+  stopPlaybackTick(); clearInterval(pbInterval);
+  if(audioURL){ try{URL.revokeObjectURL(audioURL);}catch(_){} }
+  audioURL=null; audioDuration=0; pbState='idle';
+  pbFill.style.width='0%'; pbCurrent.textContent='0:00'; pbTotal.textContent='0:00';
+  pbWrap.classList.remove('show'); voiceRetakeBtn.classList.remove('show');
+  playMyBtn.disabled=true; compareRecordingBtn.disabled=true;
+  recordBtn.disabled=false; recordBtn.className='record-btn idle';
+  recordBtn.textContent='🎙 Записати себе';
+  practiceStep.textContent='1. Повтори фразу → 2. Запиши себе → 3. Послухай себе';
+}
+
 function selectCaption(index){
   if(!captions.length){ playOriginalSegment(); return; }
   const next=Math.max(0,Math.min(captions.length-1,index));
   activeCaptionIndex=next; activeCaption=captions[next];
   renderCaption(activeCaption.text);
   try { ytPlayer.seekTo(activeCaption.start,true); ytPlayer.pauseVideo(); } catch(_) {}
-  setCaptionStatus(`${fmt(activeCaption.start)} · репліка ${next+1}`,true);
+  setCaptionStatus('Обрана репліка',true);
+}
+
+const CAPTION_CACHE_PREFIX='speakchain-captions-v2:';
+const CAPTION_CACHE_TTL=7*24*60*60*1000;
+
+function normalizeCaptionEvents(events){
+  if(!Array.isArray(events)) return [];
+  return events.map(event=>{
+    if(event&&event.text!=null&&event.start!=null){
+      const start=Number(event.start), end=Number(event.end??(start+2));
+      return {start,end,text:String(event.text).replace(/\s+/g,' ').trim()};
+    }
+    if(!event||!event.segs||event.tStartMs==null) return null;
+    const start=Number(event.tStartMs)/1000;
+    return {start,end:(Number(event.tStartMs)+Number(event.dDurationMs||2000))/1000,
+      text:event.segs.map(segment=>segment.utf8||'').join('').replace(/\s+/g,' ').trim()};
+  }).filter(event=>event&&Number.isFinite(event.start)&&Number.isFinite(event.end)&&event.text)
+    .sort((a,b)=>a.start-b.start);
+}
+
+function activateCaptions(events,source='Інтерактивні субтитри'){
+  captions=normalizeCaptionEvents(events);
+  if(!captions.length) return false;
+  setCaptionStatus(source,true);
+  captionHelp.textContent='Натисни слово для перекладу або всю репліку, щоб зберегти фразу.';
+  if(!captionSyncTimer) captionSyncTimer=setInterval(syncCaptions,150);
+  syncCaptions();
+  return true;
+}
+
+function readCaptionCache(){
+  if(!videoId) return null;
+  try{
+    const cached=JSON.parse(localStorage.getItem(CAPTION_CACHE_PREFIX+videoId)||'null');
+    if(!cached||Date.now()-cached.saved_at>CAPTION_CACHE_TTL) return null;
+    return cached.events;
+  }catch(_){return null;}
+}
+
+function writeCaptionCache(events){
+  if(!videoId||!Array.isArray(events)) return;
+  try{
+    const indexKey=CAPTION_CACHE_PREFIX+'index';
+    const ids=JSON.parse(localStorage.getItem(indexKey)||'[]').filter(id=>id!==videoId);
+    ids.unshift(videoId);
+    for(const oldId of ids.slice(6)) localStorage.removeItem(CAPTION_CACHE_PREFIX+oldId);
+    localStorage.setItem(indexKey,JSON.stringify(ids.slice(0,6)));
+    localStorage.setItem(CAPTION_CACHE_PREFIX+videoId,JSON.stringify({saved_at:Date.now(),events}));
+  }catch(_){}
 }
 
 async function loadCaptions(force=false){
-  // Використовуємо явний captions_url якщо переданий, інакше будуємо з apiBase
   const capBase = captionsUrl || (apiBase ? apiBase + "/captions" : "");
   if (!videoId || !capBase) return;
   try {
-    if(force){ captions=[]; activeCaption=null; activeCaptionIndex=-1; }
-    setCaptionStatus('Шукаю англійські субтитри…');
-    const capUrl = `${capBase}?v=${encodeURIComponent(videoId)}&lang=en`;
-    const res=await fetch(capUrl,{
-      headers:captionAuthHeaders(capUrl), signal:AbortSignal.timeout(6000)
-    });
+    if(force){
+      captions=[]; activeCaption=null; activeCaptionIndex=-1;
+      try{localStorage.removeItem(CAPTION_CACHE_PREFIX+videoId);}catch(_){}
+    }
+    const supplied=playerData.caption_events||playerData.captions?.events;
+    if(supplied&&activateCaptions(supplied,'Текст уроку готовий')) return;
+    if(!force){
+      const cached=readCaptionCache();
+      if(cached&&activateCaptions(cached,'Текст уроку готовий')) return;
+    }
+    setCaptionStatus('Готуємо текст уроку…');
+    const capUrl=`${capBase}?v=${encodeURIComponent(videoId)}&lang=en`;
+    const controller=new AbortController();
+    const timeout=setTimeout(()=>controller.abort(),8000);
+    let res;
+    try{res=await fetch(capUrl,{headers:captionAuthHeaders(capUrl),signal:controller.signal});}
+    finally{clearTimeout(timeout);}
     if (!res.ok) { showTranscriptNotice('Текстова доріжка недоступна'); return; }
     const data=await res.json();
-    if (!data.events) { showTranscriptNotice('Для цього відео YouTube не віддав доступних англійських субтитрів.'); return; }
-    captions=data.events
-      .filter(e=>e.segs&&e.tStartMs!=null)
-      .map(e=>({start:e.tStartMs/1000,end:(e.tStartMs+(e.dDurationMs||2000))/1000,
-                 text:e.segs.map(s=>s.utf8||"").join("").replace(/\n/g," ").trim()}))
-      .filter(e=>e.text.length>0);
-    if (captions.length>0){
-      setCaptionStatus('Інтерактивні субтитри',true);
-      captionHelp.textContent='Торкнися слова для перекладу слова або репліки — для перекладу всієї фрази.';
-      if (!captionSyncTimer) captionSyncTimer=setInterval(syncCaptions,150);
-    } else showTranscriptNotice('У цього відео немає доступних англійських субтитрів.');
-  } catch(e){ showTranscriptNotice('Не вдалося завантажити інтерактивні субтитри. Спробуй ще раз.'); }
+    if (!data.events||!activateCaptions(data.events)) {
+      showTranscriptNotice('Для цього уроку інтерактивний текст ще готується.'); return;
+    }
+    writeCaptionCache(data.events);
+  } catch(e){ showTranscriptNotice('Не вдалося завантажити текст уроку. Спробуй ще раз.'); }
 }
 
 function showTranscriptNotice(message){
-  setCaptionStatus('Субтитри показує YouTube');
-  document.getElementById("transcript-text").textContent='Обери момент у відео й тренуй фразу по 4 секунди';
-  captionHelp.textContent='Навіть без текстової доріжки працюють оригінал, повтор, запис себе та розмова з Chainy.';
+  setCaptionStatus(message||'Текст уроку ще готується');
+  document.getElementById("transcript-text").textContent='Відео працює без затримки. Текст можна оновити окремо.';
+  captionHelp.textContent='Запис себе та розмова з Chainy доступні вже зараз.';
+}
+
+function captionAt(seconds){
+  let low=0,high=captions.length-1,match=null;
+  while(low<=high){
+    const mid=(low+high)>>1, item=captions[mid];
+    if(seconds<item.start-0.1) high=mid-1;
+    else if(seconds>item.end+0.5) low=mid+1;
+    else {match=item;break;}
+  }
+  return match;
 }
 
 function syncCaptions(){
@@ -1495,13 +1597,11 @@ function syncCaptions(){
   let cur;
   try { cur=ytPlayer.getCurrentTime(); } catch(_){ return; }
   const el=document.getElementById("transcript-text");
-  const transcript=document.getElementById("interactive-transcript");
-  // Розширений буфер пошуку — 0.5сек до і після
-  let found=captions.find(c=>cur>=c.start-0.1&&cur<=c.end+0.5);
+  const found=captionAt(cur);
   if (found){
     activeCaption=found;
     activeCaptionIndex=captions.indexOf(found);
-    setCaptionStatus(`${fmt(found.start)} · поточна репліка`,true);
+    setCaptionStatus('Поточна репліка',true);
     if (el.textContent!==found.text){
       el.style.opacity="0";
       setTimeout(()=>{ renderCaption(found.text); el.style.opacity="1"; },120);
@@ -1544,9 +1644,9 @@ async function inspectCaptionPhrase(text){
   document.getElementById('word-card-word').textContent=phrase;
   document.getElementById('word-card-phonetic').textContent='перекладаю…';
   document.getElementById('word-card-translation').textContent='';
-  document.getElementById('word-card-example').textContent='Оригінальний звук збережеться разом із таймкодом відео.';
+  document.getElementById('word-card-example').textContent='Фраза збережеться разом із контекстом цього уроку.';
   wordCardVocab.dataset.saved='0';
-  wordCardAudio.textContent='🔊 Оригінал'; wordCardVocab.textContent='💎 Зберегти фразу';
+  wordCardAudio.textContent='🔁 Повторити фразу'; wordCardVocab.textContent='💎 Зберегти фразу';
   try{
     const response=await fetch(`${apiBase}/word_lookup`,{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({uid:TG?.initDataUnsafe?.user?.id||playerUid,init_data:TG?.initData||'',text:phrase,
@@ -1612,7 +1712,7 @@ wordCardVocab.addEventListener('click',async()=>{
   if(saved){
     wordCardVocab.dataset.saved='1';
     wordCardVocab.textContent='✅ Збережено · Відкрити словник';
-    showToast('💎 Збережено в словник зі звуком');
+    showToast('💎 Збережено у словник з озвученням');
   }
 });
 
