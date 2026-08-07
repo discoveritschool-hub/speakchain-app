@@ -367,6 +367,47 @@
     border:1px solid var(--line); display:flex; align-items:center; justify-content:center;
     font-size:var(--fs-md); font-weight:700; color:var(--purple);
     box-shadow:0 1px 4px rgba(0,0,0,.15); line-height:1; }
+
+  /* Chainy memory is an explicit, user-controlled surface. */
+  .memory-entry { width:min(100%,320px); padding:11px 16px; border-radius:var(--r);
+    border:1px solid var(--line); background:var(--bg-card); color:var(--text);
+    font:600 var(--fs)/1.3 inherit; cursor:pointer; }
+  .memory-entry:focus-visible, .memory-btn:focus-visible, .memory-close:focus-visible,
+  .memory-consent input:focus-visible { outline:3px solid var(--purple); outline-offset:2px; }
+  .memory-overlay { position:fixed; inset:0; z-index:1700; display:none; align-items:flex-end;
+    justify-content:center; background:rgba(5,5,10,.68); backdrop-filter:blur(5px); }
+  .memory-overlay.show { display:flex; }
+  .memory-sheet { width:min(100%,620px); max-height:min(88vh,760px); overflow-y:auto;
+    padding:18px 18px calc(22px + env(safe-area-inset-bottom)); border:1px solid var(--line);
+    border-radius:var(--r-lg) var(--r-lg) 0 0; background:var(--bg-card); box-shadow:var(--shadow-sheet); }
+  .memory-head { display:flex; align-items:flex-start; gap:12px; }
+  .memory-head-copy { flex:1; min-width:0; }
+  .memory-title { font-size:var(--fs-lg); font-weight:800; }
+  .memory-subtitle, .memory-state { margin-top:5px; color:var(--text2); font-size:var(--fs-sm); line-height:1.5; }
+  .memory-close { width:40px; height:40px; flex:none; border:1px solid var(--line);
+    border-radius:50%; background:var(--bg-card2); color:var(--text); font-size:var(--fs-md); cursor:pointer; }
+  .memory-status { margin:16px 0; padding:12px; border:1px solid var(--line); border-radius:var(--r-sm);
+    color:var(--text2); background:var(--bg-card2); line-height:1.45; }
+  .memory-status.error { border-color:rgba(247,110,110,.55); color:var(--red); }
+  .memory-consent { display:flex; align-items:flex-start; gap:10px; padding:14px;
+    border:1px solid var(--line); border-radius:var(--r); line-height:1.45; cursor:pointer; }
+  .memory-consent input { width:20px; height:20px; flex:none; margin-top:1px; accent-color:var(--purple); }
+  .memory-actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+  .memory-btn { min-height:42px; padding:10px 14px; border:1px solid var(--line); border-radius:var(--r-sm);
+    background:var(--bg-card2); color:var(--text); font:700 var(--fs-sm)/1.2 inherit; cursor:pointer; }
+  .memory-btn.primary { border-color:var(--purple); background:var(--purple); color:#fff; }
+  .memory-btn.danger { border-color:rgba(247,110,110,.55); color:var(--red); }
+  .memory-btn:disabled { opacity:.5; cursor:wait; }
+  .memory-list { display:flex; flex-direction:column; gap:10px; margin-top:16px; }
+  .memory-item { padding:14px; border:1px solid var(--line); border-radius:var(--r); background:var(--bg-card2); }
+  .memory-item.pending { border-color:rgba(247,201,92,.55); }
+  .memory-meta { color:var(--text3); font-size:var(--fs-xs); text-transform:uppercase; letter-spacing:.05em; }
+  .memory-text { margin-top:7px; color:var(--text); line-height:1.5; overflow-wrap:anywhere; white-space:pre-wrap; }
+  .memory-danger-zone { margin-top:20px; padding-top:16px; border-top:1px solid var(--line); }
+  @media (min-width:700px) {
+    .memory-overlay { align-items:center; padding:24px; }
+    .memory-sheet { border-radius:var(--r-lg); }
+  }
 </style>
 </head>
 <body>
@@ -391,6 +432,43 @@
     ⭐ Своя ситуація
     <span>Опиши — і Chainy зіграє потрібну людину →</span>
   </button>
+</div>
+
+<!-- Chainy memory management: unavailable backend states fail visibly and safely. -->
+<div class="memory-overlay" id="chainy-memory-overlay" role="dialog" aria-modal="true"
+     aria-labelledby="chainy-memory-title" onclick="if(event.target===this)closeChainyMemory()">
+  <section class="memory-sheet" aria-describedby="chainy-memory-description">
+    <div class="memory-head">
+      <div class="memory-head-copy">
+        <h2 class="memory-title" id="chainy-memory-title" tabindex="-1">Пам’ять Chainy</h2>
+        <p class="memory-subtitle" id="chainy-memory-description">Тут ти вирішуєш, що Chainy може пам’ятати між розмовами.</p>
+      </div>
+      <button class="memory-close" type="button" onclick="closeChainyMemory()" aria-label="Закрити керування пам’яттю">✕</button>
+    </div>
+    <div class="memory-status" id="chainy-memory-status" role="status" aria-live="polite">Завантажуємо налаштування…</div>
+    <div id="chainy-memory-consent" hidden>
+      <label class="memory-consent">
+        <input id="chainy-memory-consent-check" type="checkbox">
+        <span>Я дозволяю Chainy зберігати корисні факти з моїх розмов для наступних діалогів. До згоди Chainy не використовує наявну й не зберігає нову міжсесійну пам’ять.</span>
+      </label>
+      <p class="memory-state" id="chainy-memory-disabled-summary">До згоди вміст пам’яті не відображається.</p>
+      <div class="memory-actions">
+        <button class="memory-btn primary" id="chainy-memory-enable" type="button" onclick="enableChainyMemory()">Увімкнути пам’ять</button>
+        <button class="memory-btn danger" type="button" onclick="deleteAllChainyMemory()">Видалити наявні дані</button>
+      </div>
+    </div>
+    <div id="chainy-memory-enabled" hidden>
+      <p class="memory-state">Пам’ять увімкнена. Нові факти можна підтвердити, змінити або видалити нижче.</p>
+      <div class="memory-list" id="chainy-memory-list" aria-label="Збережена пам’ять Chainy"></div>
+      <div class="memory-danger-zone">
+        <div class="memory-actions">
+          <button class="memory-btn danger" type="button" onclick="deleteAllChainyMemory()">Видалити всю пам’ять</button>
+          <button class="memory-btn danger" type="button" onclick="disableChainyMemory()">Вимкнути пам’ять і видалити дані</button>
+        </div>
+        <p class="memory-subtitle">Вимкнення зупиняє пам’ять і видаляє збережену історію та факти Chainy.</p>
+      </div>
+    </div>
+  </section>
 </div>
 
 <!-- ══ MY SITUATION MODAL ══ -->
@@ -924,6 +1002,9 @@ function renderScenarios() {
         <button onclick="startChainyChat()"
           style="margin-top:4px;padding:14px 40px;border-radius:var(--r-lg);background:linear-gradient(135deg,var(--purple),var(--purple));border:none;color:#fff;font-size:var(--fs-md);font-weight:700;cursor:pointer;letter-spacing:-.2px;box-shadow:0 4px 20px rgba(124,110,247,.4)">
           Привіт, Chainy! 👋
+        </button>
+        <button class="memory-entry" type="button" onclick="openChainyMemory()" aria-haspopup="dialog">
+          ⚙️ Пам’ять Chainy
         </button>
       </div>`;
     return;
@@ -2662,5 +2743,6 @@ renderScenarios();
   else init();
 })();
 </script>
+<script src="chainy_memory.js"></script>
 </body>
 </html>

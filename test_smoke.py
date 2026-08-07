@@ -491,7 +491,7 @@ def test_pwa_identity_handoff():
         ok("головна і callback-сторінки одразу завантажують версіонований auth-код")
 
     sw = (ROOT / "sw.js").read_text(encoding="utf-8")
-    if "speakchain-shell-v17" not in sw or "telegram_auth_callback.html" not in sw:
+    if "speakchain-shell-v18" not in sw or "telegram_auth_callback.html" not in sw:
         fail("service worker не оновив cache version для auth-виправлення")
     else:
         ok("service worker примусово оновлює PWA auth-код після деплою")
@@ -1258,7 +1258,7 @@ def test_live_rooms_fail_closed_until_two_account_gate():
         "joinLiveMatch",
     )
     missing = [marker for marker in markers if marker not in pwa]
-    if missing or "speakchain-shell-v17" not in sw:
+    if missing or "speakchain-shell-v18" not in sw:
         fail(f"rooms gate або cache rollover неповні: {missing}")
     else:
         ok("live rooms приховані client-side; backend gate лишається авторитетним")
@@ -1308,6 +1308,54 @@ def test_interactive_captions_and_vocabulary_workspace():
         ok("слово перекладається в контексті, озвучується й відкривається без click-through")
 
 
+def test_chainy_memory_controls_contract():
+    """Memory controls stay authenticated, explicit, accessible and injection-safe."""
+    section("Chainy — явна згода й керування пам’яттю")
+    buddy = (ROOT / "speaking_buddy.html").read_text(encoding="utf-8")
+    memory_path = ROOT / "chainy_memory.js"
+    memory = memory_path.read_text(encoding="utf-8") if memory_path.exists() else ""
+    worker = (ROOT / "sw.js").read_text(encoding="utf-8")
+    buddy_markers = (
+        'id="chainy-memory-overlay" role="dialog" aria-modal="true"',
+        'id="chainy-memory-consent-check" type="checkbox"',
+        'onclick="openChainyMemory()" aria-haspopup="dialog"',
+        "До згоди Chainy не використовує наявну й не зберігає нову міжсесійну пам’ять.",
+        'id="chainy-memory-disabled-summary"', "Видалити наявні дані",
+        "Вимкнення зупиняє пам’ять і видаляє збережену історію та факти Chainy.",
+        '<script src="chainy_memory.js"></script>',
+        '@media (min-width:700px)',
+    )
+    memory_markers = (
+        "apiBase() + '/buddy_memory'", "function authPayload", "init_data: initData",
+        "pwa_access_token: access", "headers: authHeaders()", "memoryRequest('view')",
+        "runMutation('consent'", "runMutation('confirm'", "confirmed: true",
+        "runMutation('edit'", "runMutation('delete'", "runMutation('delete_all'",
+        "runMutation('disable'", "text.textContent = item.text", "list.replaceChildren()",
+        "typeof data?.error === 'string'", "error.code = code",
+        "state.items = state.enabled ? receivedItems : []", "else list?.replaceChildren()",
+        "state.itemCount > 0", "До згоди вміст пам’яті не відображається.",
+        "if (!state.open || state.busy) return", "state.returnFocus?.focus?.()", "event.key === 'Escape'",
+    )
+    missing = [f"html:{marker}" for marker in buddy_markers if marker not in buddy]
+    missing += [f"js:{marker}" for marker in memory_markers if marker not in memory]
+    if "uid" in re.sub(r"[A-Za-z_]uid[A-Za-z_]", "", memory, flags=re.I).lower():
+        missing.append("js:memory request must never send uid")
+    if "innerHTML" in memory:
+        missing.append("js:memory text renderer must not use innerHTML")
+    if missing:
+        fail(f"керування пам’яттю неповне/небезпечне: {missing}")
+    else:
+        ok("view/consent/confirm/edit/delete/purge/disable мають auth і безпечний DOM-render")
+    if "speakchain-shell-v18" not in worker or "'./chainy_memory.js'" not in worker:
+        fail("новий memory controller не включений у rollover service worker")
+    else:
+        ok("memory controller включений у cache v18")
+    if _has_node() and memory and not _js_ok(memory):
+        fail("chainy_memory.js: JavaScript не парситься")
+    else:
+        ok("chainy_memory.js: JavaScript парситься")
+
+
 def main():
     print("\033[1m" + "═" * 58)
     print("  SpeakChain — смоук-тести")
@@ -1342,6 +1390,7 @@ def main():
     test_desktop_shell_keeps_mobile_navigation_intact()
     test_live_rooms_fail_closed_until_two_account_gate()
     test_interactive_captions_and_vocabulary_workspace()
+    test_chainy_memory_controls_contract()
 
     print("\n" + "═" * 58)
     if FAILS:

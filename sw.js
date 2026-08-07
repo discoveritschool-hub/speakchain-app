@@ -1,7 +1,7 @@
-const CACHE = 'speakchain-shell-v17';
+const CACHE = 'speakchain-shell-v18';
 const SHELL = [
   './index_v2.html', './telegram_auth_callback.html', './offline.html', './player.html', './vocab.html', './speaking_buddy.html',
-  './progress.html', './tokens.css', './pwa.js', './manifest.webmanifest',
+  './progress.html', './tokens.css', './pwa.js', './chainy_memory.js', './manifest.webmanifest',
   './icon-192.png', './icon-512.png', './Chainy.png', './toast_rewards.js'
 ];
 const SHELL_PATHS = new Set(SHELL.map(path => new URL(path, self.location.href).pathname));
