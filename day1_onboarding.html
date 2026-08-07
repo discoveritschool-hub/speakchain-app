@@ -10,6 +10,10 @@
        ВАЖЛИВО: шлях БЕЗ початкового слеша. Слеш = корінь домену,
        а сайт живе в підпапці /speakchain-app/ → 404.
   ─────────────────────────────────────────────────────────────── -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Знайомство — SpeakChain</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
   :root, :host {
     --purple:#7c6ef7; --purple-dark:#5b4bc4; --purple-bg:#241d4d; --purple-text:#c9c2ff;
@@ -31,13 +35,7 @@
     --dur-fast:.12s; --dur:.15s; --ease:cubic-bezier(.4,0,.2,1);
     color-scheme:dark;
   }
-  </style>
-  <link rel="stylesheet" href="tokens.css">
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Знайомство — SpeakChain</title>
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
-<style>
+
   *{margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
   body{background:var(--bg); color:var(--text);
     font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',Roboto,sans-serif;
@@ -55,6 +53,8 @@
     background:linear-gradient(90deg,var(--purple),var(--purple-dark)); border-radius:var(--r);
     transition:width .35s cubic-bezier(.4,0,.2,1);}
   .step-count{font-size:var(--fs-sm); color:var(--text2); font-weight:600; flex-shrink:0; min-width:34px; text-align:right;}
+  .sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;
+    margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important;}
 
   h1{font-size:21px; font-weight:700; letter-spacing:-.3px; margin:4px 0 6px; text-align:center;}
   .sub{text-align:center; color:var(--text2); font-size:var(--fs); margin:0 auto 18px; max-width:340px; line-height:1.45;}
@@ -66,8 +66,12 @@
   .choices{display:flex; flex-direction:column; gap:10px;}
   .choice{display:flex; align-items:center; gap:12px; background:var(--bg-card);
     border:1.5px solid var(--line); border-radius:var(--r); padding:16px;
+    width:100%; color:var(--text); text-align:left; font-family:inherit; appearance:none;
     cursor:pointer; transition:all .15s; user-select:none; font-size:var(--fs-md); font-weight:600;}
   .choice:active{transform:scale(.99);}
+  .choice:focus-visible,.back:focus-visible,.cta:focus-visible{
+    outline:3px solid var(--purple-text); outline-offset:3px;
+  }
   .choice.on{border-color:var(--purple); background:rgba(124,110,247,.14);}
   .choice .mk{margin-left:auto; width:22px; height:22px; flex-shrink:0;
     border:2px solid var(--bg-card2); display:grid; place-items:center; transition:all .15s;}
@@ -103,20 +107,24 @@
   .done h1{font-size:var(--fs-lg);}
   .done p{color:var(--text2); font-size:var(--fs); margin:8px auto 0; max-width:320px; line-height:1.5;}
 </style>
+<link rel="stylesheet" href="tokens.css">
 </head>
 <body>
 <div class="wrap">
   <div id="screen">
     <div class="top">
       <button class="back" id="backBtn" aria-label="назад" disabled>‹</button>
-      <div class="bar"><i id="prog"></i></div>
-      <span class="step-count" id="stepCount">1/5</span>
+      <div class="bar" id="onboarding-progress" role="progressbar"
+           aria-label="Прогрес знайомства" aria-valuemin="1" aria-valuemax="7"
+           aria-valuenow="1" aria-valuetext="Крок 1 з 7"><i id="prog"></i></div>
+      <span class="step-count" id="stepCount" aria-hidden="true">1/7</span>
+      <span class="sr-only" id="stepStatus" role="status" aria-live="polite" aria-atomic="true">Крок 1 з 7</span>
     </div>
     <div id="body"></div>
-    <p class="hint" id="hint"></p>
+    <p class="hint" id="hint" role="status" aria-live="polite" aria-atomic="true"></p>
   </div>
 
-  <div class="done" id="doneScreen">
+  <div class="done" id="doneScreen" role="status" aria-live="polite" tabindex="-1">
     <div class="ic">🎯</div>
     <h1>Дякуємо! Вас почули.</h1>
     <p id="doneText">Тепер Ваш челендж підлаштований саме під Вас. Повертайтесь у чат — почнемо 🔗</p>
@@ -266,10 +274,12 @@ let idx = 0;
 
 const bodyEl=document.getElementById("body");
 const prog=document.getElementById("prog");
+const progressEl=document.getElementById("onboarding-progress");
 const hint=document.getElementById("hint");
 const cta=document.getElementById("cta");
 const backBtn=document.getElementById("backBtn");
 const stepCount=document.getElementById("stepCount");
+const stepStatus=document.getElementById("stepStatus");
 const CHECK='<svg viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L19 7" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
 function isAnswered(sc){
@@ -278,18 +288,30 @@ function isAnswered(sc){
   return Array.isArray(a) && a.length>0;
 }
 
-function render(){
+function render({focusOptionIndex=null, focusHeading=false}={}){
   const sc=SCREENS[idx];
   trackStep(idx+1, SCREENS.length);   // воронка: досягнуто екран idx+1
   bodyEl.innerHTML=`<div class="phase-wrap"><span class="phase-tag">${sc.tag}</span></div>
-    <h1>${sc.title}</h1><p class="sub">${sc.sub}</p>`;
+    <h1 id="onboarding-title" tabindex="-1">${sc.title}</h1><p class="sub">${sc.sub}</p>`;
   const box=document.createElement("div"); box.className="choices";
+  box.setAttribute("role", sc.type==="single" ? "radiogroup" : "group");
+  box.setAttribute("aria-labelledby", "onboarding-title");
+  box.setAttribute("aria-describedby", "hint");
+  const choiceButtons=[];
 
-  sc.opts.forEach(o=>{
+  sc.opts.forEach((o, optionIndex)=>{
     const sel = sc.type==="single" ? (answers[sc.id]===o.v)
                                    : ((answers[sc.id]||[]).includes(o.v));
-    const el=document.createElement("div");
+    const el=document.createElement("button");
+    el.type="button";
     el.className="choice "+sc.type+(sel?" on":"");
+    el.dataset.optionIndex=String(optionIndex);
+    if(sc.type==="single"){
+      el.setAttribute("role", "radio");
+      el.setAttribute("aria-checked", String(sel));
+    } else {
+      el.setAttribute("aria-pressed", String(sel));
+    }
     el.innerHTML=`<span>${o.t}</span><span class="mk">${CHECK}</span>`;
     el.onclick=()=>{
       if(sc.type==="single"){ answers[sc.id]=o.v; }
@@ -311,8 +333,9 @@ function render(){
         }
         answers[sc.id]=arr;
       }
-      render();
+      render({focusOptionIndex:optionIndex});
     };
+    choiceButtons.push(el);
     box.appendChild(el);
   });
   bodyEl.appendChild(box);
@@ -334,6 +357,10 @@ function render(){
   // прогрес
   prog.style.width=((idx+1)/SCREENS.length*100)+"%";
   stepCount.textContent=(idx+1)+"/"+SCREENS.length;
+  stepStatus.textContent=`Крок ${idx+1} з ${SCREENS.length}`;
+  progressEl.setAttribute("aria-valuemax", String(SCREENS.length));
+  progressEl.setAttribute("aria-valuenow", String(idx+1));
+  progressEl.setAttribute("aria-valuetext", `Крок ${idx+1} з ${SCREENS.length}`);
   backBtn.disabled=(idx===0);
 
   // мульти можна пропустити (крім required); single — обов'язковий
@@ -353,19 +380,26 @@ function render(){
   }
   cta.textContent = (idx===SCREENS.length-1) ? "Завершити" : "Далі";
   window.scrollTo(0,0);
+  if(Number.isInteger(focusOptionIndex) && choiceButtons[focusOptionIndex]){
+    requestAnimationFrame(()=>choiceButtons[focusOptionIndex].focus());
+  } else if(focusHeading){
+    requestAnimationFrame(()=>document.getElementById("onboarding-title")?.focus());
+  }
 }
 
-backBtn.onclick=()=>{ if(idx>0){ idx--; render(); } };
+backBtn.onclick=()=>{ if(idx>0){ idx--; render({focusHeading:true}); } };
 cta.onclick=()=>{
-  if(idx<SCREENS.length-1){ idx++; render(); }
+  if(idx<SCREENS.length-1){ idx++; render({focusHeading:true}); }
   else finish();
 };
 render();
 
 function finish(){
   document.getElementById("screen").style.display="none";
-  document.getElementById("doneScreen").style.display="block";
+  const doneScreen=document.getElementById("doneScreen");
+  doneScreen.style.display="block";
   document.getElementById("ctaBar").style.display="none";
+  requestAnimationFrame(()=>doneScreen.focus());
 
   const payload={
     action:"day1_onboarding_done",

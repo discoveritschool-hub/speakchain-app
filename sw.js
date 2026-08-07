@@ -1,4 +1,4 @@
-const CACHE = 'speakchain-shell-v19';
+const CACHE = 'speakchain-shell-v20';
 const SHELL = [
   './index_v2.html', './telegram_auth_callback.html', './offline.html', './player.html', './vocab.html', './speaking_buddy.html',
   './progress.html', './tokens.css', './pwa.js', './chainy_memory.js', './chainy_interest.js', './manifest.webmanifest',
