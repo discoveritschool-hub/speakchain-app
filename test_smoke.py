@@ -1281,6 +1281,7 @@ def test_interactive_captions_and_vocabulary_workspace():
     vocab = (ROOT / "vocab.html").read_text(encoding="utf-8")
     player_markers = (
         'id="interactive-transcript"', 'className = \'caption-word\'',
+        "cc_load_policy:1", "cc_lang_pref:'en'",
         "event.stopPropagation()", "inspectCaptionWord(part.toLowerCase(), text)",
         "body: JSON.stringify({uid, init_data: TG?.initData || '', word, context})",
         "AbortSignal.timeout(6000)", "if (!captionSyncTimer)",
@@ -1290,6 +1291,7 @@ def test_interactive_captions_and_vocabulary_workspace():
         "window.speechSynthesis.speak(utterance)", "saveCaptionWord(word)",
         "window.parent.minimizePlayer()", "window.parent.openOv('ov-vocab')",
         "init_data: TG?.initData || ''",
+        "У цього відео немає доступних англійських субтитрів.",
     )
     vocab_markers = (
         'id="tab-words"', 'id="tab-phrases"', 'id="word-detail"',
