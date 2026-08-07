@@ -491,7 +491,7 @@ def test_pwa_identity_handoff():
         ok("головна і callback-сторінки одразу завантажують версіонований auth-код")
 
     sw = (ROOT / "sw.js").read_text(encoding="utf-8")
-    if "speakchain-shell-v21" not in sw or "telegram_auth_callback.html" not in sw:
+    if "speakchain-shell-v22" not in sw or "telegram_auth_callback.html" not in sw:
         fail("service worker не оновив cache version для auth-виправлення")
     else:
         ok("service worker примусово оновлює PWA auth-код після деплою")
@@ -1258,7 +1258,7 @@ def test_live_rooms_fail_closed_until_two_account_gate():
         "joinLiveMatch",
     )
     missing = [marker for marker in markers if marker not in pwa]
-    if missing or "speakchain-shell-v21" not in sw:
+    if missing or "speakchain-shell-v22" not in sw:
         fail(f"rooms gate або cache rollover неповні: {missing}")
     else:
         ok("live rooms приховані client-side; backend gate лишається авторитетним")
@@ -1346,10 +1346,10 @@ def test_chainy_memory_controls_contract():
         fail(f"керування пам’яттю неповне/небезпечне: {missing}")
     else:
         ok("view/consent/confirm/edit/delete/purge/disable мають auth і безпечний DOM-render")
-    if "speakchain-shell-v21" not in worker or "'./chainy_memory.js'" not in worker:
+    if "speakchain-shell-v22" not in worker or "'./chainy_memory.js'" not in worker:
         fail("новий memory controller не включений у rollover service worker")
     else:
-        ok("memory controller включений у cache v21")
+        ok("memory controller включений у cache v22")
     if _has_node() and memory and not _js_ok(memory):
         fail("chainy_memory.js: JavaScript не парситься")
     else:
@@ -1409,10 +1409,10 @@ def test_chainy_interest_ui_contract():
         fail(f"адаптивні теми неповні/небезпечні: {missing}")
     else:
         ok("catalog/preference/custom-topic мають auth, consent gate і безпечний DOM")
-    if "speakchain-shell-v21" not in worker or "'./chainy_interest.js'" not in worker:
+    if "speakchain-shell-v22" not in worker or "'./chainy_interest.js'" not in worker:
         fail("interest controller не включений у rollover service worker")
     else:
-        ok("interest controller включений у cache v21")
+        ok("interest controller включений у cache v22")
     if _has_node() and interest and not _js_ok(interest):
         fail("chainy_interest.js: JavaScript не парситься")
     else:
@@ -1472,10 +1472,10 @@ def test_day1_onboarding_accessibility_contract():
         ok("native choices, ARIA state, visible focus and focus recovery are present")
 
     worker = (ROOT / "sw.js").read_text(encoding="utf-8")
-    if "speakchain-shell-v21" not in worker or "'./index_v2.html'" not in worker:
+    if "speakchain-shell-v22" not in worker or "'./index_v2.html'" not in worker:
         fail("accessible embedded onboarding is not covered by the cache rollover")
     else:
-        ok("cache v21 publishes the accessible embedded onboarding")
+        ok("cache v22 publishes the accessible embedded onboarding")
 
 
 def test_progress_security_accessibility_contract():
@@ -1520,10 +1520,73 @@ def test_progress_security_accessibility_contract():
         ok("progress uses safe DOM, native disabled controls and dialog focus lifecycle")
 
     worker = (ROOT / "sw.js").read_text(encoding="utf-8")
-    if "speakchain-shell-v21" not in worker or "'./progress.html'" not in worker:
-        fail("hardened progress module is not covered by cache v21")
+    if "speakchain-shell-v22" not in worker or "'./progress.html'" not in worker:
+        fail("hardened progress module is not covered by cache v22")
     else:
-        ok("cache v21 publishes hardened progress")
+        ok("cache v22 publishes hardened progress")
+
+
+def test_player_bounded_seek_behavior():
+    """Double-tap, buttons and keyboard share one bounded, accessible seek path."""
+    section("Player - bounded double-tap seek")
+    player = (ROOT / "player.html").read_text(encoding="utf-8")
+    helper_path = ROOT / "player_seek.js"
+    helper = helper_path.read_text(encoding="utf-8") if helper_path.exists() else ""
+    worker = (ROOT / "sw.js").read_text(encoding="utf-8")
+    markers = (
+        '<script src="player_seek.js"></script>',
+        'function seekRelative(deltaSeconds)',
+        "return seekController.seekRelative(deltaSeconds)",
+        'id="seek-gesture-layer" aria-hidden="true" hidden',
+        'data-seek-direction="left"', 'data-seek-direction="right"',
+        'id="seek-feedback" role="status" aria-live="polite" aria-atomic="true"',
+        'id="seek-back" type="button" aria-label="Назад на 10 секунд"',
+        'id="seek-forward" type="button" aria-label="Вперед на 10 секунд"',
+        'tabindex="0" aria-label="Відеоплеєр.',
+        "backward: 'Назад на 10 секунд'",
+        "forward: 'Вперед на 10 секунд'",
+        "unavailable: 'Перемотування зараз недоступне'",
+        "seekFeedback.textContent = message",
+        "seekGestureLayer.hidden = false",
+        ".seek-gesture-zone {", "z-index:20", "#interactive-transcript",
+        "z-index:25", "#video-toggle", "z-index:30", "min-height:44px",
+        ":focus-visible",
+    )
+    helper_markers = (
+        "const SEEK_SECONDS = 10", "const DOUBLE_TAP_MS = 360",
+        "const SYNTHETIC_CLICK_DEDUP_MS = 700", "function createSeekController(options)",
+        "function seekRelative(requestedDelta)", "player.getCurrentTime()",
+        "player.getDuration()", "player.seekTo(target, true)",
+        "function handleGesture(direction, source, timestamp)",
+        "function bindSeekControls(options)", "function applyGestureBounds(layer)",
+    )
+    missing = [f"player:{marker}" for marker in markers if marker not in player]
+    missing += [f"helper:{marker}" for marker in helper_markers if marker not in helper]
+    if missing or "user-scalable=no" in player or "maximum-scale=1" in player:
+        fail(f"bounded seek accessibility/static contract incomplete: {missing}")
+    else:
+        ok("player exposes accessible controls, fixed live feedback and protected gesture layers")
+
+    if "speakchain-shell-v22" not in worker or "'./player_seek.js'" not in worker:
+        fail("player seek helper is not covered by cache v22")
+    else:
+        ok("cache v22 publishes the player seek helper")
+
+    harness = ROOT / "test_player_seek_behavior.js"
+    if not _has_node():
+        fail("node is required for the player seek behavioral harness")
+    elif not harness.exists():
+        fail("player seek behavioral harness is missing")
+    else:
+        syntax = subprocess.run(["node", "--check", str(helper_path)], cwd=ROOT,
+                                capture_output=True, text=True, timeout=10)
+        behavior = subprocess.run(["node", str(harness)], cwd=ROOT,
+                                  capture_output=True, text=True, timeout=10)
+        if syntax.returncode or behavior.returncode or "7/7 passed" not in behavior.stdout:
+            detail = (syntax.stderr + behavior.stdout + behavior.stderr).strip()
+            fail(f"player seek Node harness failed: {detail[:500]}")
+        else:
+            ok("Node behavior proves +/-10, clamp, unavailable, timing, dedup, reuse and safe bounds")
 
 
 def main():
@@ -1564,6 +1627,7 @@ def main():
     test_chainy_interest_ui_contract()
     test_day1_onboarding_accessibility_contract()
     test_progress_security_accessibility_contract()
+    test_player_bounded_seek_behavior()
 
     print("\n" + "═" * 58)
     if FAILS:
