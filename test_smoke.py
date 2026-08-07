@@ -491,7 +491,7 @@ def test_pwa_identity_handoff():
         ok("головна і callback-сторінки одразу завантажують версіонований auth-код")
 
     sw = (ROOT / "sw.js").read_text(encoding="utf-8")
-    if "speakchain-shell-v15" not in sw or "telegram_auth_callback.html" not in sw:
+    if "speakchain-shell-v16" not in sw or "telegram_auth_callback.html" not in sw:
         fail("service worker не оновив cache version для auth-виправлення")
     else:
         ok("service worker примусово оновлює PWA auth-код після деплою")
@@ -1258,7 +1258,7 @@ def test_live_rooms_fail_closed_until_two_account_gate():
         "joinLiveMatch",
     )
     missing = [marker for marker in markers if marker not in pwa]
-    if missing or "speakchain-shell-v15" not in sw:
+    if missing or "speakchain-shell-v16" not in sw:
         fail(f"rooms gate або cache rollover неповні: {missing}")
     else:
         ok("live rooms приховані client-side; backend gate лишається авторитетним")
@@ -1276,6 +1276,8 @@ def test_interactive_captions_and_vocabulary_workspace():
         "AbortSignal.timeout(6000)", "if (!captionSyncTimer)",
         'id="word-card-audio"', 'id="word-card-vocab"',
         "window.speechSynthesis.speak(utterance)", "saveCaptionWord(word)",
+        "window.parent.minimizePlayer()", "window.parent.openOv('ov-vocab')",
+        "init_data: TG?.initData || ''",
     )
     vocab_markers = (
         'id="tab-words"', 'id="tab-phrases"', 'id="word-detail"',

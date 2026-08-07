@@ -1364,7 +1364,16 @@ wordCardAudio.addEventListener('click',()=>{
     window.speechSynthesis.speak(utterance);
   }catch(_){ showToast('Прослуховування недоступне'); }
 });
-wordCardVocab.addEventListener('click',()=>{
+wordCardVocab.addEventListener('click',async()=>{
+  if (window.parent && window.parent !== window) {
+    try {
+      if (typeof window.parent.minimizePlayer === 'function' && typeof window.parent.openOv === 'function') {
+        window.parent.minimizePlayer();
+        await window.parent.openOv('ov-vocab');
+        return;
+      }
+    } catch (_) {}
+  }
   location.href=new URL('vocab.html',location.href).toString();
 });
 
@@ -1374,7 +1383,7 @@ async function saveCaptionWord(word) {
   try {
     const response = await fetch(`${apiBase}/player_action`, {
       method: 'POST', headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({uid, action: 'save_phrase', phrase: word}),
+      body: JSON.stringify({uid, init_data: TG?.initData || '', action: 'save_phrase', phrase: word}),
     });
     if (response.ok && word && !sessionSavedPhrases.includes(word)) sessionSavedPhrases.push(word);
     return response.ok;
@@ -1554,7 +1563,7 @@ async function bookAction(action, stage, word='') {
   try {
     const response = await fetch(`${apiBase}/player_action`, {
       method:'POST', headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({ action, stage, word, uid, video_id:videoId,
+      body:JSON.stringify({ action, stage, word, uid, init_data:TG?.initData || '', video_id:videoId,
         video_title:videoTitle || 'YouTube book', current_time:ytPlayer?.getCurrentTime?.() || 0 })
     });
     return response.ok;
