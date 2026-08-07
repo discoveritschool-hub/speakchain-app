@@ -61,6 +61,8 @@ function payloadFor(screen) {
       my_name: 'E2E Learner',
       done_lessons: 3,
       current_plan: 'basic',
+      utc_offset: 2,
+      notification_pref: 'evening',
       lottery: { tickets: 0 }
     };
   }
@@ -160,6 +162,9 @@ const test = base.extend({
       requests: [],
       unexpected: [],
       payloadFailures: new Map(),
+      profileMutationFailures: [],
+      profileMutationResponses: [],
+      profileSettings: { utc_offset: 2, notification_pref: 'evening' },
       sessionMode: 'success',
       pageErrors: [],
       consoleErrors: [],
@@ -310,11 +315,35 @@ const test = base.extend({
           scenario.payloadFailures.set(screen, failures - 1);
           await route.fulfill(json({ ok: false, error: 'temporary fixture failure' }, 503));
         } else {
-          await route.fulfill(json({ ok: true, d: payloadFor(screen) }));
+          const payload = payloadFor(screen);
+          if (screen === 's-profile') Object.assign(payload, scenario.profileSettings);
+          await route.fulfill(json({ ok: true, d: payload }));
         }
         return;
       }
       if (url.pathname === '/miniapp_action') {
+        if (body.action === 'profile_settings_update') {
+          const planned = scenario.profileMutationResponses.shift();
+          if (planned?.delayMs) {
+            await new Promise(resolve => setTimeout(resolve, planned.delayMs));
+          }
+          const failure = scenario.profileMutationFailures.shift();
+          if (failure || (planned && Number(planned.status || 200) >= 400)) {
+            const terminal = failure || planned;
+            await route.fulfill(json({ ok: false, error: terminal.error || 'temporary_failure' }, terminal.status || 503)).catch(() => {});
+            return;
+          }
+          const settings = planned?.settings || body.settings || {};
+          Object.assign(scenario.profileSettings, settings);
+          await route.fulfill(json({
+            ok: true,
+            settings: {
+              level: 'B1', current_plan: 'basic',
+              ...scenario.profileSettings
+            }
+          })).catch(() => {});
+          return;
+        }
         await route.fulfill(json({ ok: true }));
         return;
       }
