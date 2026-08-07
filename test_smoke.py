@@ -1371,6 +1371,7 @@ def test_chainy_interest_ui_contract():
         "window.SC_CHAINY_INTEREST?.attachSessionTopic?.(currentScenario)",
         "window.SC_CHAINY_INTEREST?.payloadContext?.(currentScenario)",
         "interest_topic: interestContext.interest_topic || null",
+        "interest_topic_source: interestContext.interest_topic_source || null",
         '<script src="chainy_interest.js"></script>',
     )
     interest_markers = (
@@ -1384,6 +1385,7 @@ def test_chainy_interest_ui_contract():
         "Скинути приховані вподобання", "function resetPreferences()",
         "state.pendingCustomTopic = custom", "window.startChainyChat?.()",
         "scenario?.mySituation || scenario?.videoPractice", "interest_topic: null",
+        "interest_topic_source: 'custom'", "interest_topic_source: allowed ? 'catalog' : null",
         "allowed ? state.selectedKey : null", "label.textContent = item.label_uk",
         "list.replaceChildren()", "queueMicrotask(mount)",
         "speakchain:memory-control-changed",
@@ -1392,6 +1394,8 @@ def test_chainy_interest_ui_contract():
     missing += [f"js:{marker}" for marker in interest_markers if marker not in interest]
     if buddy.count("interest_topic: interestContext.interest_topic || null") < 2:
         missing.append("html:text and realtime payloads both need interest_topic")
+    if buddy.count("interest_topic_source: interestContext.interest_topic_source || null") < 2:
+        missing.append("html:text and realtime payloads both need interest_topic_source")
     if re.search(r"\buid\b", interest, re.I):
         missing.append("js:interest request must never use uid")
     if "innerHTML" in interest:

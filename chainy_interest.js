@@ -293,17 +293,22 @@
     // Explicit role-play, video/book practice and custom session topics always
     // outrank adaptive recommendations.
     if (!scenario?.isChainy || scenario?.mySituation || scenario?.videoPractice) {
-      return { scenario_desc: baseDescription, interest_topic: null };
+      return { scenario_desc: baseDescription, interest_topic: null, interest_topic_source: null };
     }
     const custom = String(scenario?.customInterestTopic || '').trim().replace(/\s+/g, ' ').slice(0, 120);
     if (custom) {
       return {
         scenario_desc: `${baseDescription}\nLearner-selected topic for this session: ${custom}`.slice(0, 500),
         interest_topic: null,
+        interest_topic_source: 'custom',
       };
     }
     const allowed = state.catalog.some(item => item.eligible && item.topic_key === state.selectedKey);
-    return { scenario_desc: baseDescription, interest_topic: allowed ? state.selectedKey : null };
+    return {
+      scenario_desc: baseDescription,
+      interest_topic: allowed ? state.selectedKey : null,
+      interest_topic_source: allowed ? 'catalog' : null,
+    };
   }
 
   window.SC_CHAINY_INTEREST = { mount, attachSessionTopic, payloadContext };

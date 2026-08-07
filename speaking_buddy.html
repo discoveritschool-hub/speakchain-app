@@ -1759,6 +1759,7 @@ async function sendMessage() {
         my_situation:  currentScenario.mySituation || null,
         video_practice: currentScenario.videoPractice || null,
         interest_topic: interestContext.interest_topic || null,
+        interest_topic_source: interestContext.interest_topic_source || null,
       })
     });
 
@@ -1860,6 +1861,7 @@ function realtimePayload() {
     my_situation: currentScenario?.mySituation || null,
     video_practice: currentScenario?.videoPractice || null,
     interest_topic: interestContext.interest_topic || null,
+    interest_topic_source: interestContext.interest_topic_source || null,
   };
 }
 
