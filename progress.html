@@ -10,40 +10,34 @@
        ВАЖЛИВО: шлях БЕЗ початкового слеша. Слеш = корінь домену,
        а сайт живе в підпапці /speakchain-app/ → 404.
   ─────────────────────────────────────────────────────────────── -->
-  <style>
-  :root {
-    --purple:#7c6ef7; --purple-dark:#5b4bc4; --purple-bg:#241d4d; --purple-text:#c9c2ff;
-    --green:#5ad8a6; --green-bg:#1b3229;
-    --red:#f76e6e; --orange:#f7a35c; --gold:#f5c842; --silver:#b0b0c0;
-    --bronze:#cd7f32; --yellow:#f7c95c; --blue:#5ab4f7; --telegram:#2ea6da;
-    --bg:#0d0d14; --bg-card:#16161f; --bg-card2:#1e1e2a; --bg-card3:#252535;
-    --text:#eaeaf5; --text2:#8888a8; --text3:#5a5a72;
-    --line:#2a2a3a;
-    --r-sm:8px; --r:12px; --r-lg:20px; --r-pill:999px;
-    --fs-xs:11px; --fs-sm:12px; --fs:14px; --fs-md:16px; --fs-lg:20px; --fs-xl:28px;
-    --fw:400; --fw-md:600; --fw-bold:800;
-    --sp-xs:4px; --sp-sm:8px; --sp:12px; --sp-md:16px; --sp-lg:24px;
-    --glow-purple:0 0 0 4px var(--purple-bg);
-    --shadow-sheet:0 -8px 32px rgba(0,0,0,.5);
-    --grad-purple:linear-gradient(135deg,#7c6ef7,#5b4bc4);
-    --grad-progress:linear-gradient(90deg,var(--green),var(--purple));
-    --grad-gold:linear-gradient(135deg,#f5c451,#e0a020);
-    --dur-fast:.12s; --dur:.15s; --ease:cubic-bezier(.4,0,.2,1);
-  }
-  </style>
-  <link rel="stylesheet" href="tokens.css">
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-<title>SpeakChain · Мій шлях</title>
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
-<script src="toast_rewards.js"></script>
-<style>
+
+  <style>:root {
+  --purple:#7c6ef7;--purple-dark:#5b4bc4;--purple-bg:#241d4d;--purple-text:#c9c2ff;
+  --green:#5ad8a6;--green-bg:#1b3229;--red:#f76e6e;--orange:#f7a35c;--gold:#f5c842;
+  --silver:#b0b0c0;--bronze:#cd7f32;--yellow:#f7c95c;--blue:#5ab4f7;--telegram:#2ea6da;
+  --bg:#0d0d14;--bg-card:#16161f;--bg-card2:#1e1e2a;--bg-card3:#252535;
+  --text:#eaeaf5;--text2:#8888a8;--text3:#5a5a72;--line:#2a2a3a;
+  --r-sm:8px;--r:12px;--r-lg:20px;--r-pill:999px;
+  --fs-xs:11px;--fs-sm:12px;--fs:14px;--fs-md:16px;--fs-lg:20px;--fs-xl:28px;
+  --fw:400;--fw-md:600;--fw-bold:800;--sp-xs:4px;--sp-sm:8px;--sp:12px;--sp-md:16px;--sp-lg:24px;
+  --glow-purple:0 0 0 4px var(--purple-bg);--shadow-sheet:0 -8px 32px rgba(0,0,0,.5);
+  --grad-purple:linear-gradient(135deg,#7c6ef7,#5b4bc4);--grad-progress:linear-gradient(90deg,var(--green),var(--purple));
+  --grad-gold:linear-gradient(135deg,#f5c451,#e0a020);--dur-fast:.12s;--dur:.15s;--ease:cubic-bezier(.4,0,.2,1)
+}
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 .fdb{background:linear-gradient(135deg,rgba(124,110,247,.18),rgba(90,216,166,.10));border:1px solid rgba(124,110,247,.35);border-radius:var(--r);padding:18px 16px;margin-bottom:14px}
 .fdb-title{font-size:var(--fs-md);font-weight:700;color:var(--text);margin-bottom:6px}
 .fdb-text{font-size:var(--fs);line-height:1.5;color:var(--text2);margin-bottom:14px}
 .fdb-btn{display:block;width:100%;background:var(--purple);color:#fff;border:none;border-radius:var(--r);padding:13px;font-size:var(--fs);font-weight:600;cursor:pointer;text-align:center}
 .fdb-btn:active{opacity:.85}
+.next-topic-card{display:flex;align-items:center;gap:13px;padding:16px;border-radius:var(--r-lg,14px);background:linear-gradient(135deg,rgba(124,110,247,.16),rgba(124,110,247,.06));border:1px solid rgba(124,110,247,.3);cursor:pointer;transition:transform .12s;margin-bottom:14px}
+.next-topic-card:active{transform:scale(.985)}
+.next-topic-icon{font-size:28px;flex-shrink:0}
+.next-topic-body{display:flex;flex-direction:column;gap:3px;flex:1;min-width:0}
+.next-topic-eyebrow{font-size:var(--fs-xs);font-weight:700;color:var(--purple);text-transform:uppercase;letter-spacing:.06em}
+.next-topic-title{font-size:var(--fs,15px);font-weight:650;color:var(--text)}
+.next-topic-sub{font-size:var(--fs-sm,13px);color:var(--text2,#8b8b93);line-height:1.4}
+.next-topic-cta{flex-shrink:0;padding:8px 15px;border-radius:999px;background:var(--purple,#7c6ef7);color:#fff;font-size:var(--fs-sm,13px);font-weight:600}
 body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;min-height:100vh;padding-bottom:48px}
 
 .hdr{position:sticky;top:0;z-index:20;background:var(--bg);border-bottom:.5px solid var(--line);padding:18px 16px 14px}
@@ -72,13 +66,13 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .tabs{display:flex;gap:6px;padding:14px 16px 0;overflow-x:auto;scrollbar-width:none}
 .tabs::-webkit-scrollbar{display:none}
 /* ── Уніфікована стрілка горизонтального скролу (єдина для всіх мініапів) ── */
-.scroll-hint{position:absolute;top:14px;bottom:0;right:0;display:flex;align-items:center;cursor:pointer;background:linear-gradient(to right,transparent,var(--bg) 45%);padding-left:18px;transition:opacity .2s;}
+.scroll-hint{position:absolute;top:14px;bottom:0;right:0;display:flex;align-items:center;cursor:pointer;background:linear-gradient(to right,transparent,var(--bg) 45%);padding:0 0 0 18px;border:0;transition:opacity .2s;}
 .scroll-hint span{width:26px;height:26px;border-radius:50%;background:var(--bg-card2);border:.5px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:var(--fs-md);font-weight:700;color:var(--purple);box-shadow:0 1px 4px rgba(0,0,0,.15);line-height:1;}
 .scroll-hint.hidden{opacity:0;pointer-events:none;}
 .tab{flex-shrink:0;padding:6px 12px;background:var(--bg-card);color:var(--text2);font-size:var(--fs-sm);font-weight:600;border-radius:var(--r-lg);border:1px solid var(--line);cursor:pointer;transition:all .15s}
 .tab.active{background:var(--purple);color:#fff;border-color:var(--purple)}
 .tab.done{color:var(--green)}
-.tab.locked{opacity:.4}
+.tab.locked,.tab:disabled{opacity:.4;cursor:not-allowed}
 
 .section{padding:14px 16px}
 .stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
@@ -99,20 +93,8 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 
 .topics-title{font-size:var(--fs-sm);color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin:14px 0 10px}
 
-/* ── Topic gaps block (L-06) — прогалини в темах ── */
-.gap-card{background:var(--bg-card);border-radius:var(--r);padding:14px;margin-bottom:14px;border:1px solid var(--line)}
-.gap-title{font-size:var(--fs);font-weight:700;color:var(--text);margin-bottom:2px;display:flex;align-items:center;gap:6px}
-.gap-hint{font-size:var(--fs-sm);color:var(--text2);margin-bottom:12px;line-height:1.4}
-.gap-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line)}
-.gap-item:first-of-type{border-top:none;padding-top:0}
-.gap-badge{width:26px;height:26px;border-radius:50%;background:rgba(247,163,92,.15);color:var(--orange);font-size:var(--fs-xs);font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.gap-body{flex:1;min-width:0}
-.gap-name{font-size:var(--fs);font-weight:600;color:var(--text)}
-.gap-level{font-size:var(--fs-xs);color:var(--text3);margin-top:1px}
-.gap-empty{font-size:var(--fs-sm);color:var(--text2);text-align:center;padding:8px 0}
-
 /* ── Topic card with colored bar ── */
-.topic{display:flex;align-items:center;gap:10px;padding:12px;background:var(--bg-card);border-radius:var(--r);margin-bottom:8px;border:1px solid var(--line);cursor:pointer;transition:all .15s}
+.topic{display:flex;align-items:center;gap:10px;padding:12px;background:var(--bg-card);border-radius:var(--r);margin-bottom:8px;border:1px solid var(--line);cursor:pointer;transition:all .15s;width:100%;text-align:left}
 .topic:active{transform:scale(.98)}
 .topic-num{font-size:var(--fs);color:var(--text3);font-weight:600;width:18px;flex-shrink:0;text-align:center}
 .topic-body{flex:1;min-width:0}
@@ -138,7 +120,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .modal-content{background:var(--bg);width:100%;max-height:92vh;border-top-left-radius:20px;border-top-right-radius:20px;display:flex;flex-direction:column;overflow:hidden;animation:slideUp .3s}
 @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
 .modal-hdr{padding:14px 16px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--line);flex-shrink:0}
-.modal-close{width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:var(--fs-xl);color:var(--text2)}
+.modal-close{width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:var(--fs-xl);color:var(--text2);border:0;background:transparent}
 .modal-title{flex:1;font-size:var(--fs-md);font-weight:600}
 .modal-body{flex:1;overflow-y:auto;padding:16px;scrollbar-width:none}
 .modal-body::-webkit-scrollbar{display:none}
@@ -157,11 +139,11 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .workflow{margin-bottom:20px}
 .workflow-title{font-size:var(--fs);font-weight:700;color:var(--text);margin-bottom:4px}
 .workflow-hint{font-size:var(--fs-sm);color:var(--text2);margin-bottom:12px;line-height:1.5}
-.step{display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg-card);border-radius:var(--r);margin-bottom:8px;border:1px solid var(--line);transition:all .15s;cursor:pointer}
+.step{display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg-card);border-radius:var(--r);margin-bottom:8px;border:1px solid var(--line);transition:all .15s;cursor:pointer;width:100%;text-align:left}
 .step:active{transform:scale(.98)}
 .step.done{border-color:rgba(90,216,166,.3)}
 .step.next{border-color:var(--purple);background:rgba(124,110,247,.08);box-shadow:0 0 0 1px var(--purple)}
-.step.locked{opacity:.5}
+.step.locked,.step:disabled{opacity:.5;cursor:not-allowed}
 .step-num{width:28px;height:28px;border-radius:50%;background:var(--bg-card2);display:flex;align-items:center;justify-content:center;font-size:var(--fs);font-weight:700;color:var(--text2);flex-shrink:0}
 .step.done .step-num{background:var(--green);color:var(--bg)}
 .step.next .step-num{background:var(--purple);color:#fff}
@@ -206,27 +188,28 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 
 .close-btn{display:block;margin:24px auto 0;background:transparent;border:1px solid var(--line);color:var(--text2);padding:10px 24px;border-radius:var(--r-lg);font-size:var(--fs);cursor:pointer}
 .diag-btn{display:block;width:calc(100% - 32px);margin:16px auto 0;background:var(--grad-purple);border:none;color:#fff;padding:14px;border-radius:var(--r);font-size:var(--fs);font-weight:700;cursor:pointer;box-shadow:0 6px 18px rgba(124,110,247,.28)}
+.next-topic-card{width:100%;text-align:left}
+.tab,.topic,.step,.next-topic-card,.scroll-hint,.modal-close{font-family:inherit;appearance:none}
+.tab:focus-visible,.topic:focus-visible,.step:focus-visible,.next-topic-card:focus-visible,
+.scroll-hint:focus-visible,.modal-close:focus-visible,.diag-btn:focus-visible,.close-btn:focus-visible,
+.fdb-btn:focus-visible,.ex-btn:focus-visible,.ex-next:focus-visible{outline:3px solid var(--purple-text);outline-offset:3px}
+.sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;
+  overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}</style>
+  <link rel="stylesheet" href="tokens.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SpeakChain · Мій шлях</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="toast_rewards.js"></script>
 
-  /* ── ЛІВА стрілка: раніше її не було. Пролистала вперед — і не повернутись. ── */
-  .scroll-hint-l { position:absolute; top:0; bottom:0; left:0; display:flex; align-items:center;
-    cursor:pointer; padding-right:18px; z-index:5;
-    background:linear-gradient(to left, transparent, var(--bg) 45%);
-    opacity:0; pointer-events:none; transition:opacity .2s; }
-  .scroll-hint-l.show { opacity:1; pointer-events:auto; }
-  .scroll-hint-l span { width:26px; height:26px; border-radius:50%; background:var(--bg-card);
-    border:1px solid var(--line); display:flex; align-items:center; justify-content:center;
-    font-size:var(--fs-md); font-weight:700; color:var(--purple);
-    box-shadow:0 1px 4px rgba(0,0,0,.15); line-height:1; }
-</style>
 </head>
 <body>
-
 <div class="hdr">
   <div class="hdr-top">
     <div class="hdr-name" id="hdr-name">Студент</div>
     <div class="hdr-level" id="hdr-level">—</div>
   </div>
-  <div class="overall-track">
+  <div class="overall-track" id="overall-progress" role="progressbar" aria-label="Загальний прогрес тем" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
     <div class="overall-fill" id="overall-fill" style="width:0%"></div>
   </div>
   <div class="overall-meta">
@@ -240,7 +223,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
     <span class="journey-title">Шлях A1 → C2</span>
     <span class="journey-pct" id="journey-pct">0%</span>
   </div>
-  <div class="journey-track">
+  <div class="journey-track" id="journey-progress" role="progressbar" aria-label="Прогрес шляху A1 до C2" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
     <div class="journey-fill" id="journey-fill" style="width:0%">
       <div class="journey-thumb"></div>
     </div>
@@ -253,35 +236,39 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 </div>
 
 <div style="position:relative;">
-  <div class="tabs" id="tabs"></div>
-  <div class="scroll-hint-l" id="tabs-scroll-hint-l" onclick="__scL('tabs')"><span>‹</span></div>
-    <div class="scroll-hint" id="tabs-scroll-hint" onclick="scrollProgressTabs()"><span>›</span></div>
+  <div class="tabs" id="tabs" role="tablist" aria-label="Рівні англійської"></div>
+  <button class="scroll-hint" id="tabs-scroll-hint" type="button" aria-label="Показати наступні рівні"><span aria-hidden="true">›</span></button>
 </div>
 
 <div class="section">
+  <div class="sr-only" id="progress-status" role="status" aria-live="polite" aria-atomic="true"></div>
   <div id="first-day-banner"></div>
   <div class="stats-row" id="stats-row"></div>
   <div id="lvl-progress"></div>
   <div id="vocab-progress"></div>
-  <div id="topic-gaps"></div>
-  <div class="topics-title">Tutor Me</div>
+  <div id="next-topic-card"></div>
+  <div class="topics-title">Усі теми рівня</div>
   <div id="topics-list"></div>
 </div>
 
-<button class="diag-btn" onclick="openDiagnostic()">🎯 Пройти діагностику знову</button>
-<button class="close-btn" onclick="Telegram.WebApp.close()">Закрити</button>
+<button class="diag-btn" id="diagnostic-btn" type="button">🎯 Пройти діагностику знову</button>
+<!-- 🔴 БУЛО: onclick="Telegram.WebApp.close()" — ВИМИКАЛО УВЕСЬ ДОДАТОК.
+     Людина дивилась свій прогрес, тисне «Закрити» (маючи на увазі «закрити
+     цей екран») — і додаток гасне повністю. Треба заходити наново.
+     Тепер: в оболонці go('s-home') → назад на головну, додаток живий.
+     Standalone (без оболонки) — стара поведінка. -->
+<button class="close-btn" id="progress-close-btn" type="button">Закрити</button>
 
 <!-- TOPIC DETAIL MODAL -->
-<div class="modal" id="topic-modal">
-  <div class="modal-content">
+<div class="modal" id="topic-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" hidden>
+  <div class="modal-content" tabindex="-1">
     <div class="modal-hdr">
-      <div class="modal-close" onclick="closeModal()">×</div>
+      <button class="modal-close" id="modal-close-btn" type="button" aria-label="Закрити тему">×</button>
       <div class="modal-title" id="modal-title">Тема</div>
     </div>
     <div class="modal-body" id="modal-body"></div>
   </div>
 </div>
-
 <script>
 const DEFAULT_GRAMMAR = {
   A1: ["The ABC, spelling","The Numbers","a / an","Countable nouns with a/an and some","Present Simple","Present Continuous","Non-Continuous Verbs (stative)","Imperative Mood","Possessive Case ('s / s')","In, on, at — time","Comparative and Superlative Degrees","Zero Conditional","Modal Verbs: basic (can/must/should)","Going to (future plans)","Question Tags"],
@@ -300,7 +287,7 @@ let activeLevel = "A1";
 const tg        = window.Telegram?.WebApp;
 const UID       = tg?.initDataUnsafe?.user?.id || 0;
 const INIT_DATA = tg?.initData || '';
-const API       = 'https://speakchain-bot-production.up.railway.app';
+const API       = (window.SC_BOT_API || 'https://speakchain-bot-production.up.railway.app');
 
 // ── Уніфікована відправка дії в бот через HTTP (sendData як фолбек) ──
 async function maAction(action, extra){
@@ -318,362 +305,489 @@ async function maAction(action, extra){
     ok = res.ok;
   } catch(e){ ok=false; }
   if(!ok && tg && typeof tg.sendData==='function'){ try{ tg.sendData(JSON.stringify(body)); }catch(e){} }
+  try{ if(window.shellRoute && window.shellRoute(action)) return ok; }catch(e){}
   return ok;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   BACK-OR-CLOSE — спільний вихід для екрана прогресу.
+
+   🔴 БУЛО: Telegram.WebApp.close() у 4 місцях — кожне ВИМИКАЛО
+   УВЕСЬ ДОДАТОК. Логіка була така: бот надішле повідомлення в чат,
+   тож треба туди перейти. Але це стара модель: тепер усе живе
+   ВСЕРЕДИНІ оболонки, і виходити нікуди не треба.
+
+   Наслідок: людина тиснула будь-яку кнопку — і додаток гаснув.
+   Щоб продовжити, вона мала відкривати його наново через бота.
+   Найшвидший спосіб втратити людину — вимкнути їй продукт під руками.
+
+   ТЕПЕР: в оболонці go('s-home') → назад на головну.
+   Standalone (окремий файл, без оболонки) — стара поведінка. */
+function backOrClose(){
+  if (typeof window.go === 'function') { window.go('s-home'); return; }
+  try { Telegram.WebApp.close(); } catch(e){}
 }
 
 // ── Кнопка «Пройти діагностику знову»: бот надішле кнопку запуску ──
 async function openDiagnostic(){
+  /* v13.3: diagnostic_day4.html тепер вмонтовано в оболонку (ov-diagnostic) —
+     той самий прийом, що й s-buddy/s-prog. Раніше тут ішли через бота
+     (окреме повідомлення в чат), бо гадали, що WebApp не може відкрити
+     інший WebApp — правда, але не стосується монтування в ту саму
+     Shadow DOM, це не «інший WebApp». Standalone (без оболонки) —
+     стара поведінка через бота. */
+  if (typeof window.openOv === 'function') { window.openOv('ov-diagnostic'); return; }
   await maAction("open_diagnostic", {});
-  try { Telegram.WebApp.close(); } catch(e){}
+  backOrClose();
 }
 
 // ── Google Noto Emoji helper ──
-function emojiImg(emoji, size){
-  if(!emoji) return '';
-  size = size || 18;
+const SAFE_COLORS = new Set(["green", "yellow", "red", "gray"]);
+let modalOpener = null;
+
+function safeText(value, maxLength=500){
+  return String(value ?? "").replace(/[\u0000-\u001f\u007f]/g, " ").slice(0, maxLength);
+}
+
+function clampNumber(value, min=0, max=100){
+  const number = Number(value);
+  if(!Number.isFinite(number)) return min;
+  return Math.min(max, Math.max(min, number));
+}
+
+function make(tag, className="", text=""){
+  const element = document.createElement(tag);
+  if(className) element.className = className;
+  if(text !== "") element.textContent = safeText(text);
+  return element;
+}
+
+function makeButton(className, label){
+  const button = make("button", className);
+  button.type = "button";
+  if(label) button.setAttribute("aria-label", label);
+  return button;
+}
+
+function setProgress(element, value, valueText=""){
+  const percent = Math.round(clampNumber(value));
+  element.setAttribute("aria-valuenow", String(percent));
+  element.setAttribute("aria-valuetext", valueText || `${percent}%`);
+  return percent;
+}
+
+function masteryColor(mastery, candidate){
+  if(SAFE_COLORS.has(candidate)) return candidate;
+  return mastery >= 80 ? "green" : mastery >= 50 ? "yellow" : mastery > 0 ? "red" : "gray";
+}
+
+function normalizePayload(){
+  if(!D || typeof D !== "object" || Array.isArray(D)) D = {};
+  const levels = Array.isArray(D.levels)
+    ? D.levels.map(level => safeText(level, 2)).filter(level => DEFAULT_LEVELS.includes(level))
+    : DEFAULT_LEVELS.slice();
+  D.levels = levels.length ? [...new Set(levels)] : DEFAULT_LEVELS.slice();
+  const grammar = D.cefr_grammar && typeof D.cefr_grammar === "object" ? D.cefr_grammar : DEFAULT_GRAMMAR;
+  D.cefr_grammar = {};
+  D.levels.forEach(level => {
+    const topics = Array.isArray(grammar[level]) ? grammar[level] : (DEFAULT_GRAMMAR[level] || []);
+    D.cefr_grammar[level] = topics.map(topic => safeText(topic, 160)).filter(Boolean).slice(0, 100);
+  });
+  D.level_names = D.level_names && typeof D.level_names === "object" ? D.level_names : DEFAULT_LEVEL_NAMES;
+  D.topics_data = D.topics_data && typeof D.topics_data === "object" ? D.topics_data : {};
+  D.vocab_coverage = D.vocab_coverage && typeof D.vocab_coverage === "object" ? D.vocab_coverage : {};
+  D.level = D.levels.includes(D.level) ? D.level : D.levels[0];
+}
+
+function emojiNode(emoji, size=18){
+  const label = safeText(emoji, 12);
   const codepoints = [];
-  for(const ch of emoji){
-    const cp = ch.codePointAt(0);
-    if(cp === 0xFE0F) continue;
-    codepoints.push(cp.toString(16));
+  for(const char of label){
+    const point = char.codePointAt(0);
+    if(point !== 0xFE0F) codepoints.push(point.toString(16));
   }
-  const code = codepoints.join('_');
-  const url = 'https://fonts.gstatic.com/s/e/notoemoji/latest/' + code + '/emoji.svg';
-  return '<img src="' + url + '" alt="' + emoji + '" style="width:' + size + 'px;height:' + size + 'px;vertical-align:middle;display:inline-block" onerror="this.outerHTML=\'<span>' + emoji + '</span>\'">';
+  const image = document.createElement("img");
+  image.src = `https://fonts.gstatic.com/s/e/notoemoji/latest/${codepoints.join("_")}/emoji.svg`;
+  image.alt = label;
+  image.width = size;
+  image.height = size;
+  image.style.cssText = `width:${size}px;height:${size}px;vertical-align:middle;display:inline-block`;
+  image.addEventListener("error", () => image.replaceWith(make("span", "", label)), {once:true});
+  return image;
 }
 
 function init() {
-  Telegram.WebApp.ready();
-  Telegram.WebApp.expand();
+  try { window.Telegram?.WebApp?.ready(); window.Telegram?.WebApp?.expand(); } catch(e) {}
   try {
     const raw = new URLSearchParams(window.location.search).get("d");
     if (raw) D = JSON.parse(decodeURIComponent(raw));
-  } catch(e) {}
-  if (!D.cefr_grammar)   D.cefr_grammar   = DEFAULT_GRAMMAR;
-  if (!D.levels)         D.levels         = DEFAULT_LEVELS;
-  if (!D.level_names)    D.level_names    = DEFAULT_LEVEL_NAMES;
-  if (!D.topics_data)    D.topics_data    = {};  // нові дані з grammar_engine
-  if (!D.vocab_coverage) D.vocab_coverage = {};  // покриття лексики за рівнями
-  if (!D.topic_gaps)     D.topic_gaps     = [];  // прогалини в темах (L-06)
-  if (!D.level)          D.level          = "A1";
+  } catch(e) { D = {}; }
+  normalizePayload();
   activeLevel = D.level;
   render();
 }
 
 function getMastery(topicName) {
-  // Пріоритет: дані з grammar_engine (topics_data)
-  const td = D.topics_data || {};
-  if (td[topicName]) return td[topicName];
-  // Fallback: старий список mastered (бінарно)
-  const mastered = D.mastered || [];
+  const raw = (D.topics_data || {})[topicName];
+  const mastered = Array.isArray(D.mastered) ? D.mastered : [];
+  const fallbackDone = mastered.includes(topicName);
+  const source = raw && typeof raw === "object" ? raw : {};
+  const mastery = clampNumber(raw ? source.mastery : (fallbackDone ? 100 : 0));
+  const examples = Array.isArray(source.buddy_examples) ? source.buddy_examples.slice(0, 20) : [];
   return {
-    mastery: mastered.includes(topicName) ? 100 : 0,
-    color: mastered.includes(topicName) ? "green" : "gray",
-    buddy_uses: 0,
-    buddy_errors: 0,
-    buddy_examples: [],
-    steps_done: { video: mastered.includes(topicName), table: false, exercises: false, buddy: false },
-    next_step: mastered.includes(topicName) ? null : "video"
+    mastery,
+    color: masteryColor(mastery, source.color),
+    buddy_uses: Math.round(clampNumber(source.buddy_uses, 0, 1000000)),
+    buddy_errors: Math.round(clampNumber(source.buddy_errors, 0, 1000000)),
+    buddy_examples: examples.map(example => ({
+      phrase: safeText(example?.phrase, 500), correction: safeText(example?.correction, 500),
+      explanation: safeText(example?.explanation, 1000), date: safeText(example?.date, 80),
+    })),
+    steps_done: {
+      video: Boolean(source.steps_done?.video ?? fallbackDone), table: Boolean(source.steps_done?.table),
+      exercises: Boolean(source.steps_done?.exercises), buddy: Boolean(source.steps_done?.buddy),
+    },
+    next_step: safeText(source.next_step, 40),
   };
 }
 
 function render() {
-  const levels     = D.levels;
-  const levelNames = D.level_names;
-  const grammar    = D.cefr_grammar;
-  const allTopics  = levels.flatMap(l => grammar[l] || []);
-
-  // Загальний прогрес = середня mastery всіх тем
+  const levels = D.levels;
+  const grammar = D.cefr_grammar;
+  const allTopics = levels.flatMap(level => grammar[level] || []);
   let totalScore = 0;
-  let totalTopics = 0;
   let fullyDone = 0;
-  allTopics.forEach(t => {
-    const m = getMastery(t).mastery;
-    totalScore += m;
-    totalTopics++;
-    if (m >= 80) fullyDone++;
+  allTopics.forEach(topic => {
+    const mastery = getMastery(topic).mastery;
+    totalScore += mastery;
+    if(mastery >= 80) fullyDone++;
   });
-  const overallPct = totalTopics ? Math.round(totalScore / totalTopics) : 0;
-
-  document.getElementById("hdr-name").textContent  = D.name || "Студент";
+  const overallPct = allTopics.length ? Math.round(totalScore / allTopics.length) : 0;
+  document.getElementById("hdr-name").textContent = safeText(D.name || "Студент", 80);
   document.getElementById("hdr-level").textContent = activeLevel;
   document.getElementById("overall-fill").style.width = overallPct + "%";
-  document.getElementById("overall-left").textContent = fullyDone + " з " + totalTopics + " тем";
+  document.getElementById("overall-left").textContent = `${fullyDone} з ${allTopics.length} тем`;
   document.getElementById("overall-right").textContent = overallPct + "%";
+  setProgress(document.getElementById("overall-progress"), overallPct, `${fullyDone} з ${allTopics.length} тем завершено`);
 
-  // Journey A1→C2
-  const curIdx = levels.indexOf(D.level);
+  const currentIndex = Math.max(0, levels.indexOf(D.level));
   let topicsBeforeCurrent = 0;
-  for (let i = 0; i < curIdx; i++) topicsBeforeCurrent += (grammar[levels[i]] || []).length;
-  const curLvlTopics  = grammar[D.level] || [];
-  const curLvlDone    = curLvlTopics.filter(t => getMastery(t).mastery >= 80).length;
-  const journeyDone   = topicsBeforeCurrent + curLvlDone;
-  const journeyPct    = totalTopics ? Math.round(journeyDone / totalTopics * 100) : 0;
-  document.getElementById("journey-pct").textContent  = journeyPct + "%";
+  for(let index=0; index<currentIndex; index++) topicsBeforeCurrent += (grammar[levels[index]] || []).length;
+  const currentTopics = grammar[D.level] || [];
+  const currentDone = currentTopics.filter(topic => getMastery(topic).mastery >= 80).length;
+  const journeyPct = allTopics.length ? Math.round((topicsBeforeCurrent + currentDone) / allTopics.length * 100) : 0;
+  document.getElementById("journey-pct").textContent = journeyPct + "%";
   document.getElementById("journey-fill").style.width = journeyPct + "%";
+  setProgress(document.getElementById("journey-progress"), journeyPct, `${journeyPct}% шляху A1 до C2`);
 
-  const marksEl = document.getElementById("journey-marks");
-  marksEl.innerHTML = "";
-  levels.forEach(lvl => {
-    const lvlTopics = grammar[lvl] || [];
-    const lvlDone   = lvlTopics.filter(t => getMastery(t).mastery >= 80).length;
-    const isAll     = lvlDone === lvlTopics.length && lvlTopics.length > 0;
-    const isCur     = lvl === D.level;
-    const isGoal    = lvl === "C2";
-    const m = document.createElement("div");
-    m.className = "journey-mark" + (isAll ? " done" : "") + (isCur ? " current" : "") + (isGoal && !isAll ? " goal" : "");
-    m.textContent = lvl + (isAll ? "✓" : "");
-    if (isGoal && !isAll) m.textContent = "C2 👑";
-    marksEl.appendChild(m);
+  const marks = document.getElementById("journey-marks");
+  marks.replaceChildren();
+  levels.forEach(level => {
+    const topics = grammar[level] || [];
+    const done = topics.filter(topic => getMastery(topic).mastery >= 80).length;
+    const complete = done === topics.length && topics.length > 0;
+    const mark = make("div", "journey-mark" + (complete ? " done" : "") + (level === D.level ? " current" : "") + (level === "C2" && !complete ? " goal" : ""));
+    mark.textContent = level === "C2" && !complete ? "C2 👑" : level + (complete ? "✓" : "");
+    marks.appendChild(mark);
   });
 
-  if ((D.streak || 0) > 0) {
-    document.getElementById("streak-strip").style.display = "flex";
-    document.getElementById("streak-val").textContent  = D.streak;
-    document.getElementById("streak-best").textContent = D.best_streak || 0;
-  }
+  const streak = Math.round(clampNumber(D.streak, 0, 1000000));
+  const streakStrip = document.getElementById("streak-strip");
+  streakStrip.style.display = streak > 0 ? "flex" : "none";
+  document.getElementById("streak-val").textContent = String(streak);
+  document.getElementById("streak-best").textContent = String(Math.round(clampNumber(D.best_streak, 0, 1000000)));
 
-  const tabsEl = document.getElementById("tabs");
-  tabsEl.innerHTML = "";
-  levels.forEach((lvl, i) => {
-    const topics = grammar[lvl] || [];
-    const done = topics.filter(t => getMastery(t).mastery >= 80).length;
-    const isAll = done === topics.length && topics.length > 0;
-    const isLocked = i > curIdx;
-    const tab = document.createElement("div");
-    tab.className = "tab" + (lvl === activeLevel ? " active" : "") + (isAll ? " done" : "") + (isLocked ? " locked" : "");
-    tab.textContent = lvl + (isAll ? " ✓" : " " + done + "/" + topics.length);
-    tab.onclick = () => { activeLevel = lvl; renderLevel(); };
-    tabsEl.appendChild(tab);
+  const tabs = document.getElementById("tabs");
+  tabs.replaceChildren();
+  levels.forEach((level, index) => {
+    const topics = grammar[level] || [];
+    const done = topics.filter(topic => getMastery(topic).mastery >= 80).length;
+    const complete = done === topics.length && topics.length > 0;
+    const locked = index > currentIndex;
+    const button = makeButton("tab" + (level === activeLevel ? " active" : "") + (complete ? " done" : "") + (locked ? " locked" : ""));
+    button.setAttribute("role", "tab");
+    button.setAttribute("aria-selected", String(level === activeLevel));
+    button.setAttribute("aria-controls", "topics-list");
+    button.disabled = locked;
+    button.textContent = level + (complete ? " ✓" : ` ${done}/${topics.length}`);
+    button.addEventListener("click", () => {
+      activeLevel = level;
+      [...tabs.children].forEach(tab => {
+        const selected = tab === button;
+        tab.classList.toggle("active", selected);
+        tab.setAttribute("aria-selected", String(selected));
+      });
+      renderLevel({announce:true});
+    });
+    tabs.appendChild(button);
   });
-
-  // ── Уніфікована стрілка скролу вкладок ──
-  const _t = document.getElementById('tabs');
-  if (_t && !_t._hintWired) {
-    _t.addEventListener('scroll', updateProgressTabsHint, { passive: true });
-    _t._hintWired = true;
+  tabs.onkeydown = event => {
+    if(!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+    const enabled = [...tabs.querySelectorAll("button:not(:disabled)")];
+    if(!enabled.length) return;
+    event.preventDefault();
+    const current = Math.max(0, enabled.indexOf(event.target));
+    const next = event.key === "Home" ? 0 : event.key === "End" ? enabled.length - 1
+      : (current + (event.key === "ArrowRight" ? 1 : -1) + enabled.length) % enabled.length;
+    enabled[next].focus();
+    enabled[next].click();
+  };
+  const tabStrip = document.getElementById("tabs");
+  if(tabStrip && !tabStrip._hintWired){
+    tabStrip.addEventListener("scroll", updateProgressTabsHint, {passive:true});
+    tabStrip._hintWired = true;
   }
   setTimeout(updateProgressTabsHint, 80);
-
   renderLevel();
 }
 
-function scrollProgressTabs(){
-  const el=document.getElementById('tabs');
-  if(el) el.scrollBy({left:140,behavior:'smooth'});
-}
+function scrollProgressTabs(){ document.getElementById("tabs")?.scrollBy({left:140, behavior:"smooth"}); }
+
 function updateProgressTabsHint(){
-  const el=document.getElementById('tabs');
-  const hint=document.getElementById('tabs-scroll-hint');
-  if(!el||!hint) return;
-  const atEnd=el.scrollLeft+el.clientWidth>=el.scrollWidth-4;
-  const scrollable=el.scrollWidth>el.clientWidth+4;
-  hint.classList.toggle('hidden',!(scrollable&&!atEnd));
+  const tabs = document.getElementById("tabs");
+  const hint = document.getElementById("tabs-scroll-hint");
+  if(!tabs || !hint) return;
+  const hidden = tabs.scrollWidth <= tabs.clientWidth + 4 || tabs.scrollLeft + tabs.clientWidth >= tabs.scrollWidth - 4;
+  hint.classList.toggle("hidden", hidden);
+  hint.hidden = hidden;
 }
 
-function renderLevel() {
-  const grammar    = D.cefr_grammar;
+function statNode(value, label, color){
+  const stat = make("div", "stat");
+  stat.append(make("div", `stat-v ${color}`, value), make("div", "stat-l", label));
+  return stat;
+}
+
+function makeBar(label, value, valueText){
+  const track = make("div", "lvl-track");
+  track.setAttribute("role", "progressbar");
+  track.setAttribute("aria-label", label);
+  track.setAttribute("aria-valuemin", "0");
+  track.setAttribute("aria-valuemax", "100");
+  const percent = setProgress(track, value, valueText);
+  const fill = make("div", "lvl-fill");
+  fill.style.width = percent + "%";
+  track.appendChild(fill);
+  return track;
+}
+
+function renderLevel({announce=false, focusHeading=false}={}) {
+  const grammar = D.cefr_grammar;
   const levelNames = D.level_names;
-  const lvlTopics  = grammar[activeLevel] || [];
-  
-  let totalScore = 0;
-  lvlTopics.forEach(t => totalScore += getMastery(t).mastery);
-  const lvlPct = lvlTopics.length ? Math.round(totalScore / lvlTopics.length) : 0;
-  const lvlDoneFully = lvlTopics.filter(t => getMastery(t).mastery >= 80).length;
-  
-  const scores = D.scores || [];
-  const avgScore = scores.length ? Math.round(scores.reduce((a,b) => a + (typeof b === 'number' ? b : b.score || 0), 0) / scores.length) : 0;
+  const topics = grammar[activeLevel] || [];
+  const total = topics.reduce((sum, topic) => sum + getMastery(topic).mastery, 0);
+  const levelPct = topics.length ? Math.round(total / topics.length) : 0;
+  const completed = topics.filter(topic => getMastery(topic).mastery >= 80).length;
+  const scores = Array.isArray(D.scores) ? D.scores : [];
+  const avgScore = scores.length ? Math.round(scores.reduce((sum, item) => sum + clampNumber(typeof item === "number" ? item : item?.score), 0) / scores.length) : 0;
+  const stats = document.getElementById("stats-row");
+  stats.replaceChildren(
+    statNode(`${completed}/${topics.length}`, "Тем готово", "p"),
+    statNode(avgScore || "—", "Середній бал", "g"),
+    statNode(Math.round(clampNumber(D.done_lessons, 0, 1000000)), "Уроків", "o"),
+  );
 
-  document.getElementById("stats-row").innerHTML =
-    '<div class="stat"><div class="stat-v p">' + lvlDoneFully + '/' + lvlTopics.length + '</div><div class="stat-l">Тем готово</div></div>' +
-    '<div class="stat"><div class="stat-v g">' + (avgScore || "—") + '</div><div class="stat-l">Середній бал</div></div>' +
-    '<div class="stat"><div class="stat-v o">' + (D.done_lessons || 0) + '</div><div class="stat-l">Уроків</div></div>';
-
-  // ── Перший день: замість «стіни нулів» — тепле привітання і заклик до дії ──
-  const fdb = document.getElementById("first-day-banner");
-  if (fdb) {
-    const noLessons = !(D.done_lessons > 0);
-    const noScores  = !(scores.length > 0);
-    if (noLessons && noScores) {
-      const nm = (D.name || "").trim();
-      fdb.innerHTML =
-        '<div class="fdb">' +
-          '<div class="fdb-title">' + (nm ? ('Вітаю, ' + nm + '! ') : 'Вітаю! ') + '👋</div>' +
-          '<div class="fdb-text">Це твоя карта прогресу. Поки що вона чиста — але після першого уроку тут зʼявляться бали, рівень і твій ланцюжок. Почнемо з першого кроку?</div>' +
-          '<button class="fdb-btn" onclick="startFirstLesson()">▶️ Почати перший урок</button>' +
-        '</div>';
-    } else {
-      fdb.innerHTML = "";
-    }
+  const firstDay = document.getElementById("first-day-banner");
+  firstDay.replaceChildren();
+  if(!(clampNumber(D.done_lessons, 0, 1000000) > 0) && !scores.length){
+    const card = make("div", "fdb");
+    const name = safeText(D.name, 80).trim();
+    card.append(
+      make("div", "fdb-title", (name ? `Вітаю, ${name}! ` : "Вітаю! ") + "👋"),
+      make("div", "fdb-text", "Це твоя карта прогресу. Після першого уроку тут зʼявляться бали, рівень і твій ланцюжок. Почнемо з першого кроку?"),
+    );
+    const start = makeButton("fdb-btn");
+    start.textContent = "▶️ Почати перший урок";
+    start.addEventListener("click", startFirstLesson);
+    card.appendChild(start);
+    firstDay.appendChild(card);
   }
 
-  document.getElementById("lvl-progress").innerHTML =
-    '<div class="lvl-progress">' +
-      '<div class="lvl-progress-top">' +
-        '<div class="lvl-progress-name">' + (levelNames[activeLevel] || activeLevel) + '</div>' +
-        '<div class="lvl-progress-pct">' + lvlPct + '%</div>' +
-      '</div>' +
-      '<div class="lvl-track"><div class="lvl-fill" style="width:' + lvlPct + '%"></div></div>' +
-    '</div>';
+  const levelProgress = document.getElementById("lvl-progress");
+  levelProgress.replaceChildren();
+  const levelCard = make("div", "lvl-progress");
+  const top = make("div", "lvl-progress-top");
+  const levelTitle = make("h2", "lvl-progress-name", safeText(levelNames[activeLevel] || activeLevel, 100));
+  levelTitle.id = "active-level-title";
+  levelTitle.tabIndex = -1;
+  top.append(levelTitle, make("div", "lvl-progress-pct", `${levelPct}%`));
+  levelCard.append(top, makeBar(`Прогрес рівня ${activeLevel}`, levelPct));
+  levelProgress.appendChild(levelCard);
 
-  const vc = (D.vocab_coverage || {})[activeLevel];
-  const vol = (D.vocab_volume || {})[activeLevel];
-  const volDelta = (D.vocab_volume_delta || {})[activeLevel] || 0;
-  const vcEl = document.getElementById("vocab-progress");
-  const deltaBadge = (volDelta > 0)
-    ? '<div style="font-size:var(--fs-xs);color:var(--green);margin-top:3px">↑ +' + volDelta + ' за тиждень</div>'
-    : '';
-  const volLine = (typeof vol === 'number')
-    ? '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:10px;border-top:1px solid var(--line)">' +
-        '<div><div style="font-size:var(--fs);color:var(--text)">📚 Активний словник ' + activeLevel + '</div>' +
-        '<div style="font-size:var(--fs-xs);color:var(--text3);margin-top:1px">усі слова рівня, що ти знаєш</div></div>' +
-        '<div style="text-align:right"><div style="font-size:var(--fs-lg);font-weight:700;color:var(--text)">' + vol.toLocaleString('uk') + '</div>' + deltaBadge + '</div>' +
-      '</div>'
-    : '';
-  if (vc) {
-    const vpct = vc.pct || 0;
-    vcEl.innerHTML =
-      '<div class="lvl-progress" style="margin-top:10px">' +
-        '<div class="lvl-progress-top">' +
-          '<div class="lvl-progress-name">📖 Ключова лексика ' + activeLevel +
-            ' <span style="color:var(--text3);font-weight:400">' +
-            vc.known + '/' + vc.target + ' ключових слів</span></div>' +
-          '<div class="lvl-progress-pct">' + vpct + '%</div>' +
-        '</div>' +
-        '<div class="lvl-track"><div class="lvl-fill" style="width:' + vpct + '%"></div></div>' +
-        (vc.gap > 0 ? '<div style="font-size:var(--fs-sm);color:var(--text3);margin-top:6px">' +
-          'ще ' + vc.gap + ' до цілі рівня</div>' : '') +
-        volLine +
-      '</div>';
-  } else if (volLine) {
-    vcEl.innerHTML = '<div class="lvl-progress" style="margin-top:10px">' + volLine + '</div>';
-  } else {
-    vcEl.innerHTML = "";
-  }
-
-  renderTopicGaps();
-
-  document.getElementById("topics-list").innerHTML = lvlTopics.map((topic, i) => {
+  renderVocabulary();
+  renderNextTopicCard(topics);
+  const list = document.getElementById("topics-list");
+  list.replaceChildren();
+  topics.forEach((topic, index) => {
     const data = getMastery(topic);
-    const warnIcon = data.buddy_errors > 0 ? ' <span class="topic-warn">⚠ ' + data.buddy_errors + ' помилок</span>' : '';
-    return '<div class="topic" onclick="openTopic(\'' + topic.replace(/'/g, "\\'") + '\')">' +
-      '<div class="topic-num">' + (i + 1) + '</div>' +
-      '<div class="topic-body">' +
-        '<div class="topic-name">' + topic + warnIcon + '</div>' +
-        '<div class="topic-bar-row">' +
-          '<div class="topic-bar-track"><div class="topic-bar-fill ' + data.color + '" style="width:' + data.mastery + '%"></div></div>' +
-          '<div class="topic-pct ' + data.color + '">' + data.mastery + '%</div>' +
-        '</div>' +
-      '</div>' +
-      '<div class="topic-arr">›</div>' +
-    '</div>';
-  }).join("");
+    const button = makeButton("topic", `Відкрити тему ${topic}`);
+    const number = make("div", "topic-num", index + 1);
+    const body = make("div", "topic-body");
+    const name = make("div", "topic-name", topic);
+    if(data.buddy_errors > 0) name.appendChild(make("span", "topic-warn", ` ⚠ ${data.buddy_errors} помилок`));
+    const row = make("div", "topic-bar-row");
+    const track = make("div", "topic-bar-track");
+    track.setAttribute("role", "progressbar");
+    track.setAttribute("aria-label", `Засвоєння теми ${topic}`);
+    track.setAttribute("aria-valuemin", "0"); track.setAttribute("aria-valuemax", "100");
+    setProgress(track, data.mastery);
+    const fill = make("div", `topic-bar-fill ${data.color}`); fill.style.width = data.mastery + "%"; track.appendChild(fill);
+    row.append(track, make("div", `topic-pct ${data.color}`, `${data.mastery}%`));
+    body.append(name, row);
+    button.append(number, body, make("div", "topic-arr", "›"));
+    button.addEventListener("click", () => openTopic(topic, button));
+    list.appendChild(button);
+  });
+  if(announce) document.getElementById("progress-status").textContent = `${activeLevel}: ${completed} з ${topics.length} тем завершено`;
+  if(focusHeading) requestAnimationFrame(() => levelTitle.focus?.());
 }
 
-// ── Прогалини в темах (L-06) ──
-// Показує топ-N найслабших тем (свій рівень + нижчі, фундамент
-// важливіший за швидкість проходження — методичне обґрунтування
-// власниці, Реєстр L-06). Видимо ЗАВЖДИ, навіть при порожньому
-// srs_words (D.topic_gaps=[]) — правило проєкту "усі поля видимі
-// завжди, навіть майбутні/порожні".
-function renderTopicGaps() {
-  const el = document.getElementById("topic-gaps");
-  if (!el) return;
-  const gaps = D.topic_gaps || [];
-
-  if (!gaps.length) {
-    el.innerHTML =
-      '<div class="gap-card">' +
-        '<div class="gap-title">🎯 Прогалини в темах</div>' +
-        '<div class="gap-empty">Ще недостатньо даних — продовжуй практикуватись, і тут з\'являться теми, які варто підтягнути.</div>' +
-      '</div>';
-    return;
+function renderVocabulary(){
+  const host = document.getElementById("vocab-progress");
+  host.replaceChildren();
+  const coverage = (D.vocab_coverage || {})[activeLevel];
+  const volume = Number((D.vocab_volume || {})[activeLevel]);
+  const delta = Math.round(clampNumber((D.vocab_volume_delta || {})[activeLevel], 0, 1000000));
+  if(!coverage && !Number.isFinite(volume)) return;
+  const card = make("div", "lvl-progress"); card.style.marginTop = "10px";
+  if(coverage && typeof coverage === "object"){
+    const known = Math.round(clampNumber(coverage.known, 0, 10000000));
+    const target = Math.round(clampNumber(coverage.target, 0, 10000000));
+    const gap = Math.round(clampNumber(coverage.gap, 0, 10000000));
+    const percent = clampNumber(coverage.pct);
+    const top = make("div", "lvl-progress-top");
+    top.append(make("div", "lvl-progress-name", `📖 Ключова лексика ${activeLevel} ${known}/${target} ключових слів`), make("div", "lvl-progress-pct", `${Math.round(percent)}%`));
+    card.append(top, makeBar(`Ключова лексика ${activeLevel}`, percent));
+    if(gap > 0){ const hint=make("div", "lvl-hint", `ще ${gap} до цілі рівня`); card.appendChild(hint); }
   }
-
-  el.innerHTML =
-    '<div class="gap-card">' +
-      '<div class="gap-title">🎯 Прогалини в темах</div>' +
-      '<div class="gap-hint">Найслабші теми твого рівня і нижче — підтягни їх, щоб впевненіше вести розмову</div>' +
-      gaps.map((g, i) =>
-        '<div class="gap-item">' +
-          '<div class="gap-badge">' + (i + 1) + '</div>' +
-          '<div class="gap-body">' +
-            '<div class="gap-name">' + g.label + '</div>' +
-            '<div class="gap-level">' + g.level + ' · ' + g.known + ' слів засвоєно</div>' +
-          '</div>' +
-        '</div>'
-      ).join("") +
-    '</div>';
+  if(Number.isFinite(volume)){
+    const row = make("div"); row.style.cssText = "display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:10px;border-top:1px solid var(--line)";
+    const copy = make("div"); copy.append(make("div", "", `📚 Активний словник ${activeLevel}`), make("div", "lvl-hint", "усі слова рівня, що ти знаєш"));
+    const count = make("div", "", Math.round(clampNumber(volume, 0, 10000000)).toLocaleString("uk")); count.style.textAlign = "right";
+    if(delta > 0) count.appendChild(make("div", "lvl-hint", `↑ +${delta} за тиждень`));
+    row.append(copy, count); card.appendChild(row);
+  }
+  host.appendChild(card);
 }
 
-function openTopic(topicName) {
-  const data = getMastery(topicName);
-  document.getElementById("modal-title").textContent = topicName;
+function renderNextTopicCard(topics) {
+  const host = document.getElementById("next-topic-card");
+  host.replaceChildren();
+  const next = topics.find(topic => getMastery(topic).mastery < 80);
+  if(!next) return;
+  const data = getMastery(next);
+  const button = makeButton("next-topic-card", `Відкрити наступну тему ${next}`);
+  button.append(
+    make("span", "next-topic-icon", data.mastery > 0 ? "🎯" : "▶️"),
+    (() => { const body=make("span", "next-topic-body"); body.append(make("span", "next-topic-eyebrow", data.mastery > 0 ? "Продовжити" : "Наступна тема"), make("span", "next-topic-title", next), make("span", "next-topic-sub", `${data.mastery}% готово`)); return body; })(),
+    make("span", "next-topic-cta", "Відкрити"),
+  );
+  button.addEventListener("click", () => openTopic(next, button));
+  host.appendChild(button);
+}
 
+function openTopic(topicName, opener=null) {
+  const topic = safeText(topicName, 160);
+  const data = getMastery(topic);
+  const modal = document.getElementById("topic-modal");
+  const body = document.getElementById("modal-body");
+  modalOpener = opener || document.activeElement;
+  document.getElementById("modal-title").textContent = topic;
+  body.replaceChildren();
+
+  const detail = make("div", "detail-progress");
+  const detailRow = make("div", "detail-progress-row");
+  detailRow.append(make("div", "detail-progress-label", "Прогрес теми"), make("div", `detail-progress-pct ${data.color}`, `${data.mastery}%`));
+  const detailTrack = make("div", "detail-bar-track");
+  detailTrack.setAttribute("role", "progressbar"); detailTrack.setAttribute("aria-label", `Прогрес теми ${topic}`);
+  detailTrack.setAttribute("aria-valuemin", "0"); detailTrack.setAttribute("aria-valuemax", "100"); setProgress(detailTrack, data.mastery);
+  const detailFill = make("div", "detail-bar-fill"); detailFill.style.width=data.mastery+"%"; detailFill.style.background=`var(--${data.color})`; detailTrack.appendChild(detailFill);
+  detail.append(detailRow, detailTrack); body.appendChild(detail);
+
+  const workflow = make("div", "workflow");
+  workflow.append(make("div", "workflow-title", "Як вчити цю тему"), make("div", "workflow-hint", "Проходь у такому порядку — кожен крок будує наступний. Підсвічений крок наступний."));
   const steps = [
-    { id: 'video',     icon: '📺', title: 'Подивись відео урок',  desc: 'Почни з реального прикладу мовлення',  cmd: 'lesson' },
-    { id: 'table',     icon: '📖', title: 'Прочитай таблицю правил вголос', desc: 'Структура і формула — щоб закріпити логіку', cmd: 'topic' },
-    { id: 'exercises', icon: '🗣', title: 'Проговори 30 речень для автоматизму', desc: 'Положення, заперечення, питання',     cmd: 'tutor_me' },
-    { id: 'buddy',     icon: '💬', title: 'Закріпи в Speaking Buddy', desc: 'Використай в живій розмові з AI',   cmd: 'buddy' },
+    {id:"video",icon:"📺",title:"Подивись відео урок",desc:"Почни з реального прикладу мовлення",cmd:"lesson"},
+    {id:"table",icon:"📖",title:"Прочитай таблицю правил вголос",desc:"Структура і формула — щоб закріпити логіку",cmd:"topic"},
+    {id:"exercises",icon:"🗣",title:"Проговори 30 речень для автоматизму",desc:"Положення, заперечення, питання",cmd:"tutor_me"},
+    {id:"buddy",icon:"💬",title:"Закріпи в Speaking Buddy",desc:"Використай в живій розмові з AI",cmd:"buddy"},
   ];
-
   let nextFound = false;
-  const stepsHTML = steps.map(s => {
-    const done = data.steps_done[s.id];
-    let cls = "step";
-    if (done) cls += " done";
-    else if (!nextFound) { cls += " next"; nextFound = true; }
-    else cls += " locked";
+  steps.forEach((step, index) => {
+    const done = data.steps_done[step.id];
+    const next = !done && !nextFound;
+    if(next) nextFound = true;
+    const locked = !done && !next;
+    const button = makeButton("step" + (done ? " done" : next ? " next" : " locked"));
+    button.disabled = locked;
+    button.setAttribute("aria-label", `${step.title}${locked ? ", заблоковано" : ""}`);
+    button.append(make("div", "step-num", done ? "✓" : index + 1));
+    const content = make("div", "step-content");
+    const title = make("div", "step-title"); title.append(emojiNode(step.icon,18), document.createTextNode(" "+step.title));
+    content.append(title, make("div", "step-desc", step.desc));
+    button.append(content, make("div", "step-arr", done ? "✓" : "→"));
+    if(!locked) button.addEventListener("click", () => goToStep(step.cmd, topic));
+    workflow.appendChild(button);
+  });
+  body.appendChild(workflow);
 
-    const arr = done ? '✓' : '→';
-    return '<div class="' + cls + '" onclick="goToStep(\'' + s.cmd + '\', \'' + topicName.replace(/'/g, "\\'") + '\')">' +
-      '<div class="step-num">' + (done ? '✓' : steps.indexOf(s) + 1) + '</div>' +
-      '<div class="step-content">' +
-        '<div class="step-title">' + emojiImg(s.icon, 18) + ' ' + s.title + '</div>' +
-        '<div class="step-desc">' + s.desc + '</div>' +
-      '</div>' +
-      '<div class="step-arr">' + arr + '</div>' +
-    '</div>';
-  }).join("");
-
-  let errorsHTML = "";
-  if (data.buddy_examples && data.buddy_examples.length) {
-    errorsHTML = '<div class="errors-section">' +
-      '<div class="errors-title">⚠️ Твої помилки в Speaking Buddy</div>' +
-      data.buddy_examples.map(ex =>
-        '<div class="error-item">' +
-          '<div class="error-wrong">' + (ex.phrase || '') + '</div>' +
-          '<div class="error-right">→ ' + (ex.correction || '') + '</div>' +
-          (ex.explanation ? '<div class="error-expl">💡 ' + ex.explanation + '</div>' : '') +
-          (ex.date ? '<div class="error-date">' + ex.date + '</div>' : '') +
-        '</div>'
-      ).join('') +
-      '</div>';
+  if(data.buddy_examples.length){
+    const errors = make("div", "errors-section"); errors.appendChild(make("div", "errors-title", "⚠️ Твої помилки в Speaking Buddy"));
+    data.buddy_examples.forEach(example => {
+      const item = make("div", "error-item");
+      item.append(make("div", "error-wrong", example.phrase), make("div", "error-right", `→ ${example.correction}`));
+      if(example.explanation) item.appendChild(make("div", "error-expl", `💡 ${example.explanation}`));
+      if(example.date) item.appendChild(make("div", "error-date", example.date));
+      errors.appendChild(item);
+    });
+    body.appendChild(errors);
   }
-
-  document.getElementById("modal-body").innerHTML =
-    '<div class="detail-progress">' +
-      '<div class="detail-progress-row">' +
-        '<div class="detail-progress-label">Прогрес теми</div>' +
-        '<div class="detail-progress-pct ' + data.color + '">' + data.mastery + '%</div>' +
-      '</div>' +
-      '<div class="detail-bar-track"><div class="detail-bar-fill" style="width:' + data.mastery + '%;background:var(--' + data.color + ')"></div></div>' +
-    '</div>' +
-    '<div class="workflow">' +
-      '<div class="workflow-title">Як вчити цю тему</div>' +
-      '<div class="workflow-hint">Проходь у такому порядку — кожен крок будує наступний. Підсвічений крок наступний.</div>' +
-      stepsHTML +
-    '</div>' +
-    errorsHTML;
-
-  document.getElementById("topic-modal").classList.add("active");
+  modal.hidden = false;
+  modal.classList.add("active");
+  requestAnimationFrame(() => document.getElementById("modal-close-btn").focus());
 }
 
 function closeModal() {
-  document.getElementById("topic-modal").classList.remove("active");
+  const modal = document.getElementById("topic-modal");
+  if(modal.hidden) return;
+  modal.classList.remove("active");
+  modal.hidden = true;
+  const opener = modalOpener;
+  modalOpener = null;
+  requestAnimationFrame(() => opener?.focus?.());
 }
 
+function handleModalKeydown(event){
+  const modal = document.getElementById("topic-modal");
+  if(event.key === "Escape") { event.preventDefault(); closeModal(); return; }
+  if(event.key !== "Tab") return;
+  const focusable = [...modal.querySelectorAll('button:not(:disabled),[href],input,textarea,[tabindex]:not([tabindex="-1"])')];
+  if(!focusable.length) return;
+  const first = focusable[0], last = focusable[focusable.length - 1];
+  if(event.shiftKey && event.target === first){ event.preventDefault(); last.focus(); }
+  else if(!event.shiftKey && event.target === last){ event.preventDefault(); first.focus(); }
+}
+
+document.getElementById("tabs-scroll-hint").addEventListener("click", scrollProgressTabs);
+document.getElementById("diagnostic-btn").addEventListener("click", openDiagnostic);
+document.getElementById("progress-close-btn").addEventListener("click", backOrClose);
+document.getElementById("modal-close-btn").addEventListener("click", closeModal);
+document.getElementById("topic-modal").addEventListener("keydown", handleModalKeydown);
+document.getElementById("topic-modal").addEventListener("click", event => { if(event.target === event.currentTarget) closeModal(); });
+
 function startFirstLesson() {
+  /* 🔴 БУЛО: maAction('start_lesson') → Telegram.WebApp.close().
+     Людина тисне «Почати урок» — і додаток ГАСНЕ. Урок мав відкритись
+     у чаті, тобто продукт вимикав сам себе в момент, коли людина
+     нарешті зважилась учитися.
+
+     ТЕПЕР: SC_flow() — міст оболонки, який відкриває ПЛЕЄР ПРЯМО ТУТ,
+     без виходу в чат. Людина тиснула «Почати» — і одразу вчиться.
+     Standalone (без оболонки): стара поведінка, бо плеєра там немає. */
+  if (typeof window.SC_flow === 'function') {
+    window.SC_flow();
+    return;
+  }
   maAction("start_lesson", {});
   if (typeof Telegram !== 'undefined' && Telegram.WebApp) {
     try { Telegram.WebApp.close(); } catch(e){}
@@ -710,74 +824,27 @@ function goToStep(cmd, topic) {
   // Передаємо команду боту (HTTP; sendData як фолбек усередині maAction)
   setTimeout(() => {
     maAction("open_topic_step", { cmd: cmd, topic: topic });
-    if (typeof Telegram !== 'undefined' && Telegram.WebApp) {
-      try { Telegram.WebApp.close(); } catch(e){}
+
+    /* 🔴 БУЛО: Telegram.WebApp.close() — ДОДАТОК ГАСНЕ.
+       Людина щойно побачила toast «+XP», тисне крок — і чорний екран.
+       Винагорода показалась і зникла разом з усім продуктом.
+
+       ТЕПЕР ведемо ВСЕРЕДИНІ додатка, кожен крок — куди треба:
+         buddy  → s-buddy  (Chainy тут же, це мініап оболонки)
+         lesson → SC_flow() (плеєр відкривається прямо тут)
+         решта  → s-home   (головна, з ланцюжком і прогресом)
+       Бот однаково отримав команду через maAction вище — просто
+       людина більше не мусить виходити, щоб це побачити. */
+    if (cmd === 'buddy' && typeof window.go === 'function') {
+      window.go('s-buddy');
+      return;
     }
+    if (cmd === 'lesson' && typeof window.SC_flow === 'function') {
+      window.SC_flow();
+      return;
+    }
+    backOrClose();          // в оболонці → s-home; standalone → як було
   }, 600);
-}
-
-// Розділ M (24.07, об'єднання потоку): таблиця Голіцинського прямо в
-// модалці — той самий вміст, що раніше йшов окремим повідомленням у
-// чат (_send_grammar_explanation). Рендер у той самий #modal-body, де
-// вже показуються 4 кроки-картки (openTopic), одразу над панеллю
-// вправ — кнопка «Далі» веде прямо до openExercises(), без виходу
-// з мініапу і без переходу в Telegram-чат.
-async function openTopicTable(topic) {
-  let panel = document.getElementById('topic-table-panel');
-  if (!panel) {
-    panel = document.createElement('div');
-    panel.id = 'topic-table-panel';
-    panel.className = 'exercises-panel show';
-    document.getElementById('modal-body').appendChild(panel);
-  }
-  panel.classList.add('show');
-  panel.innerHTML = '<div class="ex-sentence" style="color:var(--text2)">Завантажую таблицю...</div>';
-  document.getElementById('modal-body').scrollTo({top: 99999, behavior: 'smooth'});
-
-  let data = null;
-  try {
-    const res = await fetch(API + '/topic_table', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ uid: UID, init_data: INIT_DATA, topic: topic })
-    });
-    data = await res.json();
-  } catch (e) { data = null; }
-
-  if (!data || !data.found) {
-    panel.innerHTML =
-      '<div class="ex-done-banner">' +
-        '<div class="ex-done-title">⚠️ Таблиця для «' + topic + '» поки недоступна окремо</div>' +
-        '<div class="ex-done-sub">Спробуй відео цієї теми 🎬</div>' +
-      '</div>';
-    return;
-  }
-
-  const signalsHtml = (data.signals && data.signals.length)
-    ? '<div class="lvl-hint" style="margin-top:10px">🔑 ' + data.signals.slice(0, 8).join(' · ') + '</div>'
-    : '';
-  const rowsHtml = (data.table || []).map(row => {
-    const icon = row[0] || '';
-    const en   = row[1] || '';
-    const ua   = row[2] || '';
-    return '<div class="ex-sentence" style="text-align:left;min-height:0;padding:12px 16px;margin-bottom:8px;font-size:var(--fs)">' +
-      '<span style="margin-right:8px">' + icon + '</span><code>' + en + '</code>' +
-      (ua ? '<div style="color:var(--text2);font-size:var(--fs-sm);margin-top:4px">' + ua + '</div>' : '') +
-      '</div>';
-  }).join('');
-  const formulaHtml = data.formula
-    ? '<div class="ex-sentence" style="font-family:monospace;background:var(--bg-card2)">📐 ' + data.formula.replace(/\n/g, '<br>') + '</div>'
-    : '';
-
-  panel.innerHTML =
-    '<div class="ex-header"><div class="ex-title">📖 ' + topic + '</div></div>' +
-    (data.ua ? '<div class="lvl-hint">' + data.ua + '</div>' : '') +
-    signalsHtml +
-    '<div style="margin-top:14px">' + rowsHtml + '</div>' +
-    formulaHtml +
-    '<button class="ex-next" style="margin-top:10px" onclick="openExercises(' + JSON.stringify(topic) + ')">Далі → 30 речень</button>';
-
-  if (window.showReward) showReward('table_read_aloud', {topic: topic});
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -792,42 +859,92 @@ let exRecognition = null;
 let exIsRecording = false;
 let exMediaStream = null;
 
-async function openExercises(topic) {
-  exTopic   = topic;
-  exIdx     = 0;
-  exSpoken  = 0;
-
-  // Показуємо panel в модалці
-  let panel = document.getElementById('exercises-panel');
-  if (!panel) {
-    panel = document.createElement('div');
-    panel.id = 'exercises-panel';
-    panel.className = 'exercises-panel show';
-    document.getElementById('modal-body').appendChild(panel);
+// Розділ M (24.07, об'єднання потоку): таблиця Голіцинського прямо в
+// модалці — той самий вміст, що раніше йшов окремим повідомленням у
+// чат (_send_grammar_explanation). Рендер у той самий #modal-body, де
+// вже показуються 4 кроки-картки (openTopic), одразу над панеллю
+// вправ — кнопка «Далі» веде прямо до openExercises(), без виходу
+// з мініапу і без переходу в Telegram-чат.
+async function openTopicTable(topic) {
+  let panel = document.getElementById("topic-table-panel");
+  if(!panel){
+    panel = make("div", "exercises-panel show");
+    panel.id = "topic-table-panel";
+    document.getElementById("modal-body").appendChild(panel);
   }
-  panel.classList.add('show');
-  panel.innerHTML = '<div class="ex-sentence" style="color:var(--text2)">Генерую речення...</div>';
+  panel.classList.add("show");
+  panel.replaceChildren(make("div", "ex-sentence", "Завантажую таблицю..."));
+  document.getElementById("modal-body").scrollTo({top:99999, behavior:"smooth"});
 
-  // Скролимо вниз щоб показати panel
-  document.getElementById('modal-body').scrollTo({top: 99999, behavior: 'smooth'});
-
-  // Завантажуємо речення з API
-  try {
-    const res = await fetch(API + '/exercises_data', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({
-        uid: UID, init_data: INIT_DATA,
-        topic: topic,
-        level: D.level || 'B1'
-      })
+  let data = null;
+  try{
+    const response = await fetch(API + "/topic_table", {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({uid:UID, init_data:INIT_DATA, topic:safeText(topic,160)}),
     });
-    const d = await res.json();
-    exSentences = d.sentences || generateLocalSentences(topic);
-  } catch(e) {
-    exSentences = generateLocalSentences(topic);
+    data = await response.json();
+  }catch(e){ data = null; }
+
+  panel.replaceChildren();
+  if(!data || !data.found){
+    const banner = make("div", "ex-done-banner");
+    banner.append(make("div", "ex-done-title", `⚠️ Таблиця для «${safeText(topic,160)}» поки недоступна окремо`), make("div", "ex-done-sub", "Спробуй відео цієї теми 🎬"));
+    panel.appendChild(banner);
+    return;
   }
 
+  const header = make("div", "ex-header");
+  header.appendChild(make("div", "ex-title", `📖 ${safeText(topic,160)}`));
+  panel.appendChild(header);
+  if(data.ua) panel.appendChild(make("div", "lvl-hint", safeText(data.ua,1000)));
+  if(Array.isArray(data.signals) && data.signals.length){
+    const signals = data.signals.slice(0,8).map(signal => safeText(signal,120)).filter(Boolean);
+    if(signals.length) panel.appendChild(make("div", "lvl-hint", `🔑 ${signals.join(" · ")}`));
+  }
+  const rows = make("div"); rows.style.marginTop = "14px";
+  (Array.isArray(data.table) ? data.table.slice(0,100) : []).forEach(row => {
+    const item = make("div", "ex-sentence");
+    item.style.cssText = "text-align:left;min-height:0;padding:12px 16px;margin-bottom:8px;font-size:var(--fs);display:block";
+    const icon = make("span", "", safeText(row?.[0],20)); icon.style.marginRight="8px";
+    item.append(icon, make("code", "", safeText(row?.[1],1000)));
+    if(row?.[2]){ const translation=make("div", "", safeText(row[2],1000)); translation.style.cssText="color:var(--text2);font-size:var(--fs-sm);margin-top:4px"; item.appendChild(translation); }
+    rows.appendChild(item);
+  });
+  panel.appendChild(rows);
+  if(data.formula){
+    const formula = make("div", "ex-sentence", `📐 ${safeText(data.formula,3000)}`);
+    formula.style.cssText = "font-family:monospace;background:var(--bg-card2);white-space:pre-line";
+    panel.appendChild(formula);
+  }
+  const next = makeButton("ex-next"); next.style.marginTop="10px"; next.textContent="Далі → 30 речень";
+  next.addEventListener("click", () => openExercises(safeText(topic,160)));
+  panel.appendChild(next);
+  if(window.showReward) showReward("table_read_aloud", {topic:safeText(topic,160)});
+}
+
+async function openExercises(topic) {
+  exTopic = safeText(topic,160);
+  exIdx = 0;
+  exSpoken = 0;
+  let panel = document.getElementById("exercises-panel");
+  if(!panel){
+    panel = make("div", "exercises-panel show"); panel.id="exercises-panel";
+    document.getElementById("modal-body").appendChild(panel);
+  }
+  panel.classList.add("show");
+  panel.replaceChildren(make("div", "ex-sentence", "Генерую речення..."));
+  document.getElementById("modal-body").scrollTo({top:99999, behavior:"smooth"});
+  try{
+    const response = await fetch(API + "/exercises_data", {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({uid:UID, init_data:INIT_DATA, topic:exTopic, level:D.level || "B1"}),
+    });
+    const data = await response.json();
+    exSentences = Array.isArray(data.sentences)
+      ? data.sentences.map(sentence => safeText(sentence,1000)).filter(Boolean).slice(0,30)
+      : [];
+  }catch(e){ exSentences=[]; }
+  if(!exSentences.length) exSentences=generateLocalSentences(exTopic);
   renderExercise();
 }
 
@@ -869,57 +986,41 @@ function generateLocalSentences(topic) {
 }
 
 function renderExercise() {
-  const panel = document.getElementById('exercises-panel');
-  if (!panel) return;
-
-  if (exIdx >= exSentences.length) {
-    // Завершено!
-    if (window.showReward) showReward('sentences_30_done', {topic: exTopic});
-
-    // Відправляємо в бот
-    try {
-      fetch(API + '/session_activity', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({
-          uid: UID, init_data: INIT_DATA,
-          activity: 'exercises_done',
-          topic: exTopic,
-          spoken_count: exSpoken,
-        })
+  const panel = document.getElementById("exercises-panel");
+  if(!panel) return;
+  panel.replaceChildren();
+  if(exIdx >= exSentences.length){
+    if(window.showReward) showReward("sentences_30_done", {topic:exTopic});
+    try{
+      fetch(API + "/session_activity", {
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({uid:UID, init_data:INIT_DATA, activity:"exercises_done", topic:exTopic, spoken_count:exSpoken}),
       });
-    } catch(e) {}
-
-    panel.innerHTML = `
-      <div class="ex-done-banner">
-        <div class="ex-done-title">🎉 30 речень завершено!</div>
-        <div class="ex-done-sub">Проговорено: ${exSpoken} з ${exSentences.length}<br>Тема зараховується ✅</div>
-      </div>`;
+    }catch(e){}
+    const banner = make("div", "ex-done-banner");
+    banner.append(make("div", "ex-done-title", "🎉 30 речень завершено!"), make("div", "ex-done-sub", `Проговорено: ${exSpoken} з ${exSentences.length}. Тема зараховується ✅`));
+    panel.appendChild(banner);
+    document.getElementById("progress-status").textContent = `Вправи завершено: ${exSpoken} з ${exSentences.length} речень проговорено`;
     return;
   }
 
-  const sentence = exSentences[exIdx];
-  const pct = Math.round((exIdx / exSentences.length) * 100);
-
-  panel.innerHTML = `
-    <div class="ex-header">
-      <div class="ex-title">🗣 Речення ${exIdx + 1}/30</div>
-      <div class="ex-counter">Проговорено: ${exSpoken}</div>
-    </div>
-    <div class="ex-progress">
-      <div class="ex-progress-fill" style="width:${pct}%"></div>
-    </div>
-    <div class="ex-sentence" id="ex-sentence">${sentence}</div>
-    <div class="ex-actions">
-      <button class="ex-btn" id="ex-tts-btn" onclick="exSpeak()">🔊 Послухати</button>
-      <button class="ex-btn" id="ex-mic-btn" onclick="exToggleRecord()">🎤 Проговорити</button>
-    </div>
-    <button class="ex-next" id="ex-next-btn" onclick="exNext()">
-      Далі →
-    </button>`;
-
-  // Автоматично озвучуємо кожне нове речення
-  setTimeout(() => exSpeak(), 400);
+  const sentence = safeText(exSentences[exIdx],1000);
+  const percent = exSentences.length ? Math.round(exIdx / exSentences.length * 100) : 0;
+  const header = make("div", "ex-header");
+  header.append(make("div", "ex-title", `🗣 Речення ${exIdx+1}/${exSentences.length}`), make("div", "ex-counter", `Проговорено: ${exSpoken}`));
+  const progress = make("div", "ex-progress");
+  progress.setAttribute("role","progressbar"); progress.setAttribute("aria-label","Прогрес вправ");
+  progress.setAttribute("aria-valuemin","0"); progress.setAttribute("aria-valuemax",String(exSentences.length));
+  progress.setAttribute("aria-valuenow",String(exIdx)); progress.setAttribute("aria-valuetext",`Речення ${exIdx+1} з ${exSentences.length}`);
+  const fill=make("div","ex-progress-fill"); fill.style.width=percent+"%"; progress.appendChild(fill);
+  const sentenceNode=make("div","ex-sentence",sentence); sentenceNode.id="ex-sentence";
+  const actions=make("div","ex-actions");
+  const listen=makeButton("ex-btn"); listen.id="ex-tts-btn"; listen.textContent="🔊 Послухати"; listen.addEventListener("click",exSpeak);
+  const record=makeButton("ex-btn"); record.id="ex-mic-btn"; record.textContent="🎤 Проговорити"; record.addEventListener("click",exToggleRecord);
+  actions.append(listen,record);
+  const next=makeButton("ex-next"); next.id="ex-next-btn"; next.textContent="Далі →"; next.addEventListener("click",exNext);
+  panel.append(header,progress,sentenceNode,actions,next);
+  setTimeout(() => exSpeak(),400);
 }
 
 function exSpeak() {
@@ -955,11 +1056,14 @@ async function exToggleRecord() {
       // Показуємо що сказав юзер
       const sentEl = document.getElementById('ex-sentence');
       if (sentEl) {
-        sentEl.innerHTML =
-          '<span style="color:var(--text2);font-size:var(--fs-sm)">Ти сказав:</span><br>' +
-          '<span style="color:var(--green)">' + transcript + '</span><br>' +
-          '<span style="color:var(--text2);font-size:var(--fs-sm);margin-top:4px;display:block">' +
-          exSentences[exIdx] + '</span>';
+        sentEl.replaceChildren();
+        const heardLabel = make("span", "", "Ти сказав:");
+        heardLabel.style.cssText = "color:var(--text2);font-size:var(--fs-sm)";
+        const heard = make("span", "", safeText(transcript,1000));
+        heard.style.color = "var(--green)";
+        const original = make("span", "", safeText(exSentences[exIdx],1000));
+        original.style.cssText = "color:var(--text2);font-size:var(--fs-sm);margin-top:4px;display:block";
+        sentEl.append(heardLabel, document.createElement("br"), heard, document.createElement("br"), original);
       }
       exMarkSpoken();
       exStopRecord();
@@ -1081,37 +1185,6 @@ document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'hidden') endSession();
 });
 window.addEventListener('pagehide', endSession);
-</script>
-
-<script>
-/* ── Стрілки скролера: ‹ зʼявляється, коли є куди гортати назад ── */
-(function(){
-  function sync(){
-    var t=document.getElementById('tabs');
-    if(!t) return;
-    var hL=document.getElementById('tabs-scroll-hint-l');
-    var hR=document.getElementById('tabs-scroll-hint');
-    var max=t.scrollWidth-t.clientWidth;
-    if(hL) hL.classList.toggle('show', t.scrollLeft>4);
-    if(hR) hR.classList.toggle('show', t.scrollLeft<max-4 && max>4);
-  }
-  window.__scL=function(id){
-    var t=document.getElementById(id);
-    if(t) t.scrollBy({left:-140, behavior:'smooth'});
-    setTimeout(sync,320);
-  };
-  function init(){
-    var t=document.getElementById('tabs');
-    if(!t){ setTimeout(init,200); return; }
-    t.addEventListener('scroll', sync, {passive:true});
-    window.addEventListener('resize', sync);
-    /* права стрілка теж має ховатись у кінці */
-    var old=t.onscroll;
-    sync(); setTimeout(sync,400); setTimeout(sync,1200);
-  }
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init);
-  else init();
-})();
 </script>
 </body>
 </html>
