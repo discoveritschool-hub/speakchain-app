@@ -1259,6 +1259,36 @@ def test_live_rooms_fail_closed_until_two_account_gate():
         ok("live rooms приховані client-side; backend gate лишається авторитетним")
 
 
+def test_interactive_captions_and_vocabulary_workspace():
+    """Clickable captions and the word workspace keep explicit, isolated actions."""
+    section("PWA / Telegram — інтерактивні субтитри й картка слова")
+    player = (ROOT / "player.html").read_text(encoding="utf-8")
+    vocab = (ROOT / "vocab.html").read_text(encoding="utf-8")
+    player_markers = (
+        'id="interactive-transcript"', 'className = \'caption-word\'',
+        "event.stopPropagation()", "inspectCaptionWord(part.toLowerCase(), text)",
+        "body: JSON.stringify({uid, init_data: TG?.initData || '', word, context})",
+        "AbortSignal.timeout(6000)", "if (!captionSyncTimer)",
+        'id="word-card-audio"', 'id="word-card-vocab"',
+        "window.speechSynthesis.speak(utterance)", "saveCaptionWord(word)",
+    )
+    vocab_markers = (
+        'id="tab-words"', 'id="tab-phrases"', 'id="word-detail"',
+        "function openWordDetail(word, context='', row=null)",
+        "body:JSON.stringify({uid:UID,init_data:INIT_DATA,word:selectedDetailWord,context})",
+        "function renderWordExamples(container, examples)",
+        "event.stopPropagation();speakTTS", "event.stopPropagation();toggleRecord",
+        "event.stopPropagation();openYT", "event.stopPropagation();deletePhrase",
+        "@media (max-width:899px)", "@media (min-width:900px)",
+    )
+    missing = [f"player:{m}" for m in player_markers if m not in player]
+    missing += [f"vocab:{m}" for m in vocab_markers if m not in vocab]
+    if missing:
+        fail(f"інтерактивні субтитри/словник неповні: {missing}")
+    else:
+        ok("слово перекладається в контексті, озвучується й відкривається без click-through")
+
+
 def main():
     print("\033[1m" + "═" * 58)
     print("  SpeakChain — смоук-тести")
@@ -1292,6 +1322,7 @@ def main():
     test_visible_lexical_streak_and_blogger_entry()
     test_desktop_shell_keeps_mobile_navigation_intact()
     test_live_rooms_fail_closed_until_two_account_gate()
+    test_interactive_captions_and_vocabulary_workspace()
 
     print("\n" + "═" * 58)
     if FAILS:
