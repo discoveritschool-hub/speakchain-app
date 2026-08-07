@@ -205,6 +205,7 @@
       background:linear-gradient(180deg,var(--bg-card),rgba(22,22,31,.94));
       border-bottom:1px solid var(--line); pointer-events:auto; position:relative; z-index:25;
     }
+    #interactive-transcript[hidden] { display:none; }
     .transcript-head { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px; }
     .caption-status { display:flex; align-items:center; gap:7px; color:var(--text2); font-size:var(--fs-sm); font-weight:700; }
     .caption-status::before { content:""; width:7px; height:7px; flex:0 0 auto; border-radius:50%; background:var(--orange); }
@@ -541,19 +542,16 @@
   <button class="seek-button" id="seek-forward" type="button" aria-label="Вперед на 10 секунд">+10 с</button>
 </div>
 
-<section id="interactive-transcript" aria-live="polite">
-  <div class="transcript-head">
-    <div id="caption-status" class="caption-status">Завантажую репліку…</div>
-    <button type="button" class="caption-retry" id="caption-retry">Оновити</button>
-  </div>
-  <div class="transcript-label">Інтерактивна репліка SpeakChain</div>
+<section id="interactive-transcript" aria-live="polite" hidden>
+  <div id="caption-status" class="transcript-label">Завантажую репліку…</div>
+  <button type="button" class="caption-retry" id="caption-retry" hidden aria-hidden="true">Оновити</button>
   <div id="transcript-overlay"><div id="transcript-text" role="button" tabindex="0" aria-label="Перекласти всю репліку">Увімкни відео — тут з’явиться поточна репліка</div></div>
   <div class="phrase-nav" aria-label="Керування реплікою">
     <button type="button" id="phrase-prev" aria-label="Попередня репліка">‹</button>
     <button type="button" class="primary" id="phrase-repeat">🔁 Повторити фразу</button>
     <button type="button" id="phrase-next" aria-label="Наступна репліка">›</button>
   </div>
-  <div class="caption-help" id="caption-help">Торкнися слова для перекладу слова або репліки — для перекладу всієї фрази.</div>
+  <div class="caption-help" id="caption-help" hidden aria-hidden="true"></div>
 </section>
 
 <aside id="word-card" aria-live="polite">
@@ -1460,6 +1458,7 @@ let captionSyncTimer=null;
 let activeCaptionIndex=-1;
 const captionStatus=document.getElementById('caption-status');
 const captionHelp=document.getElementById('caption-help');
+const interactiveTranscript=document.getElementById('interactive-transcript');
 document.getElementById('caption-retry').addEventListener('click',()=>loadCaptions(true));
 document.getElementById('phrase-prev').addEventListener('click',()=>selectCaption(activeCaptionIndex-1));
 document.getElementById('phrase-next').addEventListener('click',()=>selectCaption(activeCaptionIndex+1));
@@ -1517,8 +1516,10 @@ function normalizeCaptionEvents(events){
 function activateCaptions(events,source='Інтерактивні субтитри'){
   captions=normalizeCaptionEvents(events);
   if(!captions.length) return false;
+  interactiveTranscript.hidden=false;
+  clearCaptionPoll();
   setCaptionStatus(source,true);
-  captionHelp.textContent='Натисни слово для перекладу або всю репліку, щоб зберегти фразу.';
+  if(!activeCaption) selectCaption(0);
   if(!captionSyncTimer) captionSyncTimer=setInterval(syncCaptions,150);
   syncCaptions();
   return true;
@@ -1568,17 +1569,34 @@ async function loadCaptions(force=false){
     finally{clearTimeout(timeout);}
     if (!res.ok) { showTranscriptNotice('Текстова доріжка недоступна'); return; }
     const data=await res.json();
+    if(data.status==='processing'||data.caption_resolver_source==='supadata_processing'){
+      showTranscriptNotice(); scheduleCaptionPoll(); return;
+    }
     if (!data.events||!activateCaptions(data.events)) {
       showTranscriptNotice('Для цього уроку інтерактивний текст ще готується.'); return;
     }
+    clearCaptionPoll();
     writeCaptionCache(data.events);
   } catch(e){ showTranscriptNotice('Не вдалося завантажити текст уроку. Спробуй ще раз.'); }
 }
 
-function showTranscriptNotice(message){
-  setCaptionStatus(message||'Текст уроку ще готується');
-  document.getElementById("transcript-text").textContent='Відео працює без затримки. Текст можна оновити окремо.';
-  captionHelp.textContent='Запис себе та розмова з Chainy доступні вже зараз.';
+let captionPollTimer=null;
+let captionPollAttempts=0;
+function clearCaptionPoll(){
+  if(captionPollTimer) clearTimeout(captionPollTimer);
+  captionPollTimer=null; captionPollAttempts=0;
+}
+function scheduleCaptionPoll(){
+  if(captionPollTimer||captionPollAttempts>=40) return;
+  captionPollAttempts++;
+  captionPollTimer=setTimeout(()=>{
+    captionPollTimer=null;
+    loadCaptions(false);
+  },15000);
+}
+function showTranscriptNotice(message=''){
+  interactiveTranscript.hidden=true;
+  setCaptionStatus(message);
 }
 
 function captionAt(seconds){

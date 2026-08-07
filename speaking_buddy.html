@@ -2446,6 +2446,8 @@ function endSession() {
       session_id: sessionId,
       messages:  sessionMsgCount,
       voice:     !!voiceMode,
+      target_phrases: (currentScenario?.videoPractice?.phrases || []).slice(0, 3),
+      history: history.slice(-40),
     });
     const blob = new Blob([payload], { type: 'application/json' });
     navigator.sendBeacon(BOT_API + '/buddy_session_end', blob);
@@ -2627,6 +2629,8 @@ renderScenarios();
           uid: UID, init_data: tg?.initData || '',
           session_id: sessionId,
           messages: sessionMsgCount, voice: !!voiceMode,
+          target_phrases: (currentScenario?.videoPractice?.phrases || []).slice(0, 3),
+          history: history.slice(-40),
         }),
       });
       beaconSent = true;   // блокуємо дубль-beacon при закритті

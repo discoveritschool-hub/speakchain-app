@@ -36,6 +36,11 @@ class PlayerLearningFlowTests(unittest.TestCase):
         self.assertIn("for(const oldId of ids.slice(6))", self.source)
         self.assertIn("function normalizeCaptionEvents(events)", self.source)
         self.assertIn("function captionAt(seconds)", self.source)
+        self.assertIn('id="interactive-transcript" aria-live="polite" hidden', self.source)
+        self.assertIn("data.status==='processing'", self.source)
+        self.assertIn("scheduleCaptionPoll()", self.source)
+        self.assertIn("interactiveTranscript.hidden=true", self.source)
+        self.assertNotIn("Відео працює без затримки", self.source)
 
     def test_subtitle_words_and_phrases_remain_clickable_and_saveable(self):
         self.assertIn("await inspectCaptionWord(part.toLowerCase(), text)", self.source)
