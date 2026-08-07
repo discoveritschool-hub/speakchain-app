@@ -491,7 +491,7 @@ def test_pwa_identity_handoff():
         ok("головна і callback-сторінки одразу завантажують версіонований auth-код")
 
     sw = (ROOT / "sw.js").read_text(encoding="utf-8")
-    if "speakchain-shell-v19" not in sw or "telegram_auth_callback.html" not in sw:
+    if "speakchain-shell-v20" not in sw or "telegram_auth_callback.html" not in sw:
         fail("service worker не оновив cache version для auth-виправлення")
     else:
         ok("service worker примусово оновлює PWA auth-код після деплою")
@@ -1258,7 +1258,7 @@ def test_live_rooms_fail_closed_until_two_account_gate():
         "joinLiveMatch",
     )
     missing = [marker for marker in markers if marker not in pwa]
-    if missing or "speakchain-shell-v19" not in sw:
+    if missing or "speakchain-shell-v20" not in sw:
         fail(f"rooms gate або cache rollover неповні: {missing}")
     else:
         ok("live rooms приховані client-side; backend gate лишається авторитетним")
@@ -1346,10 +1346,10 @@ def test_chainy_memory_controls_contract():
         fail(f"керування пам’яттю неповне/небезпечне: {missing}")
     else:
         ok("view/consent/confirm/edit/delete/purge/disable мають auth і безпечний DOM-render")
-    if "speakchain-shell-v19" not in worker or "'./chainy_memory.js'" not in worker:
+    if "speakchain-shell-v20" not in worker or "'./chainy_memory.js'" not in worker:
         fail("новий memory controller не включений у rollover service worker")
     else:
-        ok("memory controller включений у cache v19")
+        ok("memory controller включений у cache v20")
     if _has_node() and memory and not _js_ok(memory):
         fail("chainy_memory.js: JavaScript не парситься")
     else:
@@ -1409,14 +1409,73 @@ def test_chainy_interest_ui_contract():
         fail(f"адаптивні теми неповні/небезпечні: {missing}")
     else:
         ok("catalog/preference/custom-topic мають auth, consent gate і безпечний DOM")
-    if "speakchain-shell-v19" not in worker or "'./chainy_interest.js'" not in worker:
+    if "speakchain-shell-v20" not in worker or "'./chainy_interest.js'" not in worker:
         fail("interest controller не включений у rollover service worker")
     else:
-        ok("interest controller включений у cache v19")
+        ok("interest controller включений у cache v20")
     if _has_node() and interest and not _js_ok(interest):
         fail("chainy_interest.js: JavaScript не парситься")
     else:
         ok("chainy_interest.js: JavaScript парситься")
+
+
+def test_day1_onboarding_accessibility_contract():
+    """The first-run questionnaire must work without a pointer in both surfaces."""
+    section("Day 1 onboarding — keyboard and screen-reader contract")
+    standalone = (ROOT / "day1_onboarding.html").read_text(encoding="utf-8")
+    shell = SHELL.read_text(encoding="utf-8") if SHELL.exists() else ""
+    raw_apps, _, _ = _extract_apps(shell)
+    try:
+        embedded = json.loads(raw_apps).get("ov-onboarding", {}) if raw_apps else {}
+    except json.JSONDecodeError:
+        embedded = {}
+
+    style_match = re.search(r"<style>(.*?)</style>", standalone, re.S)
+    body_match = re.search(r"<body>(.*?)</body>", standalone, re.S)
+    standalone_css = style_match.group(1) if style_match else ""
+    standalone_body = body_match.group(1) if body_match else ""
+    standalone_html = re.sub(r"<script[^>]*>.*?</script>", "", standalone_body, flags=re.S).strip()
+    scripts = re.findall(r"<script[^>]*>(.*?)</script>", standalone_body, re.S)
+    standalone_js = max(scripts, key=len) if scripts else ""
+
+    expected = {"css": standalone_css, "html": standalone_html, "js": standalone_js}
+    if any(embedded.get(key) != value for key, value in expected.items()):
+        fail("standalone and APPS['ov-onboarding'] are out of sync")
+    else:
+        ok("standalone onboarding and embedded PWA module are byte-equivalent")
+
+    source = "\n".join(expected.values())
+    markers = (
+        'id="onboarding-progress" role="progressbar"',
+        'aria-valuetext="Крок 1 з 7"',
+        'id="hint" role="status" aria-live="polite" aria-atomic="true"',
+        'id="stepStatus" role="status" aria-live="polite" aria-atomic="true"',
+        'id="doneScreen" role="status" aria-live="polite" tabindex="-1"',
+        '.choice:focus-visible',
+        'document.createElement("button")',
+        'el.type="button"',
+        'box.setAttribute("role", sc.type==="single" ? "radiogroup" : "group")',
+        'el.setAttribute("role", "radio")',
+        'el.setAttribute("aria-checked", String(sel))',
+        'el.setAttribute("aria-pressed", String(sel))',
+        'render({focusOptionIndex:optionIndex})',
+        'render({focusHeading:true})',
+        'progressEl.setAttribute("aria-valuenow", String(idx+1))',
+        'stepStatus.textContent=`Крок ${idx+1} з ${SCREENS.length}`',
+        'requestAnimationFrame(()=>doneScreen.focus())',
+    )
+    missing = [marker for marker in markers if marker not in source]
+    if (missing or 'document.createElement("div");\n    el.className="choice "' in standalone_js
+            or "user-scalable=no" in standalone):
+        fail(f"onboarding accessibility markers missing: {missing}")
+    else:
+        ok("native choices, ARIA state, visible focus and focus recovery are present")
+
+    worker = (ROOT / "sw.js").read_text(encoding="utf-8")
+    if "speakchain-shell-v20" not in worker or "'./index_v2.html'" not in worker:
+        fail("accessible embedded onboarding is not covered by the cache rollover")
+    else:
+        ok("cache v20 publishes the accessible embedded onboarding")
 
 
 def main():
@@ -1455,6 +1514,7 @@ def main():
     test_interactive_captions_and_vocabulary_workspace()
     test_chainy_memory_controls_contract()
     test_chainy_interest_ui_contract()
+    test_day1_onboarding_accessibility_contract()
 
     print("\n" + "═" * 58)
     if FAILS:
