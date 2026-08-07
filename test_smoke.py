@@ -491,7 +491,7 @@ def test_pwa_identity_handoff():
         ok("головна і callback-сторінки одразу завантажують версіонований auth-код")
 
     sw = (ROOT / "sw.js").read_text(encoding="utf-8")
-    if "speakchain-shell-v14" not in sw or "telegram_auth_callback.html" not in sw:
+    if "speakchain-shell-v15" not in sw or "telegram_auth_callback.html" not in sw:
         fail("service worker не оновив cache version для auth-виправлення")
     else:
         ok("service worker примусово оновлює PWA auth-код після деплою")
@@ -860,12 +860,17 @@ def test_production_assets_and_browser_chainy_auth():
     else:
         ok("Chainy має явну кнопку «Завершити» у standalone та PWA")
 
-    lifecycle_regressions = (
+    buddy_lifecycle_regressions = (
         "if (document.visibilityState === 'hidden') endSession()",
         "window.addEventListener('pagehide', endSession)",
-        "typeof b.endSession === 'function') b.endSession()",
     )
-    if any(marker in buddy or marker in shell for marker in lifecycle_regressions):
+    shell_lifecycle_regressions = (
+        "b.endSession()",
+        "b && typeof b.endSession",
+        "b&&typeof b.endSession",
+    )
+    if (any(marker in buddy for marker in buddy_lifecycle_regressions)
+            or any(marker in shell for marker in shell_lifecycle_regressions)):
         fail("навігація або згортання Chainy знову неявно завершують сесію")
     elif "function pauseSession()" not in buddy or "typeof b.pauseSession === 'function'" not in shell:
         fail("Chainy не має явного pause-шляху для навігації та згортання")
@@ -1253,7 +1258,7 @@ def test_live_rooms_fail_closed_until_two_account_gate():
         "joinLiveMatch",
     )
     missing = [marker for marker in markers if marker not in pwa]
-    if missing or "speakchain-shell-v14" not in sw:
+    if missing or "speakchain-shell-v15" not in sw:
         fail(f"rooms gate або cache rollover неповні: {missing}")
     else:
         ok("live rooms приховані client-side; backend gate лишається авторитетним")
@@ -1281,8 +1286,18 @@ def test_interactive_captions_and_vocabulary_workspace():
         "event.stopPropagation();openYT", "event.stopPropagation();deletePhrase",
         "@media (max-width:899px)", "@media (min-width:900px)",
     )
+    shell = SHELL.read_text(encoding="utf-8") if SHELL.exists() else ""
+    raw_apps, _, _ = _extract_apps(shell)
+    try:
+        embedded_vocab = json.loads(raw_apps).get("ov-vocab", {}) if raw_apps else {}
+    except json.JSONDecodeError:
+        embedded_vocab = {}
+    embedded_source = "\n".join(str(embedded_vocab.get(k, "")) for k in ("css", "html", "js"))
+    embedded_markers = ("collection-tabs", "word-detail", "setCollectionTab", "openWordDetail")
+
     missing = [f"player:{m}" for m in player_markers if m not in player]
     missing += [f"vocab:{m}" for m in vocab_markers if m not in vocab]
+    missing += [f"embedded:{m}" for m in embedded_markers if m not in embedded_source]
     if missing:
         fail(f"інтерактивні субтитри/словник неповні: {missing}")
     else:
