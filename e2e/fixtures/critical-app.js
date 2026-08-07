@@ -17,8 +17,7 @@ function payloadFor(screen) {
     level: 'B1',
     xp_total: 420,
     streak_days: 4,
-    chain_length: 5,
-    session_minutes: 15
+    chain_length: 5
   };
   if (screen === 's-home') {
     return {
@@ -119,6 +118,7 @@ function installTelegramMiniApp(context, userId = 9001) {
         ready() {}, expand() {}, requestFullscreen() {}, setHeaderColor() {}, setBackgroundColor() {},
         close() { window.__telegramCloseCalled = true; },
         sendData(data) { (window.__telegramSendData ||= []).push(data); },
+        openLink(url) { (window.__telegramOpenLinks ||= []).push(url); },
         openTelegramLink(url) { (window.__telegramLinks ||= []).push(url); },
         BackButton: {
           onClick(callback) { backCallbacks.push(callback); },

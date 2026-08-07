@@ -840,6 +840,18 @@
   .progress-sections{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-bottom:12px}
   .progress-sections button{border:.5px solid var(--line);border-radius:var(--r);padding:10px 5px;background:var(--bg-card);color:var(--text);font-size:var(--fs-sm);font-weight:700;cursor:pointer}
   .role-workspace{display:none}.role-workspace.on{display:block}
+  .profile-settings{margin:0;padding:0;background:var(--bg-card);border:0.5px solid var(--line);border-radius:var(--r);overflow:hidden}
+  .profile-setting{display:grid;grid-template-columns:minmax(0,1fr) minmax(96px,auto);gap:12px;align-items:center;padding:12px 14px}
+  .profile-setting+.profile-setting{border-top:0.5px solid var(--line)}
+  .profile-setting dt{font-size:var(--fs-sm);color:var(--text2)}
+  .profile-setting dd{margin:0;font-size:var(--fs-sm);font-weight:700;text-align:right;overflow-wrap:anywhere}
+  .profile-setting dd.unavailable{color:var(--text2);font-weight:600}
+  .profile-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+  .profile-action{min-height:44px;padding:10px 12px;border:0.5px solid var(--line);border-radius:var(--r);background:var(--bg-card);color:var(--text);font:inherit;font-size:var(--fs-sm);font-weight:700;cursor:pointer}
+  .profile-action:focus-visible{outline:2px solid var(--purple);outline-offset:2px}
+  .profile-action[disabled]{cursor:not-allowed;color:var(--text2);opacity:.68}
+  .profile-settings-note{margin-top:8px;font-size:var(--fs-xs);line-height:1.45;color:var(--text2)}
+  @media(max-width:380px){.profile-actions{grid-template-columns:1fr}}
   .feature-status{font-size:10px;color:var(--green);font-weight:700;margin-left:auto;text-transform:uppercase}
   .mini-player{display:none;align-items:center;gap:10px;padding:9px 12px;
     background:var(--bg-card2);border-top:.5px solid var(--line);z-index:55}
@@ -1437,6 +1449,20 @@ window.addEventListener('load', function(){
 <div class="prof-head">
   <div class="av" id="p-av">?</div>
   <div><div class="nm" id="p-nm">—</div><div class="sub" id="p-sub">—</div></div>
+</div>
+<div class="sec-h"><span class="ti">Профіль і налаштування</span></div>
+<dl class="profile-settings" id="profile-settings" aria-label="Дані профілю та навчальні налаштування">
+  <div class="profile-setting"><dt>Рівень CEFR</dt><dd id="p-cefr">—</dd></div>
+  <div class="profile-setting"><dt>Тариф</dt><dd id="p-tariff">—</dd></div>
+  <div class="profile-setting"><dt>Період оплати</dt><dd id="p-billing-term">—</dd></div>
+  <div class="profile-setting"><dt>Діє до</dt><dd id="p-plan-expiry">—</dd></div>
+  <div class="profile-setting"><dt>Часовий пояс</dt><dd id="p-timezone">—</dd></div>
+  <div class="profile-setting"><dt>Тривалість сесії</dt><dd id="p-session-duration">—</dd></div>
+</dl>
+<p class="profile-settings-note" id="profile-settings-note">Зміна цих параметрів зʼявиться після безпечної синхронізації з ботом. Для повідомлення про помилку відкрийте бот і виберіть «Допомога» → «Написати адміну».</p>
+<div class="profile-actions" aria-label="Допомога з профілем">
+  <button class="profile-action" type="button" id="profile-report-bug" onclick="openProfileBugReport()">Повідомити про помилку</button>
+  <button class="profile-action" type="button" id="profile-video-guide" onclick="openProfileVideoGuide()" disabled>Відеоінструкція недоступна</button>
 </div>
 <div class="sec-h"><span class="ti">Досягнення</span><span class="meta" id="ach-n"></span></div>
 <div class="ach-grid" id="ach"></div>
@@ -3845,6 +3871,113 @@ function stopPlayer(){
 }
 
 /* ══════════ ПРОФІЛЬ ══════════ */
+const PROFILE_SUPPORT_BOT_URL='https://t.me/SpeakChain_bot';
+function boundedProfileString(source,key,maxLength=80){
+  if(!source||!Object.prototype.hasOwnProperty.call(source,key))return null;
+  const value=source[key];
+  if(typeof value!=='string')return null;
+  const clean=value.trim();
+  return clean?clean.slice(0,maxLength):null;
+}
+function boundedProfileNumber(source,key,{min,max}){
+  if(!source||!Object.prototype.hasOwnProperty.call(source,key))return null;
+  const raw=source[key];
+  if(typeof raw!=='number'&&typeof raw!=='string')return null;
+  if(typeof raw==='string'&&!/^-?\d+(?:\.\d+)?$/.test(raw.trim()))return null;
+  const value=Number(raw);
+  return Number.isFinite(value)&&value>=min&&value<=max?value:null;
+}
+function setProfileValue(id,value,unavailable='Ще недоступно'){
+  const el=$(id);
+  if(!el)return;
+  const missing=value===undefined||value===null||String(value).trim()==='';
+  el.textContent=missing?unavailable:String(value);
+  el.classList.toggle('unavailable',missing);
+}
+function profilePlanName(value){
+  return ({free:'Free',basic:'Basic',premium:'Premium'})[String(value||'').toLowerCase()]||null;
+}
+function profileBillingTerm(value){
+  const key=String(value||'').trim().toLowerCase().replace(/[ _-]/g,'');
+  return ({monthly:'1 місяць',month:'1 місяць','1month':'1 місяць','1m':'1 місяць',
+    '6m':'6 місяців','6month':'6 місяців','6months':'6 місяців',semiannual:'6 місяців',
+    yearly:'1 рік',annual:'1 рік',year:'1 рік','1year':'1 рік','1y':'1 рік',
+    '12m':'1 рік','12month':'1 рік','12months':'1 рік'})[key]||null;
+}
+function profileExpiry(value){
+  if(typeof value!=='string')return null;
+  const match=/^(\d{4})-(\d{2})-(\d{2})(?:T(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d{1,6})?(?:Z|[+-](?:[01]\d|2[0-3]):[0-5]\d))?$/.exec(value.trim());
+  if(!match)return null;
+  const year=Number(match[1]),month=Number(match[2]),day=Number(match[3]);
+  const canonical=new Date(Date.UTC(year,month-1,day));
+  if(canonical.getUTCFullYear()!==year||canonical.getUTCMonth()!==month-1||canonical.getUTCDate()!==day)return null;
+  return match[3]+'.'+match[2]+'.'+match[1];
+}
+function profileTimezone(name,offset){
+  if(name)return name;
+  if(offset===null||offset===undefined)return null;
+  return 'UTC'+(offset>=0?'+':'')+String(offset);
+}
+function safeProfileHttpsUrl(value,{telegramOnly=false}={}){
+  try{
+    const url=new URL(String(value||''));
+    if(url.protocol!=='https:')return '';
+    if(telegramOnly&&!['t.me','telegram.me'].includes(url.hostname.toLowerCase()))return '';
+    return url.href;
+  }catch(e){return '';}
+}
+function renderProfileSettings(D,H){
+  /* Every field has one authoritative payload/key. Exact-key fallbacks are
+     limited to the same semantic field; generic plan/expires_at aliases can
+     belong to unrelated modules and must never leak into the profile. */
+  const level=boundedProfileString(D,'level',16)
+    ??boundedProfileString(H,'level',16);
+  const plan=profilePlanName(boundedProfileString(D,'current_plan',16));
+  const billingTerm=boundedProfileString(D,'billing_term',32);
+  const planExpiry=boundedProfileString(D,'premium_until',64)
+    ??boundedProfileString(D,'basic_until',64);
+  const timezone=profileTimezone(boundedProfileString(D,'timezone',64),
+    boundedProfileNumber(D,'utc_offset',{min:-12,max:14}));
+  const minutes=boundedProfileNumber(D,'session_minutes',{min:1,max:240})
+    ??boundedProfileNumber(H,'session_minutes',{min:1,max:240});
+
+  setProfileValue('#p-cefr',level);
+  setProfileValue('#p-tariff',plan);
+  setProfileValue('#p-billing-term',profileBillingTerm(billingTerm));
+  setProfileValue('#p-plan-expiry',profileExpiry(planExpiry),
+    String(plan).toLowerCase()==='free'?'Не застосовується':'Ще недоступно');
+  setProfileValue('#p-timezone',timezone);
+  setProfileValue('#p-session-duration',minutes?String(minutes)+' хв':'');
+
+  const guide=safeProfileHttpsUrl(boundedProfileString(D,'profile_video_url',500));
+  const guideButton=$('#profile-video-guide');
+  if(guideButton){
+    guideButton.disabled=!guide;
+    guideButton.dataset.url=guide;
+    guideButton.textContent=guide?'Відкрити відеоінструкцію':'Відеоінструкція недоступна';
+    guideButton.setAttribute('aria-disabled',String(!guide));
+  }
+}
+function openProfileBugReport(){
+  const D=PAYLOAD['s-profile']||{};
+  const configured=boundedProfileString(D,'support_bot_url',500);
+  const link=safeProfileHttpsUrl(configured,{telegramOnly:true})||PROFILE_SUPPORT_BOT_URL;
+  try{
+    if(TG&&typeof TG.openTelegramLink==='function'){TG.openTelegramLink(link);return;}
+    window.open(link,'_blank','noopener');
+  }
+  catch(e){ window.open(link,'_blank','noopener'); }
+}
+function openProfileVideoGuide(){
+  const button=$('#profile-video-guide');
+  const link=safeProfileHttpsUrl(button?.dataset?.url);
+  if(!link){toast('Відеоінструкція ще недоступна');return;}
+  try{
+    if(TG&&typeof TG.openLink==='function'){TG.openLink(link);return;}
+    window.open(link,'_blank','noopener');
+  }
+  catch(e){ window.open(link,'_blank','noopener'); }
+}
 async function renderProfile(){
   const D=await load('s-profile');
   /* Профіль показує ланцюжок/стрік — вони живуть у payload s-home.
@@ -3886,6 +4019,7 @@ async function renderProfile(){
     +'<span style="font-size:var(--fs-xs);color:var(--purple);font-weight:700">ВИ ТУТ</span></div>'
     +info.feats.map(([ok,t])=>F(ok,t)).join('')+'</div>';
 
+  renderProfileSettings(D,H);
   renderProfileLottery();
   renderRoleWorkspace(D,H);
 }
