@@ -12,7 +12,7 @@ const {
 const byPath = (scenario, path) => scenario.requests.filter(request => request.path === path);
 
 async function runOwnVideoCycle(page, context, scenario, surface) {
-  scenario.expectedHttpConsoleErrors = 1;
+  scenario.allowedHttpConsoleErrors = 1;
   if (surface === 'telegram') await installTelegramMiniApp(context);
   else await installBrowserSession(context);
 
@@ -201,7 +201,7 @@ async function runOwnVideoCycle(page, context, scenario, surface) {
 }
 
 async function runLegacyBookCycle(page, context, scenario, surface) {
-  scenario.expectedHttpConsoleErrors = 1;
+  scenario.allowedHttpConsoleErrors = 1;
   if (surface === 'telegram') await installTelegramMiniApp(context);
   else await installBrowserSession(context);
   await page.goto('/index_v2.html');
