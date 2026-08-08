@@ -3480,7 +3480,8 @@ async function publishSocialResponse(){
 }
 function showRelayResult(room,url){
   const text='Твоя ланка додана. Передай естафету далі: '+(url||'');
-  if(navigator.share&&url)navigator.share({title:'SpeakChain естафета',text:'Відповідай англійською і продовж ланцюжок',url}).catch(()=>{});
+  const tags=COMPOSE_CTX.share_hashtags||lessonShareHashtags('relay');
+  if(navigator.share&&url)navigator.share({title:'SpeakChain естафета',text:'Відповідай англійською і продовж ланцюжок. '+tags,url}).catch(()=>{});
   else if(url&&navigator.clipboard)navigator.clipboard.writeText(url).then(()=>toast('Посилання естафети скопійовано 🔗'));
   else toast(text);
 }
@@ -3504,13 +3505,20 @@ function showLessonFinishRelay(){
   $('#lesson-finish-body').innerHTML='Започаткуй «Плітки»: кожен продовжить думку англійською. Після 15 ланок SpeakChain склеїть вертикальне відео, покаже його всім учасникам і підготує для TikTok/Reels з <b>#ТвійМікрофон</b>.';
   $('#lesson-finish-primary').textContent='Почати «Плітки»';$('#lesson-finish-skip').textContent='Завершити урок';openOv('ov-lesson-finish');
 }
+function lessonShareHashtags(kind='lesson'){
+  const discovery=kind==='relay'
+    ?[['#PassTheMic','#SpeakingChallenge'],['#PassTheMic','#EnglishChallenge'],['#SpeakingPractice','#LanguageChallenge']]
+    :[['#LearnEnglish','#EnglishSpeaking'],['#EnglishSpeakingPractice','#SpeakEnglish'],['#EnglishPractice','#LearnEnglishOnline'],['#АнглійськаУкраїнською','#EnglishSpeaking']];
+  const day=Math.floor(Date.now()/86400000),seed=Number(UID||0)+day+String(VIDEO_ROUTE_PACK?.title||'').length;
+  return ['#ТвійМікрофон','#SpeakChain',...discovery[Math.abs(seed)%discovery.length]].join(' ');
+}
 async function lessonFinishPrimary(){
   if(LESSON_FINISH.step==='result'){
     closeOv();const pack=VIDEO_ROUTE_PACK||videoRoutePack(),phrases=(pack.phrases||[]).slice(0,2).map(p=>p.en||p);
     openSocialComposer({mode:'lesson_share',topic:pack.title||'Video lesson',phrase:phrases.join(' · ')});return;
   }
   if(LESSON_FINISH.step==='share'){
-    const text=(LESSON_FINISH.share_text||'Я вивчаю англійську у SpeakChain — приєднуйся! '+LESSON_FINISH.ref_link)+' #ТвійМікрофон #SpeakChain';
+    const text=(LESSON_FINISH.share_text||'Я вивчаю англійську у SpeakChain — приєднуйся! '+LESSON_FINISH.ref_link)+' '+lessonShareHashtags('lesson');
     const done=()=>showLessonFinishRelay();
     let file=null;
     if(LESSON_FINISH.video_data){const blob=await fetch(LESSON_FINISH.video_data).then(r=>r.blob());file=new File([blob],'speakchain-video.webm',{type:LESSON_FINISH.video_mime||blob.type||'video/webm'});}
@@ -3519,7 +3527,7 @@ async function lessonFinishPrimary(){
     else if(navigator.clipboard){if(file){const a=document.createElement('a');a.href=URL.createObjectURL(file);a.download=file.name;a.click();}navigator.clipboard.writeText(text).then(()=>{toast(file?'Відео збережено, текст скопійовано':'Текст і посилання скопійовано');done();});}
     else{toast(text);done();}return;
   }
-  closeOv();const pack=VIDEO_ROUTE_PACK||videoRoutePack(),phrase=(pack.phrases||[])[0];openSocialComposer({mode:'relay',topic:pack.title||'Продовж думку з відео',phrase:phrase?.en||phrase||''});
+  closeOv();const pack=VIDEO_ROUTE_PACK||videoRoutePack(),phrase=(pack.phrases||[])[0];openSocialComposer({mode:'relay',topic:pack.title||'Продовж думку з відео',phrase:phrase?.en||phrase||'',share_hashtags:lessonShareHashtags('relay')});
 }
 function lessonFinishSkip(){if(LESSON_FINISH.step==='share')showLessonFinishRelay();else{closeOv();go('s-home');toast('Урок завершено ✓');}}
 async function startLiveMatch(){
