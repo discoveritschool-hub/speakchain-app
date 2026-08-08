@@ -4548,6 +4548,25 @@ function renderChallenge(){
     }
   }
 
+  /* Крок 2 завжди видно одразу під відео: не змушуємо шукати поле внизу
+     екрана або повертатися до чату. */
+  if(D.code_word_required){
+    const isDay6=day===6, saved=!!D.code_word_collected;
+    const label=saved?'Крок 2 · Кодове слово вже збережено ✓'
+      :(isDay6?'Крок 2 · Введіть два кодові слова з відео':'Крок 2 · Введіть кодове слово з відео');
+    const ph=isDay6?'два слова з відео':'слово з відео';
+    html+='<div style="margin:0 0 10px;padding:12px;background:var(--bg-card);border:'
+      +(saved?'1px solid var(--green)':'1px solid var(--purple)')+';border-radius:var(--r)">'
+      +'<div style="font-size:var(--fs-sm);font-weight:700;margin-bottom:7px">🔑 '+label+'</div>'
+      +(saved
+        ? '<div id="chd-phrase-msg" style="font-size:var(--fs-xs);color:var(--green)">Зібрано '+(D.code_words_collected||0)+'/7 слів</div>'
+        : '<div style="display:flex;gap:6px"><input id="chd-phrase" type="text" placeholder="'+ph+'" autocomplete="off" '
+          +'style="flex:1;min-width:0;background:var(--bg-card2);border:.5px solid var(--line);border-radius:var(--r);padding:11px 12px;font-size:var(--fs-sm);color:var(--text);outline:none">'
+          +'<button id="chd-phrase-btn" onclick="chdSubmitPhrase()" style="flex-shrink:0;padding:10px 14px;border-radius:var(--r);border:none;background:var(--purple);color:#fff;font-size:var(--fs-sm);font-weight:700;cursor:pointer">Перевірити</button></div>'
+          +'<div id="chd-phrase-msg" style="font-size:var(--fs-xs);color:var(--text2);margin-top:6px;min-height:14px">Слово може прозвучати будь-де у відео.</div>')
+      +'</div>';
+  }
+
   if(D.task_text){
     html+='<div style="background:var(--bg-card);border:.5px solid var(--line);border-radius:var(--r);padding:12px;margin-bottom:10px">'
       +'<div style="font-size:var(--fs-sm);font-weight:700;margin-bottom:6px">Завдання дня</div>'
@@ -4616,40 +4635,36 @@ function renderChallenge(){
     +'cursor:pointer;margin-top:6px">'
     +(D.done?'✓ Зроблено сьогодні':'Готово — до Дня '+(day<total?(day+1):'фіналу'))+'</button>';
 
-  /* v13.1: поле кодового слова — UI-частина зроблена, ЗВІРКА поки НЕ
-     підключена (потребує code_phrase.py, якого не було в цій сесії).
-     Підпис за днями (за задумом): Дні 1-5 — одне кодове слово,
-     День 6 — два кодові слова, День 7 — поля немає (немає даних про
-     кодове слово на цей день). */
-  if(day>=1&&day<=6){
-    const isDay6=day===6;
-    const label = isDay6 ? 'Почула кодові слова (їх два)? Введи їх 👇' : 'Почула кодове слово? Введи його 👇';
-    const ph    = isDay6 ? 'два кодові слова' : 'кодове слово';
-    html+='<div style="margin-top:16px;padding-top:14px;border-top:.5px solid var(--line)">'
-      +'<div style="font-size:var(--fs-xs);color:var(--text2);margin-bottom:6px">'+label+'</div>'
-      +'<div style="display:flex;gap:6px">'
-      +'<input id="chd-phrase" type="text" placeholder="'+ph+'" autocomplete="off" '
-      +'style="flex:1;background:var(--bg-card);border:.5px solid var(--line);border-radius:var(--r);'
-      +'padding:10px 12px;font-size:var(--fs-sm);color:var(--text);outline:none">'
-      +'<button onclick="chdSubmitPhrase()" style="flex-shrink:0;padding:10px 16px;border-radius:var(--r);'
-      +'border:none;background:var(--bg-card2);color:var(--text);font-size:var(--fs-sm);font-weight:600;'
-      +'cursor:pointer">OK</button></div>'
-      +'<div id="chd-phrase-msg" style="font-size:var(--fs-xs);color:var(--text2);margin-top:6px;min-height:14px"></div>'
-      +'</div>';
-  }
-
   $('#chd-body').innerHTML=html;
   if(D.record_mode==='final') chdRecKind='video';
   else if(D.record_mode) chdRecKind='voice';
 }
 
-function chdSubmitPhrase(){
+async function chdSubmitPhrase(){
   const inp=$('#chd-phrase'), msg=$('#chd-phrase-msg');
+  const btn=$('#chd-phrase-btn');
   const phrase=(inp?.value||'').trim();
   if(!phrase) return;
-  act('code_phrase_submit',{phrase});
-  if(msg) msg.textContent='Надіслано — перевір у чаті з ботом 👆';
-  if(inp) inp.value='';
+  if(btn){btn.disabled=true;btn.textContent='Перевіряю…';}
+  if(msg){msg.style.color='var(--text2)';msg.textContent='Перевіряю…';}
+  try{
+    const result=await postAction('code_phrase_submit',{phrase});
+    if(msg){
+      msg.style.color=result.matched?'var(--green)':'var(--orange)';
+      msg.textContent=result.message||(result.matched?'Правильно! Слово збережено.':'Поки не збігається.');
+    }
+    if(result.matched){
+      if(inp) inp.disabled=true;
+      if(btn){btn.textContent='Збережено ✓';btn.style.background='var(--green)';}
+      const D=PAYLOAD['ov-challenge']||{};
+      D.code_word_collected=true;
+      D.code_words_collected=result.count||D.code_words_collected||0;
+      return;
+    }
+  }catch(e){
+    if(msg){msg.style.color='var(--red)';msg.textContent='Немає зв’язку. Спробуйте ще раз.';}
+  }
+  if(btn){btn.disabled=false;btn.textContent='Перевірити';}
 }
 
 function chdVideo(){
