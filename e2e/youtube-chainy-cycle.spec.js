@@ -219,9 +219,20 @@ async function runLegacyBookCycle(page, context, scenario, surface) {
 
   await expect(page.locator('#ov-player')).not.toHaveClass(/\bon\b/);
   await expect(page.locator('#ov-buddy')).toHaveClass(/\bon\b/);
-  await expect(page.locator('#ov-buddy-host #chat-messages')).toContainText('A short book excerpt');
+  const buddy = page.locator('#ov-buddy-host');
+  await expect(buddy.locator('#chat-messages')).toContainText('A short book excerpt');
+  await expect(buddy.locator('#chat-messages')).toContainText('book excerpt was about');
+  await expect(buddy.locator('#voice-toggle')).toHaveClass(/\bactive\b/);
+
+  // The greeting deliberately starts in voice mode. Wait on the observable
+  // token request rather than racing its 600 ms delayed TTS kickoff. The 503
+  // fixture then exercises the same text fallback as the Video conversation.
+  await expect.poll(() => byPath(scenario, '/buddy_realtime_token').length).toBe(1);
   expect(byPath(scenario, '/buddy_realtime_token')).toHaveLength(1);
-  expect(byPath(scenario, '/video_summary')).toHaveLength(1);
+  expect(byPath(scenario, '/buddy_chat')).toHaveLength(0);
+  const summaries = byPath(scenario, '/video_summary');
+  expect(summaries).toHaveLength(1);
+  expect(summaries[0].query).toEqual({ vid: E2E_VIDEO_ID });
 }
 
 test('browser own YouTube caption continues into grounded Chainy result without retries', async ({
