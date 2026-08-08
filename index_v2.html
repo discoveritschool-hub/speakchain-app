@@ -4560,6 +4560,12 @@ function renderChallenge(){
       +'</div>'
       +'<div id="chd-rules-msg" style="font-size:var(--fs-xs);color:var(--text2);margin-top:12px;min-height:16px"></div>'
       +'<button id="chd-rules-btn" onclick="chdAcceptRules()" style="width:100%;padding:14px;border-radius:var(--r-pill);border:none;background:var(--purple);color:#fff;font-size:var(--fs-sm);font-weight:800;cursor:pointer;margin-top:8px">Приймаю правила — продовжити День 1</button>'
+      +'</div>'
+      +'<div style="padding:12px;background:var(--bg-card);border:1px solid var(--line);border-radius:var(--r);opacity:.65">'
+      +'<div style="font-size:var(--fs-sm);font-weight:700;margin-bottom:7px">🔑 Кодове слово з відео</div>'
+      +'<div style="display:flex;gap:6px"><input type="text" disabled placeholder="Спочатку прийміть правила" '
+      +'style="flex:1;min-width:0;background:var(--bg-card2);border:.5px solid var(--line);border-radius:var(--r);padding:11px 12px;font-size:var(--fs-sm);color:var(--text2)">'
+      +'<button disabled style="padding:10px 14px;border-radius:var(--r);border:none;background:var(--bg-card2);color:var(--text2);font-weight:700">Перевірити</button></div>'
       +'</div>';
     $('#chd-body').innerHTML=html;
     return;
@@ -4572,6 +4578,9 @@ function renderChallenge(){
     const label=saved?'Крок 2 · Кодове слово вже збережено ✓'
       :(isDay6?'Крок 2 · Введіть два кодові слова з відео':'Крок 2 · Введіть кодове слово з відео');
     const ph=isDay6?'два слова з відео':'слово з відео';
+    if(day===1){
+      html+='<div style="display:flex;align-items:center;gap:8px;padding:10px 12px;margin-bottom:6px;background:rgba(90,216,166,.1);border:1px solid rgba(90,216,166,.35);border-radius:var(--r);color:var(--green);font-size:var(--fs-sm);font-weight:700">✓ Правила прийнято</div>';
+    }
     html+='<div style="margin:0 0 10px;padding:12px;background:var(--bg-card);border:'
       +(saved?'1px solid var(--green)':'1px solid var(--purple)')+';border-radius:var(--r)">'
       +'<div style="font-size:var(--fs-sm);font-weight:700;margin-bottom:7px">🔑 '+label+'</div>'
