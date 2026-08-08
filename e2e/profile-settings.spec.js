@@ -14,7 +14,9 @@ test('profile settings expose supported values and honest unavailable states', a
   await expect(page.locator('#p-cefr')).toHaveText('B1');
   await expect(page.locator('#p-tariff')).toHaveText('Basic');
   await expect(page.locator('#p-session-duration')).toHaveText('Ще недоступно');
-  await expect(page.locator('#p-timezone')).toHaveText('Ще недоступно');
+  await expect(page.locator('#p-timezone')).toHaveText('UTC+2');
+  await expect(page.locator('#profile-utc-offset')).toHaveValue('2');
+  await expect(page.locator('#profile-notification-pref')).toHaveValue('evening');
   await expect(page.locator('#p-billing-term')).toHaveText('Ще недоступно');
   await expect(page.locator('#p-plan-expiry')).toHaveText('Ще недоступно');
 

@@ -61,6 +61,9 @@ function payloadFor(screen) {
       my_name: 'E2E Learner',
       done_lessons: 3,
       current_plan: 'basic',
+      utc_offset: 2,
+      notification_pref: 'evening',
+      profile_settings_revision: 0,
       lottery: { tickets: 0 }
     };
   }
@@ -160,6 +163,13 @@ const test = base.extend({
       requests: [],
       unexpected: [],
       payloadFailures: new Map(),
+      profileMutationFailures: [],
+      profileMutationResponses: [],
+      profileMutationLedger: new Map(),
+      profileSettings: {
+        utc_offset: 2, notification_pref: 'evening',
+        profile_settings_revision: 0
+      },
       sessionMode: 'success',
       pageErrors: [],
       consoleErrors: [],
@@ -310,11 +320,80 @@ const test = base.extend({
           scenario.payloadFailures.set(screen, failures - 1);
           await route.fulfill(json({ ok: false, error: 'temporary fixture failure' }, 503));
         } else {
-          await route.fulfill(json({ ok: true, d: payloadFor(screen) }));
+          const payload = payloadFor(screen);
+          if (screen === 's-profile') Object.assign(payload, scenario.profileSettings);
+          await route.fulfill(json({ ok: true, d: payload }));
         }
         return;
       }
       if (url.pathname === '/miniapp_action') {
+        if (body.action === 'profile_settings_update') {
+          const planned = scenario.profileMutationResponses.shift();
+          if (planned?.delayMs) {
+            await new Promise(resolve => setTimeout(resolve, planned.delayMs));
+          }
+          const failure = scenario.profileMutationFailures.shift();
+          if (failure || (planned && Number(planned.status || 200) >= 400)) {
+            const terminal = failure || planned;
+            await route.fulfill(json({ ok: false, error: terminal.error || 'temporary_failure' }, terminal.status || 503)).catch(() => {});
+            return;
+          }
+          const settings = planned?.settings || body.settings || {};
+          const mutationId = body.mutation_id;
+          const expectedRevision = body.expected_revision;
+          const fingerprint = JSON.stringify({ expectedRevision, settings });
+          if (typeof mutationId !== 'string' || mutationId.length < 16 ||
+              !Number.isInteger(expectedRevision) || expectedRevision < 0) {
+            await route.fulfill(json({ ok: false, error: 'invalid_mutation_metadata' }, 400)).catch(() => {});
+            return;
+          }
+          const previous = scenario.profileMutationLedger.get(mutationId);
+          if (previous) {
+            if (previous.fingerprint !== fingerprint) {
+              await route.fulfill(json({ ok: false, error: 'mutation_id_reused' }, 409)).catch(() => {});
+              return;
+            }
+            const revision = scenario.profileSettings.profile_settings_revision;
+            const payload = {
+              ok: previous.outcome === 'applied', outcome: previous.outcome,
+              replayed: true, revision,
+              mutation_revision: previous.mutationRevision,
+              settings: { level: 'B1', current_plan: 'basic', ...scenario.profileSettings }
+            };
+            await route.fulfill(json(payload, previous.outcome === 'applied' ? 200 : 409)).catch(() => {});
+            return;
+          }
+          const currentRevision = scenario.profileSettings.profile_settings_revision;
+          if (expectedRevision !== currentRevision) {
+            scenario.profileMutationLedger.set(mutationId, {
+              fingerprint, outcome: 'conflict', mutationRevision: currentRevision
+            });
+            await route.fulfill(json({
+              ok: false, outcome: 'conflict', replayed: false,
+              revision: currentRevision, mutation_revision: null,
+              settings: { level: 'B1', current_plan: 'basic', ...scenario.profileSettings }
+            }, 409)).catch(() => {});
+            return;
+          }
+          Object.assign(scenario.profileSettings, settings);
+          const revision = currentRevision + 1;
+          scenario.profileSettings.profile_settings_revision = revision;
+          scenario.profileMutationLedger.set(mutationId, {
+            fingerprint, outcome: 'applied', mutationRevision: revision
+          });
+          while (scenario.profileMutationLedger.size > 16) {
+            scenario.profileMutationLedger.delete(scenario.profileMutationLedger.keys().next().value);
+          }
+          await route.fulfill(json({
+            ok: true, outcome: 'applied', replayed: false,
+            revision, mutation_revision: revision,
+            settings: {
+              level: 'B1', current_plan: 'basic',
+              ...scenario.profileSettings
+            }
+          })).catch(() => {});
+          return;
+        }
         await route.fulfill(json({ ok: true }));
         return;
       }
@@ -395,7 +474,7 @@ const test = base.extend({
       'Only explicitly induced fixture HTTP failures may reach the console'
     ).toBeLessThanOrEqual(scenario.allowedHttpConsoleErrors);
     for (const message of scenario.consoleErrors) {
-      expect(message).toMatch(/^Failed to load resource: the server responded with a status of 503 /);
+      expect(message).toMatch(/^Failed to load resource: the server responded with a status of (?:409|503) /);
     }
   }
 });

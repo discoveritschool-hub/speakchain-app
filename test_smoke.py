@@ -509,7 +509,7 @@ def test_pwa_identity_handoff():
         ok("головна і callback-сторінки одразу завантажують версіонований auth-код")
 
     sw = (ROOT / "sw.js").read_text(encoding="utf-8")
-    if "speakchain-shell-v27" not in sw or "telegram_auth_callback.html" not in sw:
+    if "speakchain-shell-v28" not in sw or "telegram_auth_callback.html" not in sw:
         fail("service worker не оновив cache version для auth-виправлення")
     else:
         ok("service worker примусово оновлює PWA auth-код після деплою")
@@ -1285,7 +1285,7 @@ def test_live_rooms_fail_closed_until_two_account_gate():
         "joinLiveMatch",
     )
     missing = [marker for marker in markers if marker not in pwa]
-    if missing or "speakchain-shell-v27" not in sw:
+    if missing or "speakchain-shell-v28" not in sw:
         fail(f"rooms gate або cache rollover неповні: {missing}")
     else:
         ok("live rooms приховані client-side; backend gate лишається авторитетним")
@@ -1377,10 +1377,10 @@ def test_chainy_memory_controls_contract():
         fail(f"керування пам’яттю неповне/небезпечне: {missing}")
     else:
         ok("view/consent/confirm/edit/delete/purge/disable мають auth і безпечний DOM-render")
-    if "speakchain-shell-v27" not in worker or "'./chainy_memory.js'" not in worker:
+    if "speakchain-shell-v28" not in worker or "'./chainy_memory.js'" not in worker:
         fail("новий memory controller не включений у rollover service worker")
     else:
-        ok("memory controller включений у cache v23")
+        ok("memory controller включений у cache v26")
     if _has_node() and memory and not _js_ok(memory):
         fail("chainy_memory.js: JavaScript не парситься")
     else:
@@ -1440,10 +1440,10 @@ def test_chainy_interest_ui_contract():
         fail(f"адаптивні теми неповні/небезпечні: {missing}")
     else:
         ok("catalog/preference/custom-topic мають auth, consent gate і безпечний DOM")
-    if "speakchain-shell-v27" not in worker or "'./chainy_interest.js'" not in worker:
+    if "speakchain-shell-v28" not in worker or "'./chainy_interest.js'" not in worker:
         fail("interest controller не включений у rollover service worker")
     else:
-        ok("interest controller включений у cache v23")
+        ok("interest controller включений у cache v26")
     if _has_node() and interest and not _js_ok(interest):
         fail("chainy_interest.js: JavaScript не парситься")
     else:
@@ -1503,10 +1503,10 @@ def test_day1_onboarding_accessibility_contract():
         ok("native choices, ARIA state, visible focus and focus recovery are present")
 
     worker = (ROOT / "sw.js").read_text(encoding="utf-8")
-    if "speakchain-shell-v27" not in worker or "'./index_v2.html'" not in worker:
+    if "speakchain-shell-v28" not in worker or "'./index_v2.html'" not in worker:
         fail("accessible embedded onboarding is not covered by the cache rollover")
     else:
-        ok("cache v23 publishes the accessible embedded onboarding")
+        ok("cache v26 publishes the accessible embedded onboarding")
 
 
 def test_progress_security_accessibility_contract():
@@ -1551,10 +1551,10 @@ def test_progress_security_accessibility_contract():
         ok("progress uses safe DOM, native disabled controls and dialog focus lifecycle")
 
     worker = (ROOT / "sw.js").read_text(encoding="utf-8")
-    if "speakchain-shell-v27" not in worker or "'./progress.html'" not in worker:
-        fail("hardened progress module is not covered by cache v23")
+    if "speakchain-shell-v28" not in worker or "'./progress.html'" not in worker:
+        fail("hardened progress module is not covered by cache v28")
     else:
-        ok("cache v23 publishes hardened progress")
+        ok("cache v28 publishes hardened progress")
 
 
 def test_player_bounded_seek_behavior():
@@ -1598,10 +1598,10 @@ def test_player_bounded_seek_behavior():
     else:
         ok("player exposes accessible controls, fixed live feedback and protected gesture layers")
 
-    if "speakchain-shell-v27" not in worker or "'./player_seek.js'" not in worker:
-        fail("player seek helper is not covered by cache v23")
+    if "speakchain-shell-v28" not in worker or "'./player_seek.js'" not in worker:
+        fail("player seek helper is not covered by cache v28")
     else:
-        ok("cache v23 publishes the player seek helper")
+        ok("cache v28 publishes the player seek helper")
 
     harness = ROOT / "test_player_seek_behavior.js"
     if not _has_node():
