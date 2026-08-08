@@ -1610,6 +1610,7 @@ function makeTranscriptClickable(bubble, text) {
         const selected = String(window.getSelection?.() || '').trim();
         if (selected) return;
         event.stopPropagation();
+        window.postMessage({type:'sc_word_tap', word:part, context:String(text || '')}, '*');
         showPhrasePopover(part, text);
       });
       bubble.appendChild(word);
@@ -1623,7 +1624,10 @@ function makeTranscriptClickable(bubble, text) {
     const phrase = String(selection || '').replace(/\s+/g, ' ').trim();
     if (!phrase || phrase.length < 2 || phrase.length > 300 || !selection.rangeCount) return;
     const range = selection.getRangeAt(0);
-    if (bubble.contains(range.commonAncestorContainer)) showPhrasePopover(phrase, text);
+    if (bubble.contains(range.commonAncestorContainer)) {
+      window.postMessage({type:'sc_phrase_select', text:phrase, context:String(text || '')}, '*');
+      showPhrasePopover(phrase, text);
+    }
   }, 30);
   bubble.addEventListener('mouseup', captureSelection);
   bubble.addEventListener('touchend', captureSelection, { passive: true });
