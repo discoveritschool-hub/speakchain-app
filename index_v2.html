@@ -154,6 +154,12 @@
 .live-phrase-card{margin:10px 0;padding:10px;border:.5px solid var(--line);border-radius:12px;background:var(--bg-card2)}
 .live-phrase-row{display:flex;align-items:center;gap:7px;padding:7px 0;border-top:.5px solid var(--line);font-size:13px}.live-phrase-row:first-child{border-top:0}
 .live-phrase-row.used{color:var(--green)}.live-phrase-row.pending{color:var(--yellow)}.live-phrase-row button{margin-left:auto;border:0;border-radius:8px;padding:6px 8px;background:var(--bg-card3);color:inherit}
+.live-video-stage{position:relative;width:100%;aspect-ratio:4/3;margin:10px 0;border-radius:16px;overflow:hidden;background:#08080d;border:.5px solid var(--line)}
+.live-video-stage>video{width:100%;height:100%;object-fit:cover;background:#08080d}
+.live-video-empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:18px;text-align:center;color:var(--text2);font-size:13px;background:radial-gradient(circle at 50% 35%,rgba(124,110,247,.18),transparent 58%)}
+.live-local-video{position:absolute!important;right:10px;bottom:10px;width:30%!important;height:34%!important;border-radius:12px;border:2px solid rgba(255,255,255,.8);box-shadow:0 6px 20px rgba(0,0,0,.45);z-index:3}
+.live-local-empty{position:absolute;right:10px;bottom:10px;width:30%;height:34%;border-radius:12px;display:flex;align-items:center;justify-content:center;text-align:center;padding:5px;background:var(--bg-card3);color:var(--text2);font-size:10px;border:1px solid var(--line);z-index:2}
+.live-call-controls{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin:8px 0}.live-call-controls button{border:1px solid var(--line);border-radius:12px;padding:10px 8px;background:var(--bg-card2);color:var(--text);font-weight:650}.live-call-controls button.off{color:var(--red);border-color:rgba(247,110,110,.35)}
 .live-result{margin-top:12px;padding:12px;border-radius:12px;background:var(--green-bg);color:var(--text);font-size:13px;line-height:1.5}
 .cr-primary,.cr-secondary{border:none;border-radius:10px;padding:9px 10px;
   font-size:var(--fs-xs);font-weight:800;cursor:pointer}
@@ -1878,6 +1884,7 @@ window.addEventListener('load', function(){
       <input class="field-input" id="live-source-url" maxlength="500" placeholder="YouTube, стаття або новина">
       <label class="field-label">Формат</label>
       <select class="field-input" id="live-format"><option value="discussion">Обговорення</option><option value="roleplay">Рольова гра</option><option value="retell">Переказ</option><option value="debate">Дебати</option><option value="problem">Вирішення проблеми</option></select>
+      <label class="instr-note" style="display:flex;gap:9px;align-items:flex-start"><input id="live-camera-choice" type="checkbox" checked><span><b>Увімкнути камеру</b><br><small>За бажанням. Камеру можна вимкнути будь-коли під час розмови.</small></span></label>
       <button class="diag-cta" onclick="joinLiveMatch()">Знайти співрозмовника</button>
     </div>
     <div id="live-waiting" class="social-empty" style="display:none;margin-top:14px"><span class="ic">🔎</span>
@@ -1888,11 +1895,21 @@ window.addEventListener('load', function(){
         <div class="live-timer" id="live-timer">05:00</div></div>
       <div id="live-ready-box" class="instr-note">Матч почнеться, коли обидва натиснуть «Я готова».</div>
       <button class="diag-cta" id="live-ready" onclick="readyLiveMatch()">Я готова</button>
-      <div id="live-audio-status" class="instr-note">Після готовності обох підключимо живий аудіодзвінок.</div>
+      <div id="live-audio-status" class="instr-note">Після готовності обох підключимо живу розмову.</div>
+      <div class="live-video-stage" id="live-video-stage">
+        <video id="live-remote-video" autoplay playsinline></video>
+        <div class="live-video-empty" id="live-remote-empty">Камера партнера вимкнена. Голосова розмова продовжується.</div>
+        <video class="live-local-video" id="live-local-video" autoplay muted playsinline></video>
+        <div class="live-local-empty" id="live-local-empty">Ваша камера вимкнена</div>
+      </div>
+      <div class="live-call-controls">
+        <button id="live-camera-toggle" type="button" onclick="toggleLiveCamera()">📹 Вимкнути камеру</button>
+        <button id="live-mic-toggle" type="button" onclick="toggleLiveMic()">🎙 Вимкнути мікрофон</button>
+        <button id="live-camera-switch" type="button" onclick="switchLiveCamera()" style="display:none">🔄 Змінити камеру</button>
+      </div>
       <label class="instr-note" style="display:flex;gap:8px;align-items:flex-start"><input id="live-analysis-consent" type="checkbox" onchange="setLiveAnalysisConsent(this.checked)"><span>Дозволяю аналізувати transcript моїх голосових реплік для навчального підсумку. AI-аналіз буде лише якщо погодяться обоє.</span></label>
       <details class="live-phrase-card" id="live-phrase-card"><summary>Мої фрази</summary><div id="live-phrase-list"></div><button class="sn-skip" type="button" onclick="showLivePhraseHint()">Не пам’ятаю</button><div id="live-phrase-hint" class="instr-note" style="display:none"></div></details>
       <div id="live-questions" class="instr-note"></div>
-      <audio id="live-remote-audio" autoplay playsinline></audio>
       <div class="live-messages" id="live-messages"></div>
       <button class="diag-cta" id="live-record" style="display:none" onclick="toggleLiveRecord()">🎙 Fallback: надіслати голосову репліку</button>
       <button class="diag-cta" id="live-finish" onclick="finishLivePractice()">Завершити й побачити результат</button>
@@ -3060,7 +3077,7 @@ let SOCIAL={}, SOCIAL_TAB='feed', SOCIAL_PROFILE=null, SOCIAL_SETTINGS={format:'
 let COMPOSE_CTX={}, COMPOSE_VIS='private', COMPOSE_TYPE='audio', COMPOSE_REC=null;
 let COMPOSE_STREAM=null, COMPOSE_CHUNKS=[], COMPOSE_B64='', COMPOSE_MIME='', COMPOSE_TIMER=null, COMPOSE_SEC=0, COMPOSE_CONFIRMED=false;
 let LIVE_MATCH=null, LIVE_POLL=null, LIVE_TIMER_INT=null, LIVE_REC=null, LIVE_STREAM=null, LIVE_CHUNKS=[], LIVE_DEADLINE=0;
-let LIVE_PC=null,LIVE_LOCAL_STREAM=null,LIVE_SIGNAL_POLL=null,LIVE_SIGNAL_LAST='',LIVE_RTC_STARTED=false,LIVE_PENDING_CANDIDATES=[];
+let LIVE_PC=null,LIVE_LOCAL_STREAM=null,LIVE_REMOTE_STREAM=null,LIVE_SIGNAL_POLL=null,LIVE_SIGNAL_LAST='',LIVE_RTC_STARTED=false,LIVE_PENDING_CANDIDATES=[],LIVE_CAMERA_FACING='user';
 let CHAINY_COMPOSE_OBSERVER=null;
 
 async function socialApi(op,extra){
@@ -3586,7 +3603,7 @@ async function pollLiveRoom(){
     if(both&&d.deadline_ts&&Number(d.deadline_ts)!==LIVE_DEADLINE){
       LIVE_DEADLINE=Number(d.deadline_ts);startLiveTimer(LIVE_DEADLINE);
     }
-    if(both&&!LIVE_RTC_STARTED)startPeerAudio().catch(()=>setLiveAudioStatus('Живий дзвінок не підключився. Користуйтеся голосовими репліками нижче.'));
+    if(both&&!LIVE_RTC_STARTED)startPeerCall().catch(()=>setLiveAudioStatus('Жива розмова не підключилася. Користуйтеся голосовими репліками нижче.'));
     $('#live-messages').innerHTML=(d.messages||[]).length?(d.messages||[]).map(m=>{
       const media=socialMediaUrl(m.media_url||'');
       const player=media?(m.is_video
@@ -3602,21 +3619,52 @@ async function pollLiveRoom(){
 async function readyLiveMatch(){try{handleLiveStatus(await socialApi('live_ready'));trackUx('live_match_ready');}catch(e){toast('Не вдалося підтвердити готовність');}}
 function setLiveAudioStatus(text){const el=$('#live-audio-status');if(el)el.textContent=text;}
 async function rtcSignal(kind,payload){return socialApi('rtc_signal',{room_id:LIVE_MATCH.room_id,kind,payload});}
-async function startPeerAudio(){
+function renderLiveMediaState(){
+  const videoTrack=LIVE_LOCAL_STREAM?.getVideoTracks?.()[0],audioTrack=LIVE_LOCAL_STREAM?.getAudioTracks?.()[0];
+  const localVideo=$('#live-local-video'),localEmpty=$('#live-local-empty'),cameraBtn=$('#live-camera-toggle'),micBtn=$('#live-mic-toggle'),switchBtn=$('#live-camera-switch');
+  if(localVideo){localVideo.srcObject=LIVE_LOCAL_STREAM||null;localVideo.style.display=videoTrack&&videoTrack.enabled?'':'none';}
+  if(localEmpty)localEmpty.style.display=videoTrack&&videoTrack.enabled?'none':'flex';
+  if(cameraBtn){cameraBtn.textContent=videoTrack&&videoTrack.enabled?'📹 Вимкнути камеру':'📹 Увімкнути камеру';cameraBtn.classList.toggle('off',!(videoTrack&&videoTrack.enabled));}
+  if(micBtn){micBtn.textContent=audioTrack&&audioTrack.enabled?'🎙 Вимкнути мікрофон':'🎙 Увімкнути мікрофон';micBtn.classList.toggle('off',!(audioTrack&&audioTrack.enabled));}
+  if(switchBtn)switchBtn.style.display=videoTrack&&videoTrack.enabled?'':'none';
+}
+async function sendLiveOffer(){
+  if(!LIVE_PC)return;
+  for(let i=0;i<20&&LIVE_PC.signalingState!=='stable';i++)await new Promise(resolve=>setTimeout(resolve,100));
+  if(LIVE_PC.signalingState!=='stable')return;
+  const offer=await LIVE_PC.createOffer();await LIVE_PC.setLocalDescription(offer);await rtcSignal('offer',LIVE_PC.localDescription);
+}
+async function toggleLiveCamera(){
+  if(!LIVE_PC||!LIVE_LOCAL_STREAM){toast('Спочатку дочекайтеся підключення');return;}
+  let track=LIVE_LOCAL_STREAM.getVideoTracks()[0];
+  try{
+    if(track){const sender=LIVE_PC.getSenders().find(s=>s.track?.kind==='video'||s.track===null);if(track.enabled){if(sender)await sender.replaceTrack(null);track.enabled=false;}else{track.enabled=true;if(sender)await sender.replaceTrack(track);else{LIVE_PC.addTrack(track,LIVE_LOCAL_STREAM);await sendLiveOffer();}}renderLiveMediaState();return;}
+    const extra=await navigator.mediaDevices.getUserMedia({video:{facingMode:LIVE_CAMERA_FACING},audio:false});track=extra.getVideoTracks()[0];
+    LIVE_LOCAL_STREAM.addTrack(track);LIVE_PC.addTrack(track,LIVE_LOCAL_STREAM);renderLiveMediaState();await sendLiveOffer();
+  }catch(e){toast('Не вдалося увімкнути камеру. Перевірте дозвіл у телефоні.');}
+}
+function toggleLiveMic(){const track=LIVE_LOCAL_STREAM?.getAudioTracks?.()[0];if(!track){toast('Мікрофон ще не підключено');return;}track.enabled=!track.enabled;renderLiveMediaState();}
+async function switchLiveCamera(){
+  const oldTrack=LIVE_LOCAL_STREAM?.getVideoTracks?.()[0];if(!oldTrack)return;
+  try{LIVE_CAMERA_FACING=LIVE_CAMERA_FACING==='user'?'environment':'user';const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:LIVE_CAMERA_FACING}},audio:false});const next=stream.getVideoTracks()[0];const sender=LIVE_PC?.getSenders().find(s=>s.track?.kind==='video');if(sender)await sender.replaceTrack(next);LIVE_LOCAL_STREAM.removeTrack(oldTrack);oldTrack.stop();LIVE_LOCAL_STREAM.addTrack(next);renderLiveMediaState();}catch(e){LIVE_CAMERA_FACING=LIVE_CAMERA_FACING==='user'?'environment':'user';toast('На цьому пристрої не вдалося змінити камеру');}
+}
+async function startPeerCall(){
   if(LIVE_RTC_STARTED||!LIVE_MATCH?.room_id)return;LIVE_RTC_STARTED=true;
-  setLiveAudioStatus('Запитуємо доступ до мікрофона…');
+  const wantsVideo=$('#live-camera-choice')?.checked!==false;
+  setLiveAudioStatus(wantsVideo?'Запитуємо доступ до камери й мікрофона…':'Запитуємо доступ до мікрофона…');
   const cfg=await socialApi('rtc_config',{room_id:LIVE_MATCH.room_id});
-  LIVE_LOCAL_STREAM=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true},video:false});
+  LIVE_LOCAL_STREAM=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true},video:wantsVideo?{facingMode:'user',width:{ideal:640},height:{ideal:480}}:false});
   LIVE_PC=new RTCPeerConnection({iceServers:cfg.ice_servers||[]});
   LIVE_LOCAL_STREAM.getTracks().forEach(track=>LIVE_PC.addTrack(track,LIVE_LOCAL_STREAM));
-  LIVE_PC.ontrack=event=>{const audio=$('#live-remote-audio');audio.srcObject=event.streams[0];audio.play().catch(()=>{});};
+  renderLiveMediaState();
+  LIVE_PC.ontrack=event=>{LIVE_REMOTE_STREAM=event.streams[0]||LIVE_REMOTE_STREAM||new MediaStream();if(!event.streams[0])LIVE_REMOTE_STREAM.addTrack(event.track);const remote=$('#live-remote-video');remote.srcObject=LIVE_REMOTE_STREAM;remote.play().catch(()=>{});const refresh=()=>{const visible=LIVE_REMOTE_STREAM?.getVideoTracks?.().some(t=>t.readyState==='live'&&!t.muted);$('#live-remote-empty').style.display=visible?'none':'flex';};event.track.addEventListener('unmute',refresh);event.track.addEventListener('mute',refresh);event.track.addEventListener('ended',refresh);refresh();};
   LIVE_PC.onicecandidate=event=>{if(event.candidate)rtcSignal('candidate',event.candidate.toJSON()).catch(()=>{});};
   LIVE_PC.onconnectionstatechange=()=>{
     const state=LIVE_PC?.connectionState||'';
-    setLiveAudioStatus(state==='connected'?'🟢 Живий аудіодзвінок підключено':state==='failed'?'Не вдалося з’єднати напряму — доступні голосові репліки.':'Аудіо: '+state);
+    setLiveAudioStatus(state==='connected'?'🟢 Жива розмова підключена':state==='failed'?'Не вдалося з’єднати напряму — доступні голосові репліки.':'З’єднання: '+state);
   };
   startRtcSignalPolling();
-  if(cfg.caller){const offer=await LIVE_PC.createOffer();await LIVE_PC.setLocalDescription(offer);await rtcSignal('offer',LIVE_PC.localDescription);}
+  if(cfg.caller)await sendLiveOffer();
 }
 function startRtcSignalPolling(){
   clearInterval(LIVE_SIGNAL_POLL);LIVE_SIGNAL_POLL=setInterval(async()=>{
@@ -3654,8 +3702,8 @@ async function toggleLiveRecord(){
 async function leaveLiveMatch(send=true){
   clearInterval(LIVE_POLL);clearInterval(LIVE_TIMER_INT);clearInterval(LIVE_SIGNAL_POLL);
   try{if(send&&LIVE_MATCH?.room_id)await rtcSignal('bye',{});}catch(e){}
-  try{LIVE_STREAM?.getTracks().forEach(t=>t.stop());LIVE_LOCAL_STREAM?.getTracks().forEach(t=>t.stop());LIVE_PC?.close();}catch(e){}
-  if(send)await socialApi('live_leave').catch(()=>{});LIVE_MATCH=null;LIVE_DEADLINE=0;LIVE_PC=null;LIVE_LOCAL_STREAM=null;LIVE_RTC_STARTED=false;LIVE_SIGNAL_LAST='';LIVE_PENDING_CANDIDATES=[];closeOv();
+  try{LIVE_STREAM?.getTracks().forEach(t=>t.stop());LIVE_LOCAL_STREAM?.getTracks().forEach(t=>t.stop());LIVE_REMOTE_STREAM?.getTracks().forEach(t=>t.stop());LIVE_PC?.close();}catch(e){}
+  if(send)await socialApi('live_leave').catch(()=>{});LIVE_MATCH=null;LIVE_DEADLINE=0;LIVE_PC=null;LIVE_LOCAL_STREAM=null;LIVE_REMOTE_STREAM=null;LIVE_RTC_STARTED=false;LIVE_SIGNAL_LAST='';LIVE_PENDING_CANDIDATES=[];LIVE_CAMERA_FACING='user';closeOv();
 }
 function videoRoutePack(){const brief=LAST_CONVERSATION_BRIEF||{};return{title:brief.title||'Обговорення відео',summary:brief.summary||'',phrases:(brief.phrases||[]).slice(0,5),url:brief.url||'',mode:brief.mode||'discuss',questions:['What was the main idea of the video?','What did you agree or disagree with?','Have you experienced something similar?']};}
 function startVideoLiveMatch(){hideChainyRecap();LIVE_PREFILL_PACK=VIDEO_ROUTE_PACK||videoRoutePack();startLiveMatch();}
