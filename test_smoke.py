@@ -391,6 +391,14 @@ def test_shell_apps():
         fail(f"APPS JSON зламано: {e}")
         return
 
+    buddy_js = (apps.get("s-buddy") or {}).get("js", "")
+    if (buddy_js.count("/buddy_session_end") != 2
+            or len(re.findall(r"history:\s+history\.slice", buddy_js)) < 2
+            or buddy_js.count("target_phrases:") < 2):
+        fail("embedded Chainy does not send the completed conversation and video phrases")
+    else:
+        ok("embedded Chainy sends typed/Realtime history and target video phrases on both finish paths")
+
     if not _has_node():
         fail("node не знайдено — JS мініапів НЕ ПЕРЕВІРЕНО. "
              "Додай actions/setup-node@v4 у smoke.yml")
@@ -501,7 +509,7 @@ def test_pwa_identity_handoff():
         ok("головна і callback-сторінки одразу завантажують версіонований auth-код")
 
     sw = (ROOT / "sw.js").read_text(encoding="utf-8")
-    if "speakchain-shell-v25" not in sw or "telegram_auth_callback.html" not in sw:
+    if "speakchain-shell-v26" not in sw or "telegram_auth_callback.html" not in sw:
         fail("service worker не оновив cache version для auth-виправлення")
     else:
         ok("service worker примусово оновлює PWA auth-код після деплою")
@@ -1213,6 +1221,7 @@ def test_visible_lexical_streak_and_blogger_entry():
     markers = (
         'id="s-prog"', 'id="route-lexical"', "const LEXICAL_ROUTE_FALLBACK=",
         "function lexicalItems(D,level)", "function pgSetRoute(route)",
+        "practice_pct", "grammar_progress", "vocab_practiced", "vocab_mastered",
         'id="home-streak-signal"', "sc.querySelector('.l').textContent='Streak'",
         "const BLOGGER_ENTRY=", "function activateBloggerEntry(entry)",
         "blogger_phrase_repeat", "blogger_phrase_chainy",
@@ -1268,7 +1277,7 @@ def test_live_rooms_fail_closed_until_two_account_gate():
         "joinLiveMatch",
     )
     missing = [marker for marker in markers if marker not in pwa]
-    if missing or "speakchain-shell-v25" not in sw:
+    if missing or "speakchain-shell-v26" not in sw:
         fail(f"rooms gate або cache rollover неповні: {missing}")
     else:
         ok("live rooms приховані client-side; backend gate лишається авторитетним")
@@ -1360,7 +1369,7 @@ def test_chainy_memory_controls_contract():
         fail(f"керування пам’яттю неповне/небезпечне: {missing}")
     else:
         ok("view/consent/confirm/edit/delete/purge/disable мають auth і безпечний DOM-render")
-    if "speakchain-shell-v25" not in worker or "'./chainy_memory.js'" not in worker:
+    if "speakchain-shell-v26" not in worker or "'./chainy_memory.js'" not in worker:
         fail("новий memory controller не включений у rollover service worker")
     else:
         ok("memory controller включений у cache v23")
@@ -1423,7 +1432,7 @@ def test_chainy_interest_ui_contract():
         fail(f"адаптивні теми неповні/небезпечні: {missing}")
     else:
         ok("catalog/preference/custom-topic мають auth, consent gate і безпечний DOM")
-    if "speakchain-shell-v25" not in worker or "'./chainy_interest.js'" not in worker:
+    if "speakchain-shell-v26" not in worker or "'./chainy_interest.js'" not in worker:
         fail("interest controller не включений у rollover service worker")
     else:
         ok("interest controller включений у cache v23")
@@ -1486,7 +1495,7 @@ def test_day1_onboarding_accessibility_contract():
         ok("native choices, ARIA state, visible focus and focus recovery are present")
 
     worker = (ROOT / "sw.js").read_text(encoding="utf-8")
-    if "speakchain-shell-v25" not in worker or "'./index_v2.html'" not in worker:
+    if "speakchain-shell-v26" not in worker or "'./index_v2.html'" not in worker:
         fail("accessible embedded onboarding is not covered by the cache rollover")
     else:
         ok("cache v23 publishes the accessible embedded onboarding")
@@ -1534,7 +1543,7 @@ def test_progress_security_accessibility_contract():
         ok("progress uses safe DOM, native disabled controls and dialog focus lifecycle")
 
     worker = (ROOT / "sw.js").read_text(encoding="utf-8")
-    if "speakchain-shell-v25" not in worker or "'./progress.html'" not in worker:
+    if "speakchain-shell-v26" not in worker or "'./progress.html'" not in worker:
         fail("hardened progress module is not covered by cache v23")
     else:
         ok("cache v23 publishes hardened progress")
@@ -1581,7 +1590,7 @@ def test_player_bounded_seek_behavior():
     else:
         ok("player exposes accessible controls, fixed live feedback and protected gesture layers")
 
-    if "speakchain-shell-v25" not in worker or "'./player_seek.js'" not in worker:
+    if "speakchain-shell-v26" not in worker or "'./player_seek.js'" not in worker:
         fail("player seek helper is not covered by cache v23")
     else:
         ok("cache v23 publishes the player seek helper")

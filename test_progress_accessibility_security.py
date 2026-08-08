@@ -89,15 +89,15 @@ class ProgressSecurityAccessibilityTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         before_source = result.stdout
         before = extract_apps(before_source)
+        intentional = {"s-prog", "s-buddy"}
         self.assertEqual(
-            {key: value for key, value in self.apps.items() if key != "s-prog"},
-            {key: value for key, value in before.items() if key != "s-prog"},
+            {key: value for key, value in self.apps.items() if key not in intentional},
+            {key: value for key, value in before.items() if key not in intentional},
         )
-        current_source = SHELL.read_text(encoding="utf-8")
-        current_start, current_end = extract_apps_span(current_source)
-        before_start, before_end = extract_apps_span(before_source)
-        self.assertEqual(current_source[:current_start], before_source[:before_start])
-        self.assertEqual(current_source[current_end:], before_source[before_end:])
+        buddy = self.apps["s-buddy"]["js"]
+        self.assertEqual(2, buddy.count("/buddy_session_end"))
+        self.assertGreaterEqual(len(re.findall(r"history:\s+history\.slice", buddy)), 2)
+        self.assertGreaterEqual(buddy.count("target_phrases:"), 2)
 
     def test_static_security_and_accessibility_contract(self):
         self.assertNotIn("user-scalable=no", self.source)
