@@ -1142,11 +1142,11 @@ function initials(name) {
    Блогер має бачити обидва: інакше не зрозуміє, навіщо цей день. */
 const CHALLENGE_DAYS = [
   { problem: 'Це не Ваша провина',       topic: 'Скоромовки' },
-  { problem: 'Немає живої практики',     topic: 'Про себе — ім\'я, де живу, чим займаюсь' },
-  { problem: 'Немає інтересу',           topic: 'Погода' },
-  { problem: 'Граматика не системна',    topic: 'Хобі + TH + замір + карта' },
-  { problem: 'Не вплетена в життя',      topic: 'Їжа й напої + Chainy + метч' },
-  { problem: 'Немає віри в себе',        topic: 'Фінальне відео + фраза вголос' },
+  { problem: 'Ворог — це страх',          topic: 'Про себе + перший смол-ток + Chainy' },
+  { problem: 'Перестаньте перекладати',  topic: 'Погода + жива фраза How’s it going?' },
+  { problem: 'Складні звуки + Ваша карта', topic: 'TH + чесний замір + хобі + карта' },
+  { problem: 'Мрія + жива людина',        topic: 'Їжа й напої + Chainy + спікінг-метч' },
+  { problem: 'Ваше дзеркало і фінальне відео', topic: 'Скоромовки + дзеркало + фінальне відео' },
   { problem: 'Підсумкове слово',         topic: '—' },
 ];
 
@@ -1167,13 +1167,15 @@ function renderChallengeVideos() {
 
   for (let day = 1; day <= 7; day++) {
     const url = (vids[day] && vids[day].url) || '';
+    const canonicalTitle = (D.challenge_day_titles && D.challenge_day_titles[day])
+      || CHALLENGE_DAYS[day-1].problem;
     if (url) done++;
     html += `
       <div class="day-row">
         <div class="day-head">
           <div class="day-chip ${url ? 'filled' : ''}">${url ? '✓' : day}</div>
           <div style="flex:1;min-width:0">
-            <div class="day-title">День ${day}. ${CHALLENGE_DAYS[day-1].problem}</div>
+            <div class="day-title">День ${day}. ${canonicalTitle}</div>
             <div class="day-topic">${CHALLENGE_DAYS[day-1].topic}</div>
             ${CODE_WORDS[day-1] !== '—'
               ? `<div class="day-code">🔑 ${CODE_WORDS[day-1]}</div>` : ''}
