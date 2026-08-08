@@ -5,6 +5,7 @@ const FIXED_NOW_LITERAL = '2026-08-07T12:00:00.000Z';
 const pkg = JSON.parse(read('package.json'));
 const config = read('playwright.config.js');
 const spec = read('e2e/critical-paths.spec.js');
+const youtubeSpec = read('e2e/youtube-chainy-cycle.spec.js');
 const fixture = read('e2e/fixtures/critical-app.js');
 const workflow = read('.github/workflows/e2e.yml');
 const lock = read('pnpm-lock.yaml');
@@ -24,7 +25,9 @@ const checks = [
   [fixture.includes("resource === 'telegram.org/js/telegram-web-app.js'")
     && !fixture.includes("hostname === 'telegram.org'"), 'SDK stubs must allowlist exact resources'],
   [fixture.includes('DeterministicDate') && fixture.includes(FIXED_NOW_LITERAL), 'clock must be deterministic'],
-  [!spec.includes('waitForTimeout'), 'tests must not use timing sleeps'],
+  [!spec.includes('waitForTimeout') && !youtubeSpec.includes('waitForTimeout'), 'tests must not use timing sleeps'],
+  [youtubeSpec.includes("'/captions'") && youtubeSpec.includes("'/buddy_chat'")
+    && youtubeSpec.includes("'/buddy_victory'"), 'own-video critical cycle must cover captions, Chainy and visible result'],
   [workflow.includes('pnpm install --frozen-lockfile'), 'CI must use the frozen lockfile'],
   [uses.length === 5 && uses.every(value => /@[0-9a-f]{40}$/.test(value)), 'every action must use an immutable commit SHA'],
   [workflow.includes('branches: [main]') && workflow.includes('cancel-in-progress: true'), 'CI must avoid duplicate branch runs'],

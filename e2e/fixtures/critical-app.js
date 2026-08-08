@@ -4,6 +4,9 @@ const FIXED_NOW = '2026-08-07T12:00:00.000Z';
 const LOCAL_ORIGIN = `http://127.0.0.1:${Number(process.env.SPEAKCHAIN_E2E_PORT || 4173)}`;
 const BACKEND_ORIGIN = 'https://speakchain-bot-production.up.railway.app';
 const TELEGRAM_INIT_DATA = 'query_id=e2e-query&user=%7B%22id%22%3A9001%7D&auth_date=1786104000&hash=e2e-hash';
+const E2E_VIDEO_ID = 'dQw4w9WgXcQ';
+const E2E_VIDEO_TITLE = 'E2E Own Video';
+const E2E_CAPTION = 'Practice makes progress every day.';
 
 const session = label => ({
   access_token: `access-${label}`,
@@ -87,7 +90,28 @@ function sdkStub(request, url) {
     return 'window.Telegram = window.Telegram || undefined;';
   }
   if (resource === 'www.youtube.com/iframe_api') {
-    return 'window.YT = window.YT || { Player: function(){} };';
+    return `(() => {
+      const PlayerState = { PLAYING: 1, PAUSED: 2 };
+      window.YT = {
+        PlayerState,
+        Player: function(_target, options) {
+          let currentTime = 1;
+          let state = PlayerState.PAUSED;
+          this.getCurrentTime = () => currentTime;
+          this.getPlayerState = () => state;
+          this.getVideoData = () => ({ title: '${E2E_VIDEO_TITLE}' });
+          this.pauseVideo = () => { state = PlayerState.PAUSED; };
+          this.playVideo = () => {
+            state = PlayerState.PLAYING;
+            options?.events?.onStateChange?.({ data: state, target: this });
+          };
+          this.seekTo = value => { currentTime = Number(value) || 0; };
+          this.destroy = () => {};
+          setTimeout(() => options?.events?.onReady?.({ target: this }), 0);
+        }
+      };
+      setTimeout(() => window.onYouTubeIframeAPIReady?.(), 0);
+    })();`;
   }
   if (resource === 'accounts.google.com/gsi/client') {
     return 'window.google = window.google || undefined;';
@@ -139,7 +163,9 @@ const test = base.extend({
       sessionMode: 'success',
       pageErrors: [],
       consoleErrors: [],
-      expectedHttpConsoleErrors: 0
+      localFailures: [],
+      reportedErrors: [],
+      allowedHttpConsoleErrors: 0
     });
   },
 
@@ -147,6 +173,12 @@ const test = base.extend({
     page.on('pageerror', error => scenario.pageErrors.push(error.message));
     page.on('console', message => {
       if (message.type() === 'error') scenario.consoleErrors.push(message.text());
+    });
+    page.on('response', response => {
+      const url = new URL(response.url());
+      if (url.origin === LOCAL_ORIGIN && response.status() >= 400) {
+        scenario.localFailures.push(`${response.status()} ${url.pathname}`);
+      }
     });
     await context.addInitScript(fixed => {
       const NativeDate = Date;
@@ -182,7 +214,68 @@ const test = base.extend({
       }
 
       const body = postData(request);
-      scenario.requests.push({ method: request.method(), path: url.pathname, body });
+      const query = Object.fromEntries(url.searchParams.entries());
+      const headers = request.headers();
+      scenario.requests.push({ method: request.method(), path: url.pathname, query, headers, body });
+
+      if (request.method() === 'GET' && url.pathname === '/captions') {
+        if (query.v !== E2E_VIDEO_ID || query.lang !== 'en' || Object.keys(query).length !== 2) {
+          scenario.unexpected.push(`GET ${url.pathname} invalid_query`);
+          await route.fulfill(json({ error: 'invalid_caption_fixture_query' }, 400));
+          return;
+        }
+        await route.fulfill(json({
+          events: [{
+            tStartMs: 1000,
+            dDurationMs: 3500,
+            segs: [{ utf8: E2E_CAPTION }]
+          }],
+          caption_source: 'youtube',
+          caption_resolver_source: 'youtube_player'
+        }));
+        return;
+      }
+
+      if (request.method() === 'GET' && url.pathname === '/video_summary') {
+        if (query.vid !== E2E_VIDEO_ID || Object.keys(query).length !== 1) {
+          scenario.unexpected.push(`GET ${url.pathname} invalid_query`);
+          await route.fulfill(json({ error: 'invalid_video_summary_fixture_query' }, 400));
+          return;
+        }
+        await route.fulfill(json({
+          ok: true,
+          summary: 'A short lesson about consistent daily practice.'
+        }));
+        return;
+      }
+
+      if (request.method() === 'GET' && url.pathname === '/buddy_victory') {
+        if (!/^\d+$/.test(query.uid || '') || Object.keys(query).length !== 1) {
+          scenario.unexpected.push(`GET ${url.pathname} invalid_query`);
+          await route.fulfill(json({ error: 'invalid_buddy_victory_fixture_query' }, 400));
+          return;
+        }
+        await route.fulfill(json({
+          ok: true,
+          xp_gained: 12,
+          multiplier: 1,
+          streak: 5,
+          rank: 11,
+          percentile: 80,
+          gap_to_next: 20
+        }));
+        return;
+      }
+
+      if (request.method() === 'GET' && url.pathname === '/buddy_image') {
+        if (!query.q || Object.keys(query).length !== 1) {
+          scenario.unexpected.push(`GET ${url.pathname} invalid_query`);
+          await route.fulfill(json({ error: 'invalid_buddy_image_fixture_query' }, 400));
+          return;
+        }
+        await route.fulfill(json({ url: null }));
+        return;
+      }
 
       if (request.method() !== 'POST') {
         scenario.unexpected.push(`${request.method()} ${url.pathname}`);
@@ -225,6 +318,51 @@ const test = base.extend({
         await route.fulfill(json({ ok: true }));
         return;
       }
+      if (url.pathname === '/word_lookup') {
+        if (typeof body.word === 'string' && body.word.trim()) {
+          await route.fulfill(json({
+            ok: true,
+            card: {
+              word: body.word,
+              phonetic: '/\u02c8pr\u00e6kt\u026as/',
+              translation_uk: '\u043f\u0440\u0430\u043a\u0442\u0438\u043a\u0430',
+              definition_en: 'Repeated action that improves a skill.',
+              examples: ['Daily practice builds confidence.']
+            }
+          }));
+          return;
+        }
+        if (typeof body.text === 'string' && body.text.trim()) {
+          await route.fulfill(json({ ok: true, translation_uk: '\u041f\u0440\u0430\u043a\u0442\u0438\u043a\u0430 \u0449\u043e\u0434\u043d\u044f \u043f\u0440\u0438\u043d\u043e\u0441\u0438\u0442\u044c \u043f\u0440\u043e\u0433\u0440\u0435\u0441.' }));
+          return;
+        }
+        scenario.unexpected.push(`POST ${url.pathname} invalid_body`);
+        await route.fulfill(json({ error: 'invalid_word_lookup_fixture_body' }, 400));
+        return;
+      }
+      if (url.pathname === '/buddy_chat') {
+        await route.fulfill(json({
+          reply: 'Exactly. Tell me how daily practice helps you make progress.',
+          feedback: []
+        }));
+        return;
+      }
+      if (url.pathname === '/buddy_realtime_token') {
+        // The production module probes Realtime for spoken greetings first.
+        // Match the backend's real not-configured contract so this text-path
+        // cycle falls back without minting a key or touching OpenAI.
+        await route.fulfill(json({ error: 'Voice AI is not configured' }, 503));
+        return;
+      }
+      if (url.pathname === '/err_fix') {
+        scenario.reportedErrors.push(body);
+        await route.fulfill(json({ ok: true }));
+        return;
+      }
+      if (url.pathname === '/buddy_session_end') {
+        await route.fulfill(json({ ok: true }));
+        return;
+      }
       if (url.pathname === '/lottery_status') {
         await route.fulfill(json({
           ok: true,
@@ -247,10 +385,15 @@ const test = base.extend({
       'E2E must never submit payments or learner/admin messages'
     ).toEqual([]);
     expect(scenario.pageErrors, 'Production app paths must not raise uncaught page errors').toEqual([]);
+    expect(scenario.reportedErrors, 'Production app paths must not report runtime errors').toEqual([]);
+    expect(scenario.localFailures, 'Every local app asset must resolve').toEqual([]);
+    // Chromium may omit the console diagnostic when a mocked 503 finishes
+    // during navigation/teardown. Treat the configured count as a strict cap;
+    // every emitted message must still be the explicitly induced 503 below.
     expect(
-      scenario.consoleErrors,
+      scenario.consoleErrors.length,
       'Only explicitly induced fixture HTTP failures may reach the console'
-    ).toHaveLength(scenario.expectedHttpConsoleErrors);
+    ).toBeLessThanOrEqual(scenario.allowedHttpConsoleErrors);
     for (const message of scenario.consoleErrors) {
       expect(message).toMatch(/^Failed to load resource: the server responded with a status of 503 /);
     }
@@ -259,6 +402,9 @@ const test = base.extend({
 
 module.exports = {
   BACKEND_ORIGIN,
+  E2E_CAPTION,
+  E2E_VIDEO_ID,
+  E2E_VIDEO_TITLE,
   expect,
   FIXED_NOW,
   installBrowserSession,

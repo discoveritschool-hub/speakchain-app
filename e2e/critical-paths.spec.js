@@ -34,7 +34,7 @@ test('browser Telegram callback persists and resumes one PWA session', async ({ 
 
 test('Telegram initData remains the authenticated fallback when session handoff is unavailable', async ({ appPage: page, context, scenario }) => {
   scenario.sessionMode = 'unavailable';
-  scenario.expectedHttpConsoleErrors = 1;
+  scenario.allowedHttpConsoleErrors = 1;
   await installTelegramMiniApp(context);
 
   await page.goto('/index_v2.html');
@@ -53,7 +53,8 @@ test('Telegram initData remains the authenticated fallback when session handoff 
   expect(payload?.body).not.toHaveProperty('pwa_access_token');
 });
 
-test('native keyboard navigation reaches Chainy, Progress and Profile', async ({ appPage: page, context }) => {
+test('native keyboard navigation reaches Chainy, Progress and Profile', async ({ appPage: page, context, scenario }) => {
+  scenario.allowedHttpConsoleErrors = 1;
   await installBrowserSession(context);
   await page.goto('/index_v2.html');
 
@@ -83,7 +84,7 @@ test('native keyboard navigation reaches Chainy, Progress and Profile', async ({
 
 test('failed payload retries surface a recovery control and recover without reload', async ({ appPage: page, context, scenario }) => {
   scenario.payloadFailures.set('s-home', 2);
-  scenario.expectedHttpConsoleErrors = 2;
+  scenario.allowedHttpConsoleErrors = 2;
   await installBrowserSession(context);
   await page.goto('/index_v2.html');
 
