@@ -142,7 +142,7 @@
 #chainy-recap.on{opacity:1;transform:translateY(0)}
 .cr-title{font-size:15px;font-weight:800}
 .cr-sub{font-size:13px;color:var(--text2);line-height:1.45;margin-top:4px}
-.cr-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.cr-actions{display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:8px;margin-top:12px}
 .cr-actions button{border:none;border-radius:var(--r);padding:11px 8px;font-size:12px;
   font-weight:700;cursor:pointer}
 .cr-words{display:none;margin-top:10px;padding:10px;border-radius:12px;background:var(--bg-card3);border:.5px solid var(--line)}
@@ -151,6 +151,10 @@
 .cr-word:first-of-type{border-top:0}.cr-word-copy{min-width:0}.cr-word-en{font-size:14px;font-weight:800;color:var(--yellow)}
 .cr-word-uk{font-size:12px;color:var(--text2);margin-top:1px}.cr-word button{width:34px;height:34px;border:0;border-radius:50%;background:var(--bg-card2);color:var(--text);cursor:pointer}
 .cr-save-all{width:100%;margin-top:7px;border:0;border-radius:9px;padding:9px;background:var(--green-bg);color:var(--green);font-size:12px;font-weight:800;cursor:pointer}
+.live-phrase-card{margin:10px 0;padding:10px;border:.5px solid var(--line);border-radius:12px;background:var(--bg-card2)}
+.live-phrase-row{display:flex;align-items:center;gap:7px;padding:7px 0;border-top:.5px solid var(--line);font-size:13px}.live-phrase-row:first-child{border-top:0}
+.live-phrase-row.used{color:var(--green)}.live-phrase-row.pending{color:var(--yellow)}.live-phrase-row button{margin-left:auto;border:0;border-radius:8px;padding:6px 8px;background:var(--bg-card3);color:inherit}
+.live-result{margin-top:12px;padding:12px;border-radius:12px;background:var(--green-bg);color:var(--text);font-size:13px;line-height:1.5}
 .cr-primary,.cr-secondary{border:none;border-radius:10px;padding:9px 10px;
   font-size:var(--fs-xs);font-weight:800;cursor:pointer}
 .cr-primary{background:var(--purple);color:#fff}
@@ -1681,8 +1685,9 @@ window.addEventListener('load', function(){
     <button class="cr-save-all" id="chainy-recap-save-all" type="button" onclick="saveAllChainyWords()">Зберегти всі у словник</button>
   </div>
   <div class="cr-actions">
-    <button class="cr-secondary" onclick="openChainyAgain()">Ще поговорити</button>
-    <button class="cr-primary" id="chainy-recap-primary" onclick="openRecapNext()">Нові фрази</button>
+    <button class="cr-primary" id="chainy-live-next" onclick="startVideoLiveMatch()">Поговорити з людиною</button>
+    <button class="cr-secondary" onclick="openVideoMonologue()">Фінальний монолог</button>
+    <button class="cr-secondary" onclick="hideChainyRecap()">Завершити</button>
   </div>
 </div>
 <div class="overlay" id="ov-player">
@@ -1881,12 +1886,29 @@ window.addEventListener('load', function(){
       <div id="live-ready-box" class="instr-note">Матч почнеться, коли обидва натиснуть «Я готова».</div>
       <button class="diag-cta" id="live-ready" onclick="readyLiveMatch()">Я готова</button>
       <div id="live-audio-status" class="instr-note">Після готовності обох підключимо живий аудіодзвінок.</div>
+      <label class="instr-note" style="display:flex;gap:8px;align-items:flex-start"><input id="live-analysis-consent" type="checkbox" onchange="setLiveAnalysisConsent(this.checked)"><span>Дозволяю аналізувати transcript моїх голосових реплік для навчального підсумку. AI-аналіз буде лише якщо погодяться обоє.</span></label>
+      <details class="live-phrase-card" id="live-phrase-card"><summary>Мої фрази</summary><div id="live-phrase-list"></div><button class="sn-skip" type="button" onclick="showLivePhraseHint()">Не пам’ятаю</button><div id="live-phrase-hint" class="instr-note" style="display:none"></div></details>
+      <div id="live-questions" class="instr-note"></div>
       <audio id="live-remote-audio" autoplay playsinline></audio>
       <div class="live-messages" id="live-messages"></div>
       <button class="diag-cta" id="live-record" style="display:none" onclick="toggleLiveRecord()">🎙 Fallback: надіслати голосову репліку</button>
+      <button class="diag-cta" id="live-finish" onclick="finishLivePractice()">Завершити й побачити результат</button>
+      <div class="live-result" id="live-result" style="display:none"></div>
       <div style="display:flex;gap:6px"><button class="sn-skip" onclick="reportLiveMatch()">Поскаржитися</button>
         <button class="sn-skip" onclick="blockLivePartner()">Заблокувати</button></div>
     </div>
+  </div>
+</div>
+<div class="overlay" id="ov-video-monologue">
+  <div class="sheet" style="max-height:92vh;overflow-y:auto">
+    <div class="grip"></div><div style="display:flex;align-items:center"><h3 style="margin:0;flex:1">Фінальний монолог</h3><span onclick="closeVideoMonologue()" style="font-size:26px;cursor:pointer">×</span></div>
+    <div class="instr-note" id="video-monologue-task">Розкажи про головну думку відео, вислови свою позицію та використай щонайменше дві нові фрази.</div>
+    <div class="live-phrase-card" id="monologue-phrases"></div>
+    <label class="instr-note" style="display:flex;gap:8px;align-items:flex-start"><input id="monologue-consent" type="checkbox"><span>Дозволяю розпізнати цей запис і використати transcript для AI-оцінки та прогресу.</span></label>
+    <button class="diag-cta" id="monologue-record" onclick="toggleVideoMonologueRecord()">🎙 Почати запис · 60–90 секунд</button>
+    <audio id="monologue-preview" controls style="display:none;width:100%;margin-top:10px"></audio>
+    <button class="diag-cta" id="monologue-submit" style="display:none" onclick="submitVideoMonologue()">Отримати оцінку</button>
+    <div class="live-result" id="monologue-result" style="display:none"></div>
   </div>
 </div>
 <div class="overlay" id="ov-diagnostic">
@@ -3444,16 +3466,20 @@ function showRelayResult(room,url){
 }
 function startRelay(){openSocialComposer({mode:'relay',topic:SOCIAL.challenge?.topic||'',phrase:SOCIAL.challenge?.phrase||''});}
 
+let VIDEO_ROUTE_PACK=null,LIVE_PREFILL_PACK=null,LIVE_USED_PHRASES=new Set(),MONO_REC=null,MONO_STREAM=null,MONO_CHUNKS=[],MONO_B64='',MONO_MIME='';
 async function startLiveMatch(){
+  const prefill=LIVE_PREFILL_PACK;LIVE_PREFILL_PACK=null;
   if(!SOCIAL.me?.enabled||!SOCIAL.me?.allow_live){openSocialSettings();toast('Спочатку увімкни live-матч у профілі');return;}
   openOv('ov-live-match');$('#live-setup').style.display='';$('#live-waiting').style.display='none';$('#live-room').style.display='none';
+  if(prefill){VIDEO_ROUTE_PACK=prefill;$('#live-source').value='video';$('#live-topic').value=prefill.title||'';$('#live-source-url').value=prefill.url||'';$('#live-format').value=prefill.mode==='retell'?'retell':'discussion';}
   try{const scenarios=cyData().all||[];$('#live-scenario-list').innerHTML=scenarios.map(s=>'<option value="'+esc(s.title||s.name||s.scenario||'')+'"></option>').join('');}catch(e){}
 }
 async function joinLiveMatch(){
   const topic=$('#live-topic').value.trim(),source=$('#live-source').value,sourceUrl=$('#live-source-url').value.trim(),format=$('#live-format').value;
   if(source!=='any'&&!topic&&!sourceUrl){toast('Додай тему, назву або посилання');return;}
   $('#live-setup').style.display='none';$('#live-waiting').style.display='';
-  try{const r=await socialApi('live_join',{topic_text:topic||sourceUrl,topic_mode:source,topic_format:format,source_url:sourceUrl});handleLiveStatus(r);startLivePolling();}
+  const pack=source==='video'?VIDEO_ROUTE_PACK:null;
+  try{const r=await socialApi('live_join',{topic_text:topic||sourceUrl,topic_mode:source,topic_format:format,source_url:sourceUrl,video_summary:pack?.summary||'',target_phrases:pack?.phrases||[],conversation_questions:pack?.questions||[]});handleLiveStatus(r);startLivePolling();}
   catch(e){closeOv();toast(e.message==='minor_live_restricted'?'Live-матч недоступний у безпечному режимі':'Не вдалося почати пошук');}
 }
 function startLivePolling(){clearInterval(LIVE_POLL);LIVE_POLL=setInterval(async()=>{try{handleLiveStatus(await socialApi('live_status'));}catch(e){}},2500);}
@@ -3464,9 +3490,19 @@ function handleLiveStatus(r){
   $('#live-title').textContent='Партнера знайдено';
   const p=LIVE_MATCH.partner||{};$('#live-partner').textContent=p.name||'Speaking partner';$('#live-avatar').textContent=ini(p.name||'S');
   $('#live-scenario').textContent=LIVE_MATCH.topic_pack?.topic_title||LIVE_MATCH.scenario?.title||'Коротка розмова англійською';
+  renderLivePracticePack(LIVE_MATCH.topic_pack||{});
   pollLiveRoom();clearInterval(LIVE_POLL);LIVE_POLL=setInterval(pollLiveRoom,1800);
   $('#live-timer').textContent='05:00';
 }
+function renderLivePracticePack(pack){
+  const phrases=(pack.target_phrases||pack.useful_phrases||[]).slice(0,5),list=$('#live-phrase-list');LIVE_USED_PHRASES=new Set();
+  if(list)list.innerHTML=phrases.map((p,i)=>'<div class="live-phrase-row pending" id="live-phrase-'+i+'"><span><b>'+esc(p.en||p)+'</b>'+(p.ua?'<br><small>'+esc(p.ua)+'</small>':'')+'</span><button onclick="toggleLivePhrase('+i+')">Позначити</button></div>').join('');
+  const questions=(pack.conversation_questions||[]).slice(0,3);if($('#live-questions'))$('#live-questions').innerHTML=questions.length?'<b>Як почати:</b><br>'+questions.map(q=>'• '+esc(q)).join('<br>'):'';
+}
+function toggleLivePhrase(index){const phrases=(LIVE_MATCH?.topic_pack?.target_phrases||LIVE_MATCH?.topic_pack?.useful_phrases||[]).slice(0,5),phrase=phrases[index]?.en||phrases[index];if(!phrase)return;const row=$('#live-phrase-'+index);if(LIVE_USED_PHRASES.has(phrase)){LIVE_USED_PHRASES.delete(phrase);row?.classList.remove('used');row?.classList.add('pending');}else{LIVE_USED_PHRASES.add(phrase);row?.classList.add('used');row?.classList.remove('pending');}}
+function showLivePhraseHint(){const phrases=(LIVE_MATCH?.topic_pack?.target_phrases||LIVE_MATCH?.topic_pack?.useful_phrases||[]).slice(0,5),next=phrases.find(p=>!LIVE_USED_PHRASES.has(p.en||p)),box=$('#live-phrase-hint');if(!box)return;box.style.display='';box.textContent=next?('Спробуй: '+(next.en||next)+(next.ua?' — '+next.ua:'')):'Усі фрази вже позначені ✓';}
+async function setLiveAnalysisConsent(consent){if(!LIVE_MATCH?.room_id)return;try{const r=await socialApi('live_consent',{room_id:LIVE_MATCH.room_id,consent});toast(r.both_consented?'Обоє погодилися на аналіз transcript':'Твій вибір збережено');}catch(e){toast('Не вдалося зберегти згоду');}}
+async function finishLivePractice(){if(!LIVE_MATCH?.room_id)return;const button=$('#live-finish');button.disabled=true;try{const r=await socialApi('live_finish',{room_id:LIVE_MATCH.room_id,confirmed_phrases:[...LIVE_USED_PHRASES]});const x=r.result||{},box=$('#live-result');box.style.display='';box.innerHTML='<b>Розмову завершено</b><br>Використано '+Number(x.used_count||0)+' із '+Number(x.target_total||0)+' фраз.<br>'+esc(x.strength||'')+'<br><b>Далі:</b> '+esc(x.recommendation||'')+'<br><button class="sn-go" style="margin-top:8px" onclick="openVideoMonologue()">Записати фінальний монолог</button>';trackUx('video_live_practice_complete',{used:x.used_count||0,mode:x.analysis_mode||'self_confirmed'});}catch(e){toast('Не вдалося сформувати підсумок');}finally{button.disabled=false;}}
 async function pollLiveRoom(){
   if(!LIVE_MATCH?.room_id)return;
   try{
@@ -3549,6 +3585,12 @@ async function leaveLiveMatch(send=true){
   try{LIVE_STREAM?.getTracks().forEach(t=>t.stop());LIVE_LOCAL_STREAM?.getTracks().forEach(t=>t.stop());LIVE_PC?.close();}catch(e){}
   if(send)await socialApi('live_leave').catch(()=>{});LIVE_MATCH=null;LIVE_DEADLINE=0;LIVE_PC=null;LIVE_LOCAL_STREAM=null;LIVE_RTC_STARTED=false;LIVE_SIGNAL_LAST='';LIVE_PENDING_CANDIDATES=[];closeOv();
 }
+function videoRoutePack(){const brief=LAST_CONVERSATION_BRIEF||{};return{title:brief.title||'Обговорення відео',summary:brief.summary||'',phrases:(brief.phrases||[]).slice(0,5),url:brief.url||'',mode:brief.mode||'discuss',questions:['What was the main idea of the video?','What did you agree or disagree with?','Have you experienced something similar?']};}
+function startVideoLiveMatch(){hideChainyRecap();LIVE_PREFILL_PACK=VIDEO_ROUTE_PACK||videoRoutePack();startLiveMatch();}
+function openVideoMonologue(){hideChainyRecap();VIDEO_ROUTE_PACK=VIDEO_ROUTE_PACK||videoRoutePack();openOv('ov-video-monologue');$('#monologue-phrases').innerHTML=(VIDEO_ROUTE_PACK.phrases||[]).slice(0,5).map(p=>'<div class="live-phrase-row pending">'+esc(p.en||p)+'</div>').join('');}
+function closeVideoMonologue(){try{MONO_STREAM?.getTracks().forEach(t=>t.stop());}catch(e){}MONO_REC=null;MONO_STREAM=null;closeOv();}
+async function toggleVideoMonologueRecord(){const btn=$('#monologue-record');if(MONO_REC?.state==='recording'){MONO_REC.stop();return;}try{MONO_STREAM=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}});MONO_CHUNKS=[];MONO_REC=new MediaRecorder(MONO_STREAM);MONO_REC.ondataavailable=e=>{if(e.data.size)MONO_CHUNKS.push(e.data)};MONO_REC.onstop=async()=>{const blob=new Blob(MONO_CHUNKS,{type:MONO_REC.mimeType});MONO_MIME=(MONO_REC.mimeType||blob.type||'audio/webm').split(';')[0];MONO_B64=String(await blobToDataUrl(blob)).split(',').pop();MONO_STREAM?.getTracks().forEach(t=>t.stop());const preview=$('#monologue-preview');preview.src=URL.createObjectURL(blob);preview.style.display='';$('#monologue-submit').style.display='';btn.textContent='Перезаписати монолог';};MONO_REC.start();btn.textContent='■ Завершити запис';setTimeout(()=>{if(MONO_REC?.state==='recording')MONO_REC.stop()},90000);}catch(e){toast('Дозволь доступ до мікрофона');}}
+async function submitVideoMonologue(){if(!MONO_B64)return;if(!$('#monologue-consent').checked){toast('Потрібна згода на розпізнавання запису');return;}const btn=$('#monologue-submit');btn.disabled=true;btn.textContent='Аналізуємо…';try{const r=await socialApi('video_monologue_evaluate',{audio_b64:MONO_B64,media_mime:MONO_MIME,consent:true,target_phrases:(VIDEO_ROUTE_PACK?.phrases||[]).map(p=>p.en||p)}),x=r.result||{},box=$('#monologue-result');box.style.display='';box.innerHTML='<b>Монолог завершено</b><br>Цільові фрази: '+Number(x.used_count||0)+' із '+Number(x.target_total||0)+'<br>Зв’язність: <b>'+esc(x.coherence||'')+'</b><br>Виконання завдання: <b>'+esc(x.task_completion||'')+'</b><br>'+esc(x.strength||'')+'<br><b>Наступний крок:</b> '+esc(x.recommendation||'');delete PAYLOAD['s-prog'];delete PENDING['s-prog'];trackUx('video_final_monologue_complete',{used:x.used_count||0});}catch(e){toast(e.message==='insufficient_speech'?'Запис закороткий або мовлення не розпізнано':'Не вдалося оцінити монолог');}finally{btn.disabled=false;btn.textContent='Отримати оцінку';}}
 function reportLiveMatch(){if(!LIVE_MATCH)return;const reason=prompt('Що сталося?');if(reason)socialApi('report',{target_uid:LIVE_MATCH.partner_uid,reason}).then(()=>{toast('Скаргу надіслано');leaveLiveMatch();}).catch(()=>{});}
 function blockLivePartner(){if(!LIVE_MATCH)return;if(confirm('Заблокувати цього користувача?'))socialApi('block',{target_uid:LIVE_MATCH.partner_uid}).then(()=>{toast('Користувача заблоковано');leaveLiveMatch();}).catch(()=>{});}
 
@@ -4967,6 +5009,11 @@ async function showChainyRecap(){
   if(errors.length)mergeErrorSrs(errors);
   const errorReview=applyChainyErrorReviewResult(recap);
   const context=learningContext();
+  if(context?.kind==='video'||context?.kind==='book'){
+    const brief=LAST_CONVERSATION_BRIEF||{};
+    VIDEO_ROUTE_PACK={title:brief.title||context.value||'Обговорення відео',summary:brief.summary||'',phrases:(brief.phrases||phrases||[]).slice(0,5),url:brief.url||'',mode:brief.mode||'discuss',questions:['What was the main idea of the video?','What did you agree or disagree with?','Have you experienced something similar?']};
+  }
+  const liveNext=$('#chainy-live-next');if(liveNext)liveNext.style.display=SOCIAL.live_rooms_enabled?'':'none';
   const bloggerEntry=guidedState().blogger_entry;
   if(bloggerEntry?.step==='chainy_open')updateBloggerEntry('complete');
   const used=Number(recap.used_count||0);

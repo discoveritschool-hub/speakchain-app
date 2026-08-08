@@ -1208,6 +1208,10 @@ def test_guided_native_navigation():
         'id="chainy-recap-words"', "renderChainyNewWords((recap.new_words||[])",
         "function speakChainyWord(index)", "async function saveChainyWord(index)",
         "async function saveAllChainyWords()", "action:'add',phrase:item.word",
+        'id="chainy-live-next"', "function startVideoLiveMatch()",
+        "function renderLivePracticePack(pack)", "async function finishLivePractice()",
+        "async function setLiveAnalysisConsent(consent)", "function openVideoMonologue()",
+        "async function submitVideoMonologue()", "video_monologue_evaluate",
         "Опрацювати помилки", "Пропонуємо зараз, бо настав час повторення за SRS.",
     )
     missing = [marker for marker in markers if marker not in shell]
