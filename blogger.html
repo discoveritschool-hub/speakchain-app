@@ -733,6 +733,16 @@ textarea.form-input { resize:vertical; min-height:76px; line-height:1.5; }
   <div class="section fold" id="sec-videos">
     <div class="section-title fold-h" onclick="toggleFold(this)">Відео на 7 днів челенджу<span class="fold-arr">›</span></div><div class="fold-b">
 
+    <div class="day-row" style="margin-bottom:12px">
+      <div class="day-title">👋 Вітальне відео після оплати</div>
+      <div class="day-topic">30–45 секунд. Студент побачить його перед кнопкою «Почати День 1».</div>
+      <div class="inline-form" style="margin-top:8px">
+        <input class="form-input" id="challenge-welcome-video" placeholder="https://youtu.be/…">
+        <button class="btn btn-sm btn-purple" onclick="saveChallengeWelcomeVideo()">Зберегти</button>
+      </div>
+      <div class="status-line" id="challenge-welcome-status"></div>
+    </div>
+
     <div class="code-warn">
       <b>🔑 Кодове слово — вплітайте в СЕРЕДИНУ відео</b>
       Не в кінець. У різному місці щодня — на початку, в середині, наприкінці.
@@ -818,6 +828,13 @@ textarea.form-input { resize:vertical; min-height:76px; line-height:1.5; }
     <div class="section-title fold-h" onclick="toggleFold(this)">Розсилка учням<span class="fold-arr">›</span></div><div class="fold-b">
     <textarea class="form-input" id="broadcast-input" placeholder="Що написати учням…"></textarea>
 
+    <select class="form-input" id="broadcast-audience" style="margin-top:7px">
+      <option value="all">Усі мої студенти</option>
+      <option value="challenge">Лише учасники активного челенджу</option>
+      <option value="basic">Лише Basic</option>
+      <option value="premium">Лише Premium</option>
+    </select>
+
     <div class="status-line" id="bc-video-status" style="margin-top:7px"></div>
     <input class="form-input" id="broadcast-video-url"
            placeholder="https://youtu.be/… (необов'язково)" style="margin-top:7px">
@@ -828,7 +845,7 @@ textarea.form-input { resize:vertical; min-height:76px; line-height:1.5; }
     <button class="btn btn-full btn-purple" onclick="submitBroadcast()" style="margin-top:9px">
       📣 Надіслати
     </button>
-    <div class="status-line">Бот покаже підтвердження перед відправкою</div>
+    <div class="status-line">Повідомлення прийде кожному обраному студенту приватно в бот. У ком’юніті воно не публікується. Перед відправкою бот покаже прев’ю.</div>
   </div></div>
 
   <div class="divider"></div>
@@ -1205,6 +1222,14 @@ function saveChallengeVideo(day) {
   toast('🎬 Відео дня ' + day + ' збережено');
 }
 
+function saveChallengeWelcomeVideo(){
+  const input=document.getElementById('challenge-welcome-video');
+  const url=(input&&input.value||'').trim();
+  maAction('blogger_set_challenge_welcome_video',{url});
+  const status=document.getElementById('challenge-welcome-status');
+  if(status) status.textContent=url?'✅ Посилання збережено':'Вітальне відео не задано';
+}
+
 /* ── Лотерея: блогер бачить свій розіграш, якщо його додано ── */
 function renderLottery() {
   const pill = document.getElementById('lottery-status-pill');
@@ -1317,6 +1342,12 @@ function savePhrase(day) {
 
   maAction('blogger_set_phrase_day', { day: day, phrase: phrase, video_url: video });
   renderPhrases();
+
+  const welcomeUrl=D.challenge_welcome_video_url||'';
+  const welcomeInput=document.getElementById('challenge-welcome-video');
+  const welcomeStatus=document.getElementById('challenge-welcome-status');
+  if(welcomeInput) welcomeInput.value=welcomeUrl;
+  if(welcomeStatus) welcomeStatus.textContent=welcomeUrl?'✅ Вітальне відео задано':'Вітальне відео ще не додано';
   toast('💬 Фразу на ' + WEEKDAYS[day-1] + ' збережено');
 }
 
@@ -1835,7 +1866,8 @@ function submitBroadcast(){
   }
   const u = document.getElementById('broadcast-video-url');
   const url = (u && u.value || '').trim();
-  maAction('blogger_broadcast', { text: txt, video_url: url });
+  const audience=(document.getElementById('broadcast-audience')||{}).value||'all';
+  maAction('blogger_broadcast', { text: txt, video_url: url, audience });
 }
 
 function attachBcVideo(){
@@ -1843,7 +1875,8 @@ function attachBcVideo(){
   const txt = (el && el.value || '').trim();
   /* Текст летить разом із запитом — інакше блогер напише текст,
      піде записувати відео, і текст загубиться при закритті панелі. */
-  maAction('blogger_bc_attach_video', { text: txt });
+  const audience=(document.getElementById('broadcast-audience')||{}).value||'all';
+  maAction('blogger_bc_attach_video', { text: txt, audience });
 }
 
 </script>
