@@ -3468,6 +3468,7 @@ async function publishSocialResponse(){
       await socialApi('challenge_send',{target_uid:COMPOSE_CTX.target_uid,topic,phrase,legacy_ref:SOCIAL.challenge?.legacy_ref||{}});
     }
     const lessonShare=COMPOSE_CTX.mode==='lesson_share';
+    if(lessonShare){LESSON_FINISH.video_data=COMPOSE_B64;LESSON_FINISH.video_mime=COMPOSE_MIME||'video/webm';}
     await discardComposeDraft();stopComposeMedia();closeOv();toast(response.moderation==='blocked'?'Відповідь збережено, але приховано до перевірки':'Твоя speaking-відповідь опублікована ✓');
     trackUx('social_publish',{mode:COMPOSE_CTX.mode||'free',visibility:COMPOSE_VIS});
     await refreshSocial();socialTab('feed');
@@ -3485,10 +3486,10 @@ function showRelayResult(room,url){
 }
 function startRelay(){openSocialComposer({mode:'relay',topic:SOCIAL.challenge?.topic||'',phrase:SOCIAL.challenge?.phrase||''});}
 
-let VIDEO_ROUTE_PACK=null,LIVE_PREFILL_PACK=null,LIVE_USED_PHRASES=new Set(),MONO_REC=null,MONO_STREAM=null,MONO_CHUNKS=[],MONO_B64='',MONO_MIME='',LESSON_FINISH={step:'result',ref_link:'',share_text:'',motivation:''};
+let VIDEO_ROUTE_PACK=null,LIVE_PREFILL_PACK=null,LIVE_USED_PHRASES=new Set(),MONO_REC=null,MONO_STREAM=null,MONO_CHUNKS=[],MONO_B64='',MONO_MIME='',LESSON_FINISH={step:'result',ref_link:'',share_text:'',motivation:'',video_data:'',video_mime:''};
 
 function showLessonFinishResult(data){
-  LESSON_FINISH={step:'result',ref_link:data.ref_link||window.SHARE_LINK||'',share_text:data.share_text||'',motivation:data.result?.motivation||'Ще один крок до вільної англійської.'};
+  LESSON_FINISH={step:'result',ref_link:data.ref_link||window.SHARE_LINK||'',share_text:data.share_text||'',motivation:data.result?.motivation||'Ще один крок до вільної англійської.',video_data:'',video_mime:''};
   $('#lesson-finish-step').textContent='Урок завершено';$('#lesson-finish-title').textContent=LESSON_FINISH.motivation;
   $('#lesson-finish-body').innerHTML='Запиши 15–30 секунд: скажи головну думку відео й використай дві нові фрази. Це необов’язково — відео можна залишити друзям або спільноті.';
   $('#lesson-finish-primary').textContent='Записати коротке відео';$('#lesson-finish-skip').textContent='Завершити без публікації';openOv('ov-lesson-finish');
@@ -3503,7 +3504,7 @@ function showLessonFinishRelay(){
   $('#lesson-finish-body').innerHTML='Започаткуй «Плітки»: кожен продовжить думку англійською. Після 15 ланок SpeakChain склеїть вертикальне відео, покаже його всім учасникам і підготує для TikTok/Reels з <b>#ТвійМікрофон</b>.';
   $('#lesson-finish-primary').textContent='Почати «Плітки»';$('#lesson-finish-skip').textContent='Завершити урок';openOv('ov-lesson-finish');
 }
-function lessonFinishPrimary(){
+async function lessonFinishPrimary(){
   if(LESSON_FINISH.step==='result'){
     closeOv();const pack=VIDEO_ROUTE_PACK||videoRoutePack(),phrases=(pack.phrases||[]).slice(0,2).map(p=>p.en||p);
     openSocialComposer({mode:'lesson_share',topic:pack.title||'Video lesson',phrase:phrases.join(' · ')});return;
@@ -3511,8 +3512,11 @@ function lessonFinishPrimary(){
   if(LESSON_FINISH.step==='share'){
     const text=(LESSON_FINISH.share_text||'Я вивчаю англійську у SpeakChain — приєднуйся! '+LESSON_FINISH.ref_link)+' #ТвійМікрофон #SpeakChain';
     const done=()=>showLessonFinishRelay();
-    if(navigator.share)navigator.share({title:'Мій результат у SpeakChain',text,url:LESSON_FINISH.ref_link||undefined}).then(done).catch(()=>{});
-    else if(navigator.clipboard)navigator.clipboard.writeText(text).then(()=>{toast('Текст і посилання скопійовано');done();});
+    let file=null;
+    if(LESSON_FINISH.video_data){const blob=await fetch(LESSON_FINISH.video_data).then(r=>r.blob());file=new File([blob],'speakchain-video.webm',{type:LESSON_FINISH.video_mime||blob.type||'video/webm'});}
+    if(navigator.share&&file&&navigator.canShare?.({files:[file]}))navigator.share({title:'Мій результат у SpeakChain',text,files:[file]}).then(done).catch(()=>{});
+    else if(navigator.share)navigator.share({title:'Мій результат у SpeakChain',text,url:LESSON_FINISH.ref_link||undefined}).then(done).catch(()=>{});
+    else if(navigator.clipboard){if(file){const a=document.createElement('a');a.href=URL.createObjectURL(file);a.download=file.name;a.click();}navigator.clipboard.writeText(text).then(()=>{toast(file?'Відео збережено, текст скопійовано':'Текст і посилання скопійовано');done();});}
     else{toast(text);done();}return;
   }
   closeOv();const pack=VIDEO_ROUTE_PACK||videoRoutePack(),phrase=(pack.phrases||[])[0];openSocialComposer({mode:'relay',topic:pack.title||'Продовж думку з відео',phrase:phrase?.en||phrase||''});
