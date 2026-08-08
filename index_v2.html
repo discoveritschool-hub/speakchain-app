@@ -145,6 +145,12 @@
 .cr-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
 .cr-actions button{border:none;border-radius:var(--r);padding:11px 8px;font-size:12px;
   font-weight:700;cursor:pointer}
+.cr-words{display:none;margin-top:10px;padding:10px;border-radius:12px;background:var(--bg-card3);border:.5px solid var(--line)}
+.cr-words.on{display:block}.cr-words-title{font-size:12px;font-weight:800;margin-bottom:7px}
+.cr-word{display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:7px;padding:7px 0;border-top:.5px solid var(--line)}
+.cr-word:first-of-type{border-top:0}.cr-word-copy{min-width:0}.cr-word-en{font-size:14px;font-weight:800;color:var(--yellow)}
+.cr-word-uk{font-size:12px;color:var(--text2);margin-top:1px}.cr-word button{width:34px;height:34px;border:0;border-radius:50%;background:var(--bg-card2);color:var(--text);cursor:pointer}
+.cr-save-all{width:100%;margin-top:7px;border:0;border-radius:9px;padding:9px;background:var(--green-bg);color:var(--green);font-size:12px;font-weight:800;cursor:pointer}
 .cr-primary,.cr-secondary{border:none;border-radius:10px;padding:9px 10px;
   font-size:var(--fs-xs);font-weight:800;cursor:pointer}
 .cr-primary{background:var(--purple);color:#fff}
@@ -1669,6 +1675,11 @@ window.addEventListener('load', function(){
 <div id="chainy-recap">
   <div class="cr-title">✅ Розмову завершено</div>
   <div class="cr-sub" id="chainy-recap-sub">Контекст збережено — наступного разу Chainy продовжить звідси.</div>
+  <div class="cr-words" id="chainy-recap-words" aria-label="Нові слова з розмови">
+    <div class="cr-words-title">Нові слова</div>
+    <div id="chainy-recap-word-list"></div>
+    <button class="cr-save-all" id="chainy-recap-save-all" type="button" onclick="saveAllChainyWords()">Зберегти всі у словник</button>
+  </div>
   <div class="cr-actions">
     <button class="cr-secondary" onclick="openChainyAgain()">Ще поговорити</button>
     <button class="cr-primary" id="chainy-recap-primary" onclick="openRecapNext()">Нові фрази</button>
@@ -4962,6 +4973,7 @@ async function showChainyRecap(){
   const grammarProgress=(recap.grammar_progress||[]).slice(0,3);
   const vocabPracticed=(recap.vocab_practiced||[]).slice(0,5);
   const vocabMastered=(recap.vocab_mastered||[]).slice(0,5);
+  renderChainyNewWords((recap.new_words||[]).slice(0,8));
   const learningBits=[];
   if(grammarProgress.length) learningBits.push('Граматика: '+grammarProgress.map(x=>x.label||x.id).join(', ')+' +20%');
   if(vocabPracticed.length) learningBits.push('У процесі: '+vocabPracticed.join(', '));
@@ -4990,6 +5002,38 @@ async function showChainyRecap(){
   if(!el)return;
   el.style.display='';
   setTimeout(()=>el.classList.add('on'),30);
+}
+let CHAINY_NEW_WORDS=[];
+function renderChainyNewWords(words){
+  CHAINY_NEW_WORDS=(Array.isArray(words)?words:[]).filter(x=>x&&x.word);
+  const card=$('#chainy-recap-words'),list=$('#chainy-recap-word-list');
+  if(!card||!list)return;
+  if(!CHAINY_NEW_WORDS.length){card.classList.remove('on');list.replaceChildren();return;}
+  list.innerHTML=CHAINY_NEW_WORDS.map((item,i)=>
+    '<div class="cr-word"><div class="cr-word-copy"><div class="cr-word-en">'+esc(item.word)+'</div>'+
+    (item.translation_uk?'<div class="cr-word-uk">'+esc(item.translation_uk)+'</div>':'')+'</div>'+
+    '<button type="button" onclick="speakChainyWord('+i+')" aria-label="Прослухати '+esc(item.word)+'">🔊</button>'+
+    '<button type="button" id="chainy-word-save-'+i+'" onclick="saveChainyWord('+i+')" aria-label="Зберегти '+esc(item.word)+' у словник">＋</button></div>'
+  ).join('');
+  card.classList.add('on');
+}
+function speakChainyWord(index){
+  const word=CHAINY_NEW_WORDS[index]?.word;if(!word||!window.speechSynthesis)return;
+  speechSynthesis.cancel();const utterance=new SpeechSynthesisUtterance(word);utterance.lang='en-US';utterance.rate=.85;speechSynthesis.speak(utterance);
+}
+async function saveChainyWord(index){
+  const item=CHAINY_NEW_WORDS[index],button=$('#chainy-word-save-'+index);if(!item?.word)return false;
+  if(button?.dataset.saved==='1')return true;
+  try{
+    const response=await fetch(BOT_API+'/vocab_update',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({uid:UID,init_data:TG?.initData||'',action:'add',phrase:item.word,translation:item.translation_uk||''})});
+    if(!response.ok)throw new Error('save_failed');
+    if(button){button.dataset.saved='1';button.textContent='✓';button.setAttribute('aria-label',item.word+' збережено');}
+    return true;
+  }catch(e){toast('Не вдалося зберегти слово');return false;}
+}
+async function saveAllChainyWords(){
+  const results=await Promise.all(CHAINY_NEW_WORDS.map((_,i)=>saveChainyWord(i)));
+  if(results.length&&results.every(Boolean)){const button=$('#chainy-recap-save-all');if(button){button.textContent='Усі слова збережено ✓';button.disabled=true;}toast('Слова збережено у словник');}
 }
 function hideChainyRecap(){
   const el=$('#chainy-recap');

@@ -1205,6 +1205,9 @@ def test_guided_native_navigation():
         "window.SC_errorReview=function", "item.success_uses>=3?'mastered':'reviewing'",
         "action:'error_srs_review'", "function openGuidedErrors()",
         "const errors=(recap.errors||recap.mistakes||d.recent_errors||d.errors||[])",
+        'id="chainy-recap-words"', "renderChainyNewWords((recap.new_words||[])",
+        "function speakChainyWord(index)", "async function saveChainyWord(index)",
+        "async function saveAllChainyWords()", "action:'add',phrase:item.word",
         "Опрацювати помилки", "Пропонуємо зараз, бо настав час повторення за SRS.",
     )
     missing = [marker for marker in markers if marker not in shell]
