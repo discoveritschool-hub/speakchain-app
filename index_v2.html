@@ -4546,6 +4546,9 @@ function renderChallenge(){
         +'aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;'
         +'margin:8px 0 14px;cursor:pointer"><span style="font-size:22px;color:var(--purple)">▶️</span></div>';
     }
+  }else if(D.video_missing){
+    html+='<div style="padding:16px;margin:8px 0 14px;background:var(--bg-card);border:1px solid var(--orange);border-radius:var(--r);font-size:var(--fs-sm);line-height:1.5">'
+      +'<b>Відео цього дня ще не додано автором.</b><br><span style="color:var(--text2)">Коли блогер вставить URL у своєму кабінеті, воно автоматично з’явиться тут.</span></div>';
   }
 
   if(D.offer){
@@ -4625,9 +4628,9 @@ function renderChallenge(){
   if(D.record_mode){
     const isFinal = D.record_mode==='final';
     const label = D.record_prompt || (isFinal?'Зніми фінальне відео':'Запиши себе');
-    html+='<div id="chd-rec-box" style="background:var(--bg-card);border:.5px solid var(--line);'
+    html+='<div id="chd-rec-box" style="background:var(--bg-card);border:'+(D.record_completed?'1px solid var(--green)':'.5px solid var(--line)')+';'
       +'border-radius:var(--r);padding:12px;margin-bottom:10px">'
-      +'<div style="font-size:var(--fs-sm);font-weight:700;margin-bottom:8px">'+(isFinal?'🎬 ':'🎙 ')+esc(label)+'</div>';
+      +'<div style="font-size:var(--fs-sm);font-weight:700;margin-bottom:8px">'+(isFinal?'🎬 ':'🎙 ')+esc(label)+(D.record_completed?' ✓':'')+'</div>';
     if(isFinal){
       /* Фінальне відео — тільки відео, вибору немає (сценарій вимагає кадру) */
       html+='<div style="display:none" id="chd-kind-voice"></div><div style="display:none" id="chd-kind-video"></div>';
@@ -4817,6 +4820,8 @@ async function chdUploadVoice(){
         renderChallenge();
       }else if(msg){
         msg.textContent='🪞 Збережено — це піде на дзеркало Дня 6';
+        const D=PAYLOAD['ov-challenge']||{};
+        D.record_completed=true;
       }
     }else{
       if(msg) msg.textContent='Не вдалось зберегти — спробуй ще раз';
@@ -4845,7 +4850,7 @@ let CHD_RETURN_DAY=null;
 
 function chdAction(fn){
   const D=PAYLOAD['ov-challenge']||{};
-  if(fn==='s-buddy'){ closeOv(); go('s-buddy'); return; }
+  if(fn==='s-buddy'){ postAction('challenge_chainy_opened',{day:D.day||1}).catch(()=>{}); closeOv(); go('s-buddy'); return; }
   if(fn==='s-social'){ CHD_RETURN_DAY=D.day||1; closeOv(); go('s-social'); return; }
   if(fn==='progress'){ CHD_RETURN_DAY=D.day||1; closeOv(); go('s-prog'); return; }
   if(fn==='lesson'){ closeOv(); act('start_lesson'); return; }
@@ -4856,7 +4861,10 @@ function chdAction(fn){
      інший WebApp», а domalювати контент у ту саму Shadow DOM. */
   if(fn==='ov-diagnostic'){ CHD_RETURN_DAY=D.day||1; closeOv(); openOv('ov-diagnostic'); return; }
   if(fn==='ov-onboarding'){ CHD_RETURN_DAY=D.day||1; closeOv(); openOv('ov-onboarding'); return; }
-  if(fn==='challenge_match_free'){ act('challenge_match_free'); return; }
+  if(fn==='challenge_match_free'){
+    postAction('challenge_match_free').then(r=>toast(r.message||'Спікінг-метч запущено')).catch(()=>toast('Не вдалося запустити метч'));
+    return;
+  }
   act('challenge_'+fn);
 }
 
@@ -4865,6 +4873,7 @@ async function chdDone(){
   const day=D.day||1;
   try{
     const result=await postAction('challenge_task_'+day);
+    if(!result.ok){ toast(result.message||'Завершіть усі кроки дня'); return; }
     if(day===6||day===7||result.offer_ready){
       delete PAYLOAD['ov-challenge']; delete PENDING['ov-challenge'];
       await load('ov-challenge');
