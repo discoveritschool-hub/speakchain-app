@@ -2692,6 +2692,7 @@ async function sendWeeklyChallengeToChat(){
 /* Дані сцен беремо з РОБОЧОГО модуля APPS['s-buddy'] — не дублюємо. */
 let CY=null, CY_STATE={}, cyCat='all', cyQ='', cyLim=8, cyStyle='friendly';
 let LAST_CONVERSATION_BRIEF=null;
+let VIDEO_CHAINY_GENERATION=0;
 
 function conversationBrief(overrides){
   const home=PAYLOAD['s-home']||{}, buddy=CY_STATE||{}, src=overrides||LAST_CONVERSATION_BRIEF||{};
@@ -2803,9 +2804,14 @@ async function cyRecommended(){
   await cyChat();
 }
 
-async function cyLaunch(fn){
+async function cyLaunch(fn, videoChainyGeneration){
+  const generation=videoChainyGeneration==null
+    ? ++VIDEO_CHAINY_GENERATION
+    : videoChainyGeneration;
+  if(generation!==VIDEO_CHAINY_GENERATION)return null;
   const ov=$('#ov-buddy'); ov.classList.add('on'); tgBack(true);
   const win=await mountApp('s-buddy', $('#ov-buddy-host'), null);
+  if(generation!==VIDEO_CHAINY_GENERATION || !ov.classList.contains('on'))return null;
   try{ fn(win); }catch(e){ console.warn('chainy',e.message); }
   setTimeout(watchChainyForCompose,250);
   return win;
@@ -3885,6 +3891,7 @@ async function startChallengeAndOpen(){
 window.startChallengeAndOpen=startChallengeAndOpen;
 
 async function openPlayer(url,positionSec){
+  ++VIDEO_CHAINY_GENERATION;
   const ov=$('#ov-player'); ov.classList.add('on'); tgBack(true);
   const existing=$('#ov-player-host iframe');
   if(existing){
@@ -3937,6 +3944,30 @@ async function openPlayer(url,positionSec){
 
 /* Book Loop lives inside the same YouTube player iframe. Its final action
    returns here so the learner moves directly from listening to speaking. */
+function validVideoContext(data){
+  if(!data || typeof data!=='object' || Array.isArray(data))return null;
+  const allowed=new Set(['type','version','video_id','title','mode','phrases','resource_kind','summary','current_time']);
+  const keys=Object.keys(data);
+  if(keys.some(key=>!allowed.has(key)))return null;
+  if(data.type!=='speakchain-video-context' || data.version!=='v1')return null;
+  if(typeof data.video_id!=='string' || (data.video_id!==''&&!/^[A-Za-z0-9_-]{11}$/.test(data.video_id)))return null;
+  if(typeof data.title!=='string' || !data.title.trim() || data.title.length>160)return null;
+  if(!['discuss','retell','practice_phrase'].includes(data.mode))return null;
+  if(!['video','book'].includes(data.resource_kind))return null;
+  if(!Array.isArray(data.phrases) || data.phrases.length>5)return null;
+  const cleanString=(value,max)=>typeof value==='string' && value.length<=max
+    && !/[\u0000-\u001f\u007f-\u009f]/.test(value);
+  if(!cleanString(data.title,160))return null;
+  if(data.phrases.some(value=>!cleanString(value,300) || !value.trim()))return null;
+  if(data.phrases.reduce((total,value)=>total+value.length,0)>1000)return null;
+  if(data.summary!==undefined&&!cleanString(data.summary,600))return null;
+  if(data.current_time!==undefined&&(!Number.isFinite(data.current_time)||data.current_time<0||data.current_time>86400))return null;
+  return {type:data.type,version:data.version,video_id:data.video_id,title:data.title.trim(),mode:data.mode,
+    phrases:data.phrases.map(value=>value.trim()),resource_kind:data.resource_kind,
+    ...(data.summary!==undefined?{summary:data.summary.trim()}:{}),
+    ...(data.current_time!==undefined?{current_time:data.current_time}:{})};
+}
+
 window.addEventListener('message', async event => {
   if (event.origin !== location.origin) return;
   if(event.data?.type==='speakchain-practice-phrase'){
@@ -3948,8 +3979,29 @@ window.addEventListener('message', async event => {
     return;
   }
   if (event.data?.type === 'speakchain-video-context') {
-    LAST_CONVERSATION_BRIEF=conversationBrief(event.data);
-    setLearningContext(event.data.resource_kind||'video',event.data.title||'',{phrases:(event.data.phrases||[]).slice(0,5)});
+    const playerOverlay=$('#ov-player'),host=$('#ov-player-host');
+    const frame=host?.querySelector(':scope > iframe[title="SpeakChain Player"]');
+    if(!playerOverlay?.classList.contains('on') || !frame?.isConnected || event.source!==frame.contentWindow)return;
+    const context=validVideoContext(event.data);
+    if(!context)return;
+    const generation=++VIDEO_CHAINY_GENERATION;
+    const brief=conversationBrief(context);
+    LAST_CONVERSATION_BRIEF=brief;
+    setLearningContext(brief.resource_kind||'video',brief.title||'',{phrases:brief.phrases});
+    /* The player button promises an immediate conversation. Previously this
+       branch only remembered the context and left the learner inside the
+       player with no visible transition. Suppress the redundant post-player
+       nudge and open the existing, backend-backed video practice directly. */
+    SPOKE_OFFERED=true;
+    closeOv(true,generation);
+    delete PAYLOAD['s-buddy']; delete PENDING['s-buddy'];
+    await go('s-buddy',false,false,generation);
+    if(generation!==VIDEO_CHAINY_GENERATION)return;
+    await cyLaunch(box=>{
+      if(box&&typeof box.startVideoChat==='function')box.startVideoChat(brief);
+    },generation);
+    if(generation!==VIDEO_CHAINY_GENERATION)return;
+    trackUx('video_chainy_cycle_start',{phrases:brief.phrases.length,source:'player'});
     return;
   }
   if (event.data?.type !== 'speakchain-book-retell') return;
@@ -4917,7 +4969,9 @@ function leaveBuddy(){
   }catch(e){ console.warn('leaveBuddy', e.message); }
 }
 
-async function go(sid, isBack, fromHistory){
+async function go(sid, isBack, fromHistory, videoChainyGeneration){
+  if(videoChainyGeneration==null)++VIDEO_CHAINY_GENERATION;
+  else if(videoChainyGeneration!==VIDEO_CHAINY_GENERATION)return;
   sid=SCREEN_ALIASES[sid]||sid;
   if(!R[sid]){
     console.warn('Unknown screen:',sid);
@@ -4940,6 +4994,7 @@ async function go(sid, isBack, fromHistory){
   tgBack(sid!=='s-home' || HIST.length>0);
 
   if(R[sid]) await R[sid]();
+  if(videoChainyGeneration!=null&&videoChainyGeneration!==VIDEO_CHAINY_GENERATION)return;
   if(BROWSER_NAV&&!fromHistory){
     const initial=!history.state?.speakchain;
     commitBrowserState(sid,'',initial);
@@ -5013,7 +5068,9 @@ async function openOv(id, fromHistory){
   if(id==='ov-diagnostic'){ await mountApp('ov-diagnostic',$('#ov-diagnostic-host'),null); }
   if(id==='ov-onboarding'){ await mountApp('ov-onboarding',$('#ov-onboarding-host'),null); }
 }
-function closeOv(fromHistory){
+function closeOv(fromHistory, videoChainyGeneration){
+  if(videoChainyGeneration==null)++VIDEO_CHAINY_GENERATION;
+  else if(videoChainyGeneration!==VIDEO_CHAINY_GENERATION)return;
   const wasPlayer = $('#ov-player')?.classList.contains('on');
   const wasBuddy = $('#ov-buddy')?.classList.contains('on');
   const wasCompose = $('#ov-social-compose')?.classList.contains('on');

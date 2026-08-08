@@ -50,6 +50,62 @@ async function runOwnVideoCycle(page, context, scenario, surface) {
   await expect(player.locator('#word-card-translation'))
     .toHaveText('\u041f\u0440\u0430\u043a\u0442\u0438\u043a\u0430 \u0449\u043e\u0434\u043d\u044f \u043f\u0440\u0438\u043d\u043e\u0441\u0438\u0442\u044c \u043f\u0440\u043e\u0433\u0440\u0435\u0441.');
 
+  const validContext = {
+    type: 'speakchain-video-context', version: 'v1', video_id: E2E_VIDEO_ID,
+    title: E2E_VIDEO_TITLE, mode: 'practice_phrase', phrases: [E2E_CAPTION],
+    current_time: 12, resource_kind: 'video'
+  };
+  const malformedContexts = [
+    { ...validContext, phrases: { 0: E2E_CAPTION } },
+    { ...validContext, mode: 'system' },
+    { ...validContext, title: 'x'.repeat(161) },
+    { ...validContext, phrases: ['x'.repeat(301)] },
+    { ...validContext, unexpected: 'field' }
+  ];
+  for (const payload of malformedContexts) {
+    await player.locator('body').evaluate((_, data) => {
+      window.parent.postMessage(data, window.location.origin);
+    }, payload);
+  }
+
+  await page.evaluate(data => {
+    const source = document.querySelector('#ov-player-host > iframe[title="SpeakChain Player"]').contentWindow;
+    window.dispatchEvent(new MessageEvent('message', {
+      data, origin: 'https://decoy.invalid', source
+    }));
+  }, validContext);
+
+  // A same-origin iframe is still untrusted unless it is the currently
+  // mounted SpeakChain player. Keep its WindowProxy and replay it after
+  // detaching to cover both decoy and stale-frame sources.
+  await page.evaluate(async data => {
+    const decoy = document.createElement('iframe');
+    decoy.hidden = true;
+    decoy.src = 'about:blank';
+    document.body.appendChild(decoy);
+    await new Promise(resolve => requestAnimationFrame(resolve));
+    const staleSource = decoy.contentWindow;
+    window.dispatchEvent(new MessageEvent('message', {
+      data, origin: window.location.origin, source: staleSource
+    }));
+    decoy.remove();
+    window.dispatchEvent(new MessageEvent('message', {
+      data, origin: window.location.origin, source: staleSource
+    }));
+  }, { ...validContext, title: 'decoy context' });
+
+  await expect(page.locator('#ov-player')).toHaveClass(/\bon\b/);
+  await expect(page.locator('#ov-buddy')).not.toHaveClass(/\bon\b/);
+  expect(byPath(scenario, '/buddy_realtime_token')).toHaveLength(0);
+
+  // The player's real click wins. A second valid message queued by the same
+  // frame becomes stale as soon as the first transition detaches that frame.
+  await player.locator('body').evaluate((_, data) => {
+    document.getElementById('speak-with-chainy').addEventListener('click', () => {
+      window.parent.postMessage(data, window.location.origin);
+    });
+  }, { ...validContext, title: 'rapid duplicate must be ignored' });
+
   const speak = player.locator('#speak-with-chainy');
   await speak.focus();
   await expect(speak).toBeFocused();
