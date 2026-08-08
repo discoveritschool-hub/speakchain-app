@@ -71,7 +71,7 @@ def test_profile_actions_use_supported_safe_flows():
 
 
 def test_profile_release_bumps_public_shell_cache():
-    assert "speakchain-shell-v23" in SW
+    assert "speakchain-shell-v24" in SW
 
 
 if __name__ == "__main__":

@@ -1,4 +1,4 @@
-import { createReadStream, statSync } from 'node:fs';
+import { readFileSync, statSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { dirname, extname, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -14,6 +14,7 @@ const types = {
   '.png': 'image/png',
   '.webmanifest': 'application/manifest+json; charset=utf-8'
 };
+const files = new Map();
 
 const server = createServer((request, response) => {
   let pathname;
@@ -31,11 +32,16 @@ const server = createServer((request, response) => {
   }
   try {
     if (!statSync(file).isFile()) throw new Error('not_file');
+    // The production shell is close to 1 MB. Cache immutable test-run bytes
+    // after the readiness probe so parallel desktop/mobile requests do not
+    // open competing OneDrive streams or crash the local server on a late
+    // stream error.
+    if (!files.has(file)) files.set(file, readFileSync(file));
     response.writeHead(200, {
       'Cache-Control': 'no-store',
       'Content-Type': types[extname(file).toLowerCase()] || 'application/octet-stream'
     });
-    createReadStream(file).pipe(response);
+    response.end(files.get(file));
   } catch {
     response.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' }).end('not found');
   }

@@ -122,6 +122,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>SpeakChain Player</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="pwa.js"></script>
   <style>
     * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
     body {
@@ -1188,6 +1189,10 @@ transcriptText.addEventListener('click',()=>{
   if(activeCaption?.text) inspectCaptionPhrase(activeCaption.text);
 });
 transcriptText.addEventListener('keydown',event=>{
+  // A caption word is itself a native button inside this container. Its
+  // keyboard activation must inspect the word, not bubble into the phrase
+  // shortcut and race a second /word_lookup request.
+  if(event.target!==transcriptText)return;
   if((event.key==='Enter'||event.key===' ')&&activeCaption?.text){event.preventDefault();inspectCaptionPhrase(activeCaption.text);}
 });
 

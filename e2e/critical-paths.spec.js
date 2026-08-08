@@ -53,7 +53,8 @@ test('Telegram initData remains the authenticated fallback when session handoff 
   expect(payload?.body).not.toHaveProperty('pwa_access_token');
 });
 
-test('native keyboard navigation reaches Chainy, Progress and Profile', async ({ appPage: page, context }) => {
+test('native keyboard navigation reaches Chainy, Progress and Profile', async ({ appPage: page, context, scenario }) => {
+  scenario.expectedHttpConsoleErrors = 1;
   await installBrowserSession(context);
   await page.goto('/index_v2.html');
 

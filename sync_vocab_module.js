@@ -2,8 +2,10 @@ const fs = require('fs');
 
 const shellPath = 'index_v2.html';
 const sourcePath = 'vocab.html';
+const buddyPath = 'speaking_buddy.html';
 const shell = fs.readFileSync(shellPath, 'utf8');
 const source = fs.readFileSync(sourcePath, 'utf8');
+const buddySource = fs.readFileSync(buddyPath, 'utf8');
 
 const declaration = 'const APPS   = ';
 const jsonStart = shell.indexOf(declaration) + declaration.length;
@@ -45,8 +47,27 @@ for (const marker of ['collection-tabs', 'word-detail', 'setCollectionTab', 'ope
   if (!(css + html + inlineScripts).includes(marker)) throw new Error(`missing source marker: ${marker}`);
 }
 
+function extractModule(document, label) {
+  const moduleCss = [...document.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/gi)]
+    .map(match => match[1]).join('\n');
+  const moduleBody = document.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+  if (!moduleBody) throw new Error(`${label} body not found`);
+  const moduleJs = [...moduleBody[1].matchAll(/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/gi)]
+    .map(match => match[1]).join('\n');
+  const moduleHtml = moduleBody[1].replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '').trim();
+  return { css: moduleCss, html: moduleHtml, js: moduleJs };
+}
+
 apps['ov-vocab'] = {css, html, js: inlineScripts};
+const buddy = extractModule(buddySource, 'speaking buddy');
+for (const marker of ['normalizeConversationBrief', 'videoPractice', 'finishSessionWithCard']) {
+  if (!(buddy.css + buddy.html + buddy.js).includes(marker)) throw new Error(`missing buddy source marker: ${marker}`);
+}
+apps['s-buddy'] = buddy;
 const replacement = JSON.stringify(apps);
 const updated = shell.slice(0, jsonStart) + replacement + shell.slice(jsonEnd);
 fs.writeFileSync(shellPath, updated, 'utf8');
-console.log(JSON.stringify({css: css.length, html: html.length, js: inlineScripts.length}));
+console.log(JSON.stringify({
+  vocab: {css: css.length, html: html.length, js: inlineScripts.length},
+  buddy: {css: buddy.css.length, html: buddy.html.length, js: buddy.js.length}
+}));
