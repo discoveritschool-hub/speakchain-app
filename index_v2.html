@@ -1911,6 +1911,16 @@ window.addEventListener('load', function(){
     <div class="live-result" id="monologue-result" style="display:none"></div>
   </div>
 </div>
+<div class="overlay" id="ov-lesson-finish">
+  <div class="sheet" style="max-height:92vh;overflow-y:auto;text-align:center">
+    <div class="grip"></div>
+    <div class="social-kicker" id="lesson-finish-step">Урок завершено</div>
+    <h3 id="lesson-finish-title" style="margin:8px 0">Ти зробив(ла) ще один крок</h3>
+    <div class="instr-note" id="lesson-finish-body"></div>
+    <button class="diag-cta" id="lesson-finish-primary" onclick="lessonFinishPrimary()">Записати коротке відео</button>
+    <button class="sn-skip" id="lesson-finish-skip" onclick="lessonFinishSkip()">Завершити без публікації</button>
+  </div>
+</div>
 <div class="overlay" id="ov-diagnostic">
   <div class="sheet" style="max-height:94vh;padding:0;overflow:hidden;display:flex;flex-direction:column">
     <div class="grip" style="margin:10px auto 4px;flex-shrink:0"></div>
@@ -3385,9 +3395,16 @@ function openSocialComposer(ctx){
   $('#compose-draft-resume')?.classList.toggle('on',!!localStorage.getItem(COMPOSE_DRAFT_KEY));
   $('#compose-publish').textContent='Переглянути й опублікувати';
   const labels={challenge:'Виклик для '+(COMPOSE_CTX.target_name||'студента'),relay:'Перша ланка естафети',
-    reply:'Відеовідповідь',challenge_week:'Челендж тижня',free:'Speaking response'};
+    lesson_share:'Моє відео після уроку',reply:'Відеовідповідь',challenge_week:'Челендж тижня',free:'Speaking response'};
   $('#compose-title').textContent=labels[COMPOSE_CTX.mode]||'Записати відповідь';
-  $('#compose-kicker').textContent=COMPOSE_CTX.mode==='relay'?'Speaking relay':'Speaking practice';
+  $('#compose-kicker').textContent=COMPOSE_CTX.mode==='relay'?'Speaking relay':COMPOSE_CTX.mode==='lesson_share'?'Крок 2 із 3':'Speaking practice';
+  const guided=COMPOSE_CTX.mode==='lesson_share';
+  COMPOSE_TYPE=guided?'video':COMPOSE_TYPE;
+  COMPOSE_VIS=guided?'friends':COMPOSE_VIS;
+  ['#compose-topic','#compose-phrase','#compose-transcript','#compose-visibility'].forEach(sel=>{const el=$(sel);if(el)el.style.display=guided?'none':'';});
+  $$('#ov-social-compose .field-label').forEach(el=>el.style.display=guided?'none':'');
+  $('#compose-state').textContent=guided?'15–30 секунд. Скажи головну думку й використай дві нові фрази.':'До 45 секунд. Можна перезаписати перед публікацією.';
+  $('#compose-publish').textContent=guided?'Переглянути відео':'Переглянути й опублікувати';
   setComposeVisibility(COMPOSE_VIS);openOv('ov-social-compose');
 }
 function setComposeVisibility(v){
@@ -3450,10 +3467,12 @@ async function publishSocialResponse(){
     if(COMPOSE_CTX.mode==='challenge'&&COMPOSE_CTX.target_uid){
       await socialApi('challenge_send',{target_uid:COMPOSE_CTX.target_uid,topic,phrase,legacy_ref:SOCIAL.challenge?.legacy_ref||{}});
     }
+    const lessonShare=COMPOSE_CTX.mode==='lesson_share';
     await discardComposeDraft();stopComposeMedia();closeOv();toast(response.moderation==='blocked'?'Відповідь збережено, але приховано до перевірки':'Твоя speaking-відповідь опублікована ✓');
     trackUx('social_publish',{mode:COMPOSE_CTX.mode||'free',visibility:COMPOSE_VIS});
     await refreshSocial();socialTab('feed');
-    if(relayRoom)setTimeout(()=>showRelayResult(relayRoom,COMPOSE_CTX.room_url),250);
+    if(lessonShare)setTimeout(()=>showLessonFinishShare(),250);
+    else if(relayRoom)setTimeout(()=>showRelayResult(relayRoom,COMPOSE_CTX.room_url),250);
     else if(needsProfile)setTimeout(()=>{openSocialSettings();toast('Перша фраза готова. Тепер обери, як тебе бачить спільнота.');},350);
   }catch(e){await saveComposeDraft();toast(e.message==='media_too_large'?'Запис завеликий. Спробуй до 30 секунд':'Не вдалося опублікувати. Чернетка лишилась.');}
   finally{btn.disabled=false;btn.textContent='Опублікувати зараз';}
@@ -3466,7 +3485,39 @@ function showRelayResult(room,url){
 }
 function startRelay(){openSocialComposer({mode:'relay',topic:SOCIAL.challenge?.topic||'',phrase:SOCIAL.challenge?.phrase||''});}
 
-let VIDEO_ROUTE_PACK=null,LIVE_PREFILL_PACK=null,LIVE_USED_PHRASES=new Set(),MONO_REC=null,MONO_STREAM=null,MONO_CHUNKS=[],MONO_B64='',MONO_MIME='';
+let VIDEO_ROUTE_PACK=null,LIVE_PREFILL_PACK=null,LIVE_USED_PHRASES=new Set(),MONO_REC=null,MONO_STREAM=null,MONO_CHUNKS=[],MONO_B64='',MONO_MIME='',LESSON_FINISH={step:'result',ref_link:'',share_text:'',motivation:''};
+
+function showLessonFinishResult(data){
+  LESSON_FINISH={step:'result',ref_link:data.ref_link||window.SHARE_LINK||'',share_text:data.share_text||'',motivation:data.result?.motivation||'Ще один крок до вільної англійської.'};
+  $('#lesson-finish-step').textContent='Урок завершено';$('#lesson-finish-title').textContent=LESSON_FINISH.motivation;
+  $('#lesson-finish-body').innerHTML='Запиши 15–30 секунд: скажи головну думку відео й використай дві нові фрази. Це необов’язково — відео можна залишити друзям або спільноті.';
+  $('#lesson-finish-primary').textContent='Записати коротке відео';$('#lesson-finish-skip').textContent='Завершити без публікації';openOv('ov-lesson-finish');
+}
+function showLessonFinishShare(){
+  LESSON_FINISH.step='share';$('#lesson-finish-step').textContent='Крок 3 із 3';$('#lesson-finish-title').textContent='Поділися своїм результатом';
+  $('#lesson-finish-body').innerHTML='Надішли відео другу або в групу. До запрошення додамо: <b>«Я вивчаю англійську у SpeakChain — приєднуйся»</b> і <b>#ТвійМікрофон</b>.';
+  $('#lesson-finish-primary').textContent='Поділитися й запросити';$('#lesson-finish-skip').textContent='Завершити';openOv('ov-lesson-finish');
+}
+function showLessonFinishRelay(){
+  LESSON_FINISH.step='relay';$('#lesson-finish-step').textContent='За бажанням';$('#lesson-finish-title').textContent='Передати естафету?';
+  $('#lesson-finish-body').innerHTML='Започаткуй «Плітки»: кожен продовжить думку англійською. Після 15 ланок SpeakChain склеїть вертикальне відео, покаже його всім учасникам і підготує для TikTok/Reels з <b>#ТвійМікрофон</b>.';
+  $('#lesson-finish-primary').textContent='Почати «Плітки»';$('#lesson-finish-skip').textContent='Завершити урок';openOv('ov-lesson-finish');
+}
+function lessonFinishPrimary(){
+  if(LESSON_FINISH.step==='result'){
+    closeOv();const pack=VIDEO_ROUTE_PACK||videoRoutePack(),phrases=(pack.phrases||[]).slice(0,2).map(p=>p.en||p);
+    openSocialComposer({mode:'lesson_share',topic:pack.title||'Video lesson',phrase:phrases.join(' · ')});return;
+  }
+  if(LESSON_FINISH.step==='share'){
+    const text=(LESSON_FINISH.share_text||'Я вивчаю англійську у SpeakChain — приєднуйся! '+LESSON_FINISH.ref_link)+' #ТвійМікрофон #SpeakChain';
+    const done=()=>showLessonFinishRelay();
+    if(navigator.share)navigator.share({title:'Мій результат у SpeakChain',text,url:LESSON_FINISH.ref_link||undefined}).then(done).catch(()=>{});
+    else if(navigator.clipboard)navigator.clipboard.writeText(text).then(()=>{toast('Текст і посилання скопійовано');done();});
+    else{toast(text);done();}return;
+  }
+  closeOv();const pack=VIDEO_ROUTE_PACK||videoRoutePack(),phrase=(pack.phrases||[])[0];openSocialComposer({mode:'relay',topic:pack.title||'Продовж думку з відео',phrase:phrase?.en||phrase||''});
+}
+function lessonFinishSkip(){if(LESSON_FINISH.step==='share')showLessonFinishRelay();else{closeOv();go('s-home');toast('Урок завершено ✓');}}
 async function startLiveMatch(){
   const prefill=LIVE_PREFILL_PACK;LIVE_PREFILL_PACK=null;
   if(!SOCIAL.me?.enabled||!SOCIAL.me?.allow_live){openSocialSettings();toast('Спочатку увімкни live-матч у профілі');return;}
@@ -3590,7 +3641,7 @@ function startVideoLiveMatch(){hideChainyRecap();LIVE_PREFILL_PACK=VIDEO_ROUTE_P
 function openVideoMonologue(){hideChainyRecap();VIDEO_ROUTE_PACK=VIDEO_ROUTE_PACK||videoRoutePack();openOv('ov-video-monologue');$('#monologue-phrases').innerHTML=(VIDEO_ROUTE_PACK.phrases||[]).slice(0,5).map(p=>'<div class="live-phrase-row pending">'+esc(p.en||p)+'</div>').join('');}
 function closeVideoMonologue(){try{MONO_STREAM?.getTracks().forEach(t=>t.stop());}catch(e){}MONO_REC=null;MONO_STREAM=null;closeOv();}
 async function toggleVideoMonologueRecord(){const btn=$('#monologue-record');if(MONO_REC?.state==='recording'){MONO_REC.stop();return;}try{MONO_STREAM=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}});MONO_CHUNKS=[];MONO_REC=new MediaRecorder(MONO_STREAM);MONO_REC.ondataavailable=e=>{if(e.data.size)MONO_CHUNKS.push(e.data)};MONO_REC.onstop=async()=>{const blob=new Blob(MONO_CHUNKS,{type:MONO_REC.mimeType});MONO_MIME=(MONO_REC.mimeType||blob.type||'audio/webm').split(';')[0];MONO_B64=String(await blobToDataUrl(blob)).split(',').pop();MONO_STREAM?.getTracks().forEach(t=>t.stop());const preview=$('#monologue-preview');preview.src=URL.createObjectURL(blob);preview.style.display='';$('#monologue-submit').style.display='';btn.textContent='Перезаписати монолог';};MONO_REC.start();btn.textContent='■ Завершити запис';setTimeout(()=>{if(MONO_REC?.state==='recording')MONO_REC.stop()},90000);}catch(e){toast('Дозволь доступ до мікрофона');}}
-async function submitVideoMonologue(){if(!MONO_B64)return;if(!$('#monologue-consent').checked){toast('Потрібна згода на розпізнавання запису');return;}const btn=$('#monologue-submit');btn.disabled=true;btn.textContent='Аналізуємо…';try{const r=await socialApi('video_monologue_evaluate',{audio_b64:MONO_B64,media_mime:MONO_MIME,consent:true,target_phrases:(VIDEO_ROUTE_PACK?.phrases||[]).map(p=>p.en||p)}),x=r.result||{},box=$('#monologue-result');box.style.display='';box.innerHTML='<b>Монолог завершено</b><br>Цільові фрази: '+Number(x.used_count||0)+' із '+Number(x.target_total||0)+'<br>Зв’язність: <b>'+esc(x.coherence||'')+'</b><br>Виконання завдання: <b>'+esc(x.task_completion||'')+'</b><br>'+esc(x.strength||'')+'<br><b>Наступний крок:</b> '+esc(x.recommendation||'');delete PAYLOAD['s-prog'];delete PENDING['s-prog'];trackUx('video_final_monologue_complete',{used:x.used_count||0});}catch(e){toast(e.message==='insufficient_speech'?'Запис закороткий або мовлення не розпізнано':'Не вдалося оцінити монолог');}finally{btn.disabled=false;btn.textContent='Отримати оцінку';}}
+async function submitVideoMonologue(){if(!MONO_B64)return;if(!$('#monologue-consent').checked){toast('Потрібна згода на розпізнавання запису');return;}const btn=$('#monologue-submit');btn.disabled=true;btn.textContent='Аналізуємо…';try{const r=await socialApi('video_monologue_evaluate',{audio_b64:MONO_B64,media_mime:MONO_MIME,consent:true,target_phrases:(VIDEO_ROUTE_PACK?.phrases||[]).map(p=>p.en||p)}),x=r.result||{},box=$('#monologue-result');box.style.display='';box.innerHTML='<b>Монолог завершено</b><br>Цільові фрази: '+Number(x.used_count||0)+' із '+Number(x.target_total||0)+'<br>Зв’язність: <b>'+esc(x.coherence||'')+'</b><br>Виконання завдання: <b>'+esc(x.task_completion||'')+'</b><br>'+esc(x.strength||'')+'<br><b>Наступний крок:</b> '+esc(x.recommendation||'')+'<button class="diag-cta" onclick="closeVideoMonologue();showLessonFinishResult(window.LAST_MONO_RESULT)">Завершити урок</button>';window.LAST_MONO_RESULT=r;delete PAYLOAD['s-prog'];delete PENDING['s-prog'];trackUx('video_final_monologue_complete',{used:x.used_count||0});}catch(e){toast(e.message==='insufficient_speech'?'Запис закороткий або мовлення не розпізнано':'Не вдалося оцінити монолог');}finally{btn.disabled=false;btn.textContent='Отримати оцінку';}}
 function reportLiveMatch(){if(!LIVE_MATCH)return;const reason=prompt('Що сталося?');if(reason)socialApi('report',{target_uid:LIVE_MATCH.partner_uid,reason}).then(()=>{toast('Скаргу надіслано');leaveLiveMatch();}).catch(()=>{});}
 function blockLivePartner(){if(!LIVE_MATCH)return;if(confirm('Заблокувати цього користувача?'))socialApi('block',{target_uid:LIVE_MATCH.partner_uid}).then(()=>{toast('Користувача заблоковано');leaveLiveMatch();}).catch(()=>{});}
 
