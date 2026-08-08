@@ -67,6 +67,18 @@ async function runOwnVideoCycle(page, context, scenario, surface) {
       window.parent.postMessage(data, window.location.origin);
     }, payload);
   }
+  const legacyBook = {
+    type: 'speakchain-book-retell', title: 'A short book excerpt', videoId: E2E_VIDEO_ID
+  };
+  for (const payload of [
+    { ...legacyBook, title: 'x'.repeat(161) },
+    { ...legacyBook, videoId: 'invalid' },
+    { ...legacyBook, phrases: [] }
+  ]) {
+    await player.locator('body').evaluate((_, data) => {
+      window.parent.postMessage(data, window.location.origin);
+    }, payload);
+  }
 
   await page.evaluate(data => {
     const source = document.querySelector('#ov-player-host > iframe[title="SpeakChain Player"]').contentWindow;
@@ -74,11 +86,17 @@ async function runOwnVideoCycle(page, context, scenario, surface) {
       data, origin: 'https://decoy.invalid', source
     }));
   }, validContext);
+  await page.evaluate(data => {
+    const source = document.querySelector('#ov-player-host > iframe[title="SpeakChain Player"]').contentWindow;
+    window.dispatchEvent(new MessageEvent('message', {
+      data, origin: 'https://decoy.invalid', source
+    }));
+  }, legacyBook);
 
   // A same-origin iframe is still untrusted unless it is the currently
   // mounted SpeakChain player. Keep its WindowProxy and replay it after
   // detaching to cover both decoy and stale-frame sources.
-  await page.evaluate(async data => {
+  await page.evaluate(async ({ videoContext, bookContext }) => {
     const decoy = document.createElement('iframe');
     decoy.hidden = true;
     decoy.src = 'about:blank';
@@ -86,13 +104,22 @@ async function runOwnVideoCycle(page, context, scenario, surface) {
     await new Promise(resolve => requestAnimationFrame(resolve));
     const staleSource = decoy.contentWindow;
     window.dispatchEvent(new MessageEvent('message', {
-      data, origin: window.location.origin, source: staleSource
+      data: videoContext, origin: window.location.origin, source: staleSource
+    }));
+    window.dispatchEvent(new MessageEvent('message', {
+      data: bookContext, origin: window.location.origin, source: staleSource
     }));
     decoy.remove();
     window.dispatchEvent(new MessageEvent('message', {
-      data, origin: window.location.origin, source: staleSource
+      data: videoContext, origin: window.location.origin, source: staleSource
     }));
-  }, { ...validContext, title: 'decoy context' });
+    window.dispatchEvent(new MessageEvent('message', {
+      data: bookContext, origin: window.location.origin, source: staleSource
+    }));
+  }, {
+    videoContext: { ...validContext, title: 'decoy context' },
+    bookContext: legacyBook
+  });
 
   await expect(page.locator('#ov-player')).toHaveClass(/\bon\b/);
   await expect(page.locator('#ov-buddy')).not.toHaveClass(/\bon\b/);
@@ -173,6 +200,30 @@ async function runOwnVideoCycle(page, context, scenario, surface) {
   }
 }
 
+async function runLegacyBookCycle(page, context, scenario, surface) {
+  scenario.expectedHttpConsoleErrors = 1;
+  if (surface === 'telegram') await installTelegramMiniApp(context);
+  else await installBrowserSession(context);
+  await page.goto('/index_v2.html');
+  await page.locator('button.own-video-entry').click();
+  const player = page.frameLocator('#ov-player-host iframe[title="SpeakChain Player"]');
+  await expect(player.locator('body')).toBeVisible();
+
+  const legacyBook = {
+    type: 'speakchain-book-retell', title: 'A short book excerpt', videoId: E2E_VIDEO_ID
+  };
+  await player.locator('body').evaluate((_, payload) => {
+    window.parent.postMessage(payload, window.location.origin);
+    window.parent.postMessage(payload, window.location.origin);
+  }, legacyBook);
+
+  await expect(page.locator('#ov-player')).not.toHaveClass(/\bon\b/);
+  await expect(page.locator('#ov-buddy')).toHaveClass(/\bon\b/);
+  await expect(page.locator('#ov-buddy-host #chat-messages')).toContainText('A short book excerpt');
+  expect(byPath(scenario, '/buddy_realtime_token')).toHaveLength(1);
+  expect(byPath(scenario, '/video_summary')).toHaveLength(1);
+}
+
 test('browser own YouTube caption continues into grounded Chainy result without retries', async ({
   appPage: page, context, scenario
 }) => {
@@ -183,4 +234,16 @@ test('Telegram own YouTube caption continues into grounded Chainy result without
   appPage: page, context, scenario
 }) => {
   await runOwnVideoCycle(page, context, scenario, 'telegram');
+});
+
+test('browser legacy Book Loop handoff accepts only the live player and ignores a rapid duplicate', async ({
+  appPage: page, context, scenario
+}) => {
+  await runLegacyBookCycle(page, context, scenario, 'browser');
+});
+
+test('Telegram legacy Book Loop handoff accepts only the live player and ignores a rapid duplicate', async ({
+  appPage: page, context, scenario
+}) => {
+  await runLegacyBookCycle(page, context, scenario, 'telegram');
 });

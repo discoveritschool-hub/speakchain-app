@@ -1970,7 +1970,11 @@ async function bookStage(stage) {
 
 async function bookRetell() {
   await bookStage('retell');
-  const payload = {type:'speakchain-book-retell', title:videoTitle || 'this book excerpt', videoId};
+  const payload = {
+    type:'speakchain-video-context', version:'v1', video_id:videoId || '',
+    title:videoTitle || 'this book excerpt', mode:'retell', phrases:[],
+    resource_kind:'book'
+  };
   if (window.parent && window.parent !== window) {
     window.parent.postMessage(payload, window.location.origin);
   } else {

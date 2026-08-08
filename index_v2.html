@@ -3968,6 +3968,42 @@ function validVideoContext(data){
     ...(data.current_time!==undefined?{current_time:data.current_time}:{})};
 }
 
+function validLegacyBookContext(data){
+  if(!data || typeof data!=='object' || Array.isArray(data))return null;
+  const allowed=new Set(['type','title','videoId']);
+  if(Object.keys(data).some(key=>!allowed.has(key)))return null;
+  if(data.type!=='speakchain-book-retell')return null;
+  if(typeof data.title!=='string' || !data.title.trim() || data.title.length>160
+    || /[\u0000-\u001f\u007f-\u009f]/.test(data.title))return null;
+  if(typeof data.videoId!=='string' || (data.videoId!==''&&!/^[A-Za-z0-9_-]{11}$/.test(data.videoId)))return null;
+  return {type:'speakchain-video-context',version:'v1',video_id:data.videoId,
+    title:data.title.trim(),mode:'retell',phrases:[],resource_kind:'book'};
+}
+
+function authorizedPlayerMessage(event){
+  const playerOverlay=$('#ov-player'),host=$('#ov-player-host');
+  const frame=host?.querySelector(':scope > iframe[title="SpeakChain Player"]');
+  return !!(playerOverlay?.classList.contains('on') && frame?.isConnected
+    && event.source===frame.contentWindow);
+}
+
+async function launchPlayerConversation(context,source){
+  const generation=++VIDEO_CHAINY_GENERATION;
+  const brief=conversationBrief(context);
+  LAST_CONVERSATION_BRIEF=brief;
+  setLearningContext(brief.resource_kind||'video',brief.title||'',{phrases:brief.phrases});
+  SPOKE_OFFERED=true;
+  closeOv(true,generation);
+  delete PAYLOAD['s-buddy']; delete PENDING['s-buddy'];
+  await go('s-buddy',false,false,generation);
+  if(generation!==VIDEO_CHAINY_GENERATION)return;
+  await cyLaunch(box=>{
+    if(box&&typeof box.startVideoChat==='function')box.startVideoChat(brief);
+  },generation);
+  if(generation!==VIDEO_CHAINY_GENERATION)return;
+  trackUx('video_chainy_cycle_start',{phrases:brief.phrases.length,source});
+}
+
 window.addEventListener('message', async event => {
   if (event.origin !== location.origin) return;
   if(event.data?.type==='speakchain-practice-phrase'){
@@ -3979,41 +4015,21 @@ window.addEventListener('message', async event => {
     return;
   }
   if (event.data?.type === 'speakchain-video-context') {
-    const playerOverlay=$('#ov-player'),host=$('#ov-player-host');
-    const frame=host?.querySelector(':scope > iframe[title="SpeakChain Player"]');
-    if(!playerOverlay?.classList.contains('on') || !frame?.isConnected || event.source!==frame.contentWindow)return;
+    if(!authorizedPlayerMessage(event))return;
     const context=validVideoContext(event.data);
     if(!context)return;
-    const generation=++VIDEO_CHAINY_GENERATION;
-    const brief=conversationBrief(context);
-    LAST_CONVERSATION_BRIEF=brief;
-    setLearningContext(brief.resource_kind||'video',brief.title||'',{phrases:brief.phrases});
     /* The player button promises an immediate conversation. Previously this
        branch only remembered the context and left the learner inside the
        player with no visible transition. Suppress the redundant post-player
        nudge and open the existing, backend-backed video practice directly. */
-    SPOKE_OFFERED=true;
-    closeOv(true,generation);
-    delete PAYLOAD['s-buddy']; delete PENDING['s-buddy'];
-    await go('s-buddy',false,false,generation);
-    if(generation!==VIDEO_CHAINY_GENERATION)return;
-    await cyLaunch(box=>{
-      if(box&&typeof box.startVideoChat==='function')box.startVideoChat(brief);
-    },generation);
-    if(generation!==VIDEO_CHAINY_GENERATION)return;
-    trackUx('video_chainy_cycle_start',{phrases:brief.phrases.length,source:'player'});
+    await launchPlayerConversation(context,'player');
     return;
   }
   if (event.data?.type !== 'speakchain-book-retell') return;
-  const book = event.data || {};
-  const title = String(book.title || 'this book excerpt').slice(0, 120);
-  setLearningContext('book',title,{video_id:book.videoId||''});
-  closeOv();
-  delete PAYLOAD['s-buddy']; delete PENDING['s-buddy'];
-  await go('s-buddy');
-  try {
-    await cyLaunch(box => box?.startVideoChat?.(conversationBrief({title,mode:'retell',video_id:book.videoId,resource_kind:'book'})));
-  } catch (e) { console.warn('book retell start', e.message); }
+  if(!authorizedPlayerMessage(event))return;
+  const legacyBook=validLegacyBookContext(event.data);
+  if(!legacyBook)return;
+  await launchPlayerConversation(legacyBook,'legacy_book_player');
 });
 
 function minimizePlayer(){
