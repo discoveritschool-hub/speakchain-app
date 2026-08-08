@@ -4548,6 +4548,23 @@ function renderChallenge(){
     }
   }
 
+  /* Правила й згода йдуть ПІСЛЯ основного відео челенджу Дня 1, де
+     блогер їх озвучує. До підтвердження решта практики не відкривається. */
+  if(day===1&&D.rules_required){
+    html+='<div style="background:var(--bg-card);border:1px solid var(--purple);border-radius:var(--r);padding:16px;margin-bottom:10px">'
+      +'<div style="font-size:20px;font-weight:800;margin-bottom:12px">🤝 Правила челенджу</div>'
+      +'<div style="font-size:var(--fs-sm);line-height:1.55;color:var(--text)">'
+      +'<b>1. Критика заборонена. Підтримка вітається.</b><br>Ми вчимося говорити без страху й не знецінюємо одне одного.<br><br>'
+      +'<b>2. Дивіться всі відео й виконуйте всі завдання.</b><br>Дні зчеплені: те, що зробите сьогодні, знадобиться завтра.<br><br>'
+      +'Пообіцяйте собі пройти всі сім днів. Не комусь — собі.'
+      +'</div>'
+      +'<div id="chd-rules-msg" style="font-size:var(--fs-xs);color:var(--text2);margin-top:12px;min-height:16px"></div>'
+      +'<button id="chd-rules-btn" onclick="chdAcceptRules()" style="width:100%;padding:14px;border-radius:var(--r-pill);border:none;background:var(--purple);color:#fff;font-size:var(--fs-sm);font-weight:800;cursor:pointer;margin-top:8px">Приймаю правила — продовжити День 1</button>'
+      +'</div>';
+    $('#chd-body').innerHTML=html;
+    return;
+  }
+
   /* Крок 2 завжди видно одразу під відео: не змушуємо шукати поле внизу
      екрана або повертатися до чату. */
   if(D.code_word_required){
@@ -4665,6 +4682,22 @@ async function chdSubmitPhrase(){
     if(msg){msg.style.color='var(--red)';msg.textContent='Немає зв’язку. Спробуйте ще раз.';}
   }
   if(btn){btn.disabled=false;btn.textContent='Перевірити';}
+}
+
+async function chdAcceptRules(){
+  const btn=$('#chd-rules-btn'), msg=$('#chd-rules-msg');
+  if(btn){btn.disabled=true;btn.textContent='Зберігаю…';}
+  try{
+    const result=await postAction('challenge_rules_accept');
+    if(!result.ok||!result.accepted) throw new Error('not_accepted');
+    const D=PAYLOAD['ov-challenge']||{};
+    D.rules_required=false;
+    toast(result.message||'Правила прийнято ✓');
+    renderChallenge();
+  }catch(e){
+    if(msg){msg.style.color='var(--red)';msg.textContent='Не вдалося зберегти згоду. Перевірте інтернет і спробуйте ще раз.';}
+    if(btn){btn.disabled=false;btn.textContent='Приймаю правила — продовжити День 1';}
+  }
 }
 
 function chdVideo(){
