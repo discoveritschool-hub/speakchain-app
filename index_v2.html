@@ -4548,6 +4548,25 @@ function renderChallenge(){
     }
   }
 
+  if(D.offer){
+    const O=D.offer;
+    if(!D._offerTracked){
+      D._offerTracked=true;
+      postAction('challenge_offer_opened').catch(()=>{});
+    }
+    html+='<div style="background:linear-gradient(145deg,rgba(124,110,247,.18),var(--bg-card));border:1px solid var(--purple);border-radius:var(--r);padding:16px;margin-bottom:10px">'
+      +'<div style="font-size:22px;font-weight:850;margin-bottom:6px">🚀 '+esc(O.title||'Продовжуйте свій шлях')+'</div>'
+      +'<div style="font-size:var(--fs-sm);color:var(--text2);line-height:1.5;margin-bottom:12px">Відео навчає. Chainy тренує. Жива розмова вмикає мовлення.</div>'
+      +(O.credit_note?'<div style="padding:9px 11px;background:rgba(90,216,166,.12);border-radius:var(--r-sm);color:var(--green);font-size:var(--fs-sm);font-weight:700;margin-bottom:10px">✓ '+esc(O.credit_note)+'</div>':'')
+      +'<div style="padding:10px 0;border-top:.5px solid var(--line);font-size:var(--fs-sm)">⚡ <b>Basic — $'+esc(String(O.basic||''))+'/міс</b><br><span style="color:var(--text2)">Щоденні уроки, Chainy, карта і прогрес</span></div>'
+      +(O.premium_visible?'<div style="padding:10px 0;border-top:.5px solid var(--line);font-size:var(--fs-sm)">🌟 <b>Premium — $'+esc(String(O.premium||''))+'/міс</b><br><span style="color:var(--text2)">Усе з Basic та щотижневі живі ефіри</span></div>':'')
+      +'<button onclick="chdOpenOffer(\'basic\')" style="width:100%;padding:14px;border-radius:var(--r-pill);border:none;background:var(--purple);color:#fff;font-size:var(--fs-sm);font-weight:800;cursor:pointer;margin-top:8px">Обрати Basic — $'+esc(String(O.basic||''))+' →</button>'
+      +(O.premium_visible?'<button onclick="chdOpenOffer(\'premium\')" style="width:100%;padding:13px;border-radius:var(--r-pill);border:1px solid var(--purple);background:transparent;color:var(--purple);font-size:var(--fs-sm);font-weight:800;cursor:pointer;margin-top:7px">Обрати Premium — $'+esc(String(O.premium||''))+' →</button>':'')
+      +'</div>';
+    $('#chd-body').innerHTML=html;
+    return;
+  }
+
   /* Правила й згода йдуть ПІСЛЯ основного відео челенджу Дня 1, де
      блогер їх озвучує. До підтвердження решта практики не відкривається. */
   if(day===1&&D.rules_required){
@@ -4791,7 +4810,14 @@ async function chdUploadVoice(){
         kind:chdRecKind, data:b64})});
     const j=await res.json().catch(()=>({}));
     if(res.ok && j.ok){
-      if(msg) msg.textContent='🪞 Збережено — це піде на дзеркало Дня 6';
+      if(j.final&&j.offer_ready){
+        if(msg) msg.textContent='🎉 Фінальне відео прийнято. Відкриваю результат…';
+        delete PAYLOAD['ov-challenge']; delete PENDING['ov-challenge'];
+        await load('ov-challenge');
+        renderChallenge();
+      }else if(msg){
+        msg.textContent='🪞 Збережено — це піде на дзеркало Дня 6';
+      }
     }else{
       if(msg) msg.textContent='Не вдалось зберегти — спробуй ще раз';
     }
@@ -4834,10 +4860,26 @@ function chdAction(fn){
   act('challenge_'+fn);
 }
 
-function chdDone(){
+async function chdDone(){
   const D=PAYLOAD['ov-challenge']||{};
-  act('challenge_task_'+(D.day||1));
+  const day=D.day||1;
+  try{
+    const result=await postAction('challenge_task_'+day);
+    if(day===6||day===7||result.offer_ready){
+      delete PAYLOAD['ov-challenge']; delete PENDING['ov-challenge'];
+      await load('ov-challenge');
+      renderChallenge();
+      return;
+    }
+  }catch(e){ toast('Не вдалося завершити день. Спробуйте ще раз'); return; }
   closeOv();
+}
+
+function chdOpenOffer(plan){
+  const O=((PAYLOAD['ov-challenge']||{}).offer||{});
+  const url=(plan==='premium'?O.premium_pay:O.basic_pay)||O.paywall_url||'';
+  if(!url){ toast('Плани тимчасово недоступні'); return; }
+  try{ TG?.openLink?.(url) || window.open(url,'_blank'); }catch(e){ window.open(url,'_blank'); }
 }
 
 
