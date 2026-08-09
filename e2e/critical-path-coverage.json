@@ -46,6 +46,7 @@
     "notification-practice-intents": {
       "verification": "ci_simulated",
       "tests": [
+        "fresh PWA notification waits behind sign-in without protected requests",
         "PWA notification opens unscripted free conversation directly",
         "Telegram notification opens unscripted free conversation directly",
         "PWA newer navigation cancels a delayed free-conversation intent",
@@ -55,6 +56,7 @@
       ],
       "assertions": [
         "deeplink.free_conversation_direct",
+        "deeplink.free_conversation_pre_auth_fail_closed",
         "deeplink.exercise_structured_selector",
         "deeplink.notification_stale_navigation_suppressed",
         "deeplink.pwa_tma_parity"
