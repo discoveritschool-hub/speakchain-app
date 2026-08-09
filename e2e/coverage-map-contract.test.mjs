@@ -38,4 +38,14 @@ expectFailure('comment-only evidence', input => {
     .replace("criticalAssertion('auth.gate_visible'", "criticalAssertion('auth.gate_removed'")
     + "\n// criticalAssertion('auth.gate_visible', () => expect(true).toBe(true));\n";
 });
-process.stdout.write('Coverage validator mutation tests passed (4/4)\n');
+for (const [name, file, before, after] of [
+  ['criticalAssertion no-op', 'e2e/critical-path-matrix.spec.js', 'return assertion();', 'return undefined;'],
+  ['criticalInvariant no-op', 'e2e/fixtures/critical-app.js', 'return assertion();', 'return undefined;'],
+  ['criticalAssertion renamed', 'e2e/critical-path-matrix.spec.js', 'function criticalAssertion(', 'function ignoredCriticalAssertion('],
+  ['criticalInvariant renamed', 'e2e/fixtures/critical-app.js', 'function criticalInvariant(', 'function ignoredCriticalInvariant('],
+  ['criticalAssertion skips callback', 'e2e/critical-path-matrix.spec.js', 'return assertion();', 'if (false) return assertion(); return undefined;'],
+  ['criticalInvariant skips callback', 'e2e/fixtures/critical-app.js', 'return assertion();', 'if (false) return assertion(); return undefined;']
+]) {
+  expectFailure(name, input => { input.sources[file] = input.sources[file].replace(before, after); });
+}
+process.stdout.write('Coverage validator mutation tests passed (10/10)\n');

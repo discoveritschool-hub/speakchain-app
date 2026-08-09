@@ -14,7 +14,7 @@
     "auth-deny": {
       "verification": "ci_simulated",
       "tests": ["L1-13 auth deny keeps protected shell closed"],
-      "assertions": ["auth.gate_visible", "auth.profile_closed", "auth.no_payload"]
+      "assertions": ["auth.gate_visible", "auth.gate_topmost", "auth.no_payload", "auth.no_authenticated_request"]
     },
     "safe-retry-offline": {
       "verification": "ci_simulated",

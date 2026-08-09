@@ -23,6 +23,7 @@ function analyzeSource(source, filename) {
   const declarations = new Map();
   const assertions = new Set();
   const invariants = new Set();
+  const executableWrappers = new Set();
 
   walk(ast, node => {
     if (node.type === 'FunctionDeclaration' && node.id?.name) functions.set(node.id.name, node);
@@ -30,8 +31,27 @@ function analyzeSource(source, filename) {
         && ['ArrowFunctionExpression', 'FunctionExpression'].includes(node.init?.type)) {
       functions.set(node.id.name, node.init);
     }
+  });
+
+  // Marker wrappers are trusted only when their entire body is one
+  // unconditional `return callback()` statement. A no-op, conditional call,
+  // renamed callback, or skipped callback therefore invalidates every marker.
+  for (const name of ['criticalAssertion', 'criticalInvariant']) {
+    const wrapper = functions.get(name);
+    const callback = wrapper?.params?.[1];
+    const statements = wrapper?.body?.type === 'BlockStatement' ? wrapper.body.body : [];
+    const returned = statements.length === 1 && statements[0]?.type === 'ReturnStatement'
+      ? statements[0].argument : null;
+    if (callback?.type === 'Identifier'
+        && returned?.type === 'CallExpression'
+        && returned.callee?.type === 'Identifier'
+        && returned.callee.name === callback.name) executableWrappers.add(name);
+  }
+
+  walk(ast, node => {
     if (node.type !== 'CallExpression' || node.callee?.type !== 'Identifier') return;
     if (node.callee.name === 'criticalAssertion' || node.callee.name === 'criticalInvariant') {
+      if (!executableWrappers.has(node.callee.name)) return;
       const id = node.arguments?.[0];
       const callback = node.arguments?.[1];
       if (id?.type !== 'StringLiteral'
@@ -76,7 +96,7 @@ function analyzeSource(source, filename) {
     if (!['ArrowFunctionExpression', 'FunctionExpression'].includes(callback?.type)) return;
     declarations.set(node.loc.start.line, hasExecutableAssertion(callback.body));
   });
-  return { assertions, declarations, invariants };
+  return { assertions, declarations, executableWrappers, invariants };
 }
 
 export function collectPlaywrightEntries(report, root = process.cwd()) {
@@ -115,9 +135,14 @@ export function validateCoverage({ map, entries, sources, config }) {
   const analyses = new Map(Object.entries(sources).map(([file, source]) => [file, analyzeSource(source, file)]));
   const assertionIds = new Set();
   const invariantIds = new Set();
+  const executableWrappers = new Set();
   for (const analysis of analyses.values()) {
     analysis.assertions.forEach(id => assertionIds.add(id));
     analysis.invariants.forEach(id => invariantIds.add(id));
+    analysis.executableWrappers.forEach(name => executableWrappers.add(name));
+  }
+  for (const name of ['criticalAssertion', 'criticalInvariant']) {
+    if (!executableWrappers.has(name)) failures.push(`marker wrapper does not unconditionally execute callback: ${name}`);
   }
   const projects = map.matrix?.projects || [];
   for (const project of ['chromium-desktop', 'chromium-mobile']) {

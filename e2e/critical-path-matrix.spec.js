@@ -18,10 +18,26 @@ test('L1-13 auth deny keeps protected shell closed', async ({ appPage: page, sce
   await page.goto('/index_v2.html?s=s-profile');
 
   await criticalAssertion('auth.gate_visible', () => expect(page.locator('#sc-auth-gate')).toBeVisible());
-  await criticalAssertion('auth.profile_closed', () => expect(page.locator('#s-profile')).not.toHaveClass(/\bon\b/));
+  await criticalAssertion('auth.gate_topmost', async () => {
+    const secure = await page.locator('#sc-auth-gate').evaluate(gate => {
+      const rect = gate.getBoundingClientRect();
+      const top = document.elementFromPoint(innerWidth / 2, innerHeight / 2);
+      return (
+        getComputedStyle(gate).position === 'fixed'
+        && Number(getComputedStyle(gate).zIndex) >= 10000
+        && rect.left === 0 && rect.top === 0
+        && rect.width === innerWidth && rect.height === innerHeight
+        && (top === gate || gate.contains(top))
+      );
+    });
+    expect(secure).toBe(true);
+  });
   criticalAssertion('auth.no_payload', () => expect(
     scenario.requests.filter(request => request.path === '/miniapp_payload')
   ).toEqual([]));
+  criticalAssertion('auth.no_authenticated_request', () => expect(scenario.requests.filter(request =>
+    request.headers.authorization || request.body.init_data || request.body.pwa_access_token
+  )).toEqual([]));
 });
 
 for (const [surface, install] of surfaces) {
