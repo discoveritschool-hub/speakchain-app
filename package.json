@@ -5,7 +5,7 @@
   "scripts": {
     "e2e": "playwright test",
     "e2e:list": "playwright test --list",
-    "validate:e2e": "node e2e/validate-harness.mjs"
+    "validate:e2e": "node e2e/validate-harness.mjs && node e2e/validate-coverage-map.mjs"
   },
   "devDependencies": {
     "@playwright/test": "1.62.1"

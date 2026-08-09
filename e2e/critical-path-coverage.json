@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "registry_ids": ["L1-13"],
+  "required_projects": ["chromium-desktop", "chromium-mobile"],
+  "required_surfaces": ["pwa", "telegram"],
+  "capabilities": {
+    "auth-deny": ["L1-13 auth deny keeps protected shell closed"],
+    "safe-retry-offline": ["failed payload retries surface a recovery control and recover without reload", "Telegram payload failure recovers without reload and preserves verified initData", "Telegram ApiClient prefers verified initData and reports offline recovery state"],
+    "stale-navigation": ["slow shell payload is aborted when navigation advances to Profile"],
+    "roles-support-paywall-no-charge": ["L1-13 learner safety surfaces remain gated and opening plans never charges"],
+    "rooms-hidden": ["L1-13 learner safety surfaces remain gated and opening plans never charges"],
+    "profile-chainy-parity": ["native keyboard navigation reaches Chainy, Progress and Profile", "Telegram native navigation reaches Chainy, Progress and Profile with initData identity"],
+    "book-video-parity": ["browser own YouTube caption continues into grounded Chainy result without retries", "Telegram own YouTube caption continues into grounded Chainy result without retries", "browser legacy Book Loop handoff accepts only the live player and ignores a rapid duplicate", "Telegram legacy Book Loop handoff accepts only the live player and ignores a rapid duplicate"],
+    "deeplink-parity": ["L1-13 authenticated deeplinks have PWA and Telegram parity"],
+    "zero-unexpected-errors": ["fixture:deny-by-default-network-and-runtime-errors"]
+  }
+}
