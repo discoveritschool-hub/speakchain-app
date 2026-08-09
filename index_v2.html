@@ -2928,7 +2928,9 @@ function cyExploreToggle(){
 
 /* Тап на сцену → відкриваємо СПРАВЖНІЙ чат (робочий модуль) */
 async function cyOpen(cat,idx){ await cyLaunch(w=>{ w.selectRole(cyStyle); w.openScenario(cat,idx); }); }
-async function cyChat(){ await cyLaunch(w=>w.startChainyChat()); }
+async function cyChat(navigationGeneration){
+  await cyLaunch(w=>w.startChainyChat(), navigationGeneration);
+}
 async function cyMy(){   await cyLaunch(w=>{ w.showScreen('s-home'); w.openMySituation(); }); }
 async function retellLastVideo(){
   const brief=conversationBrief({...(LAST_CONVERSATION_BRIEF||{}),mode:'retell'});
@@ -5659,7 +5661,7 @@ async function go(sid, isBack, fromHistory, videoChainyGeneration){
     console.warn('Unknown screen:',sid);
     sid='s-home';
   }
-  if(sid===CUR && !isBack) return;
+  if(sid===CUR && !isBack) return null;
   /* Ідемо геть із Chainy → лише пауза; завершення — кнопкою ✓. */
   if(CUR==='s-buddy' && sid!=='s-buddy') leaveBuddy();
   if(!isBack && CUR) HIST.push(CUR);
@@ -5676,11 +5678,12 @@ async function go(sid, isBack, fromHistory, videoChainyGeneration){
   tgBack(sid!=='s-home' || HIST.length>0);
 
   if(R[sid]) await R[sid]();
-  if(generation!==VIDEO_CHAINY_GENERATION)return;
+  if(generation!==VIDEO_CHAINY_GENERATION)return null;
   if(BROWSER_NAV&&!fromHistory){
     const initial=!history.state?.speakchain;
     commitBrowserState(sid,'',initial);
   }
+  return generation;
 }
 $$('.nav button').forEach(b=>b.addEventListener('click',async()=>{
   HIST.length=0;              /* тап по вкладці = новий корінь */
@@ -6160,10 +6163,12 @@ function activateBloggerEntry(entry){
 }
 async function activateInitialRoute(){
   if (START === 's-buddy' && PRACTICE_MODE === 'free_conversation') {
-    await go('s-buddy');
+    const navigationGeneration=await go('s-buddy');
     // Notification intent is explicit: bypass the scenario chooser and open
-    // the existing unscripted Chainy conversation contract directly.
-    await cyChat();
+    // the existing unscripted Chainy conversation contract directly. Reuse
+    // the completed navigation generation so a newer user route cancels this
+    // delayed launch instead of reopening Chainy over the newer destination.
+    if(navigationGeneration!==null) await cyChat(navigationGeneration);
   } else if (START === 's-listen' && PRACTICE_MODE === 'exercise') {
     // Practice is the canonical structured exercise selector. Progress is a
     // report surface and must never be used as an exercise fallback.

@@ -48,12 +48,15 @@
       "tests": [
         "PWA notification opens unscripted free conversation directly",
         "Telegram notification opens unscripted free conversation directly",
+        "PWA newer navigation cancels a delayed free-conversation intent",
+        "Telegram newer navigation cancels a delayed free-conversation intent",
         "PWA notification exercise fallback opens the structured Practice selector",
         "Telegram notification exercise fallback opens the structured Practice selector"
       ],
       "assertions": [
         "deeplink.free_conversation_direct",
         "deeplink.exercise_structured_selector",
+        "deeplink.notification_stale_navigation_suppressed",
         "deeplink.pwa_tma_parity"
       ]
     },
