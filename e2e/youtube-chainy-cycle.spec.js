@@ -33,7 +33,8 @@ async function runOwnVideoCycle(page, context, scenario, surface) {
   await start.press('Enter');
 
   await expect(player.locator('#caption-status')).toHaveClass(/\bready\b/);
-  await expect(player.locator('#transcript-text')).toContainText(E2E_CAPTION);
+  const englishCaptionWords = E2E_CAPTION.match(/[A-Za-z][A-Za-z'-]*/g).join(' ');
+  await expect(player.locator('#transcript-text')).toHaveText(englishCaptionWords);
 
   const word = player.locator('.caption-word').first();
   await word.focus();
