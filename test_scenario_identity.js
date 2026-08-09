@@ -28,7 +28,9 @@ const { api, catalog, buildIndex } = runtime();
 const rows = Object.entries(catalog).flatMap(([cat, values]) => values.map((scenario, idx) => [scenario.id, cat, idx, scenario.title]));
 assert.equal(rows.length, manifest.scenario_count);
 assert.deepEqual(Object.fromEntries(Object.entries(catalog).map(([cat, values]) => [cat, values.length])), manifest.category_counts);
-assert.equal(crypto.createHash('sha256').update(JSON.stringify(rows)).digest('hex'), manifest.ordered_catalog_sha256);
+assert.equal(manifest.entries.length, 170);
+assert.deepEqual(manifest.entries.map(item => [item.id, item.category, item.legacy_index, item.title]), rows);
+assert.equal(crypto.createHash('sha256').update(JSON.stringify(manifest.entries)).digest('hex'), manifest.catalog_hash);
 assert.equal(new Set(rows.map(row => row[0])).size, 170, 'all canonical IDs unique');
 rows.forEach(row => assert(new RegExp(manifest.canonical_id_pattern).test(row[0]), row[0]));
 
@@ -66,6 +68,14 @@ const conflicting = new MemoryStorage({
 assert.equal(runtime(conflicting).api.migrate(conflicting).status, 'blocked');
 assert.equal(conflicting.getItem('speakchain.scenarios.v1'), null, 'collision makes no canonical write');
 
+const oversized = new MemoryStorage({'scenario_progress': JSON.stringify({'basics:0': 'x'.repeat(513)})});
+assert.equal(runtime(oversized).api.migrate(oversized).status, 'blocked');
+assert.equal(oversized.getItem('speakchain.scenarios.v1'), null, 'oversized values make no canonical write');
+const tooMany = Object.fromEntries(Array.from({length: 513}, (_, index) => [`unknown-${index}`, true]));
+const tooManyStorage = new MemoryStorage({'scenario_progress': JSON.stringify(tooMany)});
+assert.equal(runtime(tooManyStorage).api.migrate(tooManyStorage).status, 'blocked');
+assert.equal(tooManyStorage.getItem('speakchain.scenarios.v1'), null, 'entry bound makes no canonical write');
+
 const rollbackRuntime = runtime(legacy);
 assert.equal(rollbackRuntime.api.rollback(legacy).status, 'rolled_back');
 assert.equal(legacy.getItem('chainy.bookmarks'), JSON.stringify(['basics:0', 'travel/0']));
@@ -83,6 +93,7 @@ for (let i = start; i < shell.length; i += 1) {
 const buddy = JSON.parse(shell.slice(start, end))['s-buddy'].js;
 assert(buddy.includes("id:'sc.v1.basics.001'"));
 assert(buddy.includes('scenario_id:   currentScenario.id || null'));
+assert(buddy.includes('scenario_catalog_hash: currentScenario.id ? SCENARIO_CATALOG_HASH : null'));
 assert(buddy.includes('openScenarioDeepLink'));
 assert.equal((buddy.match(/id:'sc\.v1\./g) || []).length, 170, 'PWA/TMA embedded catalog parity');
 

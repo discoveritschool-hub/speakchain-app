@@ -861,6 +861,9 @@ const SCENARIOS={
 // Stable scenario identity contract. IDs are explicit catalog data: titles and
 // array positions may change without changing an already-issued identity.
 const SCENARIO_CATALOG_VERSION = 1;
+const SCENARIO_CATALOG_HASH = 'f9c3365807c1417effd60b965ab66bd24760ece647792b6a64cf0e391f5c2b3f';
+const SCENARIO_STATE_MAX_BYTES = 131072;
+const SCENARIO_STATE_MAX_ENTRIES = 512;
 const SCENARIO_STATE_KEY = 'speakchain.scenarios.v1';
 const SCENARIO_MIGRATION_KEY = 'speakchain.scenarios.migration.v1';
 const SCENARIO_BACKUP_KEY = 'speakchain.scenarios.migration.v1.backup';
@@ -921,39 +924,77 @@ function scenarioStateEntries(value, kind) {
   throw new Error(`malformed legacy ${kind}`);
 }
 
+function boundedScenarioStateValue(value, depth = 0) {
+  if (depth > 6) throw new Error('scenario state nesting is too deep');
+  if (value === null || typeof value === 'boolean') return value;
+  if (typeof value === 'number') {
+    if (!Number.isFinite(value)) throw new Error('scenario state number is not finite');
+    return value;
+  }
+  if (typeof value === 'string') {
+    if (value.length > 512) throw new Error('scenario state string is too long');
+    return value;
+  }
+  if (Array.isArray(value)) {
+    if (value.length > 32) throw new Error('scenario state array is too large');
+    return value.map(item => boundedScenarioStateValue(item, depth + 1));
+  }
+  if (typeof value === 'object') {
+    const entries = Object.entries(value);
+    if (entries.length > 32) throw new Error('scenario state object is too large');
+    return Object.fromEntries(entries.map(([key, item]) => {
+      if (key.length > 64) throw new Error('scenario state key is too long');
+      return [key, boundedScenarioStateValue(item, depth + 1)];
+    }));
+  }
+  throw new Error('unsupported scenario state value');
+}
+
 function migrateScenarioState(storage = window.localStorage) {
   const marker = storage.getItem(SCENARIO_MIGRATION_KEY);
   if (marker === 'complete' && storage.getItem(SCENARIO_STATE_KEY)) return { status: 'already_complete' };
   const raw = {};
   const next = { version: SCENARIO_CATALOG_VERSION, bookmarks: {}, progress: {}, mastery: {} };
   try {
+    let totalBytes = 0;
+    let totalEntries = 0;
     for (const [kind, keys] of Object.entries(SCENARIO_LEGACY_KEYS)) {
       for (const key of keys) {
         const text = storage.getItem(key);
         if (text == null) continue;
+        totalBytes += text.length;
+        if (totalBytes > SCENARIO_STATE_MAX_BYTES) throw new Error('legacy scenario state is too large');
         raw[key] = text;
         const parsed = JSON.parse(text);
         for (const [legacyRef, value] of scenarioStateEntries(parsed, kind)) {
+          totalEntries += 1;
+          if (totalEntries > SCENARIO_STATE_MAX_ENTRIES) throw new Error('too many legacy scenario state entries');
           const resolved = resolveScenarioRef(legacyRef);
           if (!resolved) throw new Error(`unknown or ambiguous scenario alias: ${String(legacyRef).slice(0, 160)}`);
+          const boundedValue = boundedScenarioStateValue(value);
           if (Object.prototype.hasOwnProperty.call(next[kind], resolved.id)
-              && JSON.stringify(next[kind][resolved.id]) !== JSON.stringify(value)) {
+              && JSON.stringify(next[kind][resolved.id]) !== JSON.stringify(boundedValue)) {
             throw new Error(`conflicting scenario state: ${resolved.id}`);
           }
-          next[kind][resolved.id] = value;
+          next[kind][resolved.id] = boundedValue;
         }
       }
     }
     const existing = storage.getItem(SCENARIO_STATE_KEY);
     if (existing) {
+      totalBytes += existing.length;
+      if (totalBytes > SCENARIO_STATE_MAX_BYTES) throw new Error('canonical scenario state is too large');
       const parsed = JSON.parse(existing);
       if (parsed?.version !== SCENARIO_CATALOG_VERSION) throw new Error('unsupported canonical scenario state version');
       for (const kind of ['bookmarks', 'progress', 'mastery']) {
         for (const [id, value] of Object.entries(parsed[kind] || {})) {
+          totalEntries += 1;
+          if (totalEntries > SCENARIO_STATE_MAX_ENTRIES) throw new Error('too many canonical scenario state entries');
           if (!resolveScenarioRef(id)) throw new Error(`unknown canonical scenario id: ${id}`);
+          const boundedValue = boundedScenarioStateValue(value);
           if (Object.prototype.hasOwnProperty.call(next[kind], id)
-              && JSON.stringify(next[kind][id]) !== JSON.stringify(value)) throw new Error(`conflicting scenario state: ${id}`);
-          next[kind][id] = value;
+              && JSON.stringify(next[kind][id]) !== JSON.stringify(boundedValue)) throw new Error(`conflicting scenario state: ${id}`);
+          next[kind][id] = boundedValue;
         }
       }
     }
@@ -978,11 +1019,16 @@ function rollbackScenarioStateMigration(storage = window.localStorage) {
 
 window.SC_SCENARIOS = Object.freeze({
   version: SCENARIO_CATALOG_VERSION,
+  hash: SCENARIO_CATALOG_HASH,
   resolve: resolveScenarioRef,
   migrate: migrateScenarioState,
   rollback: rollbackScenarioStateMigration,
 });
-try { migrateScenarioState(); } catch (error) { console.warn('scenario state migration unavailable', error); }
+try {
+  const hasScenarioState = storage => storage.getItem(SCENARIO_STATE_KEY)
+    || Object.values(SCENARIO_LEGACY_KEYS).flat().some(key => storage.getItem(key) !== null);
+  if (hasScenarioState(window.localStorage)) migrateScenarioState();
+} catch (error) { console.warn('scenario state migration unavailable', error); }
 
 const ROLES = [
   { id:'friendly',  name:'Friendly',        desc:'Підтримує, не виправляє кожну помилку',  emoji:'😊' },
@@ -1905,6 +1951,8 @@ async function sendMessage() {
         uid:           UID,
         scenario:      currentScenario.title,
         scenario_id:   currentScenario.id || null,
+        scenario_catalog_version: currentScenario.id ? SCENARIO_CATALOG_VERSION : null,
+        scenario_catalog_hash: currentScenario.id ? SCENARIO_CATALOG_HASH : null,
         scenario_desc: interestContext.scenario_desc || currentScenario.desc,
         role:          selectedRole,
         level:         selectedLevel,
@@ -2014,6 +2062,8 @@ function realtimePayload() {
     init_data: tg?.initData || '',
     scenario: currentScenario?.title || 'General conversation',
     scenario_id: currentScenario?.id || null,
+    scenario_catalog_version: currentScenario?.id ? SCENARIO_CATALOG_VERSION : null,
+    scenario_catalog_hash: currentScenario?.id ? SCENARIO_CATALOG_HASH : null,
     scenario_desc: interestContext.scenario_desc || currentScenario?.desc || '',
     role: selectedRole,
     level: selectedLevel,
@@ -2121,6 +2171,8 @@ function syncRealtimeMemory(userText, assistantText) {
       assistant_text: assistantText || '',
       scenario: currentScenario?.title || '',
       scenario_id: currentScenario?.id || null,
+      scenario_catalog_version: currentScenario?.id ? SCENARIO_CATALOG_VERSION : null,
+      scenario_catalog_hash: currentScenario?.id ? SCENARIO_CATALOG_HASH : null,
     }),
   }).catch(() => {});
 }

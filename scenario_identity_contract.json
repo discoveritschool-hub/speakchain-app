@@ -1,7 +1,7 @@
 {
-  "schema": "speakchain.scenario-identity-contract.v1",
+  "schema": "speakchain.scenario-catalog.v1",
   "catalog_version": 1,
-  "canonical_id_pattern": "^sc\\.v1\\.[a-z]+\\.\\d{3}$",
+  "catalog_hash": "f9c3365807c1417effd60b965ab66bd24760ece647792b6a64cf0e391f5c2b3f",
   "scenario_count": 170,
   "category_counts": {
     "basics": 20,
@@ -10,11 +10,1544 @@
     "work": 34,
     "move": 18
   },
-  "ordered_catalog_sha256": "299204dda5d3eb000bdd82f122acbe325e19d1c65da24f8488e0cf785fcb1969",
-  "legacy_aliases": ["category:index", "category/index", "category-index", "unique title"],
-  "canonical_state_key": "speakchain.scenarios.v1",
-  "migration_mode": "default-on-local-reversible-fail-closed",
-  "unknown_alias_policy": "no-write",
-  "collision_policy": "no-write",
-  "legacy_keys_retained": true
+  "legacy_recommendation_aliases": {
+    "basics": "sc.v1.basics.001",
+    "daily": "sc.v1.daily.001",
+    "travel": "sc.v1.travel.001",
+    "work": "sc.v1.work.001",
+    "interview": "sc.v1.work.001",
+    "coffee": "sc.v1.daily.049"
+  },
+  "entries": [
+    {
+      "id": "sc.v1.basics.001",
+      "category": "basics",
+      "legacy_index": 0,
+      "title": "Greeting someone new",
+      "route": "continuous",
+      "cefr_level": "A1",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.basics.002",
+      "category": "basics",
+      "legacy_index": 1,
+      "title": "Small talk over coffee",
+      "route": "continuous",
+      "cefr_level": "A1",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.basics.003",
+      "category": "basics",
+      "legacy_index": 2,
+      "title": "Weather small talk",
+      "route": "continuous",
+      "cefr_level": "A1",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.basics.004",
+      "category": "basics",
+      "legacy_index": 3,
+      "title": "Movies & TV shows",
+      "route": "continuous",
+      "cefr_level": "A1",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.basics.005",
+      "category": "basics",
+      "legacy_index": 4,
+      "title": "Hobbies & interests",
+      "route": "continuous",
+      "cefr_level": "A1",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.basics.006",
+      "category": "basics",
+      "legacy_index": 5,
+      "title": "First date",
+      "route": "continuous",
+      "cefr_level": "A1",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.basics.007",
+      "category": "basics",
+      "legacy_index": 6,
+      "title": "Expressing sympathy",
+      "route": "continuous",
+      "cefr_level": "A1",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.basics.008",
+      "category": "basics",
+      "legacy_index": 7,
+      "title": "Apologizing sincerely",
+      "route": "continuous",
+      "cefr_level": "A1",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.basics.009",
+      "category": "basics",
+      "legacy_index": 8,
+      "title": "Ask to repeat",
+      "route": "continuous",
+      "cefr_level": "A1",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.basics.010",
+      "category": "basics",
+      "legacy_index": 9,
+      "title": "Giving compliments",
+      "route": "continuous",
+      "cefr_level": "A1",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.basics.011",
+      "category": "basics",
+      "legacy_index": 10,
+      "title": "Disagreeing politely",
+      "route": "continuous",
+      "cefr_level": "A1",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.basics.012",
+      "category": "basics",
+      "legacy_index": 11,
+      "title": "Celebrating with friends",
+      "route": "continuous",
+      "cefr_level": "A1",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.basics.013",
+      "category": "basics",
+      "legacy_index": 12,
+      "title": "Making plans",
+      "route": "continuous",
+      "cefr_level": "A1",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.basics.014",
+      "category": "basics",
+      "legacy_index": 13,
+      "title": "Talking about your home country",
+      "route": "continuous",
+      "cefr_level": "A1",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.basics.015",
+      "category": "basics",
+      "legacy_index": 14,
+      "title": "Talking about travel experiences",
+      "route": "continuous",
+      "cefr_level": "A1",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.basics.016",
+      "category": "basics",
+      "legacy_index": 15,
+      "title": "Saying goodbye",
+      "route": "continuous",
+      "cefr_level": "A1",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.basics.017",
+      "category": "basics",
+      "legacy_index": 16,
+      "title": "Talking about family",
+      "route": "continuous",
+      "cefr_level": "A1",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.basics.018",
+      "category": "basics",
+      "legacy_index": 17,
+      "title": "Talking about age and life",
+      "route": "continuous",
+      "cefr_level": "A1",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.basics.019",
+      "category": "basics",
+      "legacy_index": 18,
+      "title": "Numbers, time and dates",
+      "route": "continuous",
+      "cefr_level": "A1",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.basics.020",
+      "category": "basics",
+      "legacy_index": 19,
+      "title": "Expressing feelings",
+      "route": "continuous",
+      "cefr_level": "A1",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.daily.001",
+      "category": "daily",
+      "legacy_index": 0,
+      "title": "Doctor's appointment",
+      "route": "continuous",
+      "cefr_level": "A1",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.daily.002",
+      "category": "daily",
+      "legacy_index": 1,
+      "title": "At the pharmacy",
+      "route": "continuous",
+      "cefr_level": "A1",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.daily.003",
+      "category": "daily",
+      "legacy_index": 2,
+      "title": "Supermarket",
+      "route": "continuous",
+      "cefr_level": "A1",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.daily.004",
+      "category": "daily",
+      "legacy_index": 3,
+      "title": "Clothing store",
+      "route": "continuous",
+      "cefr_level": "A1",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.daily.005",
+      "category": "daily",
+      "legacy_index": 4,
+      "title": "Parent-teacher meeting",
+      "route": "continuous",
+      "cefr_level": "A1",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.daily.006",
+      "category": "daily",
+      "legacy_index": 5,
+      "title": "Calling a plumber",
+      "route": "continuous",
+      "cefr_level": "A1",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.daily.007",
+      "category": "daily",
+      "legacy_index": 6,
+      "title": "At the bank",
+      "route": "continuous",
+      "cefr_level": "A1",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.daily.008",
+      "category": "daily",
+      "legacy_index": 7,
+      "title": "Accepting a delivery",
+      "route": "continuous",
+      "cefr_level": "A1",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.daily.009",
+      "category": "daily",
+      "legacy_index": 8,
+      "title": "Neighbor dispute",
+      "route": "continuous",
+      "cefr_level": "A1",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.daily.010",
+      "category": "daily",
+      "legacy_index": 9,
+      "title": "Tech support call",
+      "route": "continuous",
+      "cefr_level": "A1",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.daily.011",
+      "category": "daily",
+      "legacy_index": 10,
+      "title": "Dentist visit",
+      "route": "continuous",
+      "cefr_level": "A1",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.daily.012",
+      "category": "daily",
+      "legacy_index": 11,
+      "title": "Car service",
+      "route": "continuous",
+      "cefr_level": "A1",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.daily.013",
+      "category": "daily",
+      "legacy_index": 12,
+      "title": "Eye test / Optician",
+      "route": "continuous",
+      "cefr_level": "A1",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.daily.014",
+      "category": "daily",
+      "legacy_index": 13,
+      "title": "Gym / Personal trainer",
+      "route": "continuous",
+      "cefr_level": "A1",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.daily.015",
+      "category": "daily",
+      "legacy_index": 14,
+      "title": "At the vet",
+      "route": "continuous",
+      "cefr_level": "A1",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.daily.016",
+      "category": "daily",
+      "legacy_index": 15,
+      "title": "Post office",
+      "route": "continuous",
+      "cefr_level": "A1",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.daily.017",
+      "category": "daily",
+      "legacy_index": 16,
+      "title": "Locksmith emergency",
+      "route": "continuous",
+      "cefr_level": "A1",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.daily.018",
+      "category": "daily",
+      "legacy_index": 17,
+      "title": "Hair salon",
+      "route": "continuous",
+      "cefr_level": "A1",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.daily.019",
+      "category": "daily",
+      "legacy_index": 18,
+      "title": "Renting a property",
+      "route": "continuous",
+      "cefr_level": "A1",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.daily.020",
+      "category": "daily",
+      "legacy_index": 19,
+      "title": "Library",
+      "route": "continuous",
+      "cefr_level": "A1",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.daily.021",
+      "category": "daily",
+      "legacy_index": 20,
+      "title": "Joining a fitness class",
+      "route": "continuous",
+      "cefr_level": "A1",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.daily.022",
+      "category": "daily",
+      "legacy_index": 21,
+      "title": "University admissions",
+      "route": "continuous",
+      "cefr_level": "A1",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.daily.023",
+      "category": "daily",
+      "legacy_index": 22,
+      "title": "Asking teacher for extension",
+      "route": "continuous",
+      "cefr_level": "A1",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.daily.024",
+      "category": "daily",
+      "legacy_index": 23,
+      "title": "Study group meetup",
+      "route": "continuous",
+      "cefr_level": "A1",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.daily.025",
+      "category": "daily",
+      "legacy_index": 24,
+      "title": "School counselor talk",
+      "route": "continuous",
+      "cefr_level": "A1",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.daily.026",
+      "category": "daily",
+      "legacy_index": 25,
+      "title": "Phone plan upgrade",
+      "route": "continuous",
+      "cefr_level": "A1",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.daily.027",
+      "category": "daily",
+      "legacy_index": 26,
+      "title": "Returning a product",
+      "route": "continuous",
+      "cefr_level": "A1",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.daily.028",
+      "category": "daily",
+      "legacy_index": 27,
+      "title": "Lost credit card",
+      "route": "continuous",
+      "cefr_level": "A1",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.daily.029",
+      "category": "daily",
+      "legacy_index": 28,
+      "title": "Parking ticket dispute",
+      "route": "continuous",
+      "cefr_level": "A1",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.daily.030",
+      "category": "daily",
+      "legacy_index": 29,
+      "title": "Lost in public transport",
+      "route": "continuous",
+      "cefr_level": "A1",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.daily.031",
+      "category": "daily",
+      "legacy_index": 30,
+      "title": "Convenience store",
+      "route": "continuous",
+      "cefr_level": "A1",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.daily.032",
+      "category": "daily",
+      "legacy_index": 31,
+      "title": "Bakery / Farmers market",
+      "route": "continuous",
+      "cefr_level": "A1",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.daily.033",
+      "category": "daily",
+      "legacy_index": 32,
+      "title": "Pet grooming appointment",
+      "route": "continuous",
+      "cefr_level": "A1",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.daily.034",
+      "category": "daily",
+      "legacy_index": 33,
+      "title": "Art class enrollment",
+      "route": "continuous",
+      "cefr_level": "A1",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.daily.035",
+      "category": "daily",
+      "legacy_index": 34,
+      "title": "Food delivery problem",
+      "route": "continuous",
+      "cefr_level": "A1",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.daily.036",
+      "category": "daily",
+      "legacy_index": 35,
+      "title": "Concert ticket booking",
+      "route": "continuous",
+      "cefr_level": "A1",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.daily.037",
+      "category": "daily",
+      "legacy_index": 36,
+      "title": "Tech store / gadget shop",
+      "route": "continuous",
+      "cefr_level": "A1",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.daily.038",
+      "category": "daily",
+      "legacy_index": 37,
+      "title": "Swimming pool admission",
+      "route": "continuous",
+      "cefr_level": "A1",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.daily.039",
+      "category": "daily",
+      "legacy_index": 38,
+      "title": "Insurance claim",
+      "route": "continuous",
+      "cefr_level": "A1",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.daily.040",
+      "category": "daily",
+      "legacy_index": 39,
+      "title": "Apartment maintenance",
+      "route": "continuous",
+      "cefr_level": "A1",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.daily.041",
+      "category": "daily",
+      "legacy_index": 40,
+      "title": "Inviting neighbors over",
+      "route": "continuous",
+      "cefr_level": "A1",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.daily.042",
+      "category": "daily",
+      "legacy_index": 41,
+      "title": "Renewing documents",
+      "route": "continuous",
+      "cefr_level": "A1",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.daily.043",
+      "category": "daily",
+      "legacy_index": 42,
+      "title": "Calling a lawyer",
+      "route": "continuous",
+      "cefr_level": "A1",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.daily.044",
+      "category": "daily",
+      "legacy_index": 43,
+      "title": "Subscription cancellation",
+      "route": "continuous",
+      "cefr_level": "A1",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.daily.045",
+      "category": "daily",
+      "legacy_index": 44,
+      "title": "Emergency room visit",
+      "route": "continuous",
+      "cefr_level": "A1",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.daily.046",
+      "category": "daily",
+      "legacy_index": 45,
+      "title": "Booking medical appointment",
+      "route": "continuous",
+      "cefr_level": "A1",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.daily.047",
+      "category": "daily",
+      "legacy_index": 46,
+      "title": "Mental health check-in",
+      "route": "continuous",
+      "cefr_level": "A1",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.daily.048",
+      "category": "daily",
+      "legacy_index": 47,
+      "title": "Pregnancy / women's health",
+      "route": "continuous",
+      "cefr_level": "A1",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.daily.049",
+      "category": "daily",
+      "legacy_index": 48,
+      "title": "Coffee shop order",
+      "route": "continuous",
+      "cefr_level": "A1",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.daily.050",
+      "category": "daily",
+      "legacy_index": 49,
+      "title": "Restaurant reservation by phone",
+      "route": "continuous",
+      "cefr_level": "A1",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.daily.051",
+      "category": "daily",
+      "legacy_index": 50,
+      "title": "ATM / payment problem",
+      "route": "continuous",
+      "cefr_level": "A1",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.daily.052",
+      "category": "daily",
+      "legacy_index": 51,
+      "title": "Sending money abroad",
+      "route": "continuous",
+      "cefr_level": "A1",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.travel.001",
+      "category": "travel",
+      "legacy_index": 0,
+      "title": "Airport check-in",
+      "route": "continuous",
+      "cefr_level": "A2",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.travel.002",
+      "category": "travel",
+      "legacy_index": 1,
+      "title": "Hotel check-in",
+      "route": "continuous",
+      "cefr_level": "A2",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.travel.003",
+      "category": "travel",
+      "legacy_index": 2,
+      "title": "Taxi ride",
+      "route": "continuous",
+      "cefr_level": "A2",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.travel.004",
+      "category": "travel",
+      "legacy_index": 3,
+      "title": "Asking for directions",
+      "route": "continuous",
+      "cefr_level": "A2",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.travel.005",
+      "category": "travel",
+      "legacy_index": 4,
+      "title": "Lost luggage",
+      "route": "continuous",
+      "cefr_level": "A2",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.travel.006",
+      "category": "travel",
+      "legacy_index": 5,
+      "title": "Restaurant order",
+      "route": "continuous",
+      "cefr_level": "A2",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.travel.007",
+      "category": "travel",
+      "legacy_index": 6,
+      "title": "Lost passport",
+      "route": "continuous",
+      "cefr_level": "A2",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.travel.008",
+      "category": "travel",
+      "legacy_index": 7,
+      "title": "Booking a tour",
+      "route": "continuous",
+      "cefr_level": "A2",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.travel.009",
+      "category": "travel",
+      "legacy_index": 8,
+      "title": "Medical emergency abroad",
+      "route": "continuous",
+      "cefr_level": "A2",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.travel.010",
+      "category": "travel",
+      "legacy_index": 9,
+      "title": "Flight delayed",
+      "route": "continuous",
+      "cefr_level": "A2",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.travel.011",
+      "category": "travel",
+      "legacy_index": 10,
+      "title": "Meeting travelers",
+      "route": "continuous",
+      "cefr_level": "A2",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.travel.012",
+      "category": "travel",
+      "legacy_index": 11,
+      "title": "Market haggling",
+      "route": "continuous",
+      "cefr_level": "A2",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.travel.013",
+      "category": "travel",
+      "legacy_index": 12,
+      "title": "Bus / Metro navigation",
+      "route": "continuous",
+      "cefr_level": "A2",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.travel.014",
+      "category": "travel",
+      "legacy_index": 13,
+      "title": "Train journey",
+      "route": "continuous",
+      "cefr_level": "A2",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.travel.015",
+      "category": "travel",
+      "legacy_index": 14,
+      "title": "Tour guide",
+      "route": "continuous",
+      "cefr_level": "A2",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.travel.016",
+      "category": "travel",
+      "legacy_index": 15,
+      "title": "Adventure / Outdoor activity",
+      "route": "continuous",
+      "cefr_level": "A2",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.travel.017",
+      "category": "travel",
+      "legacy_index": 16,
+      "title": "Bar / Pub conversation",
+      "route": "continuous",
+      "cefr_level": "A2",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.travel.018",
+      "category": "travel",
+      "legacy_index": 17,
+      "title": "Booking show tickets",
+      "route": "continuous",
+      "cefr_level": "A2",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.travel.019",
+      "category": "travel",
+      "legacy_index": 18,
+      "title": "Beach resort",
+      "route": "continuous",
+      "cefr_level": "A2",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.travel.020",
+      "category": "travel",
+      "legacy_index": 19,
+      "title": "Customs declaration",
+      "route": "continuous",
+      "cefr_level": "A2",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.travel.021",
+      "category": "travel",
+      "legacy_index": 20,
+      "title": "Renting a car",
+      "route": "continuous",
+      "cefr_level": "A2",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.travel.022",
+      "category": "travel",
+      "legacy_index": 21,
+      "title": "Car accident abroad",
+      "route": "continuous",
+      "cefr_level": "A2",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.travel.023",
+      "category": "travel",
+      "legacy_index": 22,
+      "title": "Museum visit",
+      "route": "continuous",
+      "cefr_level": "A2",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.travel.024",
+      "category": "travel",
+      "legacy_index": 23,
+      "title": "Photographing locals",
+      "route": "continuous",
+      "cefr_level": "A2",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.travel.025",
+      "category": "travel",
+      "legacy_index": 24,
+      "title": "Wine tasting / Restaurant recommendations",
+      "route": "continuous",
+      "cefr_level": "A2",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.travel.026",
+      "category": "travel",
+      "legacy_index": 25,
+      "title": "Trying local cuisine",
+      "route": "continuous",
+      "cefr_level": "A2",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.travel.027",
+      "category": "travel",
+      "legacy_index": 26,
+      "title": "Wrong order at restaurant",
+      "route": "continuous",
+      "cefr_level": "A2",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.travel.028",
+      "category": "travel",
+      "legacy_index": 27,
+      "title": "Splitting the bill",
+      "route": "continuous",
+      "cefr_level": "A2",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.travel.029",
+      "category": "travel",
+      "legacy_index": 28,
+      "title": "Pickpocket / Theft report",
+      "route": "continuous",
+      "cefr_level": "A2",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.travel.030",
+      "category": "travel",
+      "legacy_index": 29,
+      "title": "Pharmacy abroad",
+      "route": "continuous",
+      "cefr_level": "A2",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.travel.031",
+      "category": "travel",
+      "legacy_index": 30,
+      "title": "Train ticket exchange",
+      "route": "continuous",
+      "cefr_level": "A2",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.travel.032",
+      "category": "travel",
+      "legacy_index": 31,
+      "title": "Travel insurance claim",
+      "route": "continuous",
+      "cefr_level": "A2",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.travel.033",
+      "category": "travel",
+      "legacy_index": 32,
+      "title": "Embassy visit abroad",
+      "route": "continuous",
+      "cefr_level": "A2",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.travel.034",
+      "category": "travel",
+      "legacy_index": 33,
+      "title": "Last-minute deal",
+      "route": "continuous",
+      "cefr_level": "A2",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.travel.035",
+      "category": "travel",
+      "legacy_index": 34,
+      "title": "Hotel complaint",
+      "route": "continuous",
+      "cefr_level": "A2",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.travel.036",
+      "category": "travel",
+      "legacy_index": 35,
+      "title": "Couchsurfing host",
+      "route": "continuous",
+      "cefr_level": "A2",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.travel.037",
+      "category": "travel",
+      "legacy_index": 36,
+      "title": "Hitchhiking conversation",
+      "route": "continuous",
+      "cefr_level": "A2",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.travel.038",
+      "category": "travel",
+      "legacy_index": 37,
+      "title": "Helicopter / Heli tour",
+      "route": "continuous",
+      "cefr_level": "A2",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.travel.039",
+      "category": "travel",
+      "legacy_index": 38,
+      "title": "Boat trip / Cruise",
+      "route": "continuous",
+      "cefr_level": "A2",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.travel.040",
+      "category": "travel",
+      "legacy_index": 39,
+      "title": "Camping registration",
+      "route": "continuous",
+      "cefr_level": "A2",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.travel.041",
+      "category": "travel",
+      "legacy_index": 40,
+      "title": "Festival ticketing",
+      "route": "continuous",
+      "cefr_level": "A2",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.travel.042",
+      "category": "travel",
+      "legacy_index": 41,
+      "title": "Buying gifts for family",
+      "route": "continuous",
+      "cefr_level": "A2",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.travel.043",
+      "category": "travel",
+      "legacy_index": 42,
+      "title": "Bike rental",
+      "route": "continuous",
+      "cefr_level": "A2",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.travel.044",
+      "category": "travel",
+      "legacy_index": 43,
+      "title": "Nightclub entry",
+      "route": "continuous",
+      "cefr_level": "A2",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.travel.045",
+      "category": "travel",
+      "legacy_index": 44,
+      "title": "Diving / Snorkeling lesson",
+      "route": "continuous",
+      "cefr_level": "A2",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.travel.046",
+      "category": "travel",
+      "legacy_index": 45,
+      "title": "Currency exchange",
+      "route": "continuous",
+      "cefr_level": "A2",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.work.001",
+      "category": "work",
+      "legacy_index": 0,
+      "title": "Job interview",
+      "route": "continuous",
+      "cefr_level": "A2",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.work.002",
+      "category": "work",
+      "legacy_index": 1,
+      "title": "Status update",
+      "route": "continuous",
+      "cefr_level": "A2",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.work.003",
+      "category": "work",
+      "legacy_index": 2,
+      "title": "Salary negotiation",
+      "route": "continuous",
+      "cefr_level": "A2",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.work.004",
+      "category": "work",
+      "legacy_index": 3,
+      "title": "Calling in sick",
+      "route": "continuous",
+      "cefr_level": "A2",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.work.005",
+      "category": "work",
+      "legacy_index": 4,
+      "title": "Meeting new team",
+      "route": "continuous",
+      "cefr_level": "A2",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.work.006",
+      "category": "work",
+      "legacy_index": 5,
+      "title": "Giving difficult feedback",
+      "route": "continuous",
+      "cefr_level": "A2",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.work.007",
+      "category": "work",
+      "legacy_index": 6,
+      "title": "Leading a meeting",
+      "route": "continuous",
+      "cefr_level": "A2",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.work.008",
+      "category": "work",
+      "legacy_index": 7,
+      "title": "Call with foreign client",
+      "route": "continuous",
+      "cefr_level": "A2",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.work.009",
+      "category": "work",
+      "legacy_index": 8,
+      "title": "Resigning politely",
+      "route": "continuous",
+      "cefr_level": "A2",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.work.010",
+      "category": "work",
+      "legacy_index": 9,
+      "title": "Performance review",
+      "route": "continuous",
+      "cefr_level": "A2",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.work.011",
+      "category": "work",
+      "legacy_index": 10,
+      "title": "Conflict with coworker",
+      "route": "continuous",
+      "cefr_level": "A2",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.work.012",
+      "category": "work",
+      "legacy_index": 11,
+      "title": "Project kickoff meeting",
+      "route": "continuous",
+      "cefr_level": "A2",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.work.013",
+      "category": "work",
+      "legacy_index": 12,
+      "title": "Pitching your idea",
+      "route": "continuous",
+      "cefr_level": "A2",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.work.014",
+      "category": "work",
+      "legacy_index": 13,
+      "title": "Networking at conference",
+      "route": "continuous",
+      "cefr_level": "A2",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.work.015",
+      "category": "work",
+      "legacy_index": 14,
+      "title": "Following up after interview",
+      "route": "continuous",
+      "cefr_level": "A2",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.work.016",
+      "category": "work",
+      "legacy_index": 15,
+      "title": "Freelance project negotiation",
+      "route": "continuous",
+      "cefr_level": "A2",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.work.017",
+      "category": "work",
+      "legacy_index": 16,
+      "title": "Explaining a mistake",
+      "route": "continuous",
+      "cefr_level": "A2",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.work.018",
+      "category": "work",
+      "legacy_index": 17,
+      "title": "Mentoring a junior",
+      "route": "continuous",
+      "cefr_level": "A2",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.work.019",
+      "category": "work",
+      "legacy_index": 18,
+      "title": "Onboarding new hire",
+      "route": "continuous",
+      "cefr_level": "A2",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.work.020",
+      "category": "work",
+      "legacy_index": 19,
+      "title": "Pitching to investors",
+      "route": "continuous",
+      "cefr_level": "A2",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.work.021",
+      "category": "work",
+      "legacy_index": 20,
+      "title": "Cold call to client",
+      "route": "continuous",
+      "cefr_level": "A2",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.work.022",
+      "category": "work",
+      "legacy_index": 21,
+      "title": "Scheduling across time zones",
+      "route": "continuous",
+      "cefr_level": "A2",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.work.023",
+      "category": "work",
+      "legacy_index": 22,
+      "title": "Confidential talk with boss",
+      "route": "continuous",
+      "cefr_level": "A2",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.work.024",
+      "category": "work",
+      "legacy_index": 23,
+      "title": "Customer complaint call",
+      "route": "continuous",
+      "cefr_level": "A2",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.work.025",
+      "category": "work",
+      "legacy_index": 24,
+      "title": "Asking for new role",
+      "route": "continuous",
+      "cefr_level": "A2",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.work.026",
+      "category": "work",
+      "legacy_index": 25,
+      "title": "Public speaking at conference",
+      "route": "continuous",
+      "cefr_level": "A2",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.work.027",
+      "category": "work",
+      "legacy_index": 26,
+      "title": "Receiving recognition",
+      "route": "continuous",
+      "cefr_level": "A2",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.work.028",
+      "category": "work",
+      "legacy_index": 27,
+      "title": "Board meeting",
+      "route": "continuous",
+      "cefr_level": "A2",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.work.029",
+      "category": "work",
+      "legacy_index": 28,
+      "title": "HR mediation",
+      "route": "continuous",
+      "cefr_level": "A2",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.work.030",
+      "category": "work",
+      "legacy_index": 29,
+      "title": "Reference check call",
+      "route": "continuous",
+      "cefr_level": "A2",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.work.031",
+      "category": "work",
+      "legacy_index": 30,
+      "title": "Email follow-up call",
+      "route": "continuous",
+      "cefr_level": "A2",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.work.032",
+      "category": "work",
+      "legacy_index": 31,
+      "title": "Cross-cultural team conflict",
+      "route": "continuous",
+      "cefr_level": "A2",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.work.033",
+      "category": "work",
+      "legacy_index": 32,
+      "title": "Discussing layoffs",
+      "route": "continuous",
+      "cefr_level": "A2",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.work.034",
+      "category": "work",
+      "legacy_index": 33,
+      "title": "End of year party",
+      "route": "continuous",
+      "cefr_level": "A2",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.move.001",
+      "category": "move",
+      "legacy_index": 0,
+      "title": "Border control",
+      "route": "real_life",
+      "cefr_level": "B1",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.move.002",
+      "category": "move",
+      "legacy_index": 1,
+      "title": "Apartment hunting",
+      "route": "real_life",
+      "cefr_level": "B1",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.move.003",
+      "category": "move",
+      "legacy_index": 2,
+      "title": "Opening bank account",
+      "route": "real_life",
+      "cefr_level": "B1",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.move.004",
+      "category": "move",
+      "legacy_index": 3,
+      "title": "Visa interview",
+      "route": "real_life",
+      "cefr_level": "B1",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.move.005",
+      "category": "move",
+      "legacy_index": 4,
+      "title": "Health insurance signup",
+      "route": "real_life",
+      "cefr_level": "B1",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.move.006",
+      "category": "move",
+      "legacy_index": 5,
+      "title": "Meeting the neighbors",
+      "route": "real_life",
+      "cefr_level": "B1",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.move.007",
+      "category": "move",
+      "legacy_index": 6,
+      "title": "Enrolling child in school",
+      "route": "real_life",
+      "cefr_level": "B1",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.move.008",
+      "category": "move",
+      "legacy_index": 7,
+      "title": "Getting a SIM card",
+      "route": "real_life",
+      "cefr_level": "B1",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.move.009",
+      "category": "move",
+      "legacy_index": 8,
+      "title": "Driving license exchange",
+      "route": "real_life",
+      "cefr_level": "B1",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.move.010",
+      "category": "move",
+      "legacy_index": 9,
+      "title": "Registering with a GP",
+      "route": "real_life",
+      "cefr_level": "B1",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.move.011",
+      "category": "move",
+      "legacy_index": 10,
+      "title": "City hall registration",
+      "route": "real_life",
+      "cefr_level": "B1",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.move.012",
+      "category": "move",
+      "legacy_index": 11,
+      "title": "First grocery shop abroad",
+      "route": "real_life",
+      "cefr_level": "B1",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.move.013",
+      "category": "move",
+      "legacy_index": 12,
+      "title": "Hiring a contractor",
+      "route": "real_life",
+      "cefr_level": "B1",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.move.014",
+      "category": "move",
+      "legacy_index": 13,
+      "title": "Tax office visit",
+      "route": "real_life",
+      "cefr_level": "B1",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.move.015",
+      "category": "move",
+      "legacy_index": 14,
+      "title": "Maternity / childcare services",
+      "route": "real_life",
+      "cefr_level": "B1",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.move.016",
+      "category": "move",
+      "legacy_index": 15,
+      "title": "Registering a pet",
+      "route": "real_life",
+      "cefr_level": "B1",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.move.017",
+      "category": "move",
+      "legacy_index": 16,
+      "title": "Utility setup",
+      "route": "real_life",
+      "cefr_level": "B1",
+      "prerequisites": []
+    },
+    {
+      "id": "sc.v1.move.018",
+      "category": "move",
+      "legacy_index": 17,
+      "title": "Embassy visit",
+      "route": "real_life",
+      "cefr_level": "B1",
+      "prerequisites": []
+    }
+  ]
 }
