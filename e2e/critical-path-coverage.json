@@ -43,6 +43,23 @@
       "tests": ["L1-13 synthetic deeplinks have PWA and Telegram frontend parity (pwa-session-fixture)", "L1-13 synthetic deeplinks have PWA and Telegram frontend parity (telegram-initdata-synthetic)"],
       "assertions": ["deeplink.auth_gate_absent", "deeplink.profile_open", "deeplink.profile_identity", "deeplink.chainy_open", "deeplink.chainy_title"]
     },
+    "notification-practice-intents": {
+      "verification": "ci_simulated",
+      "tests": [
+        "PWA notification opens unscripted free conversation directly",
+        "Telegram notification opens unscripted free conversation directly",
+        "PWA newer navigation cancels a delayed free-conversation intent",
+        "Telegram newer navigation cancels a delayed free-conversation intent",
+        "PWA notification exercise fallback opens the structured Practice selector",
+        "Telegram notification exercise fallback opens the structured Practice selector"
+      ],
+      "assertions": [
+        "deeplink.free_conversation_direct",
+        "deeplink.exercise_structured_selector",
+        "deeplink.notification_stale_navigation_suppressed",
+        "deeplink.pwa_tma_parity"
+      ]
+    },
     "book-video-parity": {
       "verification": "ci_simulated",
       "tests": ["browser own YouTube caption continues into grounded Chainy result without retries", "Telegram own YouTube caption continues into grounded Chainy result without retries", "browser legacy Book Loop handoff accepts only the current player and ignores a rapid duplicate", "Telegram legacy Book Loop handoff accepts only the current player and ignores a rapid duplicate"]
