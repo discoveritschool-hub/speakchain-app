@@ -3,6 +3,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
 INDEX = (ROOT / "index_v2.html").read_text(encoding="utf-8")
+API_CLIENT = (ROOT / "api_client.js").read_text(encoding="utf-8")
 SW = (ROOT / "sw.js").read_text(encoding="utf-8")
 
 
@@ -82,8 +83,7 @@ def test_profile_mutations_match_the_authenticated_bounded_backend_contract():
         "settings:request.patch",
         "mutation_id:request.mutationId",
         "expected_revision:request.expectedRevision",
-        "init_data:initData",
-        "pwa_access_token:token",
+        "window.SC_API.auth()",
         "payload.settings[key]===value",
         "saved.profile_settings_revision===revision",
         "PROFILE_SETTINGS_SAVE_TIMEOUT_MS=8000",
@@ -97,20 +97,22 @@ def test_profile_mutations_match_the_authenticated_bounded_backend_contract():
     )
     missing = [marker for marker in required if marker not in INDEX]
     assert not missing, f"profile mutation contract is incomplete: {missing}"
+    for marker in ("return { init_data: initData }", "return { pwa_access_token: token }"):
+        assert marker in API_CLIENT, f"unified auth boundary is incomplete: {marker}"
 
     start = INDEX.index("async function saveProfileSettings(")
     end = INDEX.index("function renderProfileSettings(", start)
     mutation = INDEX[start:end]
     assert "uid:" not in mutation and "uid=" not in mutation, "profile mutation must not send body uid"
-    body_start = mutation.index("body:JSON.stringify(")
-    body_end = mutation.index("signal:controller.signal", body_start)
+    body_start = mutation.index("body:{")
+    body_end = mutation.index("}\n    });", body_start)
     request_body = mutation[body_start:body_end]
     for unsupported in ("session_minutes", "profile_video_url", "level", "timezone"):
         assert unsupported not in request_body, f"unsupported profile mutation leaked: {unsupported}"
 
 
 def test_profile_release_bumps_public_shell_cache():
-    assert "speakchain-shell-v29" in SW
+    assert "speakchain-shell-v31" in SW
 
 
 if __name__ == "__main__":

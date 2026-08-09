@@ -29,7 +29,8 @@ test('browser Telegram callback persists and resumes one PWA session', async ({ 
   await expect(page.locator('#sc-auth-gate')).toHaveCount(0);
   await expect(page.locator('#s-home')).toHaveClass(/\bon\b/);
   const payload = scenario.requests.find(request => request.path === '/miniapp_payload');
-  expect(payload?.body).toMatchObject({ uid: 7001, pwa_access_token: 'access-callback', screen: 's-home' });
+  expect(payload?.body).toMatchObject({ pwa_access_token: 'access-callback', screen: 's-home' });
+  expect(payload?.body).not.toHaveProperty('uid');
 });
 
 test('Telegram initData remains the authenticated fallback when session handoff is unavailable', async ({ appPage: page, context, scenario }) => {
@@ -49,7 +50,8 @@ test('Telegram initData remains the authenticated fallback when session handoff 
   const handoff = scenario.requests.find(request => request.path === '/api/v1/session');
   expect(handoff?.body).toEqual({ init_data: TELEGRAM_INIT_DATA });
   const payload = scenario.requests.find(request => request.path === '/miniapp_payload');
-  expect(payload?.body).toMatchObject({ uid: 9001, init_data: TELEGRAM_INIT_DATA, screen: 's-home' });
+  expect(payload?.body).toMatchObject({ init_data: TELEGRAM_INIT_DATA, screen: 's-home' });
+  expect(payload?.body).not.toHaveProperty('uid');
   expect(payload?.body).not.toHaveProperty('pwa_access_token');
 });
 
@@ -106,7 +108,8 @@ test('Telegram native navigation reaches Chainy, Progress and Profile with initD
   const payloads = scenario.requests.filter(request => request.path === '/miniapp_payload');
   expect(payloads.length).toBeGreaterThanOrEqual(3);
   for (const request of payloads) {
-    expect(request.body).toMatchObject({ uid: 9001, init_data: TELEGRAM_INIT_DATA });
+    expect(request.body).toMatchObject({ init_data: TELEGRAM_INIT_DATA });
+    expect(request.body).not.toHaveProperty('uid');
     expect(request.body).not.toHaveProperty('pwa_access_token');
   }
 });
@@ -147,7 +150,8 @@ test('Telegram payload failure recovers without reload and preserves verified in
     request.path === '/miniapp_payload' && request.body.screen === 's-home');
   expect(homeRequests).toHaveLength(3);
   for (const request of homeRequests) {
-    expect(request.body).toMatchObject({ uid: 9001, init_data: TELEGRAM_INIT_DATA });
+    expect(request.body).toMatchObject({ init_data: TELEGRAM_INIT_DATA });
+    expect(request.body).not.toHaveProperty('uid');
     expect(request.body).not.toHaveProperty('pwa_access_token');
   }
 });
