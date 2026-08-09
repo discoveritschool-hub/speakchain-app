@@ -1623,6 +1623,7 @@ def test_player_bounded_seek_behavior():
 def test_feedback_round_notes_chains_and_video_challenge():
     shell = SHELL.read_text(encoding="utf-8", errors="ignore")
     buddy = (ROOT / "speaking_buddy.html").read_text(encoding="utf-8", errors="ignore")
+    player = (ROOT / "player.html").read_text(encoding="utf-8", errors="ignore")
     required = (
         "Math.max(px('--tg-content-safe-area-inset-top'),px('--tg-safe-area-inset-top'))",
         "var fullscreenChromeTop=(platform==='ios'||platform==='macos')?144:112",
@@ -1639,14 +1640,24 @@ def test_feedback_round_notes_chains_and_video_challenge():
         '<span class="ic" aria-hidden="true">🗣️</span>',
         '<span class="ic" aria-hidden="true">👥</span>',
         '<span class="ic" aria-hidden="true">📊</span>',
+        'id="video-library-entry"', 'id="ov-video-library"',
+        "const VIDEO_LIBRARY_KEY='speakchain.video.library.v1'",
+        "data.type!=='speakchain-video-opened'", 'function openLibraryVideo(videoId)',
         'id="soc-tab-chains"', 'id="social-chain-panel"',
         "if(area==='chain'){await go('s-social');socialTab('chains');return;}",
         'id="chainy-notes-panel"', "chainy_note_save", "chainy_notes_list",
         'id="weekly-challenge-video"', "There is no sample video. Never say or imply",
     )
     missing = [marker for marker in required if marker not in shell]
+    profile_start = shell.find('<div class="screen" id="s-profile">')
+    profile_end = shell.find('<div class="mini-player"', profile_start)
+    profile_html = shell[profile_start:profile_end]
     if missing:
         fail(f"feedback-round frontend contract incomplete: {missing}")
+    elif "type:'speakchain-video-opened'" not in player:
+        fail("player does not register opened videos in the profile library")
+    elif '<span class="ti">Навчання</span>' in profile_html:
+        fail("Profile still contains the duplicated Learning section")
     elif "if(sid==='s-listen') await openPlayer();" in shell:
         fail("Practice tab still skips the notes hub and auto-opens the player")
     elif "session_topic:" not in buddy or "session_topic:" not in shell:
