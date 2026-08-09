@@ -19,3 +19,5 @@ pnpm run e2e
 ```
 
 The tests never submit a payment, message a learner, use a production secret, or call the production backend. Add a route explicitly to `fixtures/critical-app.js` whenever a new intentional backend dependency is introduced; do not weaken the deny-by-default rule.
+
+`critical-path-coverage.json` is the machine-readable L1-13 coverage contract. `validate:e2e` fails when a required capability, browser project, surface, evidence title, or deny-by-default fixture invariant drifts.

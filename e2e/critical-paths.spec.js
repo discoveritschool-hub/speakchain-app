@@ -33,7 +33,7 @@ test('browser Telegram callback persists and resumes one PWA session', async ({ 
   expect(payload?.body).not.toHaveProperty('uid');
 });
 
-test('Telegram initData remains the authenticated fallback when session handoff is unavailable', async ({ appPage: page, context, scenario }) => {
+test('Telegram synthetic initData remains the frontend fallback when session handoff is unavailable', async ({ appPage: page, context, scenario }) => {
   scenario.sessionMode = 'unavailable';
   scenario.allowedHttpConsoleErrors = 1;
   await installTelegramMiniApp(context);
@@ -87,7 +87,7 @@ test('native keyboard navigation reaches Chainy, Progress and Profile', async ({
 test('Telegram native navigation reaches Chainy, Progress and Profile with initData identity', async ({ appPage: page, context, scenario }) => {
   scenario.sessionMode = 'unavailable';
   // Session handoff and the intentionally unconfigured Realtime greeting
-  // each fail closed before the verified initData/text path continues.
+  // each fail closed before the synthetic initData/text fixture path continues.
   scenario.allowedHttpConsoleErrors = 2;
   await installTelegramMiniApp(context);
   await page.goto('/index_v2.html');
@@ -132,7 +132,7 @@ test('failed payload retries surface a recovery control and recover without relo
   expect(homeRequests).toHaveLength(3);
 });
 
-test('Telegram payload failure recovers without reload and preserves verified initData', async ({ appPage: page, context, scenario }) => {
+test('Telegram payload failure recovers without reload and preserves synthetic initData', async ({ appPage: page, context, scenario }) => {
   scenario.sessionMode = 'unavailable';
   scenario.payloadFailures.set('s-home', 2);
   scenario.allowedHttpConsoleErrors = 3;

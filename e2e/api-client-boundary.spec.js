@@ -183,7 +183,7 @@ test('slow shell payload is aborted when navigation advances to Profile', async 
   await expect(page.locator('#offline-banner')).toBeHidden();
 });
 
-test('Telegram ApiClient prefers verified initData and reports offline recovery state', async ({ appPage: page, context }) => {
+test('Telegram ApiClient uses the synthetic initData fixture and reports offline recovery state', async ({ appPage: page, context }) => {
   await installTelegramMiniApp(context);
   await page.goto('/index_v2.html');
 

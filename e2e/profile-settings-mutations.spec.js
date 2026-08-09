@@ -18,7 +18,7 @@ async function openProfile(page) {
   await expect(page.locator('#profile-notification-pref')).toHaveValue('evening');
 }
 
-test('Telegram profile mutation uses verified initData without body uid', async ({ appPage: page, context, scenario }) => {
+test('Telegram profile mutation uses synthetic initData without body uid', async ({ appPage: page, context, scenario }) => {
   await installTelegramMiniApp(context);
   await openProfile(page);
 
