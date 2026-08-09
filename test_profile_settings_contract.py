@@ -110,7 +110,7 @@ def test_profile_mutations_match_the_authenticated_bounded_backend_contract():
 
 
 def test_profile_release_bumps_public_shell_cache():
-    assert "speakchain-shell-v28" in SW
+    assert "speakchain-shell-v29" in SW
 
 
 if __name__ == "__main__":
