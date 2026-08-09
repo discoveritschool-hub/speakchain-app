@@ -1012,6 +1012,14 @@ window.onYouTubeIframeAPIReady = function() {
           seekGestureLayer.hidden = false;
           // Зберігаємо назву відео
           try { videoTitle = e.target.getVideoData().title || ""; } catch(_){}
+          // Оболонка веде локальну бібліотеку переглянутих відео. Повідомлення
+          // приймається лише від активного same-origin iframe плеєра.
+          try {
+            if (window.parent !== window && videoId && videoTitle) {
+              window.parent.postMessage({type:'speakchain-video-opened',version:'v1',
+                video_id:videoId,title:videoTitle,current_time:Number(e.target.getCurrentTime?.()||0)},window.location.origin);
+            }
+          } catch(_){}
           if (!(/iPad|iPhone|iPod/.test(navigator.userAgent))) {
             document.getElementById("play-overlay").classList.add("hidden");
             e.target.playVideo();

@@ -833,6 +833,8 @@
   .menu-group .mi .t{font-size:var(--fs);font-weight:600}
   .menu-group .mi .s{font-size:var(--fs-xs);color:var(--text2)}
   .menu-group .mi .ch{color:var(--text2);font-size:var(--fs-md);flex-shrink:0}
+  .menu-group button.mi{width:100%;border:0;background:none;color:inherit;font:inherit;text-align:left}
+  .video-library-empty{padding:20px 16px;text-align:center;color:var(--text2);font-size:var(--fs-sm);line-height:1.5}
 
   /* Mobile primary navigation: a floating, thumb-friendly dock above the
      device gesture area. Five equal destinations mirror familiar social apps. */
@@ -1570,16 +1572,10 @@ window.addEventListener('load', function(){
 <div class="ach-grid" id="ach"></div>
 <div class="sec-h"><span class="ti">Лотерея</span><span class="meta">100 ланок = 1 квиток</span></div>
 <div id="profile-lottery"><div class="lottery-loading" aria-label="Завантажуємо лотерею"></div></div>
-<div class="sec-h"><span class="ti">Навчання</span></div>
+<div class="sec-h"><span class="ti">Бібліотека відео</span><span class="meta" id="video-library-meta">0 відео</span></div>
 <div class="menu-group">
-  <div class="mi" onclick="act('start_lesson')"><span class="ic"><span class="yt"></span></span>
-    <div class="body"><div class="t">Мої відео</div><div class="s">бібліотека за назвою YouTube</div></div><span class="ch">›</span></div>
-  <div class="mi" onclick="openOv('ov-vocab')"><span class="ic">💬</span>
-    <div class="body"><div class="t">Картотека фраз</div><div class="s">збережені · SRS-повтор</div></div><span class="ch">›</span></div>
-  <div class="mi" onclick="go('s-prog')"><span class="ic">📊</span>
-    <div class="body"><div class="t">Мій прогрес</div><div class="s">рівень, теми, лексика</div></div><span class="ch">›</span></div>
-  <div class="mi" onclick="openOv('ov-diagnostic')"><span class="ic">🎯</span>
-    <div class="body"><div class="t">Пройти діагностику</div><div class="s">перевірити рівень знову</div></div><span class="ch">›</span></div>
+  <button class="mi" id="video-library-entry" type="button" onclick="openVideoLibrary()"><span class="ic">🎬</span>
+    <span class="body"><span class="t">Переглянуті відео</span><span class="s" id="video-library-subtitle">Збережені за назвою YouTube</span></span><span class="ch">›</span></button>
 </div>
 <div class="sec-h"><span class="ti">Спільнота</span></div>
 <div class="menu-group">
@@ -1650,6 +1646,20 @@ window.addEventListener('load', function(){
     <p>Встав посилання на будь-яке відео — розберемо фрази, потренуємо shadowing і поговоримо про зміст.</p>
     <input class="vid" id="vid-url" placeholder="https://youtube.com/watch?v=…">
     <button class="go" onclick="submitVid()">Розібрати відео →</button>
+  </div>
+</div>
+
+<!-- Історія переглянутих відео — єдина навчальна функція, що лишається у Профілі -->
+<div class="overlay" id="ov-video-library">
+  <div class="sheet" style="max-height:88vh;overflow-y:auto">
+    <div class="grip"></div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <h3 style="margin:0;flex:1">Бібліотека відео</h3>
+      <button class="x" type="button" onclick="closeOv()" aria-label="Закрити">×</button>
+    </div>
+    <p>Тут зберігаються відео, які ти відкривала у SpeakChain. Натисни на назву, щоб повернутися до практики.</p>
+    <div class="menu-group" id="video-library-list"></div>
+    <button class="go" type="button" onclick="closeOv();openOwnVideo()">＋ Додати своє відео</button>
   </div>
 </div>
 
@@ -4203,6 +4213,13 @@ function validLegacyBookContext(data){
     title:data.title.trim(),mode:'retell',phrases:[],resource_kind:'book'};
 }
 
+function validVideoOpened(data){
+  if(!data||typeof data!=='object'||Array.isArray(data))return null;
+  if(Object.keys(data).some(key=>!['type','version','video_id','title','current_time'].includes(key)))return null;
+  if(data.type!=='speakchain-video-opened'||data.version!=='v1')return null;
+  return normalizeLibraryVideo(data);
+}
+
 function authorizedPlayerMessage(event){
   const playerOverlay=$('#ov-player'),host=$('#ov-player-host');
   const frame=host?.querySelector(':scope > iframe[title="SpeakChain Player"]');
@@ -4229,6 +4246,11 @@ async function launchPlayerConversation(context,source){
 
 window.addEventListener('message', async event => {
   if (event.origin !== location.origin) return;
+  if(event.data?.type==='speakchain-video-opened'){
+    if(!authorizedPlayerMessage(event))return;
+    const video=validVideoOpened(event.data);if(video)saveVideoLibraryItem(video);
+    return;
+  }
   if(event.data?.type==='speakchain-practice-phrase'){
     closeOv();
     await go('s-buddy');
@@ -4241,6 +4263,7 @@ window.addEventListener('message', async event => {
     if(!authorizedPlayerMessage(event))return;
     const context=validVideoContext(event.data);
     if(!context)return;
+    saveVideoLibraryItem(context);
     /* The player button promises an immediate conversation. Previously this
        branch only remembered the context and left the learner inside the
        player with no visible transition. Suppress the redundant post-player
@@ -4283,6 +4306,59 @@ const PROFILE_SUPPORT_BOT_URL='https://t.me/SpeakChain_bot';
 const PROFILE_NOTIFICATION_PREFS=new Set(['evening','on_request','off']);
 const PROFILE_PWA_ACCESS_KEY='speakchain.pwa.access.v1';
 const PROFILE_SETTINGS_SAVE_TIMEOUT_MS=8000;
+const VIDEO_LIBRARY_KEY='speakchain.video.library.v1';
+function videoLibraryStorageKey(){return VIDEO_LIBRARY_KEY+'.'+(UID||'guest');}
+function normalizeLibraryVideo(raw){
+  if(!raw||typeof raw!=='object')return null;
+  const videoId=String(raw.video_id||raw.videoId||raw.youtube_id||raw.id||'').trim();
+  if(!/^[A-Za-z0-9_-]{11}$/.test(videoId))return null;
+  const title=String(raw.title||raw.video_title||raw.name||'YouTube відео').trim()
+    .replace(/[\u0000-\u001f\u007f-\u009f]/g,' ').slice(0,160)||'YouTube відео';
+  const position=Math.max(0,Math.min(86400,Number(raw.position_sec??raw.current_time??raw.last_position_sec)||0));
+  const updated=Number(raw.updated_at||raw.saved_at)||Date.now();
+  return {video_id:videoId,title,position_sec:Math.floor(position),updated_at:updated};
+}
+function readVideoLibrary(){
+  try{
+    const parsed=JSON.parse(localStorage.getItem(videoLibraryStorageKey())||'[]');
+    return Array.isArray(parsed)?parsed.map(normalizeLibraryVideo).filter(Boolean).slice(0,24):[];
+  }catch(e){return [];}
+}
+function writeVideoLibrary(items){
+  try{localStorage.setItem(videoLibraryStorageKey(),JSON.stringify(items.slice(0,24)));}catch(e){}
+}
+function saveVideoLibraryItem(raw){
+  const item=normalizeLibraryVideo(raw);if(!item)return false;
+  const items=readVideoLibrary().filter(video=>video.video_id!==item.video_id);
+  items.unshift(item);writeVideoLibrary(items);renderVideoLibrarySummary(items);return true;
+}
+function seedVideoLibrary(D,H){
+  const backend=[D?.video_library,D?.recent_videos,H?.video_library,H?.recent_videos]
+    .find(Array.isArray)||[];
+  backend.slice().reverse().forEach(saveVideoLibraryItem);
+  saveVideoLibraryItem({video_id:H?.last_video_id||D?.last_video_id,
+    title:H?.last_video_title||D?.last_video_title,
+    position_sec:H?.last_video_position_sec||D?.last_video_position_sec});
+}
+function renderVideoLibrarySummary(items){
+  const videos=items||readVideoLibrary(),count=videos.length;
+  const meta=$('#video-library-meta');if(meta)meta.textContent=count+' '+plur(count,'відео','відео','відео');
+  const subtitle=$('#video-library-subtitle');
+  if(subtitle)subtitle.textContent=count?('Останнє: '+videos[0].title):'Відкрий відео — і воно збережеться тут';
+}
+function renderVideoLibrary(){
+  const host=$('#video-library-list');if(!host)return;
+  const videos=readVideoLibrary();renderVideoLibrarySummary(videos);
+  if(!videos.length){host.innerHTML='<div class="video-library-empty">Бібліотека поки порожня.<br>Додай власне відео або почни відеоурок — воно з’явиться тут автоматично.</div>';return;}
+  host.innerHTML=videos.map(video=>'<button class="mi" type="button" onclick="openLibraryVideo(\''+video.video_id+'\')">'
+    +'<span class="ic">▶️</span><span class="body"><span class="t">'+esc(video.title)+'</span>'
+    +'<span class="s">YouTube'+(video.position_sec?' · продовжити з '+Math.floor(video.position_sec/60)+':'+String(video.position_sec%60).padStart(2,'0'):'')+'</span></span><span class="ch">›</span></button>').join('');
+}
+function openVideoLibrary(){renderVideoLibrary();openOv('ov-video-library');}
+function openLibraryVideo(videoId){
+  const video=readVideoLibrary().find(item=>item.video_id===videoId);if(!video)return;
+  closeOv();setTimeout(()=>openPlayer('https://www.youtube.com/watch?v='+video.video_id,video.position_sec||0),0);
+}
 const PROFILE_SETTINGS_STATE={
   utcOffset:null,notificationPref:null,saving:false,generation:0,
   revision:0,controller:null,pendingDraft:null,retryRequest:null
@@ -4683,6 +4759,8 @@ async function renderProfile(){
     +info.feats.map(([ok,t])=>F(ok,t)).join('')+'</div>';
 
   renderProfileSettings(D,H);
+  seedVideoLibrary(D,H);
+  renderVideoLibrarySummary();
   renderProfileLottery();
   renderRoleWorkspace(D,H);
 }
