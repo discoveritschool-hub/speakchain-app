@@ -499,6 +499,17 @@ const test = base.extend({
         await route.fulfill(json({ error: 'invalid_word_lookup_fixture_body' }, 400));
         return;
       }
+      if (url.pathname === '/buddy_status') {
+        await route.fulfill(json({
+          ok: true,
+          max_messages: 20,
+          msg_count: 0,
+          remaining: 20,
+          history: [],
+          memory_enabled: false
+        }));
+        return;
+      }
       if (url.pathname === '/buddy_chat') {
         await route.fulfill(json({
           reply: 'Exactly. Tell me how daily practice helps you make progress.',

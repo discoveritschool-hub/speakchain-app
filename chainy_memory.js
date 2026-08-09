@@ -94,8 +94,8 @@
     if (enabled) enabled.hidden = !state.enabled;
     if (disabledSummary) {
       disabledSummary.textContent = state.itemCount > 0
-        ? `Є раніше збережені записи: ${state.itemCount}. До згоди Chainy їх не використовує.`
-        : 'До згоди вміст пам’яті не відображається.';
+        ? `Є раніше збережені довготривалі записи: ${state.itemCount}. До згоди Chainy їх не використовує.`
+        : 'Короткий контекст і тема розмови зберігаються автоматично. Довготривалі персональні факти вимкнені.';
     }
     const list = el('chainy-memory-list');
     if (state.enabled) renderMemoryItems();
@@ -217,9 +217,9 @@
     runMutation('delete_all', {}, 'Видаляємо всю пам’ять…', 'Усю пам’ять Chainy видалено.');
   };
   window.disableChainyMemory = function disableChainyMemory() {
-    const warning = 'Вимкнути пам’ять? Це зупинить пам’ять і видалить збережену історію та факти Chainy. Цю дію не можна скасувати.';
+    const warning = 'Вимкнути довготривалу пам’ять? Збережену історію та персональні факти буде видалено. Короткий контекст автоматично з’явиться з наступною новою розмовою.';
     if (!window.confirm(warning)) return;
-    runMutation('disable', {}, 'Вимикаємо й очищаємо пам’ять…', 'Пам’ять вимкнено, збережену історію та факти Chainy видалено.');
+    runMutation('disable', {}, 'Вимикаємо й очищаємо пам’ять…', 'Довготривалу пам’ять вимкнено, збережену історію та факти видалено.');
   };
 
   document.addEventListener('keydown', event => {

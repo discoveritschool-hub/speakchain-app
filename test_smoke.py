@@ -1352,8 +1352,8 @@ def test_interactive_captions_and_vocabulary_workspace():
 
 
 def test_chainy_memory_controls_contract():
-    """Memory controls stay authenticated, explicit, accessible and injection-safe."""
-    section("Chainy — явна згода й керування пам’яттю")
+    """Long-term fact controls stay explicit; short context resumes automatically."""
+    section("Chainy — автоматичний контекст і керування довгою пам’яттю")
     buddy = (ROOT / "speaking_buddy.html").read_text(encoding="utf-8")
     memory_path = ROOT / "chainy_memory.js"
     memory = memory_path.read_text(encoding="utf-8") if memory_path.exists() else ""
@@ -1362,7 +1362,7 @@ def test_chainy_memory_controls_contract():
         'id="chainy-memory-overlay" role="dialog" aria-modal="true"',
         'id="chainy-memory-consent-check" type="checkbox"',
         'onclick="openChainyMemory()" aria-haspopup="dialog"',
-        "До згоди Chainy не використовує наявну й не зберігає нову міжсесійну пам’ять.",
+        "Короткий контекст поточної розмови й основна тема зберігаються автоматично",
         'id="chainy-memory-disabled-summary"', "Видалити наявні дані",
         "Вимкнення зупиняє пам’ять і видаляє збережену історію та факти Chainy.",
         '<script src="chainy_memory.js"></script>',
@@ -1376,7 +1376,7 @@ def test_chainy_memory_controls_contract():
         "runMutation('disable'", "text.textContent = item.text", "list.replaceChildren()",
         "typeof data?.error === 'string'", "error.code = code",
         "state.items = state.enabled ? receivedItems : []", "else list?.replaceChildren()",
-        "state.itemCount > 0", "До згоди вміст пам’яті не відображається.",
+        "state.itemCount > 0", "Короткий контекст і тема розмови зберігаються автоматично.",
         "if (!state.open || state.busy) return", "state.returnFocus?.focus?.()", "event.key === 'Escape'",
     )
     missing = [f"html:{marker}" for marker in buddy_markers if marker not in buddy]
