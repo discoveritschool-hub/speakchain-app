@@ -19,6 +19,19 @@ async function expectFreeConversation(page) {
   await expect(page.locator('#ov-buddy-host #s-home')).not.toHaveClass(/\bactive\b/);
 }
 
+test('fresh PWA notification waits behind sign-in without protected requests', async ({ appPage: page, scenario }) => {
+  await page.goto('/index_v2.html?s=s-buddy&practice_mode=free_conversation');
+  await criticalAssertion('deeplink.free_conversation_pre_auth_fail_closed', async () => {
+    await expect(page.locator('#sc-auth-gate')).toBeVisible();
+    await expect(page.locator('#s-buddy')).toHaveClass(/\bon\b/);
+    await expect(page.locator('#ov-buddy')).not.toHaveClass(/\bon\b/);
+  });
+  await page.waitForTimeout(1200);
+  expect(scenario.requests.filter(request =>
+    request.path === '/miniapp_payload' || request.path === '/buddy_realtime_token'
+  )).toEqual([]);
+});
+
 for (const entry of [
   { name: 'PWA', install: installBrowserSession },
   { name: 'Telegram', install: installTelegramMiniApp }
