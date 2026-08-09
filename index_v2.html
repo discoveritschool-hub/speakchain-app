@@ -5836,8 +5836,7 @@ try{
 // Fullscreen was added in Mini Apps 8.0. telegram-web-app.js exposes a
 // compatibility method even while emulating version 6.0 in a plain browser;
 // calling that method logs an SDK error. Check the negotiated capability, not
-// only the presence of the JavaScript function. Do not swallow errors from a
-// client that claims support: those are real runtime failures worth reporting.
+// only the presence of the JavaScript function.
 function telegramVersionAtLeast(tg, minimum){
   if(!tg)return false;
   if(typeof tg.isVersionAtLeast==='function'){
@@ -5856,7 +5855,21 @@ function canRequestTelegramFullscreen(tg){
   return Boolean(tg&&typeof tg.requestFullscreen==='function'&&telegramVersionAtLeast(tg,'8.0'));
 }
 window.SC_canRequestTelegramFullscreen=canRequestTelegramFullscreen;
-if(canRequestTelegramFullscreen(TG))TG.requestFullscreen();
+function reportTelegramFullscreenFailure(error){
+  const report={
+    source:'telegram.requestFullscreen',
+    message:String(error?.message||error||'Unknown error').slice(0,240)
+  };
+  // Keep diagnostics observable without allowing a noisy client to grow this
+  // buffer without bound. This is intentionally local to the optional SDK call.
+  const reports=window.SC_RUNTIME_REPORTS||(window.SC_RUNTIME_REPORTS=[]);
+  if(reports.length<10)reports.push(report);
+  console.warn('[SpeakChain] Telegram fullscreen unavailable:',report.message);
+}
+if(canRequestTelegramFullscreen(TG)){
+  try{TG.requestFullscreen();}
+  catch(error){reportTelegramFullscreenFailure(error);}
+}
 
 // 22.07: safe area в fullscreen — Bot API 8.0+.
 //

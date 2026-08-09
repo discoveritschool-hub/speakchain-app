@@ -165,7 +165,10 @@ function installTelegramMiniApp(context, userId = 9001, options = {}) {
         version,
         isVersionAtLeast: versionAtLeast,
         ready() {}, expand() {},
-        requestFullscreen() { window.__telegramFullscreenCalls = (window.__telegramFullscreenCalls || 0) + 1; },
+        requestFullscreen() {
+          window.__telegramFullscreenCalls = (window.__telegramFullscreenCalls || 0) + 1;
+          if (options.fullscreenThrows) throw new Error(String(options.fullscreenThrows));
+        },
         setHeaderColor() {}, setBackgroundColor() {},
         close() { window.__telegramCloseCalled = true; },
         sendData(data) { (window.__telegramSendData ||= []).push(data); },

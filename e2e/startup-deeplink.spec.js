@@ -44,7 +44,16 @@ test('Telegram buddy deep link survives delayed payloads and uses supported full
   scenario.payloadDelays.set('s-home', 1600);
   scenario.payloadDelays.set('s-buddy', 80);
 
-  await page.goto('/index_v2.html?s=s-buddy');
+  // Start a real slow Home request, then reproduce a TMA deep-link handoff
+  // while that stale response is still in flight.
+  await page.goto('/index_v2.html?s=s-home');
+  await expect.poll(() => scenario.requests.filter(request =>
+    request.path.endsWith('/miniapp_payload') && request.body.screen === 's-home'
+  ).length).toBeGreaterThan(0);
+  await page.evaluate(() => {
+    history.replaceState(null, '', '/index_v2.html?s=s-buddy');
+    return go('s-buddy');
+  });
   await expect(page.locator('#s-buddy')).toHaveClass(/\bon\b/, { timeout: 350 });
   await expect(page.locator('#s-home')).not.toHaveClass(/\bon\b/);
   await expect.poll(() => page.evaluate(() => window.__telegramFullscreenCalls || 0)).toBe(1);
@@ -67,4 +76,25 @@ test('Telegram 6.0 capability guard never calls the exposed unsupported fullscre
     }),
     sdk: window.SC_canRequestTelegramFullscreen(window.Telegram.WebApp)
   }))).toEqual({ six: false, eight: true, sdk: false });
+});
+
+test('Telegram 8.0 fullscreen failure is reported without blocking a deep link', async ({ appPage: page, context }) => {
+  await installTelegramMiniApp(context, 9001, {
+    version: '8.0',
+    fullscreenThrows: 'fullscreen denied by client'
+  });
+  const warnings = [];
+  page.on('console', message => {
+    if (message.type() === 'warning') warnings.push(message.text());
+  });
+
+  await page.goto('/index_v2.html?s=s-buddy');
+  await expect(page.locator('#s-buddy')).toHaveClass(/\bon\b/, { timeout: 350 });
+  await expect(page.locator('#s-home')).not.toHaveClass(/\bon\b/);
+  expect(await page.evaluate(() => window.__telegramFullscreenCalls || 0)).toBe(1);
+  expect(await page.evaluate(() => window.SC_RUNTIME_REPORTS)).toEqual([{
+    source: 'telegram.requestFullscreen',
+    message: 'fullscreen denied by client'
+  }]);
+  expect(warnings.filter(message => message.includes('Telegram fullscreen unavailable'))).toHaveLength(1);
 });
