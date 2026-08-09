@@ -6,6 +6,8 @@
   const REFRESH_KEY = 'speakchain.pwa.refresh.v1';
   const EXP_KEY = 'speakchain.pwa.access.exp.v1';
   const USER_KEY = 'speakchain.pwa.user.v1';
+  const PROVIDER_KEY = 'speakchain.pwa.provider.v1';
+  const ACCOUNT_LINK_PATHS = new Set(['/api/v1/account-link/intents', '/api/v1/account-link/complete']);
   const LIVE_ROOMS_ENABLED = false;
   const nativeFetch = window.fetch.bind(window);
   let installPrompt = null;
@@ -51,10 +53,12 @@
       if (data.refresh_token) localStorage.setItem(REFRESH_KEY, data.refresh_token);
       if (data.expires_at) localStorage.setItem(EXP_KEY, data.expires_at);
       if (data.user_id) localStorage.setItem(USER_KEY, String(data.user_id));
+      const provider = String(data?.profile?.provider || data?.provider || '').toLowerCase();
+      if (provider === 'google' || provider === 'telegram') localStorage.setItem(PROVIDER_KEY, provider);
     } catch (_) {}
   }
   function clearSession() {
-    try { [ACCESS_KEY, REFRESH_KEY, EXP_KEY, USER_KEY].forEach(key => localStorage.removeItem(key)); } catch (_) {}
+    try { [ACCESS_KEY, REFRESH_KEY, EXP_KEY, USER_KEY, PROVIDER_KEY].forEach(key => localStorage.removeItem(key)); } catch (_) {}
   }
   function resumeStoredSession(source) {
     if (!accessValid()) return null;
@@ -107,6 +111,7 @@
     const telegramUserId = Number(webApp?.initDataUnsafe?.user?.id || 0);
     try {
       const data = await jsonPost('/api/v1/session', {init_data: initData});
+      data.provider = 'telegram';
       writeSession(data);
       return {authenticated: true, source: 'telegram', userId: Number(data.user_id || telegramUserId)};
     } catch (error) {
@@ -196,6 +201,47 @@
     } catch (error) {
       authStatus(error.message || 'Не вдалося увійти через Google.', true);
       throw error;
+    }
+  }
+  async function config() {
+    if (authConfig) return Object.assign({}, authConfig);
+    authConfig = await jsonPost('/api/v1/session/config', {}, {timeout: 12000});
+    return Object.assign({}, authConfig);
+  }
+  async function authenticatedPost(path, body, options) {
+    if (!ACCOUNT_LINK_PATHS.has(path)) throw new Error('Unsupported authenticated endpoint.');
+    if (!accessValid()) await restoreSession();
+    const accessToken = read(ACCESS_KEY);
+    if (!accessToken) {
+      const error = new Error('Увійдіть знову, щоб продовжити.');
+      error.code = 'linking_unavailable';
+      throw error;
+    }
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), Number(options?.timeout || 15000));
+    try {
+      const response = await nativeFetch(apiBase() + path, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + accessToken},
+        body: JSON.stringify(body || {}), signal: controller.signal
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        const error = new Error(data?.error?.message || 'Запит не виконано.');
+        error.code = data?.error?.code || ('account_link_' + response.status);
+        error.status = response.status;
+        throw error;
+      }
+      return data;
+    } catch (error) {
+      if (error?.name === 'AbortError') {
+        const timeoutError = new Error('Сервер не відповів вчасно.');
+        timeoutError.code = 'account_link_timeout';
+        throw timeoutError;
+      }
+      throw error;
+    } finally {
+      clearTimeout(timeout);
     }
   }
   function renderGoogleButton(clientId, attempt) {
@@ -359,5 +405,8 @@
     hasSession: accessValid,
     refresh: ensureSession,
     userId: () => Number(read(USER_KEY)) || 0,
+    provider: () => window.Telegram?.WebApp?.initData ? 'telegram' : read(PROVIDER_KEY),
+    config,
+    authenticatedPost,
   };
 })();

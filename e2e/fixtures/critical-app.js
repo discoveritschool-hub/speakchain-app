@@ -1,4 +1,13 @@
 const { test: base, expect } = require('@playwright/test');
+const backendAuthConfigContract = require('../../contracts/backend-pwa-auth-config.json');
+
+const authConfigContract = backendAuthConfigContract.endpoint_contract;
+const ACCOUNT_LINKING_CONFIG_KEY = 'account_linking_enabled';
+if (authConfigContract?.path !== '/api/v1/session/config'
+    || authConfigContract?.authentication !== 'public'
+    || !authConfigContract?.response_required?.includes(ACCOUNT_LINKING_CONFIG_KEY)) {
+  throw new Error('Backend PWA auth-config manifest does not expose account_linking_enabled');
+}
 
 const FIXED_NOW = '2026-08-07T12:00:00.000Z';
 const LOCAL_ORIGIN = `http://127.0.0.1:${Number(process.env.SPEAKCHAIN_E2E_PORT || 4173)}`;
@@ -123,14 +132,15 @@ function sdkStub(request, url) {
   return null;
 }
 
-function installBrowserSession(context, userId = 7001) {
-  return context.addInitScript(({ now, uid }) => {
+function installBrowserSession(context, userId = 7001, provider = 'google') {
+  return context.addInitScript(({ now, uid, provider }) => {
     localStorage.setItem('speakchain.pwa.access.v1', 'access-stored');
     localStorage.setItem('speakchain.pwa.refresh.v1', 'refresh-stored');
     localStorage.setItem('speakchain.pwa.access.exp.v1', '2026-08-08T12:00:00.000Z');
     localStorage.setItem('speakchain.pwa.user.v1', String(uid));
+    localStorage.setItem('speakchain.pwa.provider.v1', provider);
     window.__SPEAKCHAIN_E2E_NOW = now;
-  }, { now: FIXED_NOW, uid: userId });
+  }, { now: FIXED_NOW, uid: userId, provider });
 }
 
 function installTelegramMiniApp(context, userId = 9001) {
@@ -170,6 +180,10 @@ const test = base.extend({
         utc_offset: 2, notification_pref: 'evening',
         profile_settings_revision: 0
       },
+      accountLinkingEnabled: false,
+      accountLinkRouteAbsent: false,
+      accountLinkIntentResponses: [],
+      accountLinkCompleteResponses: [],
       sessionMode: 'success',
       pageErrors: [],
       consoleErrors: [],
@@ -294,7 +308,45 @@ const test = base.extend({
       }
 
       if (url.pathname === '/api/v1/session/config') {
-        await route.fulfill(json({ google_client_id: '', telegram_bot_username: 'SpeakChain_bot' }));
+        await route.fulfill(json({
+          google_client_id: 'google-client-e2e',
+          telegram_bot_username: 'SpeakChain_bot',
+          [ACCOUNT_LINKING_CONFIG_KEY]: scenario.accountLinkingEnabled
+        }));
+        return;
+      }
+      if (url.pathname === '/api/v1/account-link/intents') {
+        if (scenario.accountLinkRouteAbsent) {
+          await route.fulfill(json({ error: { code: 'not_found', message: 'Not found' } }, 404));
+          return;
+        }
+        const planned = scenario.accountLinkIntentResponses.shift();
+        if (planned?.delayMs) await new Promise(resolve => setTimeout(resolve, planned.delayMs));
+        if (planned && Number(planned.status || 200) >= 400) {
+          await route.fulfill(json({ error: { code: planned.code, message: planned.message || 'fixture error' } }, planned.status));
+          return;
+        }
+        await route.fulfill(json(planned?.body || {
+          ok: true, link_token: 'intent-token-e2e', expires_in: 600,
+          target_provider: body.target_provider
+        }));
+        return;
+      }
+      if (url.pathname === '/api/v1/account-link/complete') {
+        const planned = scenario.accountLinkCompleteResponses.shift();
+        if (planned?.delayMs) await new Promise(resolve => setTimeout(resolve, planned.delayMs));
+        if (planned && Number(planned.status || 200) >= 400) {
+          await route.fulfill(json({ error: { code: planned.code, message: planned.message || 'fixture error' } }, planned.status)).catch(() => {});
+          return;
+        }
+        await route.fulfill(json(planned?.body || {
+          ok: true, outcome: 'merged', canonical_user_id: 7001,
+          merge_id: 'merge-e2e', replayed: false
+        })).catch(() => {});
+        return;
+      }
+      if (url.pathname === '/api/v1/notifications') {
+        await route.fulfill(json({ok: true, notifications: [], unread_count: 0, next_cursor: null}));
         return;
       }
       if (url.pathname === '/api/v1/session') {
@@ -474,7 +526,7 @@ const test = base.extend({
       'Only explicitly induced fixture HTTP failures may reach the console'
     ).toBeLessThanOrEqual(scenario.allowedHttpConsoleErrors);
     for (const message of scenario.consoleErrors) {
-      expect(message).toMatch(/^Failed to load resource: the server responded with a status of (?:409|503) /);
+      expect(message).toMatch(/^Failed to load resource: the server responded with a status of (?:404|409|410|503) /);
     }
   }
 });

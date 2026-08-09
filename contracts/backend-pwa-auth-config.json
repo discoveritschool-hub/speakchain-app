@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "source_repository": "discoveritschool-hub/-speakchain-bot-",
+  "source_commit": "c14bf146d57118933b5ac5952189f281212d50fa",
+  "endpoint_contract": {
+    "name": "pwa-auth-config",
+    "method": "POST",
+    "path": "/api/v1/session/config",
+    "authentication": "public",
+    "request_required": [],
+    "response_required": [
+      "ok",
+      "google_client_id",
+      "telegram_bot_username",
+      "account_linking_enabled"
+    ]
+  },
+  "account_linking_enabled": {
+    "type": "boolean",
+    "default": false,
+    "meaning": "effective backend route-registration gate"
+  }
+}
