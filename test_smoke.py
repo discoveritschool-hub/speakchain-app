@@ -1620,6 +1620,28 @@ def test_player_bounded_seek_behavior():
             ok("Node behavior proves +/-10, clamp, unavailable, timing, dedup, reuse and safe bounds")
 
 
+def test_feedback_round_notes_chains_and_video_challenge():
+    shell = SHELL.read_text(encoding="utf-8", errors="ignore")
+    buddy = (ROOT / "speaking_buddy.html").read_text(encoding="utf-8", errors="ignore")
+    required = (
+        "Math.max(px('--tg-content-safe-area-inset-top'),px('--tg-safe-area-inset-top'))",
+        "if(isFullscreen)top=Math.max(top,68)",
+        'id="soc-tab-chains"', 'id="social-chain-panel"',
+        "if(area==='chain'){await go('s-social');socialTab('chains');return;}",
+        'id="chainy-notes-panel"', "chainy_note_save", "chainy_notes_list",
+        'id="weekly-challenge-video"', "There is no sample video. Never say or imply",
+    )
+    missing = [marker for marker in required if marker not in shell]
+    if missing:
+        fail(f"feedback-round frontend contract incomplete: {missing}")
+    elif "if(sid==='s-listen') await openPlayer();" in shell:
+        fail("Practice tab still skips the notes hub and auto-opens the player")
+    elif "session_topic:" not in buddy or "session_topic:" not in shell:
+        fail("Chainy session topic is not synchronized into the shell module")
+    else:
+        ok("safe header, Practice notes, Community Chains and grounded video challenge are wired")
+
+
 def main():
     print("\033[1m" + "═" * 58)
     print("  SpeakChain — смоук-тести")
@@ -1659,6 +1681,7 @@ def main():
     test_day1_onboarding_accessibility_contract()
     test_progress_security_accessibility_contract()
     test_player_bounded_seek_behavior()
+    test_feedback_round_notes_chains_and_video_challenge()
 
     print("\n" + "═" * 58)
     if FAILS:
