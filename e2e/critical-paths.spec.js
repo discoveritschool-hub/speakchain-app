@@ -82,6 +82,35 @@ test('native keyboard navigation reaches Chainy, Progress and Profile', async ({
   await expect(page.locator('#p-nm')).toHaveText('E2E Learner');
 });
 
+test('Telegram native navigation reaches Chainy, Progress and Profile with initData identity', async ({ appPage: page, context, scenario }) => {
+  scenario.sessionMode = 'unavailable';
+  // Session handoff and the intentionally unconfigured Realtime greeting
+  // each fail closed before the verified initData/text path continues.
+  scenario.allowedHttpConsoleErrors = 2;
+  await installTelegramMiniApp(context);
+  await page.goto('/index_v2.html');
+
+  await page.locator('.nav button[data-s="s-buddy"]').click();
+  await expect(page.locator('#s-buddy')).toHaveClass(/\bon\b/);
+  await expect(page.locator('#tb-title')).toHaveText('Chainy');
+  await page.evaluate(() => window.closeOv());
+
+  await page.locator('.nav button[data-s="s-prog"]').click();
+  await expect(page.locator('#s-prog')).toHaveClass(/\bon\b/);
+  await expect(page.locator('#tb-title')).toHaveText('Прогрес');
+
+  await page.locator('#tb-profile').click();
+  await expect(page.locator('#s-profile')).toHaveClass(/\bon\b/);
+  await expect(page.locator('#p-nm')).toHaveText('E2E Learner');
+
+  const payloads = scenario.requests.filter(request => request.path === '/miniapp_payload');
+  expect(payloads.length).toBeGreaterThanOrEqual(3);
+  for (const request of payloads) {
+    expect(request.body).toMatchObject({ uid: 9001, init_data: TELEGRAM_INIT_DATA });
+    expect(request.body).not.toHaveProperty('pwa_access_token');
+  }
+});
+
 test('failed payload retries surface a recovery control and recover without reload', async ({ appPage: page, context, scenario }) => {
   scenario.payloadFailures.set('s-home', 2);
   scenario.allowedHttpConsoleErrors = 2;
@@ -98,4 +127,27 @@ test('failed payload retries surface a recovery control and recover without relo
   const homeRequests = scenario.requests.filter(request =>
     request.path === '/miniapp_payload' && request.body.screen === 's-home');
   expect(homeRequests).toHaveLength(3);
+});
+
+test('Telegram payload failure recovers without reload and preserves verified initData', async ({ appPage: page, context, scenario }) => {
+  scenario.sessionMode = 'unavailable';
+  scenario.payloadFailures.set('s-home', 2);
+  scenario.allowedHttpConsoleErrors = 3;
+  await installTelegramMiniApp(context);
+  await page.goto('/index_v2.html');
+
+  const banner = page.locator('#offline-banner');
+  await expect(banner).toBeVisible();
+  await expect(banner).toContainText('temporary fixture failure');
+  await banner.getByRole('button', { name: 'Повторити' }).click();
+
+  await expect(banner).toBeHidden();
+  await expect(page.locator('#s-home')).toHaveClass(/\bon\b/);
+  const homeRequests = scenario.requests.filter(request =>
+    request.path === '/miniapp_payload' && request.body.screen === 's-home');
+  expect(homeRequests).toHaveLength(3);
+  for (const request of homeRequests) {
+    expect(request.body).toMatchObject({ uid: 9001, init_data: TELEGRAM_INIT_DATA });
+    expect(request.body).not.toHaveProperty('pwa_access_token');
+  }
 });
