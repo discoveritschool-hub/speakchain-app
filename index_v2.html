@@ -6127,6 +6127,12 @@ const START = (function(){
   }catch(e){}
   return '';
 })();
+const PRACTICE_MODE = (function(){
+  try{
+    const value=(new URLSearchParams(location.search).get('practice_mode')||'').trim();
+    return value==='free_conversation'||value==='exercise' ? value : '';
+  }catch(e){ return ''; }
+})();
 
 /* v13.1: START тепер розуміє й ОВЕРЛЕЇ (ov-vocab, ov-invite), не лише
    5 вкладок з TABS. Раніше нагадування про повторення слів чи запрошення
@@ -6153,7 +6159,16 @@ function activateBloggerEntry(entry){
   trackUx('blogger_phrase_entry',{blogger:entry.blogger,has_video:!!entry.video});
 }
 async function activateInitialRoute(){
-  if (START === 'ov-player') {
+  if (START === 's-buddy' && PRACTICE_MODE === 'free_conversation') {
+    await go('s-buddy');
+    // Notification intent is explicit: bypass the scenario chooser and open
+    // the existing unscripted Chainy conversation contract directly.
+    await cyChat();
+  } else if (START === 's-listen' && PRACTICE_MODE === 'exercise') {
+    // Practice is the canonical structured exercise selector. Progress is a
+    // report surface and must never be used as an exercise fallback.
+    await go('s-listen');
+  } else if (START === 'ov-player') {
     await go('s-home');
     await openPlayer();
   } else if (OVERLAY_START_KEYS.indexOf(START) >= 0) {
