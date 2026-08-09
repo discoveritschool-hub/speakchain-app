@@ -2,6 +2,7 @@ const assert = require('assert');
 const crypto = require('crypto');
 const fs = require('fs');
 const vm = require('vm');
+const { buildManifest } = require('./tools/assign_scenario_ids');
 
 const source = fs.readFileSync('speaking_buddy.html', 'utf8');
 const manifest = JSON.parse(fs.readFileSync('scenario_identity_contract.json', 'utf8'));
@@ -33,6 +34,22 @@ assert.deepEqual(manifest.entries.map(item => [item.id, item.category, item.lega
 assert.equal(crypto.createHash('sha256').update(JSON.stringify(manifest.entries)).digest('hex'), manifest.catalog_hash);
 assert.equal(new Set(rows.map(row => row[0])).size, 170, 'all canonical IDs unique');
 rows.forEach(row => assert(new RegExp(manifest.canonical_id_pattern).test(row[0]), row[0]));
+
+function sourceFor(mutator) {
+  const clone = JSON.parse(JSON.stringify(catalog));
+  mutator(clone);
+  return `const SCENARIOS=${JSON.stringify(clone).slice(0, -1)}\n};`;
+}
+const originalManifestBytes = fs.readFileSync('scenario_identity_contract.json', 'utf8');
+assert.throws(() => buildManifest(sourceFor(c => c.basics.splice(1, 0, c.basics.pop())), manifest), /reorder/);
+assert.throws(() => buildManifest(sourceFor(c => c.basics.push({
+  id: 'sc.v1.basics.999', emoji: 'x', title: 'Inserted v1 scenario',
+})), manifest), /insertion\/removal|insertion/);
+assert.throws(() => buildManifest(sourceFor(c => c.basics.pop()), manifest), /insertion\/removal|removal/);
+assert.throws(() => buildManifest(sourceFor(c => { c.basics[0].id = 'sc.v1.basics.999'; }), manifest), /remap/);
+assert.throws(() => buildManifest(source, manifest, {migrateVersion: 2}), /explicit ID mapping artifact/);
+assert.equal(fs.readFileSync('scenario_identity_contract.json', 'utf8'), originalManifestBytes,
+  'rejected v1 mutations cannot rewrite the authoritative manifest');
 
 assert.equal(api.resolve('basics:0').id, 'sc.v1.basics.001');
 assert.equal(api.resolve('basics/0').id, 'sc.v1.basics.001');
