@@ -473,9 +473,9 @@
     <div id="chainy-memory-consent" hidden>
       <label class="memory-consent">
         <input id="chainy-memory-consent-check" type="checkbox">
-        <span>Я дозволяю Chainy зберігати корисні факти з моїх розмов для наступних діалогів. До згоди Chainy не використовує наявну й не зберігає нову міжсесійну пам’ять.</span>
+        <span>Я дозволяю Chainy зберігати довготривалі корисні факти про мене. Короткий контекст поточної розмови й основна тема зберігаються автоматично, щоб діалог можна було продовжити.</span>
       </label>
-      <p class="memory-state" id="chainy-memory-disabled-summary">До згоди вміст пам’яті не відображається.</p>
+      <p class="memory-state" id="chainy-memory-disabled-summary">Короткий контекст розмови працює автоматично. Довготривалі персональні факти вимкнені.</p>
       <div class="memory-actions">
         <button class="memory-btn primary" id="chainy-memory-enable" type="button" onclick="enableChainyMemory()">Увімкнути пам’ять</button>
         <button class="memory-btn danger" type="button" onclick="deleteAllChainyMemory()">Видалити наявні дані</button>
@@ -1092,6 +1092,25 @@ let history = [];
 let isLoading = false;
 let pixabayCache = {};
 
+async function refreshDailyStatus() {
+  try {
+    const res = await fetch(BOT_API + '/buddy_status', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ uid: UID, init_data: tg?.initData || '' }),
+    });
+    if (!res.ok) return;
+    const data = await res.json();
+    if (Number.isFinite(Number(data.max_msgs))) maxMsgs = Math.max(0, Number(data.max_msgs));
+    if (Number.isFinite(Number(data.msg_count))) msgCount = Math.max(0, Number(data.msg_count));
+    updateCounter();
+    return data;
+  } catch (_) {
+    // The server remains authoritative and will still enforce the limit.
+    return null;
+  }
+}
+
 async function fetchPixabayImage(query) {
   if (Object.prototype.hasOwnProperty.call(pixabayCache, query)) return pixabayCache[query];
   try {
@@ -1316,8 +1335,19 @@ function addSystemNote(text) {
   box.scrollTop = box.scrollHeight;
 }
 
-function startChainyChat() {
+async function startChainyChat() {
   stopRealtimeSession();
+  // Opening Dictionary or another temporary tool must not create a new
+  // conversation. The mounted app keeps the active transcript for the day;
+  // returning to Chainy simply reveals it again.
+  if (currentScenario?.isChainy && history.some(item => item?.role === 'user' && item?.content !== '[START]')) {
+    refreshDailyStatus();
+    showScreen('s-chat');
+    updateCounter();
+    document.getElementById('chat-messages')?.scrollTo?.({ top: 999999, behavior: 'instant' });
+    return;
+  }
+  const dailyStatus = await refreshDailyStatus();
   // Відкриваємо чат з Chainy напряму, без екрану деталей
   currentScenario = {
     catId:    'chainy',
@@ -1331,7 +1361,6 @@ function startChainyChat() {
   window.SC_CHAINY_INTEREST?.attachSessionTopic?.(currentScenario);
   selectedRole  = 'chainy';
   history       = [];
-  msgCount      = 0;
 
   const msgs = document.getElementById('chat-messages');
   msgs.innerHTML = '';
@@ -1351,6 +1380,17 @@ function startChainyChat() {
   document.getElementById('chat-name').textContent = 'Chainy';
   updateCounter();
   showScreen('s-chat');
+
+  const restored = Array.isArray(dailyStatus?.history)
+    ? dailyStatus.history.filter(item => item && ['user', 'assistant'].includes(item.role) && item.content)
+    : [];
+  if (restored.some(item => item.role === 'user')) {
+    history = restored.slice(-20);
+    restored.forEach(item => addMessage(item.role === 'user' ? 'user' : 'ai', String(item.content), []));
+    addConversationDivider('Продовжуємо сьогоднішню розмову');
+    updateCounter();
+    return;
+  }
 
   const greeting = CHAINY_GREETINGS[Math.floor(Math.random() * CHAINY_GREETINGS.length)];
   addMessage('ai', greeting, []);
@@ -1983,7 +2023,11 @@ async function sendMessage() {
       if (data.retryable) restoreFailedTurn();
       addMessage('ai', data.error, []);
     } else {
-      msgCount++;
+      if (Number.isFinite(Number(data.remaining))) {
+        msgCount = Math.max(0, maxMsgs - Number(data.remaining));
+      } else {
+        msgCount++;
+      }
       sessionMsgCount++;
       updateCounter();
       history.push({ role: 'assistant', content: data.reply });
@@ -2165,14 +2209,9 @@ function syncRealtimeMemory(userText, assistantText) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      uid: UID,
-      init_data: tg?.initData || '',
+      ...realtimePayload(),
       user_text: userText || '',
       assistant_text: assistantText || '',
-      scenario: currentScenario?.title || '',
-      scenario_id: currentScenario?.id || null,
-      scenario_catalog_version: currentScenario?.id ? SCENARIO_CATALOG_VERSION : null,
-      scenario_catalog_hash: currentScenario?.id ? SCENARIO_CATALOG_HASH : null,
     }),
   }).catch(() => {});
 }
