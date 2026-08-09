@@ -378,6 +378,10 @@ const test = base.extend({
         }
         return;
       }
+      if (url.pathname === '/api/v1/notifications') {
+        await route.fulfill(json({ items: [], unread: 0, push: {} }));
+        return;
+      }
       if (url.pathname === '/miniapp_action') {
         if (body.action === 'profile_settings_update') {
           const planned = scenario.profileMutationResponses.shift();
