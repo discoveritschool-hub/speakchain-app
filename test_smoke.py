@@ -1642,6 +1642,7 @@ def test_feedback_round_notes_chains_and_video_challenge():
         "if(isFullscreen)top=Math.max(top,fullscreenChromeTop)",
         "bottom:calc(10px + var(--sc-safe-bottom))",
         "border-radius:24px",
+        ".overlay{position:absolute;inset:0;background:rgba(8,8,12,.82);z-index:80",
         'data-s="s-home" aria-label="Сьогодні"',
         'data-s="s-listen" aria-label="Практика"',
         'data-s="s-buddy" aria-label="Chainy"',
