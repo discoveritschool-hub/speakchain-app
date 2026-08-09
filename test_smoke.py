@@ -1109,7 +1109,7 @@ def test_own_video_is_visible_and_uses_the_shared_learning_loop():
         'id="paste-url"',
         "function openPasted()",
         "function extractYtId(raw)",
-        "type: 'speakchain-video-context'",
+        "type:'speakchain-video-completed'",
         "sessionSavedPhrases.slice(-5)",
     )
     missing = [marker for marker in markers if marker not in shell]

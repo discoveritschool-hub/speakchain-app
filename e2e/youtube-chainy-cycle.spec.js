@@ -125,20 +125,24 @@ async function runOwnVideoCycle(page, context, scenario, surface) {
   await expect(page.locator('#ov-buddy')).not.toHaveClass(/\bon\b/);
   expect(byPath(scenario, '/buddy_realtime_token')).toHaveLength(0);
 
-  // The player's real click wins. A second valid message queued by the same
-  // frame becomes stale as soon as the first transition detaches that frame.
+  // Finishing a phrase inside the player must not open Chainy. The prompt is
+  // unlocked only after the video reports ENDED and the player is closed.
   await player.locator('body').evaluate((_, data) => {
-    document.getElementById('speak-with-chainy').addEventListener('click', () => {
-      window.parent.postMessage(data, window.location.origin);
-    });
-  }, { ...validContext, title: 'rapid duplicate must be ignored' });
+    window.parent.postMessage({ ...data, type: 'speakchain-video-completed', mode: 'discuss' }, window.location.origin);
+  }, validContext);
+  await expect(page.locator('#ov-player')).toHaveClass(/\bon\b/);
+  await expect(page.locator('#ov-buddy')).not.toHaveClass(/\bon\b/);
 
-  const speak = player.locator('#speak-with-chainy');
+  const finishVideo = player.locator('#finish-btn');
+  await finishVideo.focus();
+  await expect(finishVideo).toBeFocused();
+  await finishVideo.press('Enter');
+  await expect(page.locator('#ov-player')).not.toHaveClass(/\bon\b/);
+  await expect(page.locator('#speak-nudge')).toHaveClass(/\bon\b/);
+  const speak = page.locator('#speak-nudge .sn-go');
   await speak.focus();
   await expect(speak).toBeFocused();
   await speak.press('Enter');
-
-  await expect(page.locator('#ov-player')).not.toHaveClass(/\bon\b/);
   await expect(page.locator('#ov-buddy')).toHaveClass(/\bon\b/);
   const buddy = page.locator('#ov-buddy-host');
   await expect(buddy.locator('#chat-messages')).toContainText(E2E_VIDEO_TITLE);
