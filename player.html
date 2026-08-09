@@ -420,10 +420,10 @@
     .practice-step { color:var(--text2); font-size:var(--fs-sm); line-height:1.4; }
     .compare-row { display:none; gap:8px; }
     .compare-row.show { display:flex; }
-    .practice-actions { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+    .practice-actions { display:grid; grid-template-columns:1fr; gap:8px; }
     .practice-actions .record-btn, .practice-actions .action-btn { width:100%; padding:11px 8px; }
     .practice-actions .action-btn, .practice-actions .record-btn { min-height:52px; }
-    .chainy-btn { width:100%; min-height:50px; border:1px solid rgba(124,110,247,.55); border-radius:var(--r); background:linear-gradient(135deg,rgba(124,110,247,.22),rgba(90,216,166,.12)); color:var(--text); font:inherit; font-weight:800; cursor:pointer; }
+    .practice-actions #play-my { display:none!important; }
 
     @media (min-width:760px) {
       body { background:linear-gradient(90deg,#11121a 0,#0d0d14 22%,#0d0d14 78%,#11121a 100%); }
@@ -577,19 +577,6 @@
   <br><button onclick="resetInactivity()" style="margin-top:6px;padding:4px 12px;border-radius:var(--r);border:none;background:var(--orange);color:#fff;font-size:var(--fs-sm);cursor:pointer">Продовжити</button>
 </div>
 
-<!-- Journey strip -->
-<div class="journey-strip" id="journey-strip" style="display:none">
-  <div class="journey-top">
-    <span class="journey-level" id="j-level">A1</span>
-    <span class="journey-goal">Ціль: C2 👑</span>
-  </div>
-  <div class="journey-track">
-    <div class="journey-fill" id="j-fill" style="width:0%"><div class="journey-thumb"></div></div>
-    <span class="journey-c2">👑</span>
-  </div>
-  <div class="journey-marks" id="j-marks"></div>
-</div>
-
 <section id="book-loop" aria-live="polite">
   <div class="book-title">📚 Book Loop</div>
   <div class="book-sub">Торкайся слова в субтитрах — воно одразу піде в SRS. Пройди цикл і перекажи сюжет Chainy.</div>
@@ -630,7 +617,6 @@
     <div class="practice-actions">
       <button class="record-btn idle" id="record-btn">🎙 Записати себе</button>
       <button class="action-btn" id="play-my" disabled hidden aria-hidden="true">▶ Почути себе</button>
-      <button class="chainy-btn" id="speak-with-chainy">💬 Проговорити з Chainy</button>
     </div>
     <button class="voice-retake" id="voice-retake">↻ Записати ще раз</button>
     <div class="rec-timer" id="rec-timer">● REC <span id="rec-secs">0:00</span></div>
@@ -814,13 +800,7 @@ async function finishSession() {
      Standalone (цей файл, без оболонки) — window.closeOv не існує,
      фолбек лишається на стару поведінку (TG.close/window.close).
      ══════════════════════════════════════════════════════════════════ */
-  const conversationBrief = {
-    type: 'speakchain-video-context', version: 'v1', video_id: videoId || '',
-    title: videoTitle || 'the video you just watched', mode: 'discuss',
-    phrases: sessionSavedPhrases.slice(-5), resource_kind: bookMode ? 'book' : 'video'
-  };
   if (window.parent && window.parent !== window) {
-    window.parent.postMessage(conversationBrief, window.location.origin);
     try { window.parent.closeOv(); } catch (_) {}
     return;
   }
@@ -1029,6 +1009,7 @@ window.onYouTubeIframeAPIReady = function() {
         },
         onStateChange: function(e) {
           if (e.data === YT.PlayerState.PLAYING) resetInactivity();
+          if (e.data === YT.PlayerState.ENDED) notifyVideoCompleted();
         },
         onError: function() { showFallback(); }
       }
@@ -1158,6 +1139,15 @@ let selectedLookupText="";
 let selectedLookupKind="word";
 let selectedLookupTranslation="";
 const sessionSavedPhrases=[];
+
+function notifyVideoCompleted(){
+  if(!window.parent||window.parent===window) return;
+  window.parent.postMessage({
+    type:'speakchain-video-completed', version:'v1', video_id:videoId||'',
+    title:videoTitle||'the video you just watched', mode:'discuss',
+    phrases:sessionSavedPhrases.slice(-5), resource_kind:bookMode?'book':'video'
+  },window.location.origin);
+}
 const waveWrap     = document.getElementById("waveform-wrap");
 const canvas       = document.getElementById("waveform");
 const recTimeLabel = document.getElementById("rec-time-label");
@@ -1165,7 +1155,6 @@ const micError     = document.getElementById("mic-error");
 const playMyBtn    = document.getElementById("play-my");
 const recAgainBtn  = document.getElementById("record-again-btn");
 const voiceRetakeBtn = document.getElementById("voice-retake");
-const speakWithChainyBtn = document.getElementById("speak-with-chainy");
 const pbWrap       = document.getElementById("playback-bar-wrap");
 const pbFill       = document.getElementById("playback-fill");
 const pbBar        = document.getElementById("playback-bar");
@@ -1173,24 +1162,6 @@ const pbCurrent    = document.getElementById("pb-current");
 const pbTotal      = document.getElementById("pb-total");
 
 document.getElementById('phrase-repeat').addEventListener('click', playOriginalSegment);
-speakWithChainyBtn.addEventListener('click', speakCurrentPhraseWithChainy);
-
-function speakCurrentPhraseWithChainy(){
-  const phrase=document.getElementById('transcript-text')?.textContent?.trim() || '';
-  const payload={type:'speakchain-video-context',version:'v1',video_id:videoId||'',
-    title:videoTitle||'this video',mode:'practice_phrase',phrases:phrase?[phrase]:[],
-    current_time:ytPlayer?.getCurrentTime?.()||0,resource_kind:bookMode?'book':'video'};
-  try { if(ytPlayer&&ytReady) ytPlayer.pauseVideo(); } catch(_) {}
-  if(window.parent&&window.parent!==window){
-    window.parent.postMessage(payload,window.location.origin);
-  }else{
-    const u=new URL('index_v2.html',location.href);
-    u.searchParams.set('s','s-buddy'); u.searchParams.set('context','video');
-    u.searchParams.set('topic',phrase||videoTitle||'video');
-    if(videoId) u.searchParams.set('vid',videoId);
-    location.href=u.toString();
-  }
-}
 
 const transcriptText=document.getElementById('transcript-text');
 transcriptText.addEventListener('click',()=>{
@@ -1647,9 +1618,9 @@ function syncCaptions(){
 function renderCaption(text) {
   const el = document.getElementById('transcript-text');
   el.replaceChildren();
-  for (const part of String(text).split(/([A-Za-z][A-Za-z'-]*)/g)) {
-    if (!part) continue;
-    if (/^[A-Za-z][A-Za-z'-]*$/.test(part)) {
+  const words=String(text).match(/[A-Za-z][A-Za-z'-]*/g)||[];
+  words.forEach((part,index) => {
+      if(index) el.appendChild(document.createTextNode(' '));
       const button = document.createElement('button');
       button.type = 'button'; button.className = 'caption-word'; button.textContent = part;
       button.title = 'Показати переклад і зберегти в словник';
@@ -1662,8 +1633,7 @@ function renderCaption(text) {
         await inspectCaptionWord(part.toLowerCase(), text);
       });
       el.appendChild(button);
-    } else el.appendChild(document.createTextNode(part));
-  }
+  });
 }
 
 async function inspectCaptionPhrase(text){
@@ -1787,66 +1757,6 @@ async function saveCaptionWord(word) {
     if (response.ok && word && !sessionSavedPhrases.includes(word)) sessionSavedPhrases.push(word);
     return response.ok;
   } catch (_) { return false; }
-}
-
-// ── Journey strip ──
-if (dataRaw){
-  try {
-    const D = JSON.parse(decodeURIComponent(dataRaw));
-    const levels  = D.levels  || ["A1","A2","B1","B2","C1","C2"];
-    const grammar = D.cefr_grammar || {};
-    const mastered  = D.mastered || [];
-    const curLevel  = D.level   || "A1";
-    const xp        = D.xp_total || 0;
-    const streak    = D.streak_days || 0;
-    const playerMin = D.player_minutes_total || 0;
-    const name      = D.name || "";
-
-    // Рахуємо загальний прогрес A1→C2
-    const allTopics  = levels.flatMap(l => grammar[l] || []);
-    const totalCount = allTopics.length;
-    const doneCount  = mastered.length;
-    const pct = totalCount ? Math.round(doneCount / totalCount * 100) : 0;
-
-    // Показуємо смужку
-    document.getElementById("journey-strip").style.display = "block";
-    document.getElementById("j-level").textContent = curLevel;
-    document.getElementById("j-fill").style.width  = pct + "%";
-
-    // Мітки рівнів
-    const marksEl = document.getElementById("j-marks");
-    levels.forEach(lvl => {
-      const topics = grammar[lvl] || [];
-      const done   = topics.filter(t => mastered.includes(t)).length;
-      const isAll  = done === topics.length && topics.length > 0;
-      const isCur  = lvl === curLevel && !isAll;
-      const el = document.createElement("span");
-      el.className = "journey-mark" + (isAll?" done":"") + (isCur?" current":"") + (lvl==="C2"&&!isAll?" goal":"");
-      el.textContent = isAll ? lvl+"✓" : lvl;
-      marksEl.appendChild(el);
-    });
-
-    // Статус-рядок під смужкою
-    const hours = Math.floor(playerMin / 60);
-    const mins  = playerMin % 60;
-    const timeStr = hours > 0 ? `${hours} год ${mins} хв` : `${mins} хв`;
-    const statsEl = document.createElement("div");
-    statsEl.style.cssText = "display:flex;gap:12px;margin-top:6px;flex-wrap:wrap;";
-    const items = [
-      { icon:"📚", val: doneCount + "/" + totalCount, label:"тем" },
-      { icon:"⚡️", val: xp,       label:"XP"        },
-      { icon:"🔥", val: streak,    label:"дн."       },
-      { icon:"⏱",  val: timeStr,   label:""          },
-    ];
-    items.forEach(it => {
-      const sp = document.createElement("span");
-      sp.style.cssText = "font-size:var(--fs-xs);color:var(--text2);font-weight:600;";
-      sp.textContent = `${it.icon} ${it.val}${it.label?" "+it.label:""}`;
-      statsEl.appendChild(sp);
-    });
-    document.getElementById("journey-strip").appendChild(statsEl);
-
-  } catch(e){}
 }
 
 // Субтитри завантажуємо після того як ytPlayer готовий

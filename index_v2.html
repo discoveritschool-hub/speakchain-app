@@ -4163,6 +4163,7 @@ async function openPlayer(url,positionSec){
 
   const host=$('#ov-player-host');
   host.innerHTML='';
+  PLAYER_VIDEO_COMPLETED=false;
   const frame=document.createElement('iframe');
   frame.title='SpeakChain Player';
   frame.allow='autoplay; encrypted-media; picture-in-picture; microphone';
@@ -4229,6 +4230,8 @@ function authorizedPlayerMessage(event){
     && event.source===frame.contentWindow);
 }
 
+let PLAYER_VIDEO_COMPLETED=false;
+
 async function launchPlayerConversation(context,source){
   const generation=++VIDEO_CHAINY_GENERATION;
   const brief=conversationBrief(context);
@@ -4248,6 +4251,14 @@ async function launchPlayerConversation(context,source){
 
 window.addEventListener('message', async event => {
   if (event.origin !== location.origin) return;
+  if(event.data?.type==='speakchain-video-completed'){
+    if(!authorizedPlayerMessage(event))return;
+    const context=validVideoContext({...event.data,type:'speakchain-video-context'});
+    if(!context)return;
+    PLAYER_VIDEO_COMPLETED=true;
+    LAST_CONVERSATION_BRIEF=conversationBrief(context);
+    return;
+  }
   if(event.data?.type==='speakchain-video-opened'){
     if(!authorizedPlayerMessage(event))return;
     const video=validVideoOpened(event.data);if(video)saveVideoLibraryItem(video);
@@ -5796,7 +5807,8 @@ function closeOv(fromHistory, videoChainyGeneration){
   /* Вийшли з плеєра — пропонуємо ГОВОРИТИ про те, що щойно дивились.
      Слухати без говоріння не дає прогресу. Маршрут «відео → Chainy»
      (startVideoChat) уже існує в мініапі — але його ніхто не кликав. */
-  if(wasPlayer) offerSpeak();
+  if(wasPlayer && PLAYER_VIDEO_COMPLETED) offerSpeak();
+  if(wasPlayer) PLAYER_VIDEO_COMPLETED=false;
   if(wasPlayer) advanceBloggerEntryAfterPlayer();
   if(wasBuddy){
     trackUx('chainy_session_close');
@@ -5926,7 +5938,7 @@ function offerSpeak(){
   /* Поле last_video_title бекенд віддає в payload s-home (додано разом
      із цією правкою). Якщо його немає — старий бот, показуємо загальний
      текст замість того, щоб мовчати. */
-  const t = (PAYLOAD['s-home']?.last_video_title || '').trim();
+  const t = (LAST_CONVERSATION_BRIEF?.title || PAYLOAD['s-home']?.last_video_title || '').trim();
   const el = $('#speak-nudge');
   if(!el) return;
   SPOKE_OFFERED = true;
