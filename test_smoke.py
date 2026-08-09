@@ -1322,7 +1322,8 @@ def test_interactive_captions_and_vocabulary_workspace():
         "init_data: TG?.initData || ''",
         "Для цього уроку інтерактивний текст ще готується.",
         "playerData.caption_events||playerData.captions?.events",
-        "CAPTION_CACHE_TTL", "toggleOwnPlayback(true)",
+        "CAPTION_CACHE_TTL", "recordBtn.addEventListener('pointerdown'",
+        "fetch(`${apiBase}/vocab_data`", "saveActivePhraseFromToolbar",
     )
     vocab_markers = (
         'id="tab-words"', 'id="tab-phrases"', 'id="word-detail"',

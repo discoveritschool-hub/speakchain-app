@@ -499,6 +499,28 @@ const test = base.extend({
         await route.fulfill(json({ error: 'invalid_word_lookup_fixture_body' }, 400));
         return;
       }
+      if (url.pathname === '/player_action') {
+        if (body.action !== 'save_phrase' || typeof body.phrase !== 'string' || !body.phrase.trim()) {
+          scenario.unexpected.push(`POST ${url.pathname} invalid_body`);
+          await route.fulfill(json({ error: 'invalid_player_action_fixture_body' }, 400));
+          return;
+        }
+        await route.fulfill(json({ ok: true }));
+        return;
+      }
+      if (url.pathname === '/vocab_data') {
+        const phrases = scenario.requests
+          .filter(entry => entry.path === '/player_action' && entry.body?.action === 'save_phrase')
+          .map(entry => ({
+            phrase: entry.body.phrase,
+            translation_uk: entry.body.translation || '',
+            video_id: entry.body.video_id || '',
+            video_title: entry.body.video_title || '',
+            video_time: Number(entry.body.current_time || 0)
+          }));
+        await route.fulfill(json({ phrases, due: [] }));
+        return;
+      }
       if (url.pathname === '/buddy_status') {
         await route.fulfill(json({
           ok: true,

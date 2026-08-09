@@ -213,7 +213,20 @@
     .caption-status.ready::before { background:var(--green); box-shadow:0 0 0 4px rgba(90,216,166,.1); }
     .caption-retry { border:0; background:transparent; color:var(--purple-text); font:inherit; font-size:var(--fs-sm); font-weight:700; cursor:pointer; padding:7px; }
     .transcript-label { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); }
-    #transcript-overlay { min-height:64px; display:grid; place-items:center; }
+    #transcript-overlay { min-height:64px; display:grid; place-items:center; min-width:0; }
+    .phrase-toolbar { display:grid; grid-template-columns:44px minmax(0,1fr) 44px 52px; gap:7px; align-items:center; }
+    .phrase-tool {
+      min-width:44px; min-height:44px; border:1px solid var(--line); border-radius:50%;
+      background:var(--bg-card2); color:var(--text); font:inherit; font-size:20px; font-weight:800;
+      display:grid; place-items:center; cursor:pointer; touch-action:manipulation; position:relative;
+    }
+    .phrase-tool:focus-visible { outline:2px solid var(--purple); outline-offset:2px; }
+    .phrase-tool.saved { color:var(--green); border-color:rgba(90,216,166,.55); background:rgba(90,216,166,.1); }
+    .vocab-count {
+      position:absolute; top:-5px; right:-5px; min-width:20px; height:20px; padding:0 5px;
+      border-radius:999px; background:var(--purple); color:#fff; font-size:10px; line-height:20px;
+      border:2px solid var(--bg-card);
+    }
     #transcript-text {
       font-size:clamp(18px,2.5vw,25px); font-weight:700; color:#fff; text-align:center; line-height:1.45;
       transition:opacity 0.2s; max-width:100%; cursor:pointer; padding:6px; border-radius:var(--r);
@@ -223,9 +236,8 @@
     .caption-word { position:relative; z-index:1; border:0; padding:5px 3px; margin:-3px 0; background:transparent; color:inherit; font:inherit; cursor:pointer; touch-action:manipulation; }
     .caption-word:hover, .caption-word:active { color:var(--gold); text-decoration:underline; }
     .caption-word:focus-visible { outline:2px solid var(--gold); outline-offset:2px; border-radius:3px; }
-    .phrase-nav { display:grid; grid-template-columns:44px minmax(0,1fr) 44px; gap:8px; margin-top:10px; }
-    .phrase-nav button { min-height:44px; border:1px solid var(--line); border-radius:var(--r); background:var(--bg-card2); color:var(--text); font:inherit; font-size:var(--fs-sm); font-weight:700; cursor:pointer; touch-action:manipulation; }
-    .phrase-nav .primary { background:var(--grad-purple); border-color:transparent; color:#fff; font-size:var(--fs); box-shadow:0 8px 20px rgba(91,75,196,.28); }
+    .cycle-status { display:flex; justify-content:center; gap:14px; flex-wrap:wrap; margin-top:9px; color:var(--text2); font-size:var(--fs-xs); font-weight:700; }
+    .cycle-status .done { color:var(--green); }
     .caption-help { margin-top:9px; color:var(--text2); font-size:var(--fs-xs); line-height:1.4; text-align:center; }
     #word-card { display:none; max-width:860px; margin:10px auto 0; padding:12px 14px; border:1px solid var(--line); border-radius:var(--r); background:var(--bg-card); }
     #word-card.show { display:block; }
@@ -405,18 +417,6 @@
       background:rgba(90,216,166,0.1);
     }
 
-    .record-again-btn {
-      width:100%; padding:9px; border-radius:var(--r);
-      border:1.5px solid var(--line); background:var(--bg-card2);
-      color:var(--text2); font-size:var(--fs); font-weight:600; cursor:pointer;
-      display:none;
-    }
-    .record-again-btn.show { display:block; }
-    .voice-retake {
-      display:none; align-self:center; padding:7px 10px; border:0; background:transparent;
-      color:var(--purple-text); font:inherit; font-size:var(--fs-sm); font-weight:700; cursor:pointer;
-    }
-    .voice-retake.show { display:inline-flex; }
     .practice-step { color:var(--text2); font-size:var(--fs-sm); line-height:1.4; }
     .compare-row { display:none; gap:8px; }
     .compare-row.show { display:flex; }
@@ -424,6 +424,36 @@
     .practice-actions .record-btn, .practice-actions .action-btn { width:100%; padding:11px 8px; }
     .practice-actions .action-btn, .practice-actions .record-btn { min-height:52px; }
     .practice-actions #play-my { display:none!important; }
+    .hold-record-wrap { display:grid; justify-items:center; gap:8px; }
+    .hold-record {
+      width:76px!important; height:76px; min-height:76px!important; padding:0!important; border-radius:50%!important;
+      font-size:30px!important; user-select:none; -webkit-user-select:none; touch-action:none!important;
+    }
+    .hold-record-hint { color:var(--text2); font-size:var(--fs-xs); text-align:center; }
+
+    .vocab-drawer-backdrop {
+      position:fixed; inset:0; z-index:80; display:none; align-items:flex-end; justify-content:center;
+      background:rgba(0,0,0,.6); padding-top:60px;
+    }
+    .vocab-drawer-backdrop.open { display:flex; }
+    .vocab-drawer {
+      width:min(100%,620px); max-height:min(76vh,720px); overflow:hidden; display:flex; flex-direction:column;
+      background:var(--bg-card); border:1px solid var(--line); border-radius:22px 22px 0 0;
+      box-shadow:0 -18px 60px rgba(0,0,0,.45);
+    }
+    .vocab-drawer-head { display:flex; align-items:center; gap:10px; padding:14px 16px 10px; }
+    .vocab-drawer-title { flex:1; font-size:var(--fs-md); font-weight:800; }
+    .vocab-drawer-close { width:40px; height:40px; border:0; border-radius:50%; background:var(--bg-card2); color:var(--text); font-size:22px; cursor:pointer; }
+    .vocab-tabs { display:grid; grid-template-columns:1fr 1fr; gap:7px; padding:0 16px 12px; }
+    .vocab-tab { min-height:42px; border:1px solid var(--line); border-radius:999px; background:var(--bg-card2); color:var(--text2); font:inherit; font-size:var(--fs-xs); font-weight:800; cursor:pointer; }
+    .vocab-tab.on { border-color:var(--purple); background:var(--purple-bg); color:var(--purple-text); }
+    .mini-vocab-list { overflow:auto; padding:0 16px 22px; display:grid; gap:12px; }
+    .mini-vocab-section-title { color:var(--text2); font-size:var(--fs-xs); font-weight:800; text-transform:uppercase; letter-spacing:.08em; margin-top:3px; }
+    .mini-vocab-row { display:grid; grid-template-columns:minmax(0,1fr) 40px; gap:8px; align-items:center; padding:11px 12px; border:1px solid var(--line); border-radius:var(--r); background:var(--bg-card2); }
+    .mini-vocab-value { font-weight:800; line-height:1.35; overflow-wrap:anywhere; }
+    .mini-vocab-translation { margin-top:3px; color:var(--gold); font-size:var(--fs-sm); line-height:1.35; }
+    .mini-vocab-audio { width:40px; height:40px; border:0; border-radius:50%; background:rgba(124,110,247,.15); color:var(--text); font-size:18px; cursor:pointer; }
+    .mini-vocab-empty { padding:28px 16px; color:var(--text2); text-align:center; line-height:1.5; }
 
     @media (min-width:760px) {
       body { background:linear-gradient(90deg,#11121a 0,#0d0d14 22%,#0d0d14 78%,#11121a 100%); }
@@ -434,7 +464,8 @@
       #video-wrap { width:100%; }
       #video-toggle { width:46px; height:46px; }
       #interactive-transcript { padding:12px; }
-      .phrase-nav { grid-template-columns:44px 1fr 44px; }
+      .phrase-toolbar { grid-template-columns:42px minmax(0,1fr) 42px 48px; gap:5px; }
+      .phrase-tool { min-width:42px; min-height:42px; }
       .practice-actions { grid-template-columns:1fr; }
       .action-btn,.record-btn,.chainy-btn { min-height:54px; }
       .loop-row { gap:8px; }
@@ -546,11 +577,16 @@
 <section id="interactive-transcript" aria-live="polite" hidden>
   <div id="caption-status" class="transcript-label">Завантажую репліку…</div>
   <button type="button" class="caption-retry" id="caption-retry" hidden aria-hidden="true">Оновити</button>
-  <div id="transcript-overlay"><div id="transcript-text" role="button" tabindex="0" aria-label="Перекласти всю репліку">Увімкни відео — тут з’явиться поточна репліка</div></div>
-  <div class="phrase-nav" aria-label="Керування реплікою">
-    <button type="button" id="phrase-prev" aria-label="Попередня репліка">‹</button>
-    <button type="button" class="primary" id="phrase-repeat">🔁 Повторити фразу</button>
-    <button type="button" id="phrase-next" aria-label="Наступна репліка">›</button>
+  <div class="phrase-toolbar" aria-label="Практика поточної фрази">
+    <button type="button" class="phrase-tool" id="phrase-original" aria-label="Прослухати оригінальну фразу">▶</button>
+    <div id="transcript-overlay"><div id="transcript-text">Увімкни відео — тут з’явиться поточна репліка</div></div>
+    <button type="button" class="phrase-tool" id="phrase-save" aria-label="Зберегти фразу у словник">＋</button>
+    <button type="button" class="phrase-tool" id="vocab-drawer-open" aria-label="Відкрити мій словник">📖<span class="vocab-count" id="vocab-count" hidden>0</span></button>
+  </div>
+  <div class="cycle-status" id="cycle-status" aria-live="polite">
+    <span id="cycle-original">Оригінал ○</span>
+    <span id="cycle-recorded">Запис ○</span>
+    <span id="cycle-listened">Прослухано ○</span>
   </div>
   <div class="caption-help" id="caption-help" hidden aria-hidden="true"></div>
 </section>
@@ -612,13 +648,13 @@
 
   <!-- Record -->
   <div style="display:flex;flex-direction:column;gap:10px">
-    <div class="panel-label">Практика фрази</div>
-    <div class="practice-step" id="practice-step">1. Повтори фразу → 2. Запиши себе → 3. Послухай себе</div>
-    <div class="practice-actions">
-      <button class="record-btn idle" id="record-btn">🎙 Записати себе</button>
+    <div class="hold-record-wrap">
+      <div class="practice-actions">
+      <button class="record-btn idle hold-record" id="record-btn" aria-label="Утримуй, щоб записати себе">🎙</button>
       <button class="action-btn" id="play-my" disabled hidden aria-hidden="true">▶ Почути себе</button>
+      </div>
+      <div class="hold-record-hint" id="practice-step">Утримуй кнопку, поки говориш</div>
     </div>
-    <button class="voice-retake" id="voice-retake">↻ Записати ще раз</button>
     <div class="rec-timer" id="rec-timer">● REC <span id="rec-secs">0:00</span></div>
 
     <!-- Waveform -->
@@ -645,9 +681,22 @@
     </div>
 
     <!-- Записати ще / Зберегти фразу -->
-    <button class="record-again-btn" id="record-again-btn" hidden aria-hidden="true">💎 Зберегти фразу</button>
   </div>
 
+</div>
+
+<div class="vocab-drawer-backdrop" id="vocab-drawer-backdrop" hidden>
+  <section class="vocab-drawer" role="dialog" aria-modal="true" aria-labelledby="vocab-drawer-title">
+    <div class="vocab-drawer-head">
+      <div class="vocab-drawer-title" id="vocab-drawer-title">📖 Мій словник</div>
+      <button type="button" class="vocab-drawer-close" id="vocab-drawer-close" aria-label="Закрити словник">×</button>
+    </div>
+    <div class="vocab-tabs" role="tablist" aria-label="Фільтр словника">
+      <button type="button" class="vocab-tab on" id="vocab-tab-video" role="tab" aria-selected="true">З цього відео</button>
+      <button type="button" class="vocab-tab" id="vocab-tab-all" role="tab" aria-selected="false">Усі слова і фрази</button>
+    </div>
+    <div class="mini-vocab-list" id="mini-vocab-list"><div class="mini-vocab-empty">Завантажую словник…</div></div>
+  </section>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -1153,27 +1202,33 @@ const canvas       = document.getElementById("waveform");
 const recTimeLabel = document.getElementById("rec-time-label");
 const micError     = document.getElementById("mic-error");
 const playMyBtn    = document.getElementById("play-my");
-const recAgainBtn  = document.getElementById("record-again-btn");
-const voiceRetakeBtn = document.getElementById("voice-retake");
 const pbWrap       = document.getElementById("playback-bar-wrap");
 const pbFill       = document.getElementById("playback-fill");
 const pbBar        = document.getElementById("playback-bar");
 const pbCurrent    = document.getElementById("pb-current");
 const pbTotal      = document.getElementById("pb-total");
+const phraseOriginalBtn=document.getElementById('phrase-original');
+const phraseSaveBtn=document.getElementById('phrase-save');
+const vocabDrawerOpenBtn=document.getElementById('vocab-drawer-open');
+const vocabCount=document.getElementById('vocab-count');
+const vocabDrawerBackdrop=document.getElementById('vocab-drawer-backdrop');
+const miniVocabList=document.getElementById('mini-vocab-list');
+const cycleOriginal=document.getElementById('cycle-original');
+const cycleRecorded=document.getElementById('cycle-recorded');
+const cycleListened=document.getElementById('cycle-listened');
+let phraseCycle={original:false,recorded:false,listened:false};
+let practiceCaptionKey='';
+let miniVocabItems=[];
+let miniVocabFilter='video';
+let resumeVideoAfterDrawer=false;
 
-document.getElementById('phrase-repeat').addEventListener('click', playOriginalSegment);
-
-const transcriptText=document.getElementById('transcript-text');
-transcriptText.addEventListener('click',()=>{
-  if(activeCaption?.text) inspectCaptionPhrase(activeCaption.text);
-});
-transcriptText.addEventListener('keydown',event=>{
-  // A caption word is itself a native button inside this container. Its
-  // keyboard activation must inspect the word, not bubble into the phrase
-  // shortcut and race a second /word_lookup request.
-  if(event.target!==transcriptText)return;
-  if((event.key==='Enter'||event.key===' ')&&activeCaption?.text){event.preventDefault();inspectCaptionPhrase(activeCaption.text);}
-});
+phraseOriginalBtn.addEventListener('click',playOriginalSegment);
+phraseSaveBtn.addEventListener('click',saveActivePhraseFromToolbar);
+vocabDrawerOpenBtn.addEventListener('click',openMiniVocabulary);
+document.getElementById('vocab-drawer-close').addEventListener('click',closeMiniVocabulary);
+vocabDrawerBackdrop.addEventListener('click',event=>{if(event.target===vocabDrawerBackdrop)closeMiniVocabulary();});
+document.getElementById('vocab-tab-video').addEventListener('click',()=>setMiniVocabFilter('video'));
+document.getElementById('vocab-tab-all').addEventListener('click',()=>setMiniVocabFilter('all'));
 
 function resizeCanvas() {
   const dpr=window.devicePixelRatio||1;
@@ -1199,10 +1254,55 @@ function drawWaveform() {
   }
 }
 
-recordBtn.addEventListener("click", async()=>{
-  if (isRec){ stopRec(); return; }
-  if (audioURL){ toggleOwnPlayback(); return; }
+let recordPointerHeld=false;
+let recordHoldTimer=null;
+let recordHoldStarted=false;
+let recordStopPending=false;
+
+async function beginHeldRecording(replaceExisting=false){
+  if(replaceExisting) clearOwnRecording();
+  recordHoldStarted=true;
   await startVoiceRecording();
+  if(!recordPointerHeld||recordStopPending){recordStopPending=false;stopRec();}
+}
+
+recordBtn.addEventListener('pointerdown',event=>{
+  if(event.pointerType==='mouse'&&event.button!==0)return;
+  event.preventDefault();
+  recordPointerHeld=true;recordHoldStarted=false;recordStopPending=false;
+  try{recordBtn.setPointerCapture(event.pointerId);}catch(_){}
+  if(audioURL){
+    recordHoldTimer=setTimeout(()=>beginHeldRecording(true),320);
+  }else{
+    beginHeldRecording(false);
+  }
+});
+
+function releaseRecordButton(){
+  recordPointerHeld=false;
+  if(recordHoldTimer){
+    clearTimeout(recordHoldTimer);recordHoldTimer=null;
+    if(!recordHoldStarted&&audioURL)toggleOwnPlayback();
+  }
+  if(recordHoldStarted){
+    if(isRec)stopRec();else recordStopPending=true;
+  }
+}
+
+recordBtn.addEventListener('pointerup',event=>{event.preventDefault();releaseRecordButton();});
+recordBtn.addEventListener('pointercancel',releaseRecordButton);
+recordBtn.addEventListener('lostpointercapture',()=>{if(recordPointerHeld)releaseRecordButton();});
+recordBtn.addEventListener('click',event=>event.preventDefault());
+recordBtn.addEventListener('contextmenu',event=>event.preventDefault());
+recordBtn.addEventListener('keydown',event=>{
+  if(event.repeat||!['Enter',' '].includes(event.key))return;
+  event.preventDefault();
+  if(audioURL){toggleOwnPlayback();return;}
+  recordPointerHeld=true;recordHoldStarted=true;beginHeldRecording(false);
+});
+recordBtn.addEventListener('keyup',event=>{
+  if(!['Enter',' '].includes(event.key)||!recordPointerHeld)return;
+  event.preventDefault();releaseRecordButton();
 });
 
 async function startVoiceRecording(){
@@ -1226,23 +1326,20 @@ async function startVoiceRecording(){
       audioURL=URL.createObjectURL(blob);
       cancelAnimationFrame(animFrame);
       waveWrap.classList.remove("visible");
-      recordBtn.className="record-btn has-audio";
-      recordBtn.textContent="Готуємо прослуховування…";
-      recordBtn.disabled=true;
+      recordBtn.className="record-btn hold-record has-audio";
+      recordBtn.textContent="▶";
+      recordBtn.setAttribute('aria-label','Прослухати свій запис. Утримуй, щоб записати знову');
+      recordBtn.disabled=false;
       playMyBtn.disabled=false;
       compareRecordingBtn.disabled=false;
-      voiceRetakeBtn.classList.add("show");
-      practiceStep.textContent="Зараз ти почуєш свій запис.";
+      phraseCycle.recorded=true;phraseCycle.listened=false;updateCycleStatus();
+      practiceStep.textContent="Натисни, щоб почути себе · утримуй, щоб записати знову";
       // Показуємо прогрес-бар
       pbWrap.classList.add("show");
       pbFill.style.width="0%";
       pbCurrent.textContent="0:00";
       pbTotal.textContent=fmt(recSec);
       audioDuration=recSec;
-      setTimeout(()=>{
-        recordBtn.disabled=false;
-        toggleOwnPlayback(true);
-      },300);
       resetInactivity();
     });
     mediaRecorder.start(100); isRec=true; recSec=0;
@@ -1250,8 +1347,10 @@ async function startVoiceRecording(){
     waveWrap.classList.add("visible");
     setTimeout(resizeCanvas,10);
     drawWaveform();
-    recordBtn.className="record-btn recording";
-    recordBtn.textContent="⏹ Зупинити запис";
+    recordBtn.className="record-btn hold-record recording";
+    recordBtn.textContent="●";
+    recordBtn.setAttribute('aria-label','Запис триває. Відпусти кнопку, щоб завершити');
+    practiceStep.textContent='Говори · відпусти, щоб завершити';
     try { if (ytPlayer&&ytReady) ytPlayer.pauseVideo(); } catch(_) {}
     if (loopActive&&ytPlayer&&ytReady) ytPlayer.seekTo(loopStart,true);
     resetInactivity();
@@ -1289,7 +1388,8 @@ function playOriginalSegment(){
   clearInterval(originalLoopTimer);
   try{
     ytPlayer.seekTo(segment.start,true); ytPlayer.playVideo();
-    practiceStep.textContent="Повтори фразу вголос. Потім натисни «Записати себе».";
+    phraseCycle.original=true;updateCycleStatus();
+    practiceStep.textContent="Утримуй мікрофон, поки повторюєш фразу";
     originalLoopTimer=setInterval(()=>{
       try{
         if(ytPlayer.getCurrentTime()>=segment.end){
@@ -1342,25 +1442,30 @@ function toggleOwnPlayback(autoPlay=false){
       stopPlaybackTick();          // зупиняємо лічильник
       playMyBtn.className="action-btn";
       playMyBtn.textContent="▶ Почути себе";
-      recordBtn.className="record-btn has-audio";
-      recordBtn.textContent="▶ Почути себе ще раз";
-      practiceStep.textContent="Почула себе? Можеш прослухати ще раз або перезаписати.";
+      recordBtn.className="record-btn hold-record has-audio";
+      recordBtn.textContent="▶";
+      recordBtn.setAttribute('aria-label','Прослухати свій запис. Утримуй, щоб записати знову');
+      phraseCycle.listened=true;updateCycleStatus();
+      practiceStep.textContent="Цикл завершено · відео продовжується";
       pbFill.style.width="100%";
       clearInterval(pbInterval);
+      try{if(ytPlayer&&ytReady)ytPlayer.playVideo();}catch(_){}
     };
+    try{if(ytPlayer&&ytReady)ytPlayer.pauseVideo();}catch(_){}
     myAudio.play().then(()=>{
       pbState='playing';
       playMyBtn.className="action-btn playing";
       playMyBtn.textContent="⏸ Пауза";
-      recordBtn.className="record-btn playing";
-      recordBtn.textContent="⏸ Пауза";
-      practiceStep.textContent=autoPlay?'Слухаєш свій запис.':'Слухаєш себе ще раз.';
+      recordBtn.className="record-btn hold-record playing";
+      recordBtn.textContent="⏸";
+      recordBtn.setAttribute('aria-label','Поставити свій запис на паузу');
+      practiceStep.textContent='Слухаєш свій запис';
       startPbProgress();
       startPlaybackTick();         // рахуємо час слухання
     }).catch(()=>{
-      recordBtn.className="record-btn has-audio";
-      recordBtn.textContent="▶ Почути себе";
-      practiceStep.textContent="Запис готовий — натисни, щоб почути себе.";
+      recordBtn.className="record-btn hold-record has-audio";
+      recordBtn.textContent="▶";
+      practiceStep.textContent="Натисни, щоб почути себе";
     });
     resetInactivity();
     return;
@@ -1374,8 +1479,9 @@ function toggleOwnPlayback(autoPlay=false){
     stopPlaybackTick();            // зупиняємо лічильник
     playMyBtn.className="action-btn paused";
     playMyBtn.textContent="▶ Продовжити";
-    recordBtn.className="record-btn paused";
-    recordBtn.textContent="▶ Продовжити";
+    recordBtn.className="record-btn hold-record paused";
+    recordBtn.textContent="▶";
+    recordBtn.setAttribute('aria-label','Продовжити прослуховування свого запису');
     resetInactivity();
     return;
   }
@@ -1386,8 +1492,9 @@ function toggleOwnPlayback(autoPlay=false){
       pbState='playing';
       playMyBtn.className="action-btn playing";
       playMyBtn.textContent="⏸ Пауза";
-      recordBtn.className="record-btn playing";
-      recordBtn.textContent="⏸ Пауза";
+      recordBtn.className="record-btn hold-record playing";
+      recordBtn.textContent="⏸";
+      recordBtn.setAttribute('aria-label','Поставити свій запис на паузу');
       startPbProgress();
       startPlaybackTick();         // продовжуємо лічильник
     }).catch(()=>showToast("Натисни ще раз"));
@@ -1409,8 +1516,6 @@ pbBar.addEventListener("click",(e)=>{
 });
 
 // Кнопка "Зберегти фразу"
-recAgainBtn.addEventListener("click", saveLoopPhrase);
-
 async function saveLoopPhrase() {
   const uid=TG?.initDataUnsafe?.user?.id || playerUid;
   if (!uid||!apiBase){ showToast("Помилка: немає з'єднання"); return; }
@@ -1427,8 +1532,6 @@ async function saveLoopPhrase() {
     if(!response.ok) throw new Error('save_failed');
     if (phrase && !sessionSavedPhrases.includes(phrase)) sessionSavedPhrases.push(phrase);
     showToast("💎 Фразу збережено!");
-    recAgainBtn.textContent="✅ Збережено";
-    setTimeout(()=>{ recAgainBtn.textContent="💎 Зберегти фразу"; },2000);
   } catch(e){ showToast("Помилка збереження"); }
   resetInactivity();
 }
@@ -1444,18 +1547,130 @@ const captionStatus=document.getElementById('caption-status');
 const captionHelp=document.getElementById('caption-help');
 const interactiveTranscript=document.getElementById('interactive-transcript');
 document.getElementById('caption-retry').addEventListener('click',()=>loadCaptions(true));
-document.getElementById('phrase-prev').addEventListener('click',()=>selectCaption(activeCaptionIndex-1));
-document.getElementById('phrase-next').addEventListener('click',()=>selectCaption(activeCaptionIndex+1));
 
 function setCaptionStatus(message,ready=false){
   captionStatus.textContent=message;
   captionStatus.classList.toggle('ready',ready);
 }
 
-voiceRetakeBtn.addEventListener('click',async()=>{
+function updateCycleStatus(){
+  const states=[
+    [cycleOriginal,'Оригінал',phraseCycle.original],
+    [cycleRecorded,'Запис',phraseCycle.recorded],
+    [cycleListened,'Прослухано',phraseCycle.listened],
+  ];
+  states.forEach(([element,label,done])=>{
+    element.textContent=`${label} ${done?'✓':'○'}`;
+    element.classList.toggle('done',done);
+  });
+}
+
+function updateVocabBadge(){
+  const count=new Set(sessionSavedPhrases.filter(Boolean)).size;
+  vocabCount.textContent=String(count);
+  vocabCount.hidden=count===0;
+}
+
+function resetPhrasePractice(caption){
+  const key=caption?`${caption.start}:${caption.end}:${caption.text}`:'';
+  if(key===practiceCaptionKey)return;
+  practiceCaptionKey=key;
   clearOwnRecording();
-  await startVoiceRecording();
-});
+  phraseCycle={original:false,recorded:false,listened:false};
+  updateCycleStatus();
+  const saved=Boolean(caption?.text&&sessionSavedPhrases.includes(caption.text));
+  phraseSaveBtn.classList.toggle('saved',saved);
+  phraseSaveBtn.textContent=saved?'✓':'＋';
+  phraseSaveBtn.setAttribute('aria-label',saved?'Фразу збережено у словник':'Зберегти фразу у словник');
+}
+
+async function saveActivePhraseFromToolbar(){
+  if(!activeCaption?.text)return;
+  if(sessionSavedPhrases.includes(activeCaption.text)){
+    showToast('Фраза вже у словнику');return;
+  }
+  phraseSaveBtn.disabled=true;
+  const saved=await saveSelectedPhrase();
+  phraseSaveBtn.disabled=false;
+  if(!saved){showToast('Не вдалося зберегти фразу');return;}
+  phraseSaveBtn.classList.add('saved');
+  phraseSaveBtn.textContent='✓';
+  phraseSaveBtn.setAttribute('aria-label','Фразу збережено у словник');
+  updateVocabBadge();
+  showToast('Фразу збережено у словник');
+  if(!vocabDrawerBackdrop.hidden)await loadMiniVocabulary();
+}
+
+function setMiniVocabFilter(filter){
+  miniVocabFilter=filter;
+  const videoTab=document.getElementById('vocab-tab-video');
+  const allTab=document.getElementById('vocab-tab-all');
+  videoTab.classList.toggle('on',filter==='video');
+  allTab.classList.toggle('on',filter==='all');
+  videoTab.setAttribute('aria-selected',String(filter==='video'));
+  allTab.setAttribute('aria-selected',String(filter==='all'));
+  renderMiniVocabulary();
+}
+
+async function openMiniVocabulary(){
+  try{resumeVideoAfterDrawer=Boolean(ytReady&&ytPlayer?.getPlayerState?.()===YT.PlayerState.PLAYING);if(ytReady)ytPlayer.pauseVideo();}catch(_){resumeVideoAfterDrawer=false;}
+  vocabDrawerBackdrop.hidden=false;
+  vocabDrawerBackdrop.classList.add('open');
+  document.getElementById('vocab-drawer-close').focus();
+  await loadMiniVocabulary();
+}
+
+function closeMiniVocabulary(){
+  vocabDrawerBackdrop.classList.remove('open');
+  vocabDrawerBackdrop.hidden=true;
+  vocabDrawerOpenBtn.focus();
+  if(resumeVideoAfterDrawer){try{ytPlayer.playVideo();}catch(_){}}
+  resumeVideoAfterDrawer=false;
+}
+
+async function loadMiniVocabulary(){
+  const uid=TG?.initDataUnsafe?.user?.id||playerUid;
+  miniVocabList.replaceChildren(Object.assign(document.createElement('div'),{className:'mini-vocab-empty',textContent:'Завантажую словник…'}));
+  if(!uid||!apiBase){miniVocabItems=[];renderMiniVocabulary('Увійди, щоб переглядати свій словник.');return;}
+  try{
+    const response=await fetch(`${apiBase}/vocab_data`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({uid,init_data:TG?.initData||''})});
+    const data=await response.json();
+    if(!response.ok)throw new Error('vocab_load_failed');
+    miniVocabItems=Array.isArray(data.phrases)?data.phrases:[];
+    renderMiniVocabulary();
+  }catch(_){miniVocabItems=[];renderMiniVocabulary('Не вдалося завантажити словник.');}
+}
+
+function miniVocabIsWord(item){return /^[A-Za-z][A-Za-z'-]*$/.test(String(item?.phrase||'').trim());}
+function miniVocabMatchesVideo(item){
+  const phrase=String(item?.phrase||'').trim();
+  return sessionSavedPhrases.includes(phrase)||(videoId&&item?.video_id===videoId)||(videoTitle&&item?.video_title===videoTitle);
+}
+function speakMiniVocab(text){
+  try{window.speechSynthesis.cancel();const utterance=new SpeechSynthesisUtterance(text);utterance.lang='en-US';utterance.rate=.86;window.speechSynthesis.speak(utterance);}catch(_){showToast('Озвучення недоступне');}
+}
+function renderMiniVocabulary(emptyMessage=''){
+  miniVocabList.replaceChildren();
+  const items=(miniVocabFilter==='video'?miniVocabItems.filter(miniVocabMatchesVideo):miniVocabItems).slice().reverse();
+  if(!items.length){
+    const empty=document.createElement('div');empty.className='mini-vocab-empty';
+    empty.textContent=emptyMessage||(miniVocabFilter==='video'?'Тут з’являться слова і фрази, додані з цього відео.':'Словник поки порожній.');
+    miniVocabList.appendChild(empty);return;
+  }
+  const groups=[['Слова',items.filter(miniVocabIsWord)],['Фрази',items.filter(item=>!miniVocabIsWord(item))]];
+  groups.forEach(([title,values])=>{
+    if(!values.length)return;
+    const heading=document.createElement('div');heading.className='mini-vocab-section-title';heading.textContent=title;miniVocabList.appendChild(heading);
+    values.forEach(item=>{
+      const row=document.createElement('div');row.className='mini-vocab-row';
+      const copy=document.createElement('div');
+      const value=document.createElement('div');value.className='mini-vocab-value';value.textContent=String(item.phrase||'');copy.appendChild(value);
+      if(item.translation_uk){const translation=document.createElement('div');translation.className='mini-vocab-translation';translation.textContent=String(item.translation_uk);copy.appendChild(translation);}
+      const audio=document.createElement('button');audio.type='button';audio.className='mini-vocab-audio';audio.textContent='🔊';audio.setAttribute('aria-label',`Озвучити ${item.phrase||''}`);audio.addEventListener('click',()=>speakMiniVocab(String(item.phrase||'')));
+      row.append(copy,audio);miniVocabList.appendChild(row);
+    });
+  });
+}
 
 function clearOwnRecording(){
   if(myAudio){ myAudio.pause(); myAudio.src=''; myAudio=null; }
@@ -1463,17 +1678,20 @@ function clearOwnRecording(){
   if(audioURL){ try{URL.revokeObjectURL(audioURL);}catch(_){} }
   audioURL=null; audioDuration=0; pbState='idle';
   pbFill.style.width='0%'; pbCurrent.textContent='0:00'; pbTotal.textContent='0:00';
-  pbWrap.classList.remove('show'); voiceRetakeBtn.classList.remove('show');
+  pbWrap.classList.remove('show');
   playMyBtn.disabled=true; compareRecordingBtn.disabled=true;
-  recordBtn.disabled=false; recordBtn.className='record-btn idle';
-  recordBtn.textContent='🎙 Записати себе';
-  practiceStep.textContent='1. Повтори фразу → 2. Запиши себе → 3. Послухай себе';
+  recordBtn.disabled=false; recordBtn.className='record-btn hold-record idle';
+  recordBtn.textContent='🎙';
+  recordBtn.setAttribute('aria-label','Утримуй, щоб записати себе');
+  phraseCycle.recorded=false;phraseCycle.listened=false;updateCycleStatus();
+  practiceStep.textContent='Утримуй кнопку, поки говориш';
 }
 
 function selectCaption(index){
   if(!captions.length){ playOriginalSegment(); return; }
   const next=Math.max(0,Math.min(captions.length-1,index));
   activeCaptionIndex=next; activeCaption=captions[next];
+  resetPhrasePractice(activeCaption);
   renderCaption(activeCaption.text);
   try { ytPlayer.seekTo(activeCaption.start,true); ytPlayer.pauseVideo(); } catch(_) {}
   setCaptionStatus('Обрана репліка',true);
@@ -1603,6 +1821,7 @@ function syncCaptions(){
   if (found){
     activeCaption=found;
     activeCaptionIndex=captions.indexOf(found);
+    resetPhrasePractice(found);
     setCaptionStatus('Поточна репліка',true);
     if (el.textContent!==found.text){
       el.style.opacity="0";
@@ -1708,11 +1927,15 @@ wordCardAudio.addEventListener('click',()=>{
   }catch(_){ showToast('Прослуховування недоступне'); }
 });
 wordCardVocab.addEventListener('click',async()=>{
-  if(wordCardVocab.dataset.saved==='1'){ await openVocabularyWorkspace(); return; }
+  if(wordCardVocab.dataset.saved==='1'){ await openMiniVocabulary(); return; }
   const saved=selectedLookupKind==='phrase' ? await saveSelectedPhrase() : await saveCaptionWord(selectedCaptionWord);
   if(saved){
     wordCardVocab.dataset.saved='1';
     wordCardVocab.textContent='✅ Збережено · Відкрити словник';
+    updateVocabBadge();
+    if(selectedLookupKind==='phrase'){
+      phraseSaveBtn.classList.add('saved');phraseSaveBtn.textContent='✓';
+    }
     showToast('💎 Збережено у словник з озвученням');
   }
 });
@@ -1736,9 +1959,10 @@ async function saveSelectedPhrase(){
   try{
     const response=await fetch(`${apiBase}/player_action`,{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({uid,init_data:TG?.initData||'',action:'save_phrase',phrase:activeCaption.text,
-        translation:selectedLookupTranslation,video_id:videoId||'',video_title:videoTitle||'YouTube video',
+        translation:selectedLookupText===activeCaption.text?selectedLookupTranslation:'',video_id:videoId||'',video_title:videoTitle||'YouTube video',
         current_time:activeCaption.start,end_time:activeCaption.end})});
     if(response.ok&&!sessionSavedPhrases.includes(activeCaption.text)) sessionSavedPhrases.push(activeCaption.text);
+    if(response.ok)updateVocabBadge();
     return response.ok;
   }catch(_){return false;}
 }
@@ -1755,6 +1979,7 @@ async function saveCaptionWord(word) {
         end_time:activeCaption?.end||0}),
     });
     if (response.ok && word && !sessionSavedPhrases.includes(word)) sessionSavedPhrases.push(word);
+    if(response.ok)updateVocabBadge();
     return response.ok;
   } catch (_) { return false; }
 }
