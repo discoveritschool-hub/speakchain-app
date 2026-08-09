@@ -5833,11 +5833,43 @@ try{
   if(TG && typeof TG.setHeaderColor==='function')     TG.setHeaderColor('#0d0d14');
   if(TG && typeof TG.setBackgroundColor==='function')  TG.setBackgroundColor('#0d0d14');
 }catch(e){}
-// 22.07: повний екран (Bot API 8.0+). Прибирає верхню системну панель
-// Telegram — застосунок займає весь екран. try/catch і typeof-перевірка,
-// бо старі клієнти Telegram цей метод ще не підтримують — тоді просто
-// лишається TG.expand() як і було, нічого не ламається.
-try{ if(TG && typeof TG.requestFullscreen==='function') TG.requestFullscreen(); }catch(e){}
+// Fullscreen was added in Mini Apps 8.0. telegram-web-app.js exposes a
+// compatibility method even while emulating version 6.0 in a plain browser;
+// calling that method logs an SDK error. Check the negotiated capability, not
+// only the presence of the JavaScript function.
+function telegramVersionAtLeast(tg, minimum){
+  if(!tg)return false;
+  if(typeof tg.isVersionAtLeast==='function'){
+    try{return Boolean(tg.isVersionAtLeast(minimum));}catch(e){}
+  }
+  const parse=value=>String(value||'0').split('.').map(part=>Number(part)||0);
+  const current=parse(tg.version),required=parse(minimum);
+  const length=Math.max(current.length,required.length);
+  for(let i=0;i<length;i++){
+    const left=current[i]||0,right=required[i]||0;
+    if(left!==right)return left>right;
+  }
+  return true;
+}
+function canRequestTelegramFullscreen(tg){
+  return Boolean(tg&&typeof tg.requestFullscreen==='function'&&telegramVersionAtLeast(tg,'8.0'));
+}
+window.SC_canRequestTelegramFullscreen=canRequestTelegramFullscreen;
+function reportTelegramFullscreenFailure(error){
+  const report={
+    source:'telegram.requestFullscreen',
+    message:String(error?.message||error||'Unknown error').slice(0,240)
+  };
+  // Keep diagnostics observable without allowing a noisy client to grow this
+  // buffer without bound. This is intentionally local to the optional SDK call.
+  const reports=window.SC_RUNTIME_REPORTS||(window.SC_RUNTIME_REPORTS=[]);
+  if(reports.length<10)reports.push(report);
+  console.warn('[SpeakChain] Telegram fullscreen unavailable:',report.message);
+}
+if(canRequestTelegramFullscreen(TG)){
+  try{TG.requestFullscreen();}
+  catch(error){reportTelegramFullscreenFailure(error);}
+}
 
 // 22.07: safe area в fullscreen — Bot API 8.0+.
 //
@@ -5933,13 +5965,7 @@ function activateBloggerEntry(entry){
   const card=$('#guided-card');if(card){$('#guided-ic').textContent='🎬';$('#guided-title').textContent=entry.blogger?'Фраза від '+entry.blogger:'Твоя фраза від блогера';$('#guided-sub').textContent='«'+entry.phrase+'»';$('#guided-why').textContent='Почуємо її в контексті → повторимо → використаємо з Chainy → збережемо прогрес.';$('#guided-go').textContent=(entry.video?'Відкрити відео':'Почати практику')+' →';card.classList.add('on');}
   trackUx('blogger_phrase_entry',{blogger:entry.blogger,has_video:!!entry.video});
 }
-(async function bootSpeakChain(){
-  // In an installed PWA, refresh the short access token before the first
-  // payload request. Telegram Mini App resolves immediately through initData.
-  try{
-    const auth = await window.SC_PWA?.ready;
-    if(auth?.userId) UID=Number(auth.userId);
-  }catch(e){}
+async function activateInitialRoute(){
   if (START === 'ov-player') {
     await go('s-home');
     await openPlayer();
@@ -5954,6 +5980,18 @@ function activateBloggerEntry(entry){
       setTimeout(()=>socialTab('challenges'),350);
     }
   }
+}
+(async function bootSpeakChain(){
+  // Route selection is URL/TMA state and must not wait for a refresh-token or
+  // Google bootstrap. go() marks the target active before its payload awaits
+  // authentication, so the requested screen is deterministic even when auth
+  // or a stale home payload resolves later.
+  const initialNavigation=activateInitialRoute();
+  try{
+    const auth = await window.SC_PWA?.ready;
+    if(auth?.userId) UID=Number(auth.userId);
+  }catch(e){}
+  await initialNavigation;
   setTimeout(scWatchAll,300);
 })();
 window.addEventListener('resize',scWatchAll);
