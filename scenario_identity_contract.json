@@ -1,0 +1,20 @@
+{
+  "schema": "speakchain.scenario-identity-contract.v1",
+  "catalog_version": 1,
+  "canonical_id_pattern": "^sc\\.v1\\.[a-z]+\\.\\d{3}$",
+  "scenario_count": 170,
+  "category_counts": {
+    "basics": 20,
+    "daily": 52,
+    "travel": 46,
+    "work": 34,
+    "move": 18
+  },
+  "ordered_catalog_sha256": "299204dda5d3eb000bdd82f122acbe325e19d1c65da24f8488e0cf785fcb1969",
+  "legacy_aliases": ["category:index", "category/index", "category-index", "unique title"],
+  "canonical_state_key": "speakchain.scenarios.v1",
+  "migration_mode": "default-on-local-reversible-fail-closed",
+  "unknown_alias_policy": "no-write",
+  "collision_policy": "no-write",
+  "legacy_keys_retained": true
+}
