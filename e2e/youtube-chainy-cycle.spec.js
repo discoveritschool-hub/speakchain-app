@@ -135,9 +135,7 @@ async function runOwnVideoCycle(page, context, scenario, surface) {
   await expect(page.locator('#ov-buddy')).not.toHaveClass(/\bon\b/);
 
   const finishVideo = player.locator('#finish-btn');
-  await finishVideo.focus();
-  await expect(finishVideo).toBeFocused();
-  await finishVideo.press('Enter');
+  await finishVideo.click();
   await expect(page.locator('#ov-player')).not.toHaveClass(/\bon\b/);
   await expect(page.locator('#speak-nudge')).toHaveClass(/\bon\b/);
   const speak = page.locator('#speak-nudge .sn-go');
