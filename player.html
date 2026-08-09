@@ -1823,7 +1823,7 @@ function syncCaptions(){
     activeCaptionIndex=captions.indexOf(found);
     resetPhrasePractice(found);
     setCaptionStatus('Поточна репліка',true);
-    if (el.textContent!==found.text){
+    if (el.dataset.captionText!==found.text){
       el.style.opacity="0";
       setTimeout(()=>{ renderCaption(found.text); el.style.opacity="1"; },120);
     } else {
@@ -1836,6 +1836,7 @@ function syncCaptions(){
 
 function renderCaption(text) {
   const el = document.getElementById('transcript-text');
+  el.dataset.captionText=String(text);
   el.replaceChildren();
   const words=String(text).match(/[A-Za-z][A-Za-z'-]*/g)||[];
   words.forEach((part,index) => {

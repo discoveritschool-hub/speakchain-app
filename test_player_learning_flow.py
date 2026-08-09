@@ -79,6 +79,8 @@ class PlayerLearningFlowTests(unittest.TestCase):
     def test_subtitle_words_and_phrases_remain_clickable_and_saveable(self):
         self.assertIn("String(text).match(/[A-Za-z][A-Za-z'-]*/g)||[]", self.source)
         self.assertIn("await inspectCaptionWord(part.toLowerCase(), text)", self.source)
+        self.assertIn("el.dataset.captionText=String(text)", self.source)
+        self.assertIn("el.dataset.captionText!==found.text", self.source)
         self.assertIn("phraseSaveBtn.addEventListener('click',saveActivePhraseFromToolbar)", self.source)
         self.assertIn("action:'save_phrase'", self.source)
         self.assertIn("Збережено у словник з озвученням", self.source)
