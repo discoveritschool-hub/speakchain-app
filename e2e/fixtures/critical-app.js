@@ -143,16 +143,30 @@ function installBrowserSession(context, userId = 7001, provider = 'google') {
   }, { now: FIXED_NOW, uid: userId, provider });
 }
 
-function installTelegramMiniApp(context, userId = 9001) {
-  return context.addInitScript(({ initData, uid }) => {
+function installTelegramMiniApp(context, userId = 9001, options = {}) {
+  return context.addInitScript(({ initData, uid, options }) => {
     const backCallbacks = [];
+    const version = String(options.version || '8.0');
+    const versionAtLeast = minimum => {
+      const current = version.split('.').map(part => Number(part) || 0);
+      const required = String(minimum || '0').split('.').map(part => Number(part) || 0);
+      for (let index = 0; index < Math.max(current.length, required.length); index += 1) {
+        const left = current[index] || 0;
+        const right = required[index] || 0;
+        if (left !== right) return left > right;
+      }
+      return true;
+    };
     window.Telegram = {
       WebApp: {
         initData,
         initDataUnsafe: { user: { id: uid, first_name: 'Telegram E2E' }, start_param: '' },
         platform: 'android',
-        version: '8.0',
-        ready() {}, expand() {}, requestFullscreen() {}, setHeaderColor() {}, setBackgroundColor() {},
+        version,
+        isVersionAtLeast: versionAtLeast,
+        ready() {}, expand() {},
+        requestFullscreen() { window.__telegramFullscreenCalls = (window.__telegramFullscreenCalls || 0) + 1; },
+        setHeaderColor() {}, setBackgroundColor() {},
         close() { window.__telegramCloseCalled = true; },
         sendData(data) { (window.__telegramSendData ||= []).push(data); },
         openLink(url) { (window.__telegramOpenLinks ||= []).push(url); },
@@ -164,7 +178,7 @@ function installTelegramMiniApp(context, userId = 9001) {
         }
       }
     };
-  }, { initData: TELEGRAM_INIT_DATA, uid: userId });
+  }, { initData: TELEGRAM_INIT_DATA, uid: userId, options });
 }
 
 const test = base.extend({
