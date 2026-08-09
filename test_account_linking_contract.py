@@ -1,8 +1,12 @@
 from pathlib import Path
+import json
 import re
 
 
 ROOT = Path(__file__).resolve().parent
+BACKEND_AUTH_CONFIG = json.loads(
+    (ROOT / "contracts/backend-pwa-auth-config.json").read_text(encoding="utf-8")
+)
 
 
 def test_account_linking_is_double_gated_and_shell_cached():
@@ -10,10 +14,37 @@ def test_account_linking_is_double_gated_and_shell_cached():
     index = (ROOT / "index_v2.html").read_text(encoding="utf-8")
     worker = (ROOT / "sw.js").read_text(encoding="utf-8")
     assert "window.SC_ACCOUNT_LINKING_BUILD_ENABLED === true" in module
-    assert "config?.account_linking_enabled !== true" in module
+    assert "CONFIG_ENABLED_KEY = 'account_linking_enabled'" in module
+    assert "config?.[CONFIG_ENABLED_KEY] !== true" in module
     assert '<div id="account-linking-slot" hidden></div>' in index
     assert "./account_linking.js" in worker
     assert "speakchain-shell-v29" in worker
+
+
+def test_account_linking_fixture_is_pinned_to_merged_backend_public_manifest():
+    fixture = (ROOT / "e2e/fixtures/critical-app.js").read_text(encoding="utf-8")
+    contract = BACKEND_AUTH_CONFIG["endpoint_contract"]
+    assert BACKEND_AUTH_CONFIG["source_repository"] == "discoveritschool-hub/-speakchain-bot-"
+    assert BACKEND_AUTH_CONFIG["source_commit"] == "c14bf146d57118933b5ac5952189f281212d50fa"
+    assert contract == {
+        "name": "pwa-auth-config",
+        "method": "POST",
+        "path": "/api/v1/session/config",
+        "authentication": "public",
+        "request_required": [],
+        "response_required": [
+            "ok", "google_client_id", "telegram_bot_username",
+            "account_linking_enabled",
+        ],
+    }
+    assert BACKEND_AUTH_CONFIG["account_linking_enabled"] == {
+        "type": "boolean",
+        "default": False,
+        "meaning": "effective backend route-registration gate",
+    }
+    assert "require('../../contracts/backend-pwa-auth-config.json')" in fixture
+    assert "response_required?.includes(ACCOUNT_LINKING_CONFIG_KEY)" in fixture
+    assert "[ACCOUNT_LINKING_CONFIG_KEY]: scenario.accountLinkingEnabled" in fixture
 
 
 def test_account_linking_uses_bearer_contract_without_raw_uid():

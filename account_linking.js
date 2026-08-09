@@ -4,6 +4,7 @@
   const BUILD_ENABLED = window.SC_ACCOUNT_LINKING_BUILD_ENABLED === true;
   const INTENT_PATH = '/api/v1/account-link/intents';
   const COMPLETE_PATH = '/api/v1/account-link/complete';
+  const CONFIG_ENABLED_KEY = 'account_linking_enabled';
   const PROVIDERS = new Set(['google', 'telegram']);
   const state = {
     mounted: false, source: '', target: '', token: '', expiresAt: 0,
@@ -248,7 +249,7 @@
     try {
       await window.SC_PWA.ready;
       const config = await window.SC_PWA.config();
-      if (config?.account_linking_enabled !== true) return;
+      if (config?.[CONFIG_ENABLED_KEY] !== true) return;
       state.source = String(window.SC_PWA.provider?.() || '').toLowerCase();
       if (!PROVIDERS.has(state.source) || !window.SC_PWA.hasSession?.()) return;
       state.target = state.source === 'google' ? 'telegram' : 'google';

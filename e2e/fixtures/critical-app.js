@@ -1,4 +1,13 @@
 const { test: base, expect } = require('@playwright/test');
+const backendAuthConfigContract = require('../../contracts/backend-pwa-auth-config.json');
+
+const authConfigContract = backendAuthConfigContract.endpoint_contract;
+const ACCOUNT_LINKING_CONFIG_KEY = 'account_linking_enabled';
+if (authConfigContract?.path !== '/api/v1/session/config'
+    || authConfigContract?.authentication !== 'public'
+    || !authConfigContract?.response_required?.includes(ACCOUNT_LINKING_CONFIG_KEY)) {
+  throw new Error('Backend PWA auth-config manifest does not expose account_linking_enabled');
+}
 
 const FIXED_NOW = '2026-08-07T12:00:00.000Z';
 const LOCAL_ORIGIN = `http://127.0.0.1:${Number(process.env.SPEAKCHAIN_E2E_PORT || 4173)}`;
@@ -302,7 +311,7 @@ const test = base.extend({
         await route.fulfill(json({
           google_client_id: 'google-client-e2e',
           telegram_bot_username: 'SpeakChain_bot',
-          account_linking_enabled: scenario.accountLinkingEnabled
+          [ACCOUNT_LINKING_CONFIG_KEY]: scenario.accountLinkingEnabled
         }));
         return;
       }
