@@ -1625,7 +1625,15 @@ def test_feedback_round_notes_chains_and_video_challenge():
     buddy = (ROOT / "speaking_buddy.html").read_text(encoding="utf-8", errors="ignore")
     required = (
         "Math.max(px('--tg-content-safe-area-inset-top'),px('--tg-safe-area-inset-top'))",
-        "if(isFullscreen)top=Math.max(top,68)",
+        "var fullscreenChromeTop=(platform==='ios'||platform==='macos')?144:112",
+        "if(isFullscreen)top=Math.max(top,fullscreenChromeTop)",
+        "bottom:calc(10px + var(--sc-safe-bottom))",
+        "border-radius:24px",
+        'data-s="s-home" aria-label="Сьогодні"',
+        'data-s="s-listen" aria-label="Практика"',
+        'data-s="s-buddy" aria-label="Chainy"',
+        'data-s="s-social" aria-label="Спільнота"',
+        'data-s="s-prog" aria-label="Прогрес"',
         'id="soc-tab-chains"', 'id="social-chain-panel"',
         "if(area==='chain'){await go('s-social');socialTab('chains');return;}",
         'id="chainy-notes-panel"', "chainy_note_save", "chainy_notes_list",
