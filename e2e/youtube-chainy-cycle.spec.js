@@ -43,13 +43,17 @@ async function runOwnVideoCycle(page, context, scenario, surface) {
   await expect(player.locator('#word-card')).toHaveClass(/\bshow\b/);
   await expect(player.locator('#word-card-translation'))
     .toHaveText('\u043f\u0440\u0430\u043a\u0442\u0438\u043a\u0430');
+  await player.locator('#word-card-vocab').click();
+  await expect(player.locator('#word-card-vocab')).toContainText('Збережено');
 
-  const phrase = player.locator('#transcript-text');
-  await phrase.focus();
-  await expect(phrase).toBeFocused();
-  await phrase.press('Enter');
-  await expect(player.locator('#word-card-translation'))
-    .toHaveText('\u041f\u0440\u0430\u043a\u0442\u0438\u043a\u0430 \u0449\u043e\u0434\u043d\u044f \u043f\u0440\u0438\u043d\u043e\u0441\u0438\u0442\u044c \u043f\u0440\u043e\u0433\u0440\u0435\u0441.');
+  await player.locator('#phrase-save').click();
+  await expect(player.locator('#phrase-save')).toHaveText('✓');
+  await player.locator('#vocab-drawer-open').click();
+  await expect(player.locator('#vocab-drawer-backdrop')).toHaveClass(/\bopen\b/);
+  await expect(player.locator('#mini-vocab-list')).toContainText('practice');
+  await expect(player.locator('#mini-vocab-list')).toContainText(englishCaptionWords);
+  await player.locator('#vocab-drawer-close').click();
+  await expect(player.locator('#vocab-drawer-backdrop')).not.toHaveClass(/\bopen\b/);
 
   const validContext = {
     type: 'speakchain-video-context', version: 'v1', video_id: E2E_VIDEO_ID,
@@ -161,7 +165,9 @@ async function runOwnVideoCycle(page, context, scenario, surface) {
   await expect(buddy.locator('#vc-btn')).toBeVisible();
 
   expect(byPath(scenario, '/captions')).toHaveLength(1);
-  expect(byPath(scenario, '/word_lookup')).toHaveLength(2);
+  expect(byPath(scenario, '/word_lookup')).toHaveLength(1);
+  expect(byPath(scenario, '/player_action')).toHaveLength(2);
+  expect(byPath(scenario, '/vocab_data')).toHaveLength(1);
   expect(byPath(scenario, '/video_summary')).toHaveLength(1);
   expect(byPath(scenario, '/buddy_chat')).toHaveLength(1);
   expect(byPath(scenario, '/buddy_realtime_token')).toHaveLength(1);
@@ -170,11 +176,12 @@ async function runOwnVideoCycle(page, context, scenario, surface) {
 
   const captions = byPath(scenario, '/captions')[0];
   const wordRequests = byPath(scenario, '/word_lookup');
+  const savedItems = byPath(scenario, '/player_action');
   const chat = byPath(scenario, '/buddy_chat')[0];
   const realtimeToken = byPath(scenario, '/buddy_realtime_token')[0];
   expect(captions.query).toEqual({ v: E2E_VIDEO_ID, lang: 'en' });
   expect(wordRequests[0].body).toMatchObject({ word: 'practice', context: E2E_CAPTION });
-  expect(wordRequests[1].body).toMatchObject({ text: E2E_CAPTION, context: E2E_VIDEO_TITLE });
+  expect(savedItems.map(entry => entry.body.phrase)).toEqual(['practice', E2E_CAPTION]);
   expect(chat.body.video_practice).toMatchObject({
     brief_version: 'v1',
     video_id: E2E_VIDEO_ID,
