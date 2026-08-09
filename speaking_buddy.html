@@ -2659,6 +2659,7 @@ function endSession() {
       session_id: sessionId,
       messages:  sessionMsgCount,
       voice:     !!voiceMode,
+      session_topic: currentScenario?.title || currentScenario?.videoPractice?.title || 'Розмова з Chainy',
       target_phrases: (currentScenario?.videoPractice?.phrases || []).slice(0, 3),
       history: history.slice(-40),
     });
@@ -2842,6 +2843,7 @@ renderScenarios();
           uid: UID, init_data: tg?.initData || '',
           session_id: sessionId,
           messages: sessionMsgCount, voice: !!voiceMode,
+          session_topic: currentScenario?.title || currentScenario?.videoPractice?.title || 'Розмова з Chainy',
           target_phrases: (currentScenario?.videoPractice?.phrases || []).slice(0, 3),
           history: history.slice(-40),
         }),
