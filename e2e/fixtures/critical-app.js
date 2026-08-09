@@ -17,6 +17,10 @@ const E2E_VIDEO_ID = 'dQw4w9WgXcQ';
 const E2E_VIDEO_TITLE = 'E2E Own Video';
 const E2E_CAPTION = 'Practice makes progress every day.';
 
+function criticalInvariant(_id, assertion) {
+  return assertion();
+}
+
 const session = label => ({
   access_token: `access-${label}`,
   refresh_token: `refresh-${label}`,
@@ -534,21 +538,27 @@ const test = base.extend({
     });
 
     await use(page);
-    expect(scenario.unexpected, 'Every non-local request must be explicitly mocked').toEqual([]);
-    expect(
+    criticalInvariant('network.deny_default', () => expect(
+      scenario.unexpected, 'Every non-local request must be explicitly mocked'
+    ).toEqual([]));
+    criticalInvariant('paid.no_requests', () => expect(
       scenario.requests.filter(request => /\/(?:pay|checkout|wayforpay|lottery_buy_ticket|admin_nudge_send)(?:\/|$)/.test(request.path)),
       'E2E must never submit payments or learner/admin messages'
-    ).toEqual([]);
-    expect(scenario.pageErrors, 'Production app paths must not raise uncaught page errors').toEqual([]);
+    ).toEqual([]));
+    criticalInvariant('errors.page', () => expect(
+      scenario.pageErrors, 'Production app paths must not raise uncaught page errors'
+    ).toEqual([]));
     expect(scenario.reportedErrors, 'Production app paths must not report runtime errors').toEqual([]);
-    expect(scenario.localFailures, 'Every local app asset must resolve').toEqual([]);
+    criticalInvariant('errors.local_assets', () => expect(
+      scenario.localFailures, 'Every local app asset must resolve'
+    ).toEqual([]));
     // Chromium may omit the console diagnostic when a mocked 503 finishes
     // during navigation/teardown. Treat the configured count as a strict cap;
     // every emitted message must still be the explicitly induced 503 below.
-    expect(
+    criticalInvariant('errors.console_allowlist', () => expect(
       scenario.consoleErrors.length,
       'Only explicitly induced fixture HTTP failures may reach the console'
-    ).toBeLessThanOrEqual(scenario.allowedHttpConsoleErrors);
+    ).toBeLessThanOrEqual(scenario.allowedHttpConsoleErrors));
     for (const message of scenario.consoleErrors) {
       expect(message).toMatch(/^Failed to load resource: the server responded with a status of (?:404|409|410|503) /);
     }

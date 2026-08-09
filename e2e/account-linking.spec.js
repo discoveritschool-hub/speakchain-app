@@ -48,7 +48,7 @@ test('route-absent backend hides the gated card without claiming a merge', async
   await expect(page.locator('text=Прогрес доступний з обох способів входу')).toHaveCount(0);
 });
 
-test('browser Google session links verified Telegram only after explicit consent and server confirmation', async ({ appPage: page, context, scenario }) => {
+test('browser Google session submits synthetic Telegram target only after explicit consent and server confirmation', async ({ appPage: page, context, scenario }) => {
   await installBrowserSession(context, 7001, 'google');
   await enableBuild(context);
   scenario.accountLinkingEnabled = true;
@@ -87,12 +87,12 @@ test('Telegram Mini App links Google with the same provider-bound contract', asy
   await expect(page.locator('#account-link-source')).toHaveText('Telegram');
   await expect(page.locator('#account-link-target')).toHaveText('Google');
   await consentAndStart(page);
-  await page.evaluate(() => window.SC_ACCOUNT_LINKING.googleTarget({credential: 'verified-google-e2e'}));
+  await page.evaluate(() => window.SC_ACCOUNT_LINKING.googleTarget({credential: 'synthetic-google-e2e'}));
   await expect(page.locator('#account-link-status')).toContainText('Сервер підтвердив підключення');
 
   const completion = linkingRequests(scenario, '/api/v1/account-link/complete')[0];
   expect(completion.headers.authorization).toBe('Bearer access-telegram-mini');
-  expect(completion.body).toEqual({link_token: 'intent-token-e2e', credential: 'verified-google-e2e'});
+  expect(completion.body).toEqual({link_token: 'intent-token-e2e', credential: 'synthetic-google-e2e'});
   expect(completion.body).not.toHaveProperty('init_data');
   expect(completion.body).not.toHaveProperty('uid');
 });

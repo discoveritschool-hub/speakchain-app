@@ -247,13 +247,13 @@ test('Telegram own YouTube caption continues into grounded Chainy result without
   await runOwnVideoCycle(page, context, scenario, 'telegram');
 });
 
-test('browser legacy Book Loop handoff accepts only the live player and ignores a rapid duplicate', async ({
+test('browser legacy Book Loop handoff accepts only the current player and ignores a rapid duplicate', async ({
   appPage: page, context, scenario
 }) => {
   await runLegacyBookCycle(page, context, scenario, 'browser');
 });
 
-test('Telegram legacy Book Loop handoff accepts only the live player and ignores a rapid duplicate', async ({
+test('Telegram legacy Book Loop handoff accepts only the current player and ignores a rapid duplicate', async ({
   appPage: page, context, scenario
 }) => {
   await runLegacyBookCycle(page, context, scenario, 'telegram');

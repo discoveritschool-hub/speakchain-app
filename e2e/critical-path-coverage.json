@@ -1,17 +1,55 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "registry_ids": ["L1-13"],
-  "required_projects": ["chromium-desktop", "chromium-mobile"],
-  "required_surfaces": ["pwa", "telegram"],
+  "matrix": {
+    "projects": ["chromium-desktop", "chromium-mobile"],
+    "surfaces": ["pwa-session-fixture", "telegram-initdata-synthetic"]
+  },
+  "verification_boundaries": {
+    "ci_simulated": "Deterministic local frontend simulation; no production, credential, signature, provider, or Telegram cryptographic claim.",
+    "live_authorized": "pending_external_credentials",
+    "telegram_backend_cryptographic_verification": "not_covered_by_app_e2e"
+  },
   "capabilities": {
-    "auth-deny": ["L1-13 auth deny keeps protected shell closed"],
-    "safe-retry-offline": ["failed payload retries surface a recovery control and recover without reload", "Telegram payload failure recovers without reload and preserves verified initData", "Telegram ApiClient prefers verified initData and reports offline recovery state"],
-    "stale-navigation": ["slow shell payload is aborted when navigation advances to Profile"],
-    "roles-support-paywall-no-charge": ["L1-13 learner safety surfaces remain gated and opening plans never charges"],
-    "rooms-hidden": ["L1-13 learner safety surfaces remain gated and opening plans never charges"],
-    "profile-chainy-parity": ["native keyboard navigation reaches Chainy, Progress and Profile", "Telegram native navigation reaches Chainy, Progress and Profile with initData identity"],
-    "book-video-parity": ["browser own YouTube caption continues into grounded Chainy result without retries", "Telegram own YouTube caption continues into grounded Chainy result without retries", "browser legacy Book Loop handoff accepts only the live player and ignores a rapid duplicate", "Telegram legacy Book Loop handoff accepts only the live player and ignores a rapid duplicate"],
-    "deeplink-parity": ["L1-13 authenticated deeplinks have PWA and Telegram parity"],
-    "zero-unexpected-errors": ["fixture:deny-by-default-network-and-runtime-errors"]
+    "auth-deny": {
+      "verification": "ci_simulated",
+      "tests": ["L1-13 auth deny keeps protected shell closed"],
+      "assertions": ["auth.gate_visible", "auth.profile_closed", "auth.no_payload"]
+    },
+    "safe-retry-offline": {
+      "verification": "ci_simulated",
+      "tests": ["failed payload retries surface a recovery control and recover without reload", "Telegram payload failure recovers without reload and preserves synthetic initData", "Telegram ApiClient uses the synthetic initData fixture and reports offline recovery state"]
+    },
+    "stale-navigation": {
+      "verification": "ci_simulated",
+      "tests": ["slow shell payload is aborted when navigation advances to Profile"]
+    },
+    "learner-role-hidden-paywall-open-no-charge": {
+      "verification": "ci_simulated",
+      "tests": ["L1-13 learner safety surfaces remain gated and opening plans never charges (pwa-session-fixture)", "L1-13 learner safety surfaces remain gated and opening plans never charges (telegram-initdata-synthetic)"],
+      "assertions": ["learner.staff_workspace_hidden", "paywall.opened", "paywall.no_charge_request"]
+    },
+    "support-link-sanitization": {
+      "verification": "ci_simulated",
+      "tests": ["profile links use sanitized Telegram SDK paths and browser fallbacks"]
+    },
+    "rooms-hidden": {
+      "verification": "ci_simulated",
+      "tests": ["L1-13 learner safety surfaces remain gated and opening plans never charges (pwa-session-fixture)", "L1-13 learner safety surfaces remain gated and opening plans never charges (telegram-initdata-synthetic)"],
+      "assertions": ["rooms.entry_hidden"]
+    },
+    "profile-chainy-deeplink-parity": {
+      "verification": "ci_simulated",
+      "tests": ["L1-13 synthetic deeplinks have PWA and Telegram frontend parity (pwa-session-fixture)", "L1-13 synthetic deeplinks have PWA and Telegram frontend parity (telegram-initdata-synthetic)"],
+      "assertions": ["deeplink.auth_gate_absent", "deeplink.profile_open", "deeplink.profile_identity", "deeplink.chainy_open", "deeplink.chainy_title"]
+    },
+    "book-video-parity": {
+      "verification": "ci_simulated",
+      "tests": ["browser own YouTube caption continues into grounded Chainy result without retries", "Telegram own YouTube caption continues into grounded Chainy result without retries", "browser legacy Book Loop handoff accepts only the current player and ignores a rapid duplicate", "Telegram legacy Book Loop handoff accepts only the current player and ignores a rapid duplicate"]
+    },
+    "deny-by-default-errors-and-paid-actions": {
+      "verification": "ci_simulated",
+      "fixture_invariants": ["network.deny_default", "errors.page", "errors.console_allowlist", "errors.local_assets", "paid.no_requests"]
+    }
   }
 }
