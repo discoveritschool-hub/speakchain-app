@@ -173,6 +173,7 @@ const test = base.extend({
       requests: [],
       unexpected: [],
       payloadFailures: new Map(),
+      payloadDelays: new Map(),
       profileMutationFailures: [],
       profileMutationResponses: [],
       profileMutationLedger: new Map(),
@@ -367,14 +368,16 @@ const test = base.extend({
       }
       if (url.pathname === '/miniapp_payload') {
         const screen = String(body.screen || '');
+        const delay = Number(scenario.payloadDelays.get(screen) || 0);
+        if (delay > 0) await new Promise(resolve => setTimeout(resolve, delay));
         const failures = Number(scenario.payloadFailures.get(screen) || 0);
         if (failures > 0) {
           scenario.payloadFailures.set(screen, failures - 1);
-          await route.fulfill(json({ ok: false, error: 'temporary fixture failure' }, 503));
+          await route.fulfill(json({ ok: false, error: 'temporary fixture failure' }, 503)).catch(() => {});
         } else {
           const payload = payloadFor(screen);
           if (screen === 's-profile') Object.assign(payload, scenario.profileSettings);
-          await route.fulfill(json({ ok: true, d: payload }));
+          await route.fulfill(json({ ok: true, d: payload })).catch(() => {});
         }
         return;
       }

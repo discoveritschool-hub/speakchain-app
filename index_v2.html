@@ -1189,6 +1189,7 @@ window.addEventListener('load', function(){
   <link rel="apple-touch-icon" href="icon-192.png">
   <script src="https://accounts.google.com/gsi/client" async></script>
   <script src="pwa.js?v=20260809-account-linking"></script>
+  <script src="api_client.js?v=20260809-boundary-v1"></script>
   <script src="account_linking.js?v=20260809-default-off"></script>
   <script src="notification_center.js?v=20260809-inbox"></script>
 </head>
@@ -2263,6 +2264,7 @@ window.__shellAct=act;
    а не тиша. showOfflineBanner/hideOfflineBanner — спільні на весь
    застосунок, не по одному на екран. */
 let OFFLINE_RETRY=null;
+let SHELL_LOAD_CONTROLLER=null;
 async function load(scr){
   if(PAYLOAD[scr])return PAYLOAD[scr];
   if(PENDING[scr])return PENDING[scr];
@@ -2278,27 +2280,43 @@ async function load(scr){
       }catch(e){}
     }
     if(!UID){
-      showOfflineBanner(scr,'Увійдіть у SpeakChain, щоб завантажити дані');
-      PAYLOAD[scr]={};return PAYLOAD[scr];
+      const auth=await window.SC_API.auth();
+      if(!auth){
+        showOfflineBanner(scr,'Увійдіть у SpeakChain, щоб завантажити дані');
+        return {};
+      }
     }
-    let lastError='';
-    for(let attempt=0;attempt<2;attempt++){
-      try{
-        const r=await fetch(BOT_API+'/miniapp_payload',{method:'POST',
-          headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({uid:UID,init_data:IDT,screen:scr})});
-        const j=await r.json().catch(()=>({}));
-        if(j?.ok&&j.d){hideOfflineBanner();PAYLOAD[scr]=j.d;return j.d;}
-        lastError=j?.error
-          ? (j.error==='unknown screen'
-              ? 'Backend ще не оновлений для екрана '+scr
-              : String(j.error))
-          : 'Помилка сервера '+r.status;
-      }catch(e){lastError='Немає звʼязку з сервером';}
-      if(attempt===0) await new Promise(res=>setTimeout(res,1200));
+    const controller=new AbortController();
+    SHELL_LOAD_CONTROLLER?.abort();
+    SHELL_LOAD_CONTROLLER=controller;
+    const scope='shell-payload';
+    const generation=window.SC_API.beginGeneration(scope);
+    try{
+      const {payload}=await window.SC_API.request('/miniapp_payload',{
+        base:BOT_API,operation:'read',attempts:2,timeout:6000,signal:controller.signal,body:{screen:scr}
+      });
+      if(!window.SC_API.isCurrent(scope,generation))return {};
+      if(payload?.ok&&payload.d){hideOfflineBanner();PAYLOAD[scr]=payload.d;return payload.d;}
+      throw new window.SC_API.ApiError('invalid_response',payload?.error||'Invalid payload');
+    }catch(error){
+      if(!window.SC_API.isCurrent(scope,generation))return {};
+      if(error?.kind==='cancelled')return {};
+      const reason=error?.kind==='auth'
+        ?'Сесія завершилась. Увійдіть ще раз.'
+        :error?.kind==='timeout'
+          ?'Сервер не відповів вчасно'
+          :error?.kind==='validation'&&error?.payload?.error==='unknown screen'
+            ?'Backend ще не оновлений для екрана '+scr
+            :error?.kind==='server'&&error?.message
+              ?String(error.message).slice(0,160)
+              :'Немає звʼязку з сервером';
+      showOfflineBanner(scr,reason);
+      return {};
+    }finally{
+      if(SHELL_LOAD_CONTROLLER===controller)SHELL_LOAD_CONTROLLER=null;
+      delete PENDING[scr];
     }
-    showOfflineBanner(scr,lastError);
-    PAYLOAD[scr]={};return PAYLOAD[scr];})();
+  })();
   return PENDING[scr];
 }
 function showOfflineBanner(scr,reason){
@@ -4361,15 +4379,7 @@ function renderProfileMutationControls(D){
   if(notification){notification.disabled=false;notification.value=PROFILE_SETTINGS_STATE.notificationPref||'';}
   profileSettingsChanged();
 }
-function profileSettingsAuth(){
-  const initData=typeof IDT==='string'?IDT:'';
-  if(initData)return {init_data:initData};
-  try{
-    const token=localStorage.getItem(PROFILE_PWA_ACCESS_KEY);
-    if(typeof token==='string'&&token.length>0&&token.length<=8192)return {pwa_access_token:token};
-  }catch(e){}
-  return null;
-}
+async function profileSettingsAuth(){return window.SC_API.auth();}
 function profileSaveError(response,payload){
   if(response?.status===401)return 'Сесія завершилась. Увійдіть у SpeakChain і спробуйте ще раз.';
   const code=typeof payload?.error==='string'?payload.error:'';
@@ -4413,7 +4423,7 @@ async function saveProfileSettings(event){
       draft:profileSettingsDraft()
     };
   }
-  const auth=profileSettingsAuth();
+  const auth=await profileSettingsAuth();
   if(!auth){
     setProfileSettingsStatus('Увійдіть у SpeakChain, щоб зберегти налаштування.','error');return;
   }
@@ -4423,18 +4433,14 @@ async function saveProfileSettings(event){
   PROFILE_SETTINGS_STATE.retryRequest=request;
   setProfileSettingsSaving(true,request.draft);
   setProfileSettingsStatus('Зберігаємо…');
-  const timeout=setTimeout(()=>controller.abort(),profileSettingsSaveTimeout());
   try{
-    const response=await fetch(BOT_API+'/miniapp_action',{
-      method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify(Object.assign({
+    const {response,payload}=await window.SC_API.request('/miniapp_action',{
+      base:BOT_API,operation:'mutation',mutationId:request.mutationId,attempts:1,
+      timeout:profileSettingsSaveTimeout(),signal:controller.signal,acceptStatuses:[409],body:{
         action:'profile_settings_update',settings:request.patch,
         mutation_id:request.mutationId,expected_revision:request.expectedRevision
-      },auth)),
-      signal:controller.signal
+      }
     });
-    const payload=await response.json().catch(()=>({}));
-    if(controller.signal.aborted)throw new DOMException('Profile settings save timed out','AbortError');
     if(generation!==PROFILE_SETTINGS_STATE.generation)return;
     if(response.status===409&&payload?.outcome==='conflict'&&profileAuthoritativeResponse(payload)){
       PROFILE_SETTINGS_STATE.saving=false;
@@ -4466,7 +4472,7 @@ async function saveProfileSettings(event){
     const save=$('#profile-settings-save');
     const offset=$('#profile-utc-offset');
     const notification=$('#profile-notification-pref');
-    const definite=error?.response?.status===400||error?.response?.status===401||error?.response?.status===409;
+    const definite=['validation','auth','conflict'].includes(error?.kind)||error?.response?.status===400||error?.response?.status===401||error?.response?.status===409;
     if(definite){
       PROFILE_SETTINGS_STATE.pendingDraft=null;
       PROFILE_SETTINGS_STATE.retryRequest=null;
@@ -4478,12 +4484,10 @@ async function saveProfileSettings(event){
       if(offset)offset.disabled=true;
       if(notification)notification.disabled=true;
       if(save){save.disabled=false;save.textContent='Перевірити й повторити';}
-      setProfileSettingsStatus(error?.name==='AbortError'
+      setProfileSettingsStatus(error?.kind==='timeout'||error?.name==='AbortError'
         ?'Не вдалося зберегти вчасно. Безпечно перевірте цей самий запит ще раз.'
         :'Результат запиту невідомий. Безпечно перевірте цей самий запит ще раз.','error');
     }
-  }finally{
-    clearTimeout(timeout);
   }
 }
 function renderProfileSettings(D,H){

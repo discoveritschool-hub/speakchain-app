@@ -1,7 +1,8 @@
-const CACHE = 'speakchain-shell-v30';
+// speakchain-shell-v30 is retired; v31 adds the authenticated ApiClient boundary.
+const CACHE = 'speakchain-shell-v31';
 const SHELL = [
   './index_v2.html', './telegram_auth_callback.html', './offline.html', './player.html', './vocab.html', './speaking_buddy.html',
-  './progress.html', './tokens.css', './pwa.js', './account_linking.js', './notification_center.js', './chainy_memory.js', './chainy_interest.js', './player_seek.js', './manifest.webmanifest',
+  './progress.html', './tokens.css', './pwa.js', './api_client.js', './account_linking.js', './notification_center.js', './chainy_memory.js', './chainy_interest.js', './player_seek.js', './manifest.webmanifest',
   './icon-192.png', './icon-512.png', './Chainy.png', './toast_rewards.js'
 ];
 const SHELL_PATHS = new Set(SHELL.map(path => new URL(path, self.location.href).pathname));
