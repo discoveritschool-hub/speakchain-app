@@ -677,186 +677,358 @@ const CHAINY_GREETINGS = [
 
 const SCENARIOS={
   basics:[
-    {emoji:'👋',title:'Greeting someone new',sub:'Перші слова, знайомство',desc:'Ти зустрічаєш нову людину на вечірці або в офісі. Треба представитися і почати розмову.',video:'dQw4w9WgXcQ',videoTitle:'How to introduce yourself in English'},
-    {emoji:'☕',title:'Small talk over coffee',sub:'Легка розмова ні про що',desc:'Ти з колегою п\'єте каву. Треба підтримати невимушену розмову.',video:'',videoTitle:''},
-    {emoji:'🌤️',title:'Weather small talk',sub:'Класичний British small talk',desc:'Погода — найпоширеніша тема для small talk.',video:'',videoTitle:''},
-    {emoji:'🎬',title:'Movies & TV shows',sub:'Обговорення фільмів',desc:'Обговорюєш з другом улюблені серіали і фільми.',video:'',videoTitle:''},
-    {emoji:'🏋️',title:'Hobbies & interests',sub:'Що ти любиш робити',desc:'Розповідаєш про свої захоплення і дізнаєшся про інтереси.',video:'',videoTitle:''},
-    {emoji:'💕',title:'First date',sub:'Романтична зустріч',desc:'Перше побачення — питання, відповіді, флірт. Ввічливо і природно.',video:'',videoTitle:''},
-    {emoji:'😔',title:'Expressing sympathy',sub:'Підтримка у важкий момент',desc:'Твій друг переживає щось складне. Потрібно висловити підтримку.',video:'',videoTitle:''},
-    {emoji:'🙏',title:'Apologizing sincerely',sub:'Вибачення щиро і правильно',desc:'Ти зробив помилку і маєш вибачитися на роботі або особисто.',video:'',videoTitle:''},
-    {emoji:'🤔',title:'Ask to repeat',sub:'Не зрозумів — питаєш знову',desc:'Не зрозумів що сказали. Ввічливо просиш повторити або пояснити.',video:'',videoTitle:''},
-    {emoji:'🎉',title:'Giving compliments',sub:'Похвала і реакція на неї',desc:'Даєш і приймаєш компліменти природно — без незручності.',video:'',videoTitle:''},
-    {emoji:'😠',title:'Disagreeing politely',sub:'Не погоджуєшся але тактовно',desc:'Маєш іншу думку. Висловлюєш незгоду так щоб не образити.',video:'',videoTitle:''},
-    {emoji:'🎂',title:'Celebrating with friends',sub:'День народження, привітання',desc:'Вечірка або зустріч. Вітаєш, тостуєш, підтримуєш розмову.',video:'',videoTitle:''},
-    {emoji:'📱',title:'Making plans',sub:'Домовляєшся про зустріч',desc:'Телефонуєш другу щоб домовитись про вихідні або зустріч.',video:'',videoTitle:''},
-    {emoji:'🏡',title:'Talking about your home country',sub:'Розповідаєш про Україну',desc:'Іноземець питає про твою країну. Розповідаєш цікаво і з гордістю.',video:'',videoTitle:''},
-    {emoji:'✈️',title:'Talking about travel experiences',sub:'Ділишся враженнями',desc:'Розповідаєш про подорож яка тебе вразила. Передаєш емоції.',video:'',videoTitle:''},
-    {emoji:'👋',title:'Saying goodbye',sub:'Прощання у різних ситуаціях',desc:'Як попрощатися з другом, колегою, на вечірці чи на роботі — різні рівні формальності.',video:'',videoTitle:''},
-    {emoji:'👨‍👩‍👧',title:'Talking about family',sub:'Батьки, діти, родичі',desc:'Розповідаєш про свою сім\'ю, дізнаєшся про родину співрозмовника. Імена, відносини, історії.',video:'',videoTitle:''},
-    {emoji:'🎂',title:'Talking about age and life',sub:'Скільки років, етапи життя',desc:'Питання про вік, життєвий етап, освіту, життєвий досвід. Ввічливо і цікаво.',video:'',videoTitle:''},
-    {emoji:'🔢',title:'Numbers, time and dates',sub:'У реальних ситуаціях',desc:'Розумієш і кажеш числа, час, дати в магазині, на зустрічі, по телефону.',video:'',videoTitle:''},
-    {emoji:'😊',title:'Expressing feelings',sub:'Емоції — позитивні і складні',desc:'Кажеш як ти себе почуваєш — радість, втома, тривога, ентузіазм. Точно і природно.',video:'',videoTitle:''},
+    {id:'sc.v1.basics.001',emoji:'👋',title:'Greeting someone new',sub:'Перші слова, знайомство',desc:'Ти зустрічаєш нову людину на вечірці або в офісі. Треба представитися і почати розмову.',video:'dQw4w9WgXcQ',videoTitle:'How to introduce yourself in English'},
+    {id:'sc.v1.basics.002',emoji:'☕',title:'Small talk over coffee',sub:'Легка розмова ні про що',desc:'Ти з колегою п\'єте каву. Треба підтримати невимушену розмову.',video:'',videoTitle:''},
+    {id:'sc.v1.basics.003',emoji:'🌤️',title:'Weather small talk',sub:'Класичний British small talk',desc:'Погода — найпоширеніша тема для small talk.',video:'',videoTitle:''},
+    {id:'sc.v1.basics.004',emoji:'🎬',title:'Movies & TV shows',sub:'Обговорення фільмів',desc:'Обговорюєш з другом улюблені серіали і фільми.',video:'',videoTitle:''},
+    {id:'sc.v1.basics.005',emoji:'🏋️',title:'Hobbies & interests',sub:'Що ти любиш робити',desc:'Розповідаєш про свої захоплення і дізнаєшся про інтереси.',video:'',videoTitle:''},
+    {id:'sc.v1.basics.006',emoji:'💕',title:'First date',sub:'Романтична зустріч',desc:'Перше побачення — питання, відповіді, флірт. Ввічливо і природно.',video:'',videoTitle:''},
+    {id:'sc.v1.basics.007',emoji:'😔',title:'Expressing sympathy',sub:'Підтримка у важкий момент',desc:'Твій друг переживає щось складне. Потрібно висловити підтримку.',video:'',videoTitle:''},
+    {id:'sc.v1.basics.008',emoji:'🙏',title:'Apologizing sincerely',sub:'Вибачення щиро і правильно',desc:'Ти зробив помилку і маєш вибачитися на роботі або особисто.',video:'',videoTitle:''},
+    {id:'sc.v1.basics.009',emoji:'🤔',title:'Ask to repeat',sub:'Не зрозумів — питаєш знову',desc:'Не зрозумів що сказали. Ввічливо просиш повторити або пояснити.',video:'',videoTitle:''},
+    {id:'sc.v1.basics.010',emoji:'🎉',title:'Giving compliments',sub:'Похвала і реакція на неї',desc:'Даєш і приймаєш компліменти природно — без незручності.',video:'',videoTitle:''},
+    {id:'sc.v1.basics.011',emoji:'😠',title:'Disagreeing politely',sub:'Не погоджуєшся але тактовно',desc:'Маєш іншу думку. Висловлюєш незгоду так щоб не образити.',video:'',videoTitle:''},
+    {id:'sc.v1.basics.012',emoji:'🎂',title:'Celebrating with friends',sub:'День народження, привітання',desc:'Вечірка або зустріч. Вітаєш, тостуєш, підтримуєш розмову.',video:'',videoTitle:''},
+    {id:'sc.v1.basics.013',emoji:'📱',title:'Making plans',sub:'Домовляєшся про зустріч',desc:'Телефонуєш другу щоб домовитись про вихідні або зустріч.',video:'',videoTitle:''},
+    {id:'sc.v1.basics.014',emoji:'🏡',title:'Talking about your home country',sub:'Розповідаєш про Україну',desc:'Іноземець питає про твою країну. Розповідаєш цікаво і з гордістю.',video:'',videoTitle:''},
+    {id:'sc.v1.basics.015',emoji:'✈️',title:'Talking about travel experiences',sub:'Ділишся враженнями',desc:'Розповідаєш про подорож яка тебе вразила. Передаєш емоції.',video:'',videoTitle:''},
+    {id:'sc.v1.basics.016',emoji:'👋',title:'Saying goodbye',sub:'Прощання у різних ситуаціях',desc:'Як попрощатися з другом, колегою, на вечірці чи на роботі — різні рівні формальності.',video:'',videoTitle:''},
+    {id:'sc.v1.basics.017',emoji:'👨‍👩‍👧',title:'Talking about family',sub:'Батьки, діти, родичі',desc:'Розповідаєш про свою сім\'ю, дізнаєшся про родину співрозмовника. Імена, відносини, історії.',video:'',videoTitle:''},
+    {id:'sc.v1.basics.018',emoji:'🎂',title:'Talking about age and life',sub:'Скільки років, етапи життя',desc:'Питання про вік, життєвий етап, освіту, життєвий досвід. Ввічливо і цікаво.',video:'',videoTitle:''},
+    {id:'sc.v1.basics.019',emoji:'🔢',title:'Numbers, time and dates',sub:'У реальних ситуаціях',desc:'Розумієш і кажеш числа, час, дати в магазині, на зустрічі, по телефону.',video:'',videoTitle:''},
+    {id:'sc.v1.basics.020',emoji:'😊',title:'Expressing feelings',sub:'Емоції — позитивні і складні',desc:'Кажеш як ти себе почуваєш — радість, втома, тривога, ентузіазм. Точно і природно.',video:'',videoTitle:''},
   ],
   daily:[
-    {emoji:'🏥',title:'Doctor\'s appointment',sub:'Симптоми, діагноз',desc:'Ти у лікаря. Описуєш симптоми і отримуєш рекомендації.',video:'K8sAbPkQYMo',videoTitle:'At the doctor – English conversation'},
-    {emoji:'💊',title:'At the pharmacy',sub:'Ліки, дозування, рецепт',desc:'В аптеці питаєш про ліки без рецепту. Фармацевт уточнює симптоми.',video:'',videoTitle:''},
-    {emoji:'🛒',title:'Supermarket',sub:'Знайти продукти, каса',desc:'В супермаркеті не можеш знайти потрібний товар. Питаєш персонал.',video:'',videoTitle:''},
-    {emoji:'👔',title:'Clothing store',sub:'Розмір, примірка, повернення',desc:'Хочеш повернути одяг не того розміру. Розмовляєш з продавцем.',video:'',videoTitle:''},
-    {emoji:'🏫',title:'Parent-teacher meeting',sub:'Успішність дитини',desc:'Зустріч з вчителем. Обговорюєте прогрес і поведінку дитини.',video:'',videoTitle:''},
-    {emoji:'🔧',title:'Calling a plumber',sub:'Проблема в квартирі',desc:'Труба тече. Телефонуєш майстру і пояснюєш проблему.',video:'',videoTitle:''},
-    {emoji:'🏦',title:'At the bank',sub:'Рахунок, картка, помилка',desc:'В банку вирішуєш питання з рахунком або помилковим списанням.',video:'',videoTitle:''},
-    {emoji:'📦',title:'Accepting a delivery',sub:'Кур\'єр, посилка, підпис',desc:'Кур\'єр привіз посилку. Перевіряєш і вирішуєш проблему якщо є.',video:'',videoTitle:''},
-    {emoji:'😤',title:'Neighbor dispute',sub:'Шум, паркування, конфлікт',desc:'Проблема з сусідом. Вирішуєш ввічливо але твердо.',video:'',videoTitle:''},
-    {emoji:'💻',title:'Tech support call',sub:'Інтернет не працює',desc:'Телефонуєш в техпідтримку. Описуєш проблему і виконуєш інструкції.',video:'',videoTitle:''},
-    {emoji:'🦷',title:'Dentist visit',sub:'Біль, процедура, страх',desc:'У стоматолога. Описуєш де болить і домовляєшся про лікування.',video:'',videoTitle:''},
-    {emoji:'🚗',title:'Car service',sub:'Ремонт, діагностика',desc:'Привіз машину в сервіс. Пояснюєш що не так і питаєш про терміни.',video:'',videoTitle:''},
-    {emoji:'👁️',title:'Eye test / Optician',sub:'Зір, окуляри, лінзи',desc:'У окуліста. Описуєш проблеми із зором і вибираєш окуляри.',video:'',videoTitle:''},
-    {emoji:'🏋️',title:'Gym / Personal trainer',sub:'Перше заняття, план',desc:'В тренажерному залі. Тренер питає про цілі і складає програму.',video:'',videoTitle:''},
-    {emoji:'🐶',title:'At the vet',sub:'Тварина хвора',desc:'Ведеш тварину до ветеринара. Описуєш симптоми і розумієш рекомендації.',video:'',videoTitle:''},
-    {emoji:'📮',title:'Post office',sub:'Посилка, відправлення',desc:'На пошті відправляєш посилку за кордон. Вибираєш тип і страховку.',video:'',videoTitle:''},
-    {emoji:'🔑',title:'Locksmith emergency',sub:'Замкнувся, втратив ключі',desc:'Замкнувся за дверима або загубив ключі. Телефонуєш і пояснюєш.',video:'',videoTitle:''},
-    {emoji:'💇',title:'Hair salon',sub:'Стрижка, фарбування',desc:'У перукарні. Пояснюєш що хочеш і реагуєш на пропозиції.',video:'',videoTitle:''},
-    {emoji:'🏠',title:'Renting a property',sub:'Перегляд квартири',desc:'Ріелтор показує квартиру. Питаєш деталі і оцінюєш варіант.',video:'',videoTitle:''},
-    {emoji:'📚',title:'Library',sub:'Знайти книгу, продовжити',desc:'В бібліотеці шукаєш книгу або продовжуєш термін позики.',video:'',videoTitle:''},
-    {emoji:'🏃',title:'Joining a fitness class',sub:'Перша тренування в групі',desc:'Перший раз в груповому занятті. Знайомишся з тренером і людьми.',video:'',videoTitle:''},
-    {emoji:'🎓',title:'University admissions',sub:'Подача документів, вимоги',desc:'В приймальній комісії питаєш про вступ і необхідні документи.',video:'',videoTitle:''},
-    {emoji:'👨‍🏫',title:'Asking teacher for extension',sub:'Прохання про відстрочку',desc:'Не встиг здати завдання. Ввічливо просиш у викладача додатковий час.',video:'',videoTitle:''},
-    {emoji:'🎒',title:'Study group meetup',sub:'Підготовка до екзамену разом',desc:'Організовуєш групу для спільної підготовки. Розподіляєш теми.',video:'',videoTitle:''},
-    {emoji:'💬',title:'School counselor talk',sub:'Особисті питання, поради',desc:'Розмова зі шкільним психологом про проблеми чи плани на майбутнє.',video:'',videoTitle:''},
-    {emoji:'📵',title:'Phone plan upgrade',sub:'Зміна тарифу',desc:'В магазині мобільного зв\'язку обираєш новий тариф або змінюєш умови.',video:'',videoTitle:''},
-    {emoji:'🛍️',title:'Returning a product',sub:'Гарантія, обмін',desc:'Повертаєш зламаний товар. Пояснюєш проблему і вимагаєш обміну.',video:'',videoTitle:''},
-    {emoji:'💳',title:'Lost credit card',sub:'Блокування, заміна',desc:'Загубив банківську карту. Телефонуєш у банк щоб заблокувати і випустити нову.',video:'',videoTitle:''},
-    {emoji:'🅿️',title:'Parking ticket dispute',sub:'Сперечаєшся з інспектором',desc:'Отримав штраф несправедливо. Сперечаєшся з паркувальним інспектором.',video:'',videoTitle:''},
-    {emoji:'🚇',title:'Lost in public transport',sub:'Не та лінія, не та зупинка',desc:'Сів не на той автобус або метро. Просиш допомогу щоб знайти правильний маршрут.',video:'',videoTitle:''},
-    {emoji:'🏪',title:'Convenience store',sub:'Дрібниці, питання',desc:'У магазині біля дому. Шукаєш конкретний товар і питаєш персонал.',video:'',videoTitle:''},
-    {emoji:'🍞',title:'Bakery / Farmers market',sub:'Свіжі продукти, торг',desc:'На ринку чи в пекарні. Питаєш про свіжість і вибираєш найкраще.',video:'',videoTitle:''},
-    {emoji:'🐾',title:'Pet grooming appointment',sub:'Стрижка тварини',desc:'Ведеш собаку чи кота на грумінг. Пояснюєш що хочеш.',video:'',videoTitle:''},
-    {emoji:'🎨',title:'Art class enrollment',sub:'Запис на курс',desc:'Записуєшся на курс малювання або іншого хобі. Питаєш про програму.',video:'',videoTitle:''},
-    {emoji:'🍕',title:'Food delivery problem',sub:'Замовлення прийшло не те',desc:'Привезли не те що замовляв. Дзвониш на гарячу лінію.',video:'',videoTitle:''},
-    {emoji:'🎵',title:'Concert ticket booking',sub:'Вибір місць, ціна',desc:'Купуєш квитки на концерт. Питаєш про місця, ціни, дату.',video:'',videoTitle:''},
-    {emoji:'🎮',title:'Tech store / gadget shop',sub:'Вибір ноутбука, телефону',desc:'В магазині електроніки. Консультуєшся з продавцем про вибір моделі.',video:'',videoTitle:''},
-    {emoji:'🏊',title:'Swimming pool admission',sub:'Перепустка, правила',desc:'Перший раз у новому басейні. Питаєш про абонемент і правила.',video:'',videoTitle:''},
-    {emoji:'💼',title:'Insurance claim',sub:'ДТП, страховий випадок',desc:'Подаєш заяву про страховий випадок. Пояснюєш деталі агенту.',video:'',videoTitle:''},
-    {emoji:'🚿',title:'Apartment maintenance',sub:'Поломка, ремонт',desc:'Щось зламалось у квартирі. Дзвониш в управління дому щоб полагодили.',video:'',videoTitle:''},
-    {emoji:'🍻',title:'Inviting neighbors over',sub:'Соцальна зустріч',desc:'Запрошуєш сусідів до себе. Знайомитесь ближче, ведете small talk.',video:'',videoTitle:''},
-    {emoji:'🪪',title:'Renewing documents',sub:'Паспорт, права',desc:'У державному офісі продовжуєш термін дії документів. Заповнюєш форми.',video:'',videoTitle:''},
-    {emoji:'⚖️',title:'Calling a lawyer',sub:'Юридична консультація',desc:'Звертаєшся до юриста за консультацією. Описуєш свою ситуацію.',video:'',videoTitle:''},
-    {emoji:'📰',title:'Subscription cancellation',sub:'Відписка від послуги',desc:'Хочеш скасувати підписку. Дзвониш у компанію і твердо стоїш на своєму.',video:'',videoTitle:''},
-    {emoji:'🚑',title:'Emergency room visit',sub:'Гостра ситуація, прийом',desc:'Прийшов до приймального відділення лікарні. Описуєш гостру проблему медсестрі.',video:'',videoTitle:''},
-    {emoji:'📞',title:'Booking medical appointment',sub:'По телефону до клініки',desc:'Дзвониш у клініку записатися. Адміністратор питає про симптоми і дату.',video:'',videoTitle:''},
-    {emoji:'🧠',title:'Mental health check-in',sub:'Розмова з терапевтом',desc:'У психотерапевта вперше. Описуєш стан, тривоги, відносини, ставиш питання про процес.',video:'',videoTitle:''},
-    {emoji:'🤰',title:'Pregnancy / women\'s health',sub:'Гінеколог, акушер',desc:'Прийом у жіночого лікаря. Питання здоров\'я, вагітності, планування.',video:'',videoTitle:''},
-    {emoji:'☕',title:'Coffee shop order',sub:'Барист, кастомізація напою',desc:'У кав\'ярні замовляєш складний напій з модифікаціями. Розумієш сленг бариста.',video:'',videoTitle:''},
-    {emoji:'🍽️',title:'Restaurant reservation by phone',sub:'Бронюєш стіл',desc:'Дзвониш у ресторан забронювати стіл. Дата, час, кількість, особливі побажання.',video:'',videoTitle:''},
-    {emoji:'🏧',title:'ATM / payment problem',sub:'Банкомат не дає гроші',desc:'Банкомат проковтнув картку або не видав готівку. Дзвониш у банк або питаєш персонал.',video:'',videoTitle:''},
-    {emoji:'💸',title:'Sending money abroad',sub:'Переказ за кордон',desc:'У банку оформляєш міжнародний переказ. Питання курсу, комісій, термінів.',video:'',videoTitle:''},
+    {id:'sc.v1.daily.001',emoji:'🏥',title:'Doctor\'s appointment',sub:'Симптоми, діагноз',desc:'Ти у лікаря. Описуєш симптоми і отримуєш рекомендації.',video:'K8sAbPkQYMo',videoTitle:'At the doctor – English conversation'},
+    {id:'sc.v1.daily.002',emoji:'💊',title:'At the pharmacy',sub:'Ліки, дозування, рецепт',desc:'В аптеці питаєш про ліки без рецепту. Фармацевт уточнює симптоми.',video:'',videoTitle:''},
+    {id:'sc.v1.daily.003',emoji:'🛒',title:'Supermarket',sub:'Знайти продукти, каса',desc:'В супермаркеті не можеш знайти потрібний товар. Питаєш персонал.',video:'',videoTitle:''},
+    {id:'sc.v1.daily.004',emoji:'👔',title:'Clothing store',sub:'Розмір, примірка, повернення',desc:'Хочеш повернути одяг не того розміру. Розмовляєш з продавцем.',video:'',videoTitle:''},
+    {id:'sc.v1.daily.005',emoji:'🏫',title:'Parent-teacher meeting',sub:'Успішність дитини',desc:'Зустріч з вчителем. Обговорюєте прогрес і поведінку дитини.',video:'',videoTitle:''},
+    {id:'sc.v1.daily.006',emoji:'🔧',title:'Calling a plumber',sub:'Проблема в квартирі',desc:'Труба тече. Телефонуєш майстру і пояснюєш проблему.',video:'',videoTitle:''},
+    {id:'sc.v1.daily.007',emoji:'🏦',title:'At the bank',sub:'Рахунок, картка, помилка',desc:'В банку вирішуєш питання з рахунком або помилковим списанням.',video:'',videoTitle:''},
+    {id:'sc.v1.daily.008',emoji:'📦',title:'Accepting a delivery',sub:'Кур\'єр, посилка, підпис',desc:'Кур\'єр привіз посилку. Перевіряєш і вирішуєш проблему якщо є.',video:'',videoTitle:''},
+    {id:'sc.v1.daily.009',emoji:'😤',title:'Neighbor dispute',sub:'Шум, паркування, конфлікт',desc:'Проблема з сусідом. Вирішуєш ввічливо але твердо.',video:'',videoTitle:''},
+    {id:'sc.v1.daily.010',emoji:'💻',title:'Tech support call',sub:'Інтернет не працює',desc:'Телефонуєш в техпідтримку. Описуєш проблему і виконуєш інструкції.',video:'',videoTitle:''},
+    {id:'sc.v1.daily.011',emoji:'🦷',title:'Dentist visit',sub:'Біль, процедура, страх',desc:'У стоматолога. Описуєш де болить і домовляєшся про лікування.',video:'',videoTitle:''},
+    {id:'sc.v1.daily.012',emoji:'🚗',title:'Car service',sub:'Ремонт, діагностика',desc:'Привіз машину в сервіс. Пояснюєш що не так і питаєш про терміни.',video:'',videoTitle:''},
+    {id:'sc.v1.daily.013',emoji:'👁️',title:'Eye test / Optician',sub:'Зір, окуляри, лінзи',desc:'У окуліста. Описуєш проблеми із зором і вибираєш окуляри.',video:'',videoTitle:''},
+    {id:'sc.v1.daily.014',emoji:'🏋️',title:'Gym / Personal trainer',sub:'Перше заняття, план',desc:'В тренажерному залі. Тренер питає про цілі і складає програму.',video:'',videoTitle:''},
+    {id:'sc.v1.daily.015',emoji:'🐶',title:'At the vet',sub:'Тварина хвора',desc:'Ведеш тварину до ветеринара. Описуєш симптоми і розумієш рекомендації.',video:'',videoTitle:''},
+    {id:'sc.v1.daily.016',emoji:'📮',title:'Post office',sub:'Посилка, відправлення',desc:'На пошті відправляєш посилку за кордон. Вибираєш тип і страховку.',video:'',videoTitle:''},
+    {id:'sc.v1.daily.017',emoji:'🔑',title:'Locksmith emergency',sub:'Замкнувся, втратив ключі',desc:'Замкнувся за дверима або загубив ключі. Телефонуєш і пояснюєш.',video:'',videoTitle:''},
+    {id:'sc.v1.daily.018',emoji:'💇',title:'Hair salon',sub:'Стрижка, фарбування',desc:'У перукарні. Пояснюєш що хочеш і реагуєш на пропозиції.',video:'',videoTitle:''},
+    {id:'sc.v1.daily.019',emoji:'🏠',title:'Renting a property',sub:'Перегляд квартири',desc:'Ріелтор показує квартиру. Питаєш деталі і оцінюєш варіант.',video:'',videoTitle:''},
+    {id:'sc.v1.daily.020',emoji:'📚',title:'Library',sub:'Знайти книгу, продовжити',desc:'В бібліотеці шукаєш книгу або продовжуєш термін позики.',video:'',videoTitle:''},
+    {id:'sc.v1.daily.021',emoji:'🏃',title:'Joining a fitness class',sub:'Перша тренування в групі',desc:'Перший раз в груповому занятті. Знайомишся з тренером і людьми.',video:'',videoTitle:''},
+    {id:'sc.v1.daily.022',emoji:'🎓',title:'University admissions',sub:'Подача документів, вимоги',desc:'В приймальній комісії питаєш про вступ і необхідні документи.',video:'',videoTitle:''},
+    {id:'sc.v1.daily.023',emoji:'👨‍🏫',title:'Asking teacher for extension',sub:'Прохання про відстрочку',desc:'Не встиг здати завдання. Ввічливо просиш у викладача додатковий час.',video:'',videoTitle:''},
+    {id:'sc.v1.daily.024',emoji:'🎒',title:'Study group meetup',sub:'Підготовка до екзамену разом',desc:'Організовуєш групу для спільної підготовки. Розподіляєш теми.',video:'',videoTitle:''},
+    {id:'sc.v1.daily.025',emoji:'💬',title:'School counselor talk',sub:'Особисті питання, поради',desc:'Розмова зі шкільним психологом про проблеми чи плани на майбутнє.',video:'',videoTitle:''},
+    {id:'sc.v1.daily.026',emoji:'📵',title:'Phone plan upgrade',sub:'Зміна тарифу',desc:'В магазині мобільного зв\'язку обираєш новий тариф або змінюєш умови.',video:'',videoTitle:''},
+    {id:'sc.v1.daily.027',emoji:'🛍️',title:'Returning a product',sub:'Гарантія, обмін',desc:'Повертаєш зламаний товар. Пояснюєш проблему і вимагаєш обміну.',video:'',videoTitle:''},
+    {id:'sc.v1.daily.028',emoji:'💳',title:'Lost credit card',sub:'Блокування, заміна',desc:'Загубив банківську карту. Телефонуєш у банк щоб заблокувати і випустити нову.',video:'',videoTitle:''},
+    {id:'sc.v1.daily.029',emoji:'🅿️',title:'Parking ticket dispute',sub:'Сперечаєшся з інспектором',desc:'Отримав штраф несправедливо. Сперечаєшся з паркувальним інспектором.',video:'',videoTitle:''},
+    {id:'sc.v1.daily.030',emoji:'🚇',title:'Lost in public transport',sub:'Не та лінія, не та зупинка',desc:'Сів не на той автобус або метро. Просиш допомогу щоб знайти правильний маршрут.',video:'',videoTitle:''},
+    {id:'sc.v1.daily.031',emoji:'🏪',title:'Convenience store',sub:'Дрібниці, питання',desc:'У магазині біля дому. Шукаєш конкретний товар і питаєш персонал.',video:'',videoTitle:''},
+    {id:'sc.v1.daily.032',emoji:'🍞',title:'Bakery / Farmers market',sub:'Свіжі продукти, торг',desc:'На ринку чи в пекарні. Питаєш про свіжість і вибираєш найкраще.',video:'',videoTitle:''},
+    {id:'sc.v1.daily.033',emoji:'🐾',title:'Pet grooming appointment',sub:'Стрижка тварини',desc:'Ведеш собаку чи кота на грумінг. Пояснюєш що хочеш.',video:'',videoTitle:''},
+    {id:'sc.v1.daily.034',emoji:'🎨',title:'Art class enrollment',sub:'Запис на курс',desc:'Записуєшся на курс малювання або іншого хобі. Питаєш про програму.',video:'',videoTitle:''},
+    {id:'sc.v1.daily.035',emoji:'🍕',title:'Food delivery problem',sub:'Замовлення прийшло не те',desc:'Привезли не те що замовляв. Дзвониш на гарячу лінію.',video:'',videoTitle:''},
+    {id:'sc.v1.daily.036',emoji:'🎵',title:'Concert ticket booking',sub:'Вибір місць, ціна',desc:'Купуєш квитки на концерт. Питаєш про місця, ціни, дату.',video:'',videoTitle:''},
+    {id:'sc.v1.daily.037',emoji:'🎮',title:'Tech store / gadget shop',sub:'Вибір ноутбука, телефону',desc:'В магазині електроніки. Консультуєшся з продавцем про вибір моделі.',video:'',videoTitle:''},
+    {id:'sc.v1.daily.038',emoji:'🏊',title:'Swimming pool admission',sub:'Перепустка, правила',desc:'Перший раз у новому басейні. Питаєш про абонемент і правила.',video:'',videoTitle:''},
+    {id:'sc.v1.daily.039',emoji:'💼',title:'Insurance claim',sub:'ДТП, страховий випадок',desc:'Подаєш заяву про страховий випадок. Пояснюєш деталі агенту.',video:'',videoTitle:''},
+    {id:'sc.v1.daily.040',emoji:'🚿',title:'Apartment maintenance',sub:'Поломка, ремонт',desc:'Щось зламалось у квартирі. Дзвониш в управління дому щоб полагодили.',video:'',videoTitle:''},
+    {id:'sc.v1.daily.041',emoji:'🍻',title:'Inviting neighbors over',sub:'Соцальна зустріч',desc:'Запрошуєш сусідів до себе. Знайомитесь ближче, ведете small talk.',video:'',videoTitle:''},
+    {id:'sc.v1.daily.042',emoji:'🪪',title:'Renewing documents',sub:'Паспорт, права',desc:'У державному офісі продовжуєш термін дії документів. Заповнюєш форми.',video:'',videoTitle:''},
+    {id:'sc.v1.daily.043',emoji:'⚖️',title:'Calling a lawyer',sub:'Юридична консультація',desc:'Звертаєшся до юриста за консультацією. Описуєш свою ситуацію.',video:'',videoTitle:''},
+    {id:'sc.v1.daily.044',emoji:'📰',title:'Subscription cancellation',sub:'Відписка від послуги',desc:'Хочеш скасувати підписку. Дзвониш у компанію і твердо стоїш на своєму.',video:'',videoTitle:''},
+    {id:'sc.v1.daily.045',emoji:'🚑',title:'Emergency room visit',sub:'Гостра ситуація, прийом',desc:'Прийшов до приймального відділення лікарні. Описуєш гостру проблему медсестрі.',video:'',videoTitle:''},
+    {id:'sc.v1.daily.046',emoji:'📞',title:'Booking medical appointment',sub:'По телефону до клініки',desc:'Дзвониш у клініку записатися. Адміністратор питає про симптоми і дату.',video:'',videoTitle:''},
+    {id:'sc.v1.daily.047',emoji:'🧠',title:'Mental health check-in',sub:'Розмова з терапевтом',desc:'У психотерапевта вперше. Описуєш стан, тривоги, відносини, ставиш питання про процес.',video:'',videoTitle:''},
+    {id:'sc.v1.daily.048',emoji:'🤰',title:'Pregnancy / women\'s health',sub:'Гінеколог, акушер',desc:'Прийом у жіночого лікаря. Питання здоров\'я, вагітності, планування.',video:'',videoTitle:''},
+    {id:'sc.v1.daily.049',emoji:'☕',title:'Coffee shop order',sub:'Барист, кастомізація напою',desc:'У кав\'ярні замовляєш складний напій з модифікаціями. Розумієш сленг бариста.',video:'',videoTitle:''},
+    {id:'sc.v1.daily.050',emoji:'🍽️',title:'Restaurant reservation by phone',sub:'Бронюєш стіл',desc:'Дзвониш у ресторан забронювати стіл. Дата, час, кількість, особливі побажання.',video:'',videoTitle:''},
+    {id:'sc.v1.daily.051',emoji:'🏧',title:'ATM / payment problem',sub:'Банкомат не дає гроші',desc:'Банкомат проковтнув картку або не видав готівку. Дзвониш у банк або питаєш персонал.',video:'',videoTitle:''},
+    {id:'sc.v1.daily.052',emoji:'💸',title:'Sending money abroad',sub:'Переказ за кордон',desc:'У банку оформляєш міжнародний переказ. Питання курсу, комісій, термінів.',video:'',videoTitle:''},
   ],
   travel:[
-    {emoji:'🛫',title:'Airport check-in',sub:'Реєстрація, місця, багаж',desc:'На стійці реєстрації. Агент перевіряє документи і питає про багаж.',video:'VBYcITmAMgU',videoTitle:'Airport check-in – real English conversation'},
-    {emoji:'🏨',title:'Hotel check-in',sub:'Бронювання, номер, ключ',desc:'Прибув у готель. Ресепшн перевіряє бронювання і вирішує проблеми.',video:'',videoTitle:''},
-    {emoji:'🚕',title:'Taxi ride',sub:'Маршрут, рекомендації',desc:'Таксист везе тебе по місту і хоче поговорити.',video:'',videoTitle:''},
-    {emoji:'🗺️',title:'Asking for directions',sub:'Заблукав у місті',desc:'Загубився в незнайомому місті. Питаєш перехожого як дістатись.',video:'',videoTitle:''},
-    {emoji:'🧳',title:'Lost luggage',sub:'Авіакомпанія, скарга',desc:'Твій багаж не прилетів. Розмовляєш з представником авіакомпанії.',video:'',videoTitle:''},
-    {emoji:'🍽️',title:'Restaurant order',sub:'Меню, алергії, рахунок',desc:'В ресторані. Офіціант приймає замовлення і допомагає з вибором.',video:'',videoTitle:''},
-    {emoji:'🚨',title:'Lost passport',sub:'Поліція, консульство',desc:'Загубив паспорт. Звертаєшся до поліції і консульства.',video:'',videoTitle:''},
-    {emoji:'🏖️',title:'Booking a tour',sub:'Екскурсія, маршрут, ціна',desc:'В туристичному офісі вибираєш екскурсію і домовляєшся про ціну.',video:'',videoTitle:''},
-    {emoji:'🤒',title:'Medical emergency abroad',sub:'Швидка, страховка',desc:'Тобі погано за кордоном. Телефонуєш в швидку і пояснюєш симптоми.',video:'',videoTitle:''},
-    {emoji:'✈️',title:'Flight delayed',sub:'Авіакомпанія, компенсація',desc:'Рейс затримали. Питаєш про права і компенсацію.',video:'',videoTitle:''},
-    {emoji:'🏕️',title:'Meeting travelers',sub:'Хостел, нові знайомства',desc:'У хостелі познайомився з мандрівниками. Обмінюєшся порадами.',video:'',videoTitle:''},
-    {emoji:'🛍️',title:'Market haggling',sub:'Торгуєшся на ринку',desc:'На туристичному ринку хочеш купити сувенір. Торгуєшся.',video:'',videoTitle:''},
-    {emoji:'🚌',title:'Bus / Metro navigation',sub:'Квиток, зупинка, маршрут',desc:'В незнайомому транспорті. Купуєш квиток і питаєш де виходити.',video:'',videoTitle:''},
-    {emoji:'🚆',title:'Train journey',sub:'Розклад, платформа, місця',desc:'На залізниці. Купуєш квиток і знаходиш своє місце.',video:'',videoTitle:''},
-    {emoji:'🚁',title:'Tour guide',sub:'Питання під час екскурсії',desc:'На екскурсії. Питаєш гіда про місця і ділишся враженнями.',video:'',videoTitle:''},
-    {emoji:'🏔️',title:'Adventure / Outdoor activity',sub:'Інструктор, безпека',desc:'Перший урок серфінгу, скелелазіння або гірських лиж. Слухаєш інструктора.',video:'',videoTitle:''},
-    {emoji:'🍺',title:'Bar / Pub conversation',sub:'Замовлення, знайомство',desc:'В барі. Замовляєш напої і знайомишся з людьми поруч.',video:'',videoTitle:''},
-    {emoji:'🎭',title:'Booking show tickets',sub:'Театр, концерт, кіно',desc:'Купуєш квитки на шоу. Питаєш про місця і програму.',video:'',videoTitle:''},
-    {emoji:'🏄',title:'Beach resort',sub:'Сервіс, оренда, активності',desc:'На курорті. Орендуєш обладнання і домовляєшся про послуги.',video:'',videoTitle:''},
-    {emoji:'🛂',title:'Customs declaration',sub:'Митниця, що декларувати',desc:'На митниці після перельоту. Відповідаєш на питання офіцера.',video:'',videoTitle:''},
-    {emoji:'🚙',title:'Renting a car',sub:'Страховка, GPS, умови',desc:'Орендуєш авто на час подорожі. Обираєш страховку, читаєш угоду.',video:'',videoTitle:''},
-    {emoji:'🚦',title:'Car accident abroad',sub:'Інший водій, поліція',desc:'Незначна аварія за кордоном. Спілкуєшся з іншим водієм і поліцією.',video:'',videoTitle:''},
-    {emoji:'🏛️',title:'Museum visit',sub:'Гід, експозиція, питання',desc:'У музеї. Питаєш гіда про експонати або беречь аудіогід.',video:'',videoTitle:''},
-    {emoji:'📷',title:'Photographing locals',sub:'Питаєш дозволу зняти',desc:'Хочеш сфотографувати людей у незнайомій культурі. Ввічливо питаєш дозволу.',video:'',videoTitle:''},
-    {emoji:'🍷',title:'Wine tasting / Restaurant recommendations',sub:'Дегустація, рекомендації',desc:'У ресторані сомельє рекомендує вино. Питаєш про сорти і пару до страв.',video:'',videoTitle:''},
-    {emoji:'🥢',title:'Trying local cuisine',sub:'Незвичні страви',desc:'У місцевому ресторані. Питаєш що це за страва і як її їдять.',video:'',videoTitle:''},
-    {emoji:'❌',title:'Wrong order at restaurant',sub:'Ввічлива скарга',desc:'Принесли не те що замовляв або не свіже. Ввічливо повертаєш страву.',video:'',videoTitle:''},
-    {emoji:'💵',title:'Splitting the bill',sub:'З попутниками, мови різні',desc:'У ресторані з групою. Домовляєтесь як розділити рахунок.',video:'',videoTitle:''},
-    {emoji:'🆘',title:'Pickpocket / Theft report',sub:'Поліція, втратив речі',desc:'У тебе щось вкрали. У поліції описуєш злочинця і втрачені речі.',video:'',videoTitle:''},
-    {emoji:'💊',title:'Pharmacy abroad',sub:'Симптоми без рецепту',desc:'У аптеці без рецепту. Пояснюєш симптоми і питаєш про ліки без перекладача.',video:'',videoTitle:''},
-    {emoji:'🚄',title:'Train ticket exchange',sub:'Запізнення, зміна квитка',desc:'Запізнився на потяг. Просиш обміняти квиток на наступний рейс.',video:'',videoTitle:''},
-    {emoji:'💼',title:'Travel insurance claim',sub:'Дзвінок про випадок',desc:'Звертаєшся у страхову через хворобу чи аварію в подорожі.',video:'',videoTitle:''},
-    {emoji:'🛂',title:'Embassy visit abroad',sub:'Консульські послуги',desc:'У своєму консульстві за кордоном. Просиш допомогу або документи.',video:'',videoTitle:''},
-    {emoji:'🎟️',title:'Last-minute deal',sub:'Знижки, торг',desc:'Шукаєш last-minute путівку чи квиток. Дзвониш у агентство і торгуєшся.',video:'',videoTitle:''},
-    {emoji:'🚿',title:'Hotel complaint',sub:'Шум, температура, чистота',desc:'У готелі щось не так. Скаржишся на ресепшн і вимагаєш вирішення.',video:'',videoTitle:''},
-    {emoji:'🛏️',title:'Couchsurfing host',sub:'Знайомство, правила',desc:'Перша зустріч з couchsurfing хостом. Знайомишся, дізнаєшся правила.',video:'',videoTitle:''},
-    {emoji:'🤙',title:'Hitchhiking conversation',sub:'Водій підвозить, балакає',desc:'Водій підвіз і хоче поговорити. Розповідаєш про себе і подорож.',video:'',videoTitle:''},
-    {emoji:'🚁',title:'Helicopter / Heli tour',sub:'Інструктаж, безпека',desc:'Перед оглядовим польотом. Слухаєш правила безпеки і питаєш деталі.',video:'',videoTitle:''},
-    {emoji:'🛶',title:'Boat trip / Cruise',sub:'Екіпаж, програма',desc:'На круїзі або човновій прогулянці. Питаєш про маршрут і активності.',video:'',videoTitle:''},
-    {emoji:'🏕️',title:'Camping registration',sub:'Кемпінг, правила',desc:'Реєструєшся в кемпінгу. Орендуєш місце і дізнаєшся про правила.',video:'',videoTitle:''},
-    {emoji:'🎪',title:'Festival ticketing',sub:'Каса, паспорт відвідувача',desc:'На фестивалі. Купуєш браслет учасника і питаєш про програму.',video:'',videoTitle:''},
-    {emoji:'🛒',title:'Buying gifts for family',sub:'Сувеніри, упаковка',desc:'Купуєш подарунки додому. Питаєш про традиційні сувеніри і упаковку.',video:'',videoTitle:''},
-    {emoji:'🚲',title:'Bike rental',sub:'Оренда велосипеда, маршрути',desc:'Орендуєш велосипед і питаєш про маршрути та правила в місті.',video:'',videoTitle:''},
-    {emoji:'🌃',title:'Nightclub entry',sub:'Dress code, ID',desc:'На вході в нічний клуб. Охоронець перевіряє документи і одяг.',video:'',videoTitle:''},
-    {emoji:'🤿',title:'Diving / Snorkeling lesson',sub:'Перший раз під водою',desc:'Перший дайв або снорклінг. Інструктор пояснює сигнали і безпеку.',video:'',videoTitle:''},
-    {emoji:'💱',title:'Currency exchange',sub:'Обмін валюти, курс, комісія',desc:'В обмінному пункті обмінюєш валюту. Питаєш про курс, приховані комісії, ліміти.',video:'',videoTitle:''},
+    {id:'sc.v1.travel.001',emoji:'🛫',title:'Airport check-in',sub:'Реєстрація, місця, багаж',desc:'На стійці реєстрації. Агент перевіряє документи і питає про багаж.',video:'VBYcITmAMgU',videoTitle:'Airport check-in – real English conversation'},
+    {id:'sc.v1.travel.002',emoji:'🏨',title:'Hotel check-in',sub:'Бронювання, номер, ключ',desc:'Прибув у готель. Ресепшн перевіряє бронювання і вирішує проблеми.',video:'',videoTitle:''},
+    {id:'sc.v1.travel.003',emoji:'🚕',title:'Taxi ride',sub:'Маршрут, рекомендації',desc:'Таксист везе тебе по місту і хоче поговорити.',video:'',videoTitle:''},
+    {id:'sc.v1.travel.004',emoji:'🗺️',title:'Asking for directions',sub:'Заблукав у місті',desc:'Загубився в незнайомому місті. Питаєш перехожого як дістатись.',video:'',videoTitle:''},
+    {id:'sc.v1.travel.005',emoji:'🧳',title:'Lost luggage',sub:'Авіакомпанія, скарга',desc:'Твій багаж не прилетів. Розмовляєш з представником авіакомпанії.',video:'',videoTitle:''},
+    {id:'sc.v1.travel.006',emoji:'🍽️',title:'Restaurant order',sub:'Меню, алергії, рахунок',desc:'В ресторані. Офіціант приймає замовлення і допомагає з вибором.',video:'',videoTitle:''},
+    {id:'sc.v1.travel.007',emoji:'🚨',title:'Lost passport',sub:'Поліція, консульство',desc:'Загубив паспорт. Звертаєшся до поліції і консульства.',video:'',videoTitle:''},
+    {id:'sc.v1.travel.008',emoji:'🏖️',title:'Booking a tour',sub:'Екскурсія, маршрут, ціна',desc:'В туристичному офісі вибираєш екскурсію і домовляєшся про ціну.',video:'',videoTitle:''},
+    {id:'sc.v1.travel.009',emoji:'🤒',title:'Medical emergency abroad',sub:'Швидка, страховка',desc:'Тобі погано за кордоном. Телефонуєш в швидку і пояснюєш симптоми.',video:'',videoTitle:''},
+    {id:'sc.v1.travel.010',emoji:'✈️',title:'Flight delayed',sub:'Авіакомпанія, компенсація',desc:'Рейс затримали. Питаєш про права і компенсацію.',video:'',videoTitle:''},
+    {id:'sc.v1.travel.011',emoji:'🏕️',title:'Meeting travelers',sub:'Хостел, нові знайомства',desc:'У хостелі познайомився з мандрівниками. Обмінюєшся порадами.',video:'',videoTitle:''},
+    {id:'sc.v1.travel.012',emoji:'🛍️',title:'Market haggling',sub:'Торгуєшся на ринку',desc:'На туристичному ринку хочеш купити сувенір. Торгуєшся.',video:'',videoTitle:''},
+    {id:'sc.v1.travel.013',emoji:'🚌',title:'Bus / Metro navigation',sub:'Квиток, зупинка, маршрут',desc:'В незнайомому транспорті. Купуєш квиток і питаєш де виходити.',video:'',videoTitle:''},
+    {id:'sc.v1.travel.014',emoji:'🚆',title:'Train journey',sub:'Розклад, платформа, місця',desc:'На залізниці. Купуєш квиток і знаходиш своє місце.',video:'',videoTitle:''},
+    {id:'sc.v1.travel.015',emoji:'🚁',title:'Tour guide',sub:'Питання під час екскурсії',desc:'На екскурсії. Питаєш гіда про місця і ділишся враженнями.',video:'',videoTitle:''},
+    {id:'sc.v1.travel.016',emoji:'🏔️',title:'Adventure / Outdoor activity',sub:'Інструктор, безпека',desc:'Перший урок серфінгу, скелелазіння або гірських лиж. Слухаєш інструктора.',video:'',videoTitle:''},
+    {id:'sc.v1.travel.017',emoji:'🍺',title:'Bar / Pub conversation',sub:'Замовлення, знайомство',desc:'В барі. Замовляєш напої і знайомишся з людьми поруч.',video:'',videoTitle:''},
+    {id:'sc.v1.travel.018',emoji:'🎭',title:'Booking show tickets',sub:'Театр, концерт, кіно',desc:'Купуєш квитки на шоу. Питаєш про місця і програму.',video:'',videoTitle:''},
+    {id:'sc.v1.travel.019',emoji:'🏄',title:'Beach resort',sub:'Сервіс, оренда, активності',desc:'На курорті. Орендуєш обладнання і домовляєшся про послуги.',video:'',videoTitle:''},
+    {id:'sc.v1.travel.020',emoji:'🛂',title:'Customs declaration',sub:'Митниця, що декларувати',desc:'На митниці після перельоту. Відповідаєш на питання офіцера.',video:'',videoTitle:''},
+    {id:'sc.v1.travel.021',emoji:'🚙',title:'Renting a car',sub:'Страховка, GPS, умови',desc:'Орендуєш авто на час подорожі. Обираєш страховку, читаєш угоду.',video:'',videoTitle:''},
+    {id:'sc.v1.travel.022',emoji:'🚦',title:'Car accident abroad',sub:'Інший водій, поліція',desc:'Незначна аварія за кордоном. Спілкуєшся з іншим водієм і поліцією.',video:'',videoTitle:''},
+    {id:'sc.v1.travel.023',emoji:'🏛️',title:'Museum visit',sub:'Гід, експозиція, питання',desc:'У музеї. Питаєш гіда про експонати або беречь аудіогід.',video:'',videoTitle:''},
+    {id:'sc.v1.travel.024',emoji:'📷',title:'Photographing locals',sub:'Питаєш дозволу зняти',desc:'Хочеш сфотографувати людей у незнайомій культурі. Ввічливо питаєш дозволу.',video:'',videoTitle:''},
+    {id:'sc.v1.travel.025',emoji:'🍷',title:'Wine tasting / Restaurant recommendations',sub:'Дегустація, рекомендації',desc:'У ресторані сомельє рекомендує вино. Питаєш про сорти і пару до страв.',video:'',videoTitle:''},
+    {id:'sc.v1.travel.026',emoji:'🥢',title:'Trying local cuisine',sub:'Незвичні страви',desc:'У місцевому ресторані. Питаєш що це за страва і як її їдять.',video:'',videoTitle:''},
+    {id:'sc.v1.travel.027',emoji:'❌',title:'Wrong order at restaurant',sub:'Ввічлива скарга',desc:'Принесли не те що замовляв або не свіже. Ввічливо повертаєш страву.',video:'',videoTitle:''},
+    {id:'sc.v1.travel.028',emoji:'💵',title:'Splitting the bill',sub:'З попутниками, мови різні',desc:'У ресторані з групою. Домовляєтесь як розділити рахунок.',video:'',videoTitle:''},
+    {id:'sc.v1.travel.029',emoji:'🆘',title:'Pickpocket / Theft report',sub:'Поліція, втратив речі',desc:'У тебе щось вкрали. У поліції описуєш злочинця і втрачені речі.',video:'',videoTitle:''},
+    {id:'sc.v1.travel.030',emoji:'💊',title:'Pharmacy abroad',sub:'Симптоми без рецепту',desc:'У аптеці без рецепту. Пояснюєш симптоми і питаєш про ліки без перекладача.',video:'',videoTitle:''},
+    {id:'sc.v1.travel.031',emoji:'🚄',title:'Train ticket exchange',sub:'Запізнення, зміна квитка',desc:'Запізнився на потяг. Просиш обміняти квиток на наступний рейс.',video:'',videoTitle:''},
+    {id:'sc.v1.travel.032',emoji:'💼',title:'Travel insurance claim',sub:'Дзвінок про випадок',desc:'Звертаєшся у страхову через хворобу чи аварію в подорожі.',video:'',videoTitle:''},
+    {id:'sc.v1.travel.033',emoji:'🛂',title:'Embassy visit abroad',sub:'Консульські послуги',desc:'У своєму консульстві за кордоном. Просиш допомогу або документи.',video:'',videoTitle:''},
+    {id:'sc.v1.travel.034',emoji:'🎟️',title:'Last-minute deal',sub:'Знижки, торг',desc:'Шукаєш last-minute путівку чи квиток. Дзвониш у агентство і торгуєшся.',video:'',videoTitle:''},
+    {id:'sc.v1.travel.035',emoji:'🚿',title:'Hotel complaint',sub:'Шум, температура, чистота',desc:'У готелі щось не так. Скаржишся на ресепшн і вимагаєш вирішення.',video:'',videoTitle:''},
+    {id:'sc.v1.travel.036',emoji:'🛏️',title:'Couchsurfing host',sub:'Знайомство, правила',desc:'Перша зустріч з couchsurfing хостом. Знайомишся, дізнаєшся правила.',video:'',videoTitle:''},
+    {id:'sc.v1.travel.037',emoji:'🤙',title:'Hitchhiking conversation',sub:'Водій підвозить, балакає',desc:'Водій підвіз і хоче поговорити. Розповідаєш про себе і подорож.',video:'',videoTitle:''},
+    {id:'sc.v1.travel.038',emoji:'🚁',title:'Helicopter / Heli tour',sub:'Інструктаж, безпека',desc:'Перед оглядовим польотом. Слухаєш правила безпеки і питаєш деталі.',video:'',videoTitle:''},
+    {id:'sc.v1.travel.039',emoji:'🛶',title:'Boat trip / Cruise',sub:'Екіпаж, програма',desc:'На круїзі або човновій прогулянці. Питаєш про маршрут і активності.',video:'',videoTitle:''},
+    {id:'sc.v1.travel.040',emoji:'🏕️',title:'Camping registration',sub:'Кемпінг, правила',desc:'Реєструєшся в кемпінгу. Орендуєш місце і дізнаєшся про правила.',video:'',videoTitle:''},
+    {id:'sc.v1.travel.041',emoji:'🎪',title:'Festival ticketing',sub:'Каса, паспорт відвідувача',desc:'На фестивалі. Купуєш браслет учасника і питаєш про програму.',video:'',videoTitle:''},
+    {id:'sc.v1.travel.042',emoji:'🛒',title:'Buying gifts for family',sub:'Сувеніри, упаковка',desc:'Купуєш подарунки додому. Питаєш про традиційні сувеніри і упаковку.',video:'',videoTitle:''},
+    {id:'sc.v1.travel.043',emoji:'🚲',title:'Bike rental',sub:'Оренда велосипеда, маршрути',desc:'Орендуєш велосипед і питаєш про маршрути та правила в місті.',video:'',videoTitle:''},
+    {id:'sc.v1.travel.044',emoji:'🌃',title:'Nightclub entry',sub:'Dress code, ID',desc:'На вході в нічний клуб. Охоронець перевіряє документи і одяг.',video:'',videoTitle:''},
+    {id:'sc.v1.travel.045',emoji:'🤿',title:'Diving / Snorkeling lesson',sub:'Перший раз під водою',desc:'Перший дайв або снорклінг. Інструктор пояснює сигнали і безпеку.',video:'',videoTitle:''},
+    {id:'sc.v1.travel.046',emoji:'💱',title:'Currency exchange',sub:'Обмін валюти, курс, комісія',desc:'В обмінному пункті обмінюєш валюту. Питаєш про курс, приховані комісії, ліміти.',video:'',videoTitle:''},
   ],
   work:[
-    {emoji:'💼',title:'Job interview',sub:'HR задає питання',desc:'На співбесіді. HR питає про досвід, мотивацію і кар\'єрні цілі.',video:'1mHjMNZZvFo',videoTitle:'Job interview in English – full practice'},
-    {emoji:'📊',title:'Status update',sub:'Звіт менеджеру',desc:'Weekly sync з менеджером. Розповідаєш що зроблено і що блокує.',video:'',videoTitle:''},
-    {emoji:'💰',title:'Salary negotiation',sub:'Проси підвищення',desc:'Розмова з менеджером про підвищення. Аргументуєш свою цінність.',video:'',videoTitle:''},
-    {emoji:'😷',title:'Calling in sick',sub:'Пояснюєш відсутність',desc:'Телефонуєш менеджеру. Пояснюєш що погано і коли повернешся.',video:'',videoTitle:''},
-    {emoji:'🤝',title:'Meeting new team',sub:'Перший день, small talk',desc:'Перший день. Знайомишся з командою за кавою після standup.',video:'',videoTitle:''},
-    {emoji:'😬',title:'Giving difficult feedback',sub:'Говориш правду колезі',desc:'Маєш дати складний фідбек колезі. Чесно і тактовно.',video:'',videoTitle:''},
-    {emoji:'🗣️',title:'Leading a meeting',sub:'Ти ведеш зустріч',desc:'Ведеш командну зустріч. Відкриваєш, тримаєш порядок, підводиш підсумки.',video:'',videoTitle:''},
-    {emoji:'🌐',title:'Call with foreign client',sub:'Business English',desc:'Відеодзвінок з іноземним клієнтом. Презентуєш рішення.',video:'',videoTitle:''},
-    {emoji:'✉️',title:'Resigning politely',sub:'Звільнення без конфлікту',desc:'Розмова з менеджером про звільнення. Дякуєш і домовляєшся.',video:'',videoTitle:''},
-    {emoji:'📈',title:'Performance review',sub:'Оцінка роботи за рік',desc:'Щорічна оцінка. Обговорюєш досягнення і ставиш цілі.',video:'',videoTitle:''},
-    {emoji:'🤯',title:'Conflict with coworker',sub:'Вирішуєш конфлікт',desc:'Напружена ситуація з колегою. Вирішуєш спокійно і конструктивно.',video:'',videoTitle:''},
-    {emoji:'📋',title:'Project kickoff meeting',sub:'Запуск нового проекту',desc:'Перша зустріч по новому проекту. Обговорюєте цілі і ролі.',video:'',videoTitle:''},
-    {emoji:'🎯',title:'Pitching your idea',sub:'Презентуєш ідею команді',desc:'Презентуєш нову ідею або ініціативу. Переконуєш колег і менеджера.',video:'',videoTitle:''},
-    {emoji:'🏆',title:'Networking at conference',sub:'Знайомишся з людьми',desc:'На конференції. Знайомишся з людьми у твоїй сфері.',video:'',videoTitle:''},
-    {emoji:'📱',title:'Following up after interview',sub:'Дзвінок або лист після',desc:'Після співбесіди. Дзвониш або пишеш щоб уточнити статус.',video:'',videoTitle:''},
-    {emoji:'🤝',title:'Freelance project negotiation',sub:'Умови, ціна, дедлайни',desc:'Фріланс. Обговорюєш умови проекту з новим клієнтом.',video:'',videoTitle:''},
-    {emoji:'📉',title:'Explaining a mistake',sub:'Помилка, причини, рішення',desc:'Щось пішло не так. Пояснюєш менеджеру що сталось і як виправиш.',video:'',videoTitle:''},
-    {emoji:'🎓',title:'Mentoring a junior',sub:'Ти пояснюєш молодшому',desc:'Менторська розмова з молодшим колегою. Направляєш і мотивуєш.',video:'',videoTitle:''},
-    {emoji:'🎯',title:'Onboarding new hire',sub:'Перші тижні на роботі',desc:'Допомагаєш новачку влитись в команду. Розповідаєш про процеси.',video:'',videoTitle:''},
-    {emoji:'🚀',title:'Pitching to investors',sub:'Презентація стартапу',desc:'Питч-сесія перед інвесторами. Презентуєш продукт і відповідаєш на каверзні питання.',video:'',videoTitle:''},
-    {emoji:'📞',title:'Cold call to client',sub:'Перший контакт, продаж',desc:'Холодний дзвінок потенційному клієнту. Представляєш компанію і продукт.',video:'',videoTitle:''},
-    {emoji:'📅',title:'Scheduling across time zones',sub:'Міжнародна зустріч',desc:'Координуєш дзвінок з людьми з різних континентів. Враховуєш часові зони.',video:'',videoTitle:''},
-    {emoji:'🤐',title:'Confidential talk with boss',sub:'Особисте, конфіденційне',desc:'Складна особиста розмова з керівником. Просиш про допомогу або зміну ролі.',video:'',videoTitle:''},
-    {emoji:'😡',title:'Customer complaint call',sub:'Розлючений клієнт',desc:'Клієнт дзвонить розлючений. Слухаєш, заспокоюєш, пропонуєш рішення.',video:'',videoTitle:''},
-    {emoji:'🆕',title:'Asking for new role',sub:'Внутрішня вакансія',desc:'Хочеш перейти на іншу позицію в компанії. Обговорюєш це з керівником.',video:'',videoTitle:''},
-    {emoji:'🎤',title:'Public speaking at conference',sub:'Доповідь, Q&A сесія',desc:'Виступаєш на конференції. Презентуєш доповідь і відповідаєш на питання.',video:'',videoTitle:''},
-    {emoji:'🏆',title:'Receiving recognition',sub:'Премія, нагорода, тост',desc:'Тебе нагороджують. Дякуєш команді і керівнику, говориш кілька слів.',video:'',videoTitle:''},
-    {emoji:'📊',title:'Board meeting',sub:'Звіт на найвищому рівні',desc:'Презентуєш квартальні результати раді директорів. Готовий до жорстких питань.',video:'',videoTitle:''},
-    {emoji:'⚖️',title:'HR mediation',sub:'Конфлікт через HR',desc:'У HR медіації між тобою і колегою. Висловлюєш свою позицію спокійно.',video:'',videoTitle:''},
-    {emoji:'🧑‍💼',title:'Reference check call',sub:'Тебе питають про колишнього',desc:'Дзвонять перевірити рекомендацію колишнього співробітника. Чесно відповідаєш.',video:'',videoTitle:''},
-    {emoji:'📬',title:'Email follow-up call',sub:'"Did you get my email?"',desc:'Хтось не відповідає на пошту. Дзвониш щоб ввічливо нагадати.',video:'',videoTitle:''},
-    {emoji:'🌐',title:'Cross-cultural team conflict',sub:'Непорозуміння через культуру',desc:'Конфлікт у міжнародній команді через культурні розбіжності. Вирішуєш дипломатично.',video:'',videoTitle:''},
-    {emoji:'💸',title:'Discussing layoffs',sub:'Звільнення, скорочення',desc:'Менеджер повідомляє про скорочення. Реагуєш, питаєш про умови, наступні кроки.',video:'',videoTitle:''},
-    {emoji:'🎁',title:'End of year party',sub:'Корпоратив, тости',desc:'На корпоративі знайомишся з іншими відділами і ведеш small talk.',video:'',videoTitle:''},
+    {id:'sc.v1.work.001',emoji:'💼',title:'Job interview',sub:'HR задає питання',desc:'На співбесіді. HR питає про досвід, мотивацію і кар\'єрні цілі.',video:'1mHjMNZZvFo',videoTitle:'Job interview in English – full practice'},
+    {id:'sc.v1.work.002',emoji:'📊',title:'Status update',sub:'Звіт менеджеру',desc:'Weekly sync з менеджером. Розповідаєш що зроблено і що блокує.',video:'',videoTitle:''},
+    {id:'sc.v1.work.003',emoji:'💰',title:'Salary negotiation',sub:'Проси підвищення',desc:'Розмова з менеджером про підвищення. Аргументуєш свою цінність.',video:'',videoTitle:''},
+    {id:'sc.v1.work.004',emoji:'😷',title:'Calling in sick',sub:'Пояснюєш відсутність',desc:'Телефонуєш менеджеру. Пояснюєш що погано і коли повернешся.',video:'',videoTitle:''},
+    {id:'sc.v1.work.005',emoji:'🤝',title:'Meeting new team',sub:'Перший день, small talk',desc:'Перший день. Знайомишся з командою за кавою після standup.',video:'',videoTitle:''},
+    {id:'sc.v1.work.006',emoji:'😬',title:'Giving difficult feedback',sub:'Говориш правду колезі',desc:'Маєш дати складний фідбек колезі. Чесно і тактовно.',video:'',videoTitle:''},
+    {id:'sc.v1.work.007',emoji:'🗣️',title:'Leading a meeting',sub:'Ти ведеш зустріч',desc:'Ведеш командну зустріч. Відкриваєш, тримаєш порядок, підводиш підсумки.',video:'',videoTitle:''},
+    {id:'sc.v1.work.008',emoji:'🌐',title:'Call with foreign client',sub:'Business English',desc:'Відеодзвінок з іноземним клієнтом. Презентуєш рішення.',video:'',videoTitle:''},
+    {id:'sc.v1.work.009',emoji:'✉️',title:'Resigning politely',sub:'Звільнення без конфлікту',desc:'Розмова з менеджером про звільнення. Дякуєш і домовляєшся.',video:'',videoTitle:''},
+    {id:'sc.v1.work.010',emoji:'📈',title:'Performance review',sub:'Оцінка роботи за рік',desc:'Щорічна оцінка. Обговорюєш досягнення і ставиш цілі.',video:'',videoTitle:''},
+    {id:'sc.v1.work.011',emoji:'🤯',title:'Conflict with coworker',sub:'Вирішуєш конфлікт',desc:'Напружена ситуація з колегою. Вирішуєш спокійно і конструктивно.',video:'',videoTitle:''},
+    {id:'sc.v1.work.012',emoji:'📋',title:'Project kickoff meeting',sub:'Запуск нового проекту',desc:'Перша зустріч по новому проекту. Обговорюєте цілі і ролі.',video:'',videoTitle:''},
+    {id:'sc.v1.work.013',emoji:'🎯',title:'Pitching your idea',sub:'Презентуєш ідею команді',desc:'Презентуєш нову ідею або ініціативу. Переконуєш колег і менеджера.',video:'',videoTitle:''},
+    {id:'sc.v1.work.014',emoji:'🏆',title:'Networking at conference',sub:'Знайомишся з людьми',desc:'На конференції. Знайомишся з людьми у твоїй сфері.',video:'',videoTitle:''},
+    {id:'sc.v1.work.015',emoji:'📱',title:'Following up after interview',sub:'Дзвінок або лист після',desc:'Після співбесіди. Дзвониш або пишеш щоб уточнити статус.',video:'',videoTitle:''},
+    {id:'sc.v1.work.016',emoji:'🤝',title:'Freelance project negotiation',sub:'Умови, ціна, дедлайни',desc:'Фріланс. Обговорюєш умови проекту з новим клієнтом.',video:'',videoTitle:''},
+    {id:'sc.v1.work.017',emoji:'📉',title:'Explaining a mistake',sub:'Помилка, причини, рішення',desc:'Щось пішло не так. Пояснюєш менеджеру що сталось і як виправиш.',video:'',videoTitle:''},
+    {id:'sc.v1.work.018',emoji:'🎓',title:'Mentoring a junior',sub:'Ти пояснюєш молодшому',desc:'Менторська розмова з молодшим колегою. Направляєш і мотивуєш.',video:'',videoTitle:''},
+    {id:'sc.v1.work.019',emoji:'🎯',title:'Onboarding new hire',sub:'Перші тижні на роботі',desc:'Допомагаєш новачку влитись в команду. Розповідаєш про процеси.',video:'',videoTitle:''},
+    {id:'sc.v1.work.020',emoji:'🚀',title:'Pitching to investors',sub:'Презентація стартапу',desc:'Питч-сесія перед інвесторами. Презентуєш продукт і відповідаєш на каверзні питання.',video:'',videoTitle:''},
+    {id:'sc.v1.work.021',emoji:'📞',title:'Cold call to client',sub:'Перший контакт, продаж',desc:'Холодний дзвінок потенційному клієнту. Представляєш компанію і продукт.',video:'',videoTitle:''},
+    {id:'sc.v1.work.022',emoji:'📅',title:'Scheduling across time zones',sub:'Міжнародна зустріч',desc:'Координуєш дзвінок з людьми з різних континентів. Враховуєш часові зони.',video:'',videoTitle:''},
+    {id:'sc.v1.work.023',emoji:'🤐',title:'Confidential talk with boss',sub:'Особисте, конфіденційне',desc:'Складна особиста розмова з керівником. Просиш про допомогу або зміну ролі.',video:'',videoTitle:''},
+    {id:'sc.v1.work.024',emoji:'😡',title:'Customer complaint call',sub:'Розлючений клієнт',desc:'Клієнт дзвонить розлючений. Слухаєш, заспокоюєш, пропонуєш рішення.',video:'',videoTitle:''},
+    {id:'sc.v1.work.025',emoji:'🆕',title:'Asking for new role',sub:'Внутрішня вакансія',desc:'Хочеш перейти на іншу позицію в компанії. Обговорюєш це з керівником.',video:'',videoTitle:''},
+    {id:'sc.v1.work.026',emoji:'🎤',title:'Public speaking at conference',sub:'Доповідь, Q&A сесія',desc:'Виступаєш на конференції. Презентуєш доповідь і відповідаєш на питання.',video:'',videoTitle:''},
+    {id:'sc.v1.work.027',emoji:'🏆',title:'Receiving recognition',sub:'Премія, нагорода, тост',desc:'Тебе нагороджують. Дякуєш команді і керівнику, говориш кілька слів.',video:'',videoTitle:''},
+    {id:'sc.v1.work.028',emoji:'📊',title:'Board meeting',sub:'Звіт на найвищому рівні',desc:'Презентуєш квартальні результати раді директорів. Готовий до жорстких питань.',video:'',videoTitle:''},
+    {id:'sc.v1.work.029',emoji:'⚖️',title:'HR mediation',sub:'Конфлікт через HR',desc:'У HR медіації між тобою і колегою. Висловлюєш свою позицію спокійно.',video:'',videoTitle:''},
+    {id:'sc.v1.work.030',emoji:'🧑‍💼',title:'Reference check call',sub:'Тебе питають про колишнього',desc:'Дзвонять перевірити рекомендацію колишнього співробітника. Чесно відповідаєш.',video:'',videoTitle:''},
+    {id:'sc.v1.work.031',emoji:'📬',title:'Email follow-up call',sub:'"Did you get my email?"',desc:'Хтось не відповідає на пошту. Дзвониш щоб ввічливо нагадати.',video:'',videoTitle:''},
+    {id:'sc.v1.work.032',emoji:'🌐',title:'Cross-cultural team conflict',sub:'Непорозуміння через культуру',desc:'Конфлікт у міжнародній команді через культурні розбіжності. Вирішуєш дипломатично.',video:'',videoTitle:''},
+    {id:'sc.v1.work.033',emoji:'💸',title:'Discussing layoffs',sub:'Звільнення, скорочення',desc:'Менеджер повідомляє про скорочення. Реагуєш, питаєш про умови, наступні кроки.',video:'',videoTitle:''},
+    {id:'sc.v1.work.034',emoji:'🎁',title:'End of year party',sub:'Корпоратив, тости',desc:'На корпоративі знайомишся з іншими відділами і ведеш small talk.',video:'',videoTitle:''},
   ],
   move:[
-    {emoji:'🛂',title:'Border control',sub:'Офіцер, мета в\'їзду',desc:'Паспортний контроль. Офіцер питає про мету в\'їзду і фінанси.',video:'sI2yjFMKQaE',videoTitle:'Border control English – what to say'},
-    {emoji:'🏠',title:'Apartment hunting',sub:'Landlord, умови оренди',desc:'Дзвониш по оголошенню. Питаєш про умови, депозит і комунальні.',video:'',videoTitle:''},
-    {emoji:'🏦',title:'Opening bank account',sub:'Документи для нерезидента',desc:'В банку для нових резидентів. Менеджер пояснює вимоги.',video:'',videoTitle:''},
-    {emoji:'📋',title:'Visa interview',sub:'Консульство, деталі планів',desc:'Співбесіда у консульстві. Офіцер питає про плани і зв\'язки.',video:'',videoTitle:''},
-    {emoji:'💉',title:'Health insurance signup',sub:'Вибір плану, питання',desc:'Реєструєшся в страховій. Агент пояснює плани і питає про потреби.',video:'',videoTitle:''},
-    {emoji:'🤝',title:'Meeting the neighbors',sub:'Знайомство, small talk',desc:'Познайомився з сусідом. Він питає звідки ти і чи потрібна допомога.',video:'',videoTitle:''},
-    {emoji:'🏫',title:'Enrolling child in school',sub:'Директор, документи',desc:'Записуєш дитину в школу. Розмовляєш з адміністрацією.',video:'',videoTitle:''},
-    {emoji:'📱',title:'Getting a SIM card',sub:'Тариф, документи',desc:'В магазині мобільного зв\'язку. Вибираєш тариф і підключаєшся.',video:'',videoTitle:''},
-    {emoji:'🚗',title:'Driving license exchange',sub:'Транспортна інспекція',desc:'Обмін іноземного посвідчення. Розбираєшся з процедурою.',video:'',videoTitle:''},
-    {emoji:'🏥',title:'Registering with a GP',sub:'Сімейний лікар',desc:'Реєструєшся у місцевого лікаря. Заповнюєш анкету.',video:'',videoTitle:''},
-    {emoji:'🏢',title:'City hall registration',sub:'Реєстрація адреси',desc:'Реєструєш адресу проживання. Чиновник перевіряє документи.',video:'',videoTitle:''},
-    {emoji:'🛒',title:'First grocery shop abroad',sub:'Незнайомий магазин',desc:'Перший похід в супермаркет нової країни. Шукаєш звичні продукти.',video:'',videoTitle:''},
-    {emoji:'🏗️',title:'Hiring a contractor',sub:'Ремонт, кошторис',desc:'Наймаєш майстра для ремонту. Обговорюєш роботу і ціну.',video:'',videoTitle:''},
-    {emoji:'📜',title:'Tax office visit',sub:'Декларація, питання',desc:'В податковій. Питаєш про обов\'язки і подаєш документи.',video:'',videoTitle:''},
-    {emoji:'🤱',title:'Maternity / childcare services',sub:'Дитячий садок, nursery',desc:'Записуєш дитину в садок. Питаєш про програму і режим.',video:'',videoTitle:''},
-    {emoji:'🐾',title:'Registering a pet',sub:'Ветеринарна служба',desc:'Реєструєш домашнього улюбленця. Питаєш про вакцинацію і чіп.',video:'',videoTitle:''},
-    {emoji:'⚡',title:'Utility setup',sub:'Електрика, газ, вода',desc:'Підключаєш комунальні послуги. Телефонуєш в компанію.',video:'',videoTitle:''},
-    {emoji:'🏛️',title:'Embassy visit',sub:'Документи, консульські послуги',desc:'В посольстві. Отримуєш документи або вирішуєш консульське питання.',video:'',videoTitle:''},
+    {id:'sc.v1.move.001',emoji:'🛂',title:'Border control',sub:'Офіцер, мета в\'їзду',desc:'Паспортний контроль. Офіцер питає про мету в\'їзду і фінанси.',video:'sI2yjFMKQaE',videoTitle:'Border control English – what to say'},
+    {id:'sc.v1.move.002',emoji:'🏠',title:'Apartment hunting',sub:'Landlord, умови оренди',desc:'Дзвониш по оголошенню. Питаєш про умови, депозит і комунальні.',video:'',videoTitle:''},
+    {id:'sc.v1.move.003',emoji:'🏦',title:'Opening bank account',sub:'Документи для нерезидента',desc:'В банку для нових резидентів. Менеджер пояснює вимоги.',video:'',videoTitle:''},
+    {id:'sc.v1.move.004',emoji:'📋',title:'Visa interview',sub:'Консульство, деталі планів',desc:'Співбесіда у консульстві. Офіцер питає про плани і зв\'язки.',video:'',videoTitle:''},
+    {id:'sc.v1.move.005',emoji:'💉',title:'Health insurance signup',sub:'Вибір плану, питання',desc:'Реєструєшся в страховій. Агент пояснює плани і питає про потреби.',video:'',videoTitle:''},
+    {id:'sc.v1.move.006',emoji:'🤝',title:'Meeting the neighbors',sub:'Знайомство, small talk',desc:'Познайомився з сусідом. Він питає звідки ти і чи потрібна допомога.',video:'',videoTitle:''},
+    {id:'sc.v1.move.007',emoji:'🏫',title:'Enrolling child in school',sub:'Директор, документи',desc:'Записуєш дитину в школу. Розмовляєш з адміністрацією.',video:'',videoTitle:''},
+    {id:'sc.v1.move.008',emoji:'📱',title:'Getting a SIM card',sub:'Тариф, документи',desc:'В магазині мобільного зв\'язку. Вибираєш тариф і підключаєшся.',video:'',videoTitle:''},
+    {id:'sc.v1.move.009',emoji:'🚗',title:'Driving license exchange',sub:'Транспортна інспекція',desc:'Обмін іноземного посвідчення. Розбираєшся з процедурою.',video:'',videoTitle:''},
+    {id:'sc.v1.move.010',emoji:'🏥',title:'Registering with a GP',sub:'Сімейний лікар',desc:'Реєструєшся у місцевого лікаря. Заповнюєш анкету.',video:'',videoTitle:''},
+    {id:'sc.v1.move.011',emoji:'🏢',title:'City hall registration',sub:'Реєстрація адреси',desc:'Реєструєш адресу проживання. Чиновник перевіряє документи.',video:'',videoTitle:''},
+    {id:'sc.v1.move.012',emoji:'🛒',title:'First grocery shop abroad',sub:'Незнайомий магазин',desc:'Перший похід в супермаркет нової країни. Шукаєш звичні продукти.',video:'',videoTitle:''},
+    {id:'sc.v1.move.013',emoji:'🏗️',title:'Hiring a contractor',sub:'Ремонт, кошторис',desc:'Наймаєш майстра для ремонту. Обговорюєш роботу і ціну.',video:'',videoTitle:''},
+    {id:'sc.v1.move.014',emoji:'📜',title:'Tax office visit',sub:'Декларація, питання',desc:'В податковій. Питаєш про обов\'язки і подаєш документи.',video:'',videoTitle:''},
+    {id:'sc.v1.move.015',emoji:'🤱',title:'Maternity / childcare services',sub:'Дитячий садок, nursery',desc:'Записуєш дитину в садок. Питаєш про програму і режим.',video:'',videoTitle:''},
+    {id:'sc.v1.move.016',emoji:'🐾',title:'Registering a pet',sub:'Ветеринарна служба',desc:'Реєструєш домашнього улюбленця. Питаєш про вакцинацію і чіп.',video:'',videoTitle:''},
+    {id:'sc.v1.move.017',emoji:'⚡',title:'Utility setup',sub:'Електрика, газ, вода',desc:'Підключаєш комунальні послуги. Телефонуєш в компанію.',video:'',videoTitle:''},
+    {id:'sc.v1.move.018',emoji:'🏛️',title:'Embassy visit',sub:'Документи, консульські послуги',desc:'В посольстві. Отримуєш документи або вирішуєш консульське питання.',video:'',videoTitle:''},
   ],
 };
+
+// Stable scenario identity contract. IDs are explicit catalog data: titles and
+// array positions may change without changing an already-issued identity.
+const SCENARIO_CATALOG_VERSION = 1;
+const SCENARIO_CATALOG_HASH = 'f9c3365807c1417effd60b965ab66bd24760ece647792b6a64cf0e391f5c2b3f';
+const SCENARIO_STATE_MAX_BYTES = 131072;
+const SCENARIO_STATE_MAX_ENTRIES = 512;
+const SCENARIO_STATE_KEY = 'speakchain.scenarios.v1';
+const SCENARIO_MIGRATION_KEY = 'speakchain.scenarios.migration.v1';
+const SCENARIO_BACKUP_KEY = 'speakchain.scenarios.migration.v1.backup';
+const SCENARIO_LEGACY_KEYS = Object.freeze({
+  bookmarks: ['speakchain.scenario.bookmarks', 'chainy.bookmarks', 'scenario_bookmarks'],
+  progress: ['speakchain.scenario.progress', 'chainy.progress', 'scenario_progress'],
+  mastery: ['speakchain.scenario.mastery', 'chainy.mastery', 'scenario_mastery'],
+});
+
+function normalizedScenarioAlias(value) {
+  if (typeof value !== 'string' || value.length < 1 || value.length > 160 || /[\u0000-\u001f]/.test(value)) return null;
+  return value.trim().toLocaleLowerCase('en-US').replace(/\s+/g, ' ');
+}
+
+function buildScenarioIdentityIndex(catalog = SCENARIOS) {
+  const ids = new Map();
+  const aliases = new Map();
+  const addAlias = (alias, id) => {
+    const key = normalizedScenarioAlias(alias);
+    if (!key) return;
+    if (!aliases.has(key)) aliases.set(key, id);
+    else if (aliases.get(key) !== id) aliases.set(key, null); // collision: fail closed
+  };
+  for (const [catId, scenarios] of Object.entries(catalog)) {
+    if (!Array.isArray(scenarios)) throw new Error(`invalid scenario category: ${catId}`);
+    scenarios.forEach((scenario, idx) => {
+      if (!/^sc\.v1\.[a-z]+\.\d{3}$/.test(scenario.id || '') || ids.has(scenario.id)) {
+        throw new Error(`invalid or duplicate scenario id: ${scenario.id || '<missing>'}`);
+      }
+      const ref = Object.freeze({ id: scenario.id, catId, idx, scenario });
+      ids.set(scenario.id, ref);
+      // Exact old app references were category + zero-based array index.
+      [`${catId}:${idx}`, `${catId}/${idx}`, `${catId}-${idx}`, scenario.title].forEach(alias => addAlias(alias, scenario.id));
+    });
+  }
+  if (ids.size !== 170) throw new Error(`scenario catalog must contain 170 entries, found ${ids.size}`);
+  return Object.freeze({ ids, aliases });
+}
+
+const SCENARIO_IDENTITIES = buildScenarioIdentityIndex();
+
+function resolveScenarioRef(value) {
+  if (value && typeof value === 'object') {
+    if (typeof value.id === 'string') value = value.id;
+    else if (typeof value.catId === 'string' && Number.isInteger(value.idx)) value = `${value.catId}:${value.idx}`;
+    else return null;
+  }
+  const key = normalizedScenarioAlias(value);
+  if (!key) return null;
+  const canonical = SCENARIO_IDENTITIES.ids.has(value) ? value : SCENARIO_IDENTITIES.aliases.get(key);
+  return canonical ? SCENARIO_IDENTITIES.ids.get(canonical) || null : null;
+}
+
+function scenarioStateEntries(value, kind) {
+  if (value == null) return [];
+  if (kind === 'bookmarks' && Array.isArray(value)) return value.map(ref => [ref, true]);
+  if (typeof value === 'object' && !Array.isArray(value)) return Object.entries(value);
+  throw new Error(`malformed legacy ${kind}`);
+}
+
+function boundedScenarioStateValue(value, depth = 0) {
+  if (depth > 6) throw new Error('scenario state nesting is too deep');
+  if (value === null || typeof value === 'boolean') return value;
+  if (typeof value === 'number') {
+    if (!Number.isFinite(value)) throw new Error('scenario state number is not finite');
+    return value;
+  }
+  if (typeof value === 'string') {
+    if (value.length > 512) throw new Error('scenario state string is too long');
+    return value;
+  }
+  if (Array.isArray(value)) {
+    if (value.length > 32) throw new Error('scenario state array is too large');
+    return value.map(item => boundedScenarioStateValue(item, depth + 1));
+  }
+  if (typeof value === 'object') {
+    const entries = Object.entries(value);
+    if (entries.length > 32) throw new Error('scenario state object is too large');
+    return Object.fromEntries(entries.map(([key, item]) => {
+      if (key.length > 64) throw new Error('scenario state key is too long');
+      return [key, boundedScenarioStateValue(item, depth + 1)];
+    }));
+  }
+  throw new Error('unsupported scenario state value');
+}
+
+function migrateScenarioState(storage = window.localStorage) {
+  const marker = storage.getItem(SCENARIO_MIGRATION_KEY);
+  if (marker === 'complete' && storage.getItem(SCENARIO_STATE_KEY)) return { status: 'already_complete' };
+  const raw = {};
+  const next = { version: SCENARIO_CATALOG_VERSION, bookmarks: {}, progress: {}, mastery: {} };
+  try {
+    let totalBytes = 0;
+    let totalEntries = 0;
+    for (const [kind, keys] of Object.entries(SCENARIO_LEGACY_KEYS)) {
+      for (const key of keys) {
+        const text = storage.getItem(key);
+        if (text == null) continue;
+        totalBytes += text.length;
+        if (totalBytes > SCENARIO_STATE_MAX_BYTES) throw new Error('legacy scenario state is too large');
+        raw[key] = text;
+        const parsed = JSON.parse(text);
+        for (const [legacyRef, value] of scenarioStateEntries(parsed, kind)) {
+          totalEntries += 1;
+          if (totalEntries > SCENARIO_STATE_MAX_ENTRIES) throw new Error('too many legacy scenario state entries');
+          const resolved = resolveScenarioRef(legacyRef);
+          if (!resolved) throw new Error(`unknown or ambiguous scenario alias: ${String(legacyRef).slice(0, 160)}`);
+          const boundedValue = boundedScenarioStateValue(value);
+          if (Object.prototype.hasOwnProperty.call(next[kind], resolved.id)
+              && JSON.stringify(next[kind][resolved.id]) !== JSON.stringify(boundedValue)) {
+            throw new Error(`conflicting scenario state: ${resolved.id}`);
+          }
+          next[kind][resolved.id] = boundedValue;
+        }
+      }
+    }
+    const existing = storage.getItem(SCENARIO_STATE_KEY);
+    if (existing) {
+      totalBytes += existing.length;
+      if (totalBytes > SCENARIO_STATE_MAX_BYTES) throw new Error('canonical scenario state is too large');
+      const parsed = JSON.parse(existing);
+      if (parsed?.version !== SCENARIO_CATALOG_VERSION) throw new Error('unsupported canonical scenario state version');
+      for (const kind of ['bookmarks', 'progress', 'mastery']) {
+        for (const [id, value] of Object.entries(parsed[kind] || {})) {
+          totalEntries += 1;
+          if (totalEntries > SCENARIO_STATE_MAX_ENTRIES) throw new Error('too many canonical scenario state entries');
+          if (!resolveScenarioRef(id)) throw new Error(`unknown canonical scenario id: ${id}`);
+          const boundedValue = boundedScenarioStateValue(value);
+          if (Object.prototype.hasOwnProperty.call(next[kind], id)
+              && JSON.stringify(next[kind][id]) !== JSON.stringify(boundedValue)) throw new Error(`conflicting scenario state: ${id}`);
+          next[kind][id] = boundedValue;
+        }
+      }
+    }
+    // Backup is written before canonical state; legacy keys are intentionally
+    // retained, making rollout reversible and replay safe.
+    if (!storage.getItem(SCENARIO_BACKUP_KEY)) storage.setItem(SCENARIO_BACKUP_KEY, JSON.stringify(raw));
+    storage.setItem(SCENARIO_STATE_KEY, JSON.stringify(next));
+    storage.setItem(SCENARIO_MIGRATION_KEY, 'complete');
+    return { status: 'complete', migrated: Object.values(next).slice(1).reduce((n, group) => n + Object.keys(group).length, 0) };
+  } catch (error) {
+    return { status: 'blocked', error: String(error?.message || error) };
+  }
+}
+
+function rollbackScenarioStateMigration(storage = window.localStorage) {
+  const backup = JSON.parse(storage.getItem(SCENARIO_BACKUP_KEY) || '{}');
+  for (const [key, value] of Object.entries(backup)) storage.setItem(key, value);
+  storage.removeItem(SCENARIO_STATE_KEY);
+  storage.removeItem(SCENARIO_MIGRATION_KEY);
+  return { status: 'rolled_back' };
+}
+
+window.SC_SCENARIOS = Object.freeze({
+  version: SCENARIO_CATALOG_VERSION,
+  hash: SCENARIO_CATALOG_HASH,
+  resolve: resolveScenarioRef,
+  migrate: migrateScenarioState,
+  rollback: rollbackScenarioStateMigration,
+});
+try {
+  const hasScenarioState = storage => storage.getItem(SCENARIO_STATE_KEY)
+    || Object.values(SCENARIO_LEGACY_KEYS).flat().some(key => storage.getItem(key) !== null);
+  if (hasScenarioState(window.localStorage)) migrateScenarioState();
+} catch (error) { console.warn('scenario state migration unavailable', error); }
 
 const ROLES = [
   { id:'friendly',  name:'Friendly',        desc:'Підтримує, не виправляє кожну помилку',  emoji:'😊' },
@@ -1255,7 +1427,8 @@ function startMySituation() {
 
 async function openScenario(catId, idx) {
   const cat = CATEGORIES.find(c => c.id === catId);
-  const s = SCENARIOS[catId][idx];
+  const s = SCENARIOS[catId]?.[idx];
+  if (!cat || !s || !resolveScenarioRef(s.id)) return false;
   currentScenario = { catId, idx, ...s };
 
   document.getElementById('detail-emoji').textContent = s.emoji;
@@ -1318,6 +1491,7 @@ async function openScenario(catId, idx) {
     `${DAILY_LIMIT - msgCount} повідомлень залишилось сьогодні`;
 
   showScreen('s-detail');
+  return true;
 }
 
 function openVideo() {
@@ -1386,7 +1560,25 @@ function submitCustomVideo() {
     const ph = document.getElementById('video-placeholder');
     if (ph) ph.style.display = 'flex';
   }
+
+  return true;
 }
+
+async function openScenarioRef(ref) {
+  const resolved = resolveScenarioRef(ref);
+  if (!resolved) return false;
+  return openScenario(resolved.catId, resolved.idx);
+}
+
+// Old links such as ?scenario=travel:0 and new canonical IDs both resolve to
+// the same immutable entry. Unknown/ambiguous refs deliberately do nothing.
+function openScenarioDeepLink() {
+  const params = new URLSearchParams(location.search);
+  const ref = params.get('scenario_id') || params.get('scenario');
+  if (ref) openScenarioRef(ref);
+}
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', openScenarioDeepLink, { once: true });
+else setTimeout(openScenarioDeepLink, 0);
 
 function selectRole(id) {
   selectedRole = id;
@@ -1758,6 +1950,9 @@ async function sendMessage() {
       body: JSON.stringify({
         uid:           UID,
         scenario:      currentScenario.title,
+        scenario_id:   currentScenario.id || null,
+        scenario_catalog_version: currentScenario.id ? SCENARIO_CATALOG_VERSION : null,
+        scenario_catalog_hash: currentScenario.id ? SCENARIO_CATALOG_HASH : null,
         scenario_desc: interestContext.scenario_desc || currentScenario.desc,
         role:          selectedRole,
         level:         selectedLevel,
@@ -1866,6 +2061,9 @@ function realtimePayload() {
     uid: UID,
     init_data: tg?.initData || '',
     scenario: currentScenario?.title || 'General conversation',
+    scenario_id: currentScenario?.id || null,
+    scenario_catalog_version: currentScenario?.id ? SCENARIO_CATALOG_VERSION : null,
+    scenario_catalog_hash: currentScenario?.id ? SCENARIO_CATALOG_HASH : null,
     scenario_desc: interestContext.scenario_desc || currentScenario?.desc || '',
     role: selectedRole,
     level: selectedLevel,
@@ -1972,6 +2170,9 @@ function syncRealtimeMemory(userText, assistantText) {
       user_text: userText || '',
       assistant_text: assistantText || '',
       scenario: currentScenario?.title || '',
+      scenario_id: currentScenario?.id || null,
+      scenario_catalog_version: currentScenario?.id ? SCENARIO_CATALOG_VERSION : null,
+      scenario_catalog_hash: currentScenario?.id ? SCENARIO_CATALOG_HASH : null,
     }),
   }).catch(() => {});
 }
