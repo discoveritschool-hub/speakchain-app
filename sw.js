@@ -1,5 +1,5 @@
-// v34 keeps Chainy's same-day conversation and daily-limit state across navigation.
-const CACHE = 'speakchain-shell-v34';
+// v35 publishes voluntary Google↔Telegram account linking while the backend gate remains authoritative.
+const CACHE = 'speakchain-shell-v35';
 const SHELL = [
   './index_v2.html', './telegram_auth_callback.html', './offline.html', './player.html', './vocab.html', './speaking_buddy.html',
   './progress.html', './tokens.css', './pwa.js', './api_client.js', './account_linking.js', './notification_center.js', './chainy_memory.js', './chainy_interest.js', './player_seek.js', './manifest.webmanifest',

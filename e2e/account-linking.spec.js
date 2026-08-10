@@ -21,14 +21,20 @@ function linkingRequests(scenario, path) {
   return scenario.requests.filter(request => request.path === path);
 }
 
-test('account linking stays absent unless both build and backend gates are enabled', async ({ appPage: page, context, scenario }) => {
+test('account linking asks for explicit consent only when the authoritative backend gate is enabled', async ({ appPage: page, context, scenario }) => {
   await installBrowserSession(context, 7001, 'google');
-  scenario.accountLinkingEnabled = true;
+  scenario.accountLinkingEnabled = false;
   await openProfile(page);
   await expect(page.locator('#account-linking-card')).toHaveCount(0);
 
+  scenario.accountLinkingEnabled = true;
   await page.reload();
+  await expect(page.locator('#account-linking-card')).toBeVisible();
+  await expect(page.locator('#account-link-start')).toBeDisabled();
+  await expect(page.locator('#account-link-consent')).not.toBeChecked();
+
   scenario.accountLinkingEnabled = false;
+  await page.reload();
   await expect(page.locator('#account-linking-card')).toHaveCount(0);
   expect(linkingRequests(scenario, '/api/v1/account-link/intents')).toHaveLength(0);
 });
