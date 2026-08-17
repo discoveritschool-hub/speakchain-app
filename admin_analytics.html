@@ -1392,6 +1392,16 @@ function renderFinance() {
   /* ═══ ВИТРАТИ ═══ */
   h += '<div style="font-size:13px;font-weight:700;color:var(--red);margin:18px 0 8px">'
     + '📤 ВИТРАТИ</div>';
+  h += '<div style="background:var(--surface);border:1px solid var(--border);border-radius:9px;'
+    + 'padding:10px 12px;margin-bottom:9px;display:flex;align-items:center;gap:10px">'
+    + '<div style="flex:1"><div style="font-size:12px;font-weight:600;color:var(--text)">'
+    + '📣 Маркетинг за останні 30 днів</div>'
+    + '<div style="font-size:10px;color:var(--text3)">Чисельник CAC у Strategy Dashboard</div></div>'
+    + '<input id="fx-marketing" type="number" min="0" step="0.01" value="'
+    + Number(st.marketing_spend_30d || 0).toFixed(2) + '" oninput="finDirty=true" '
+    + 'style="width:100px;text-align:right;background:var(--surface2);border:1px solid var(--border);'
+    + 'border-radius:7px;color:var(--accent);font-size:12px;font-weight:600;padding:7px 9px">'
+    + '</div>';
 
   const pctRow = (id, label, pct, amount, note) =>
     '<tr><td>' + label
@@ -1785,7 +1795,8 @@ function addFinRow(kind) {
 function saveFinance() {
   const tax = parseFloat((document.getElementById('fx-tax') || {}).value || 0);
   const acq = parseFloat((document.getElementById('fx-acq') || {}).value || 0);
-  pushFinance({tax_pct: tax, acquiring_pct: acq});
+  const marketing = parseFloat((document.getElementById('fx-marketing') || {}).value || 0);
+  pushFinance({tax_pct: tax, acquiring_pct: acq, marketing_spend_30d: marketing});
 }
 
 async function pushFinance(patch) {

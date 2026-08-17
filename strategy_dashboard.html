@@ -269,6 +269,18 @@ body{font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
     <div class="metric"><div class="lab">D7 retention<span class="live-dot" title="Живі дані з бота"></span></div><div class="val" data-k="d7">0%</div><div class="delta up">тримаються тиждень</div></div>
     <div class="metric"><div class="lab">D30 retention<span class="live-dot" title="Живі дані з бота"></span></div><div class="val" data-k="d30">0%</div><div class="delta up">залишаються місяць</div></div>
   </div>
+  <div class="section-t">Комерційна воронка · фактичні дані</div>
+  <div class="grid g3">
+    <div class="metric accent"><div class="lab">CAC · 30 днів<span class="live-dot" title="Маркетингові витрати за 30 днів / нові покупці"></span></div><div class="val" data-k="cac">—</div><div class="delta flat" data-k="cac_d">додайте marketing spend у Фінансах</div></div>
+    <div class="metric"><div class="lab">Почали челендж<span class="live-dot" title="Частка від усіх зареєстрованих"></span></div><div class="val" data-k="started_share">—</div><div class="delta flat" data-k="started_share_d">—</div></div>
+    <div class="metric"><div class="lab">Дійшли до дня 7<span class="live-dot" title="Завершили день 7 серед тих, хто почав"></span></div><div class="val" data-k="d7_completion">—</div><div class="delta flat" data-k="d7_completion_d">—</div></div>
+    <div class="metric"><div class="lab">Конверсія в Basic<span class="live-dot" title="Покупці Basic серед тих, хто почав"></span></div><div class="val" data-k="basic_conv">—</div><div class="delta flat" data-k="basic_conv_d">—</div></div>
+    <div class="metric"><div class="lab">Конверсія в Premium<span class="live-dot" title="Покупці Premium серед тих, хто почав"></span></div><div class="val" data-k="premium_conv">—</div><div class="delta flat" data-k="premium_conv_d">—</div></div>
+    <div class="metric"><div class="lab">Повернення · 30 днів<span class="live-dot" title="Кількість і сума фактичних refunds/chargebacks"></span></div><div class="val" data-k="refunds">—</div><div class="delta flat" data-k="refunds_d">—</div></div>
+    <div class="metric"><div class="lab">Дохід / покупця · 30 днів<span class="live-dot" title="Чистий дохід зрілої 30-денної когорти"></span></div><div class="val" data-k="buyer_rev30">—</div><div class="delta flat" data-k="buyer_rev30_d">—</div></div>
+    <div class="metric"><div class="lab">Дохід / покупця · 60 днів<span class="live-dot" title="Чистий дохід зрілої 60-денної когорти"></span></div><div class="val" data-k="buyer_rev60">—</div><div class="delta flat" data-k="buyer_rev60_d">—</div></div>
+    <div class="metric"><div class="lab">Дохід / покупця · 90 днів<span class="live-dot" title="Чистий дохід зрілої 90-денної когорти"></span></div><div class="val" data-k="buyer_rev90">—</div><div class="delta flat" data-k="buyer_rev90_d">—</div></div>
+  </div>
   <div class="section-t">Здоров'я юніт-економіки</div>
   <div class="grid g3">
     <div class="metric"><div class="lab">Вартість AI / користувач<span class="live-dot" title="Живі дані. ai_costs.py логує токени Claude і хвилини Whisper з кожного виклику. Раніше тут стояло вписане число — але облік УЖЕ працював, просто дашборд про це не знав."></span></div><div class="val" data-k="aicost">$0</div><div class="delta flat" data-k="aicost_d">Claude + Whisper · реальна собівартість</div></div>
@@ -575,6 +587,13 @@ const DATA = {
   paid:"412", paid_d:"▲ 27 нових",
   conv:"22%", conv_d:"стабільно",
   d1:"58%", d7:"41%", d30:"34%",
+  cac:"—", cac_d:"додайте marketing spend у Фінансах",
+  started_share:"—", started_share_d:"—",
+  d7_completion:"—", d7_completion_d:"—",
+  basic_conv:"—", basic_conv_d:"—", premium_conv:"—", premium_conv_d:"—",
+  refunds:"—", refunds_d:"—",
+  buyer_rev30:"—", buyer_rev30_d:"—", buyer_rev60:"—", buyer_rev60_d:"—",
+  buyer_rev90:"—", buyer_rev90_d:"—",
   aicost:"$0.04", chain:"7.3", payout:"$3,100",
   was:"0", was_d:"0% social-аудиторії", speak_min:"0",
   view_response:"0%", first_phrase:"—"
@@ -639,6 +658,7 @@ async function loadLive(){
     if(!res.ok) return;                // 403 (не super admin) → лишаються демо
     const d = await res.json();
     const ov = d.overview || {}, rev = d.revenue, ret = d.retention || {};
+    const commercial = d.commercial || {};
     const social = d.social || {};
     const sns = social.north_star || {}, slp = social.loop || {};
     if(ov.active_today != null) DATA.dau = String(ov.active_today);
@@ -647,6 +667,40 @@ async function loadLive(){
     if(ret.d1  != null) DATA.d1  = Math.round(ret.d1)  + '%';
     if(ret.d7  != null) DATA.d7  = Math.round(ret.d7)  + '%';
     if(ret.d30 != null) DATA.d30 = Math.round(ret.d30) + '%';
+    if(commercial.started_share_pct != null){
+      DATA.started_share = commercial.started_share_pct + '%';
+      DATA.started_share_d = (commercial.started || 0) + ' із ' + (commercial.registered || 0) + ' зареєстрованих';
+    }
+    if(commercial.reached_day_7_pct != null){
+      DATA.d7_completion = commercial.reached_day_7_pct + '%';
+      DATA.d7_completion_d = (commercial.reached_day_7 || 0) + ' із ' + (commercial.started || 0) + ' стартів';
+    }
+    if(commercial.basic_conversion_pct != null){
+      DATA.basic_conv = commercial.basic_conversion_pct + '%';
+      DATA.basic_conv_d = (commercial.basic_buyers || 0) + ' покупців Basic';
+    }
+    if(commercial.premium_conversion_pct != null){
+      DATA.premium_conv = commercial.premium_conversion_pct + '%';
+      DATA.premium_conv_d = (commercial.premium_buyers || 0) + ' покупців Premium';
+    }
+    if(Object.prototype.hasOwnProperty.call(commercial, 'cac_30d')){
+      DATA.cac = commercial.cac_30d == null ? '—' : '$' + Number(commercial.cac_30d).toFixed(2);
+      DATA.cac_d = '$' + Number(commercial.marketing_spend_30d || 0).toFixed(2)
+                 + ' / ' + (commercial.new_buyers_30d || 0) + ' нових покупців';
+    }
+    const refunds = commercial.refunds_30d;
+    if(refunds){
+      DATA.refunds = (refunds.count || 0) + ' · $' + Number(refunds.amount || 0).toFixed(2);
+      DATA.refunds_d = Number(refunds.payment_rate_pct || 0).toFixed(1) + '% платежів · '
+                     + Number(refunds.revenue_rate_pct || 0).toFixed(1) + '% виручки';
+    }
+    const buyerWindows = commercial.buyer_revenue_windows || {};
+    [30,60,90].forEach(days => {
+      const w = buyerWindows[String(days)];
+      if(!w) return;
+      DATA['buyer_rev'+days] = w.revenue_per_buyer == null ? '—' : '$' + Number(w.revenue_per_buyer).toFixed(2);
+      DATA['buyer_rev'+days+'_d'] = (w.buyers || 0) + ' зрілих покупців';
+    });
     if(rev){                            // фінанси бачить тільки super admin
       if(rev.mrr != null)       DATA.mrr = _fmtMoney(rev.mrr);
       if(rev.mrr_delta != null) DATA.mrr_d = (rev.mrr_delta>=0?'▲ ':'▼ ') + Math.abs(Math.round(rev.mrr_delta)) + '% за місяць';
