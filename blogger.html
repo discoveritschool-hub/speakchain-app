@@ -864,34 +864,14 @@ textarea.form-input { resize:vertical; min-height:76px; line-height:1.5; }
 
   <div class="section fold">
     <div class="section-title fold-h" onclick="toggleFold(this)">Live заняття · Premium<span class="fold-arr">›</span></div><div class="fold-b">
-    <div class="action-list">
-      <button class="action-btn accent" onclick="sendAction('blogger_live_announce')">
-        <span class="icon">📣</span>
-        <span class="body">
-          <span class="label">Анонсувати заняття</span>
-          <span class="desc">Бот напише в групу і закріпить</span>
-        </span>
-        <span class="arr">›</span>
-      </button>
-      <button class="action-btn" onclick="sendAction('blogger_live_menu')">
-        <span class="icon">🔴</span>
-        <span class="body">
-          <span class="label">Керування Live</span>
-          <span class="desc">Статус групи · як почати</span>
-        </span>
-        <span class="arr">›</span>
-      </button>
-      <button class="action-btn" onclick="sendAction('blogger_leaderboard')">
-        <span class="icon">🏆</span>
-        <span class="body">
-          <span class="label">Таблиця лідерів</span>
-          <span class="desc">Загальний рейтинг усіх учнів</span>
-        </span>
-        <span class="arr">›</span>
-      </button>
-    </div>
+    <input class="form-input" id="live-title" placeholder="Назва заняття" value="Розмовна практика">
+    <input class="form-input" id="live-time" type="datetime-local" style="margin-top:8px">
+    <input class="form-input" id="live-stream" placeholder="Посилання на ефір (необов’язково)" style="margin-top:8px">
+    <input class="form-input" id="live-activity" placeholder="Шаблон активності" value="live-rehearsal" style="margin-top:8px">
+    <button class="btn btn-full" onclick="createLiveSession()" style="margin-top:10px">Запланувати Live</button>
+    <div id="live-session-list" style="margin-top:12px"></div>
     <div class="hint-box">
-      Команди Live — у чаті бота:<br>
+      Одне Telegram-посилання можна розміщувати всюди за кілька днів. Учень приєднається наперед, а активність відкриється у заданий час.<br><br>
       <code>/live_start [тема]</code> — почати заняття<br>
       <code>/quiz Питання | Варіант1 | Варіант2 | 0</code> — квіз<br>
       <code>/live_end</code> — завершити<br>
@@ -1084,6 +1064,30 @@ async function maAction(action, extra) {
 }
 
 function sendAction(cbData) { maAction(cbData); }
+
+async function createLiveSession() {
+  const title = (document.getElementById('live-title').value || '').trim();
+  const scheduled_at = document.getElementById('live-time').value;
+  if (!title || !scheduled_at) { toast('Вкажіть назву, дату й час'); return; }
+  const ok = await maAction('blogger_live_create', {
+    title, scheduled_at,
+    stream_url: (document.getElementById('live-stream').value || '').trim(),
+    activity_slug: (document.getElementById('live-activity').value || 'live-rehearsal').trim(),
+    duration_minutes: 90
+  });
+  toast(ok ? 'Live-сесію створено — посилання надійшло в бот' : 'Не вдалося створити сесію');
+}
+
+function renderLiveSessions() {
+  const box = document.getElementById('live-session-list'); if (!box) return;
+  const rows = D.live_sessions || [];
+  box.innerHTML = rows.length ? rows.slice(0,8).map(s => `<div class="hint-box" style="margin-top:8px">
+    <b>${esc(s.title)}</b><br>${new Date(s.scheduled_at).toLocaleString('uk-UA')} · ${esc(s.status)}<br>
+    Зареєстровано: <b>${Number(s.registered||0)}</b> · Відкрили: <b>${Number(s.joined||0)}</b> · Завершили: <b>${Number(s.completed||0)}</b><br>
+    <button class="btn btn-full btn-ghost" style="margin-top:8px" onclick="copyLiveLink('${esc(s.invite_url)}')">Скопіювати запрошення</button>
+  </div>`).join('') : '<div class="status-line">Ще немає запланованих сесій</div>';
+}
+async function copyLiveLink(url) { try { await navigator.clipboard.writeText(url); toast('Посилання скопійовано'); } catch(e) { prompt('Скопіюйте посилання', url); } }
 
 /* ── Вкладки ── */
 function showTab(name, el) {
@@ -1342,6 +1346,7 @@ function savePhrase(day) {
 
   maAction('blogger_set_phrase_day', { day: day, phrase: phrase, video_url: video });
   renderPhrases();
+  renderLiveSessions();
 
   const welcomeUrl=D.challenge_welcome_video_url||'';
   const welcomeInput=document.getElementById('challenge-welcome-video');
@@ -1696,6 +1701,12 @@ function fill() {
   const basic   = D.basic   || 0;
   const premium = D.premium || 0;
   const revenue = D.revenue || 0;
+  const liveTime = document.getElementById('live-time');
+  if (liveTime && !liveTime.value) {
+    const next = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    next.setHours(19, 0, 0, 0);
+    liveTime.value = new Date(next.getTime() - next.getTimezoneOffset()*60000).toISOString().slice(0,16);
+  }
 
   document.getElementById('avatar-initials').textContent = initials(name);
   document.getElementById('header-name').textContent     = '@' + name;

@@ -3523,6 +3523,12 @@ async function sendNudge(segKey) {
 // ── OVERVIEW ─────────────────────────────────────────────
 function renderOverview() {
   const d = data.overview;
+  const live = data.live_sessions || [];
+  const liveHtml = live.length ? live.slice(0,20).map(s => `<tr>
+    <td><b>${esc(s.title)}</b><br><span class="muted">@${esc(s.owner_blogger_name||s.owner_blogger_id)}</span></td>
+    <td>${new Date(s.scheduled_at).toLocaleString('uk-UA')}</td><td>${esc(s.status)}</td>
+    <td>${fmt(s.registered||0)}</td><td>${fmt(s.joined||0)}</td><td>${fmt(s.completed||0)}</td>
+  </tr>`).join('') : '<tr><td colspan="6">Live-сесій ще немає</td></tr>';
   return `
   <div class="cards">
     <div class="card accent">
@@ -3574,6 +3580,10 @@ function renderOverview() {
   <div class="chart-block">
     <div class="chart-title">Активні юзери (30 днів)</div>
     <div class="chart-wrap"><canvas id="chart-active"></canvas></div>
+  </div>
+  <div class="chart-block">
+    <div class="chart-title">Live-сесії · старі групові та нові активності</div>
+    <div style="overflow:auto"><table><thead><tr><th>Сесія / блогер</th><th>Час</th><th>Статус</th><th>Приєднались</th><th>Відкрили</th><th>Завершили</th></tr></thead><tbody>${liveHtml}</tbody></table></div>
   </div>`;
 }
 
