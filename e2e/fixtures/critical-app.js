@@ -12,6 +12,7 @@ if (authConfigContract?.path !== '/api/v1/session/config'
 const FIXED_NOW = '2026-08-07T12:00:00.000Z';
 const LOCAL_ORIGIN = `http://127.0.0.1:${Number(process.env.SPEAKCHAIN_E2E_PORT || 4173)}`;
 const BACKEND_ORIGIN = 'https://speakchain-bot-production.up.railway.app';
+const ACTIVITY_ORIGIN = 'https://robust-grace-production-dee4.up.railway.app';
 const TELEGRAM_INIT_DATA = 'query_id=e2e-query&user=%7B%22id%22%3A9001%7D&auth_date=1786104000&hash=e2e-hash';
 const E2E_VIDEO_ID = 'dQw4w9WgXcQ';
 const E2E_VIDEO_TITLE = 'E2E Own Video';
@@ -250,6 +251,20 @@ const test = base.extend({
       const stub = sdkStub(request, url);
       if (stub !== null) {
         await route.fulfill({ status: 200, contentType: 'text/javascript; charset=utf-8', body: stub });
+        return;
+      }
+
+      if (url.origin === ACTIVITY_ORIGIN) {
+        if (request.method() === 'GET' && url.pathname === '/api/v1/live-sessions/me') {
+          await route.fulfill(json({ ok: true, sessions: [] }));
+          return;
+        }
+        if (request.method() === 'GET' && url.pathname === '/api/v1/activity-results/me') {
+          await route.fulfill(json({ ok: true, results: [] }));
+          return;
+        }
+        scenario.unexpected.push(`${request.method()} ${url.href}`);
+        await route.fulfill(json({ error: 'unexpected_activity_request' }, 599));
         return;
       }
 
