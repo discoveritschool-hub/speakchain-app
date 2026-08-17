@@ -11,12 +11,18 @@ const {
 
 const byPath = (scenario, path) => scenario.requests.filter(request => request.path === path);
 
+async function openPractice(page) {
+  await page.locator('.nav button[data-s="s-listen"]').click();
+  await expect(page.locator('#s-listen')).toHaveClass(/\bon\b/);
+}
+
 async function runOwnVideoCycle(page, context, scenario, surface) {
   scenario.allowedHttpConsoleErrors = 1;
   if (surface === 'telegram') await installTelegramMiniApp(context);
   else await installBrowserSession(context);
 
   await page.goto('/index_v2.html');
+  await openPractice(page);
 
   const ownVideo = page.locator('button.own-video-entry');
   await ownVideo.focus();
@@ -214,6 +220,7 @@ async function runLegacyBookCycle(page, context, scenario, surface) {
   if (surface === 'telegram') await installTelegramMiniApp(context);
   else await installBrowserSession(context);
   await page.goto('/index_v2.html');
+  await openPractice(page);
   await page.locator('button.own-video-entry').click();
   const player = page.frameLocator('#ov-player-host iframe[title="SpeakChain Player"]');
   await expect(player.locator('body')).toBeVisible();
