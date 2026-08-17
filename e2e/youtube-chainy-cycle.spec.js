@@ -18,7 +18,6 @@ async function runOwnVideoCycle(page, context, scenario, surface) {
 
   await page.goto('/index_v2.html');
 
-  await page.getByText('Усі ситуації', { exact: true }).click();
   const ownVideo = page.locator('button.own-video-entry');
   await ownVideo.focus();
   await expect(ownVideo).toBeFocused();
@@ -215,7 +214,6 @@ async function runLegacyBookCycle(page, context, scenario, surface) {
   if (surface === 'telegram') await installTelegramMiniApp(context);
   else await installBrowserSession(context);
   await page.goto('/index_v2.html');
-  await page.getByText('Усі ситуації', { exact: true }).click();
   await page.locator('button.own-video-entry').click();
   const player = page.frameLocator('#ov-player-host iframe[title="SpeakChain Player"]');
   await expect(player.locator('body')).toBeVisible();
