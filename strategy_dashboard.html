@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- implementation-roadmap-v6: live registry; Pages deployment recovery 2026-08-06 -->
+<!-- implementation-roadmap-v7: launch baseline; challenge sales system 2026-08-17 -->
 <html lang="uk">
 <head>
 <meta charset="utf-8">
@@ -248,7 +248,7 @@ body{font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
 <div class="panel on" id="overview">
   <div class="head">
     <div><h2>Пульс продукту</h2><div class="sub">Жива картина SpeakChain одним поглядом</div></div>
-    <div class="demo-pill">● демо-дані</div>
+    <div class="demo-pill">● очікуємо реальні дані</div>
   </div>
   <div class="grid g4">
     <div class="metric accent"><div class="lab">MRR<span class="live-dot" title="Живі дані з бота"></span></div><div class="val" data-k="mrr">$0</div><div class="delta up" data-k="mrr_d">—</div></div>
@@ -292,10 +292,10 @@ body{font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
 </div>
 <div class="panel" id="funnel">
   <div class="head"><div><h2>Воронка</h2><div class="sub">Шлях від відео блогера до оплати — де втрачаємо людей</div></div>
-  <div class="xref" onclick="goAnalytics()"><span>📈</span><span>Огляд за період. <b>Повна воронка</b> — кроки, win-back, A/B, джерела — в Аналітиці. <b>Відкрити →</b></span></div><div class="demo-pill">● демо-дані</div></div>
+  <div class="xref" onclick="goAnalytics()"><span>📈</span><span>Огляд за період. <b>Повна воронка</b> — фраза блогера → повторення → челендж → Basic/Premium, retention, win-back і джерела — в Аналітиці. <b>Відкрити →</b></span></div><div class="demo-pill">● очікуємо реальні дані</div></div>
   <div class="card">
     <div class="funnel" id="funnelbars"></div>
-    <div class="note">Кожен рядок — крок воронки. Ширина = скільки людей дійшло. Найбільший провал між кроками показує, де треба покращувати продукт. Демо показує типову форму: основний відвал — на стику «відео → бот» і на оплаті.</div>
+    <div class="note">Кожен рядок — крок воронки. До появи реального трафіку всі значення дорівнюють нулю; тестові проходження до launch baseline не враховуються.</div>
   </div>
   <div class="section-t">Speaking loop · від перегляду до живої взаємодії</div>
   <div class="card">
@@ -303,26 +303,27 @@ body{font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
     <div class="note">Ця воронка відповідає на головне продуктове питання: чи контент приводить до власного голосу, а власний голос — до відповіді іншої людини. Детальні зрізи челенджів, естафет, live match і безпеки — в Аналітиці → Контент.</div>
   </div>
   <div class="section-t">Порівняння челендж-флоу</div>
+  <div class="note" style="margin-bottom:12px">Актуальна модель: платний 7-денний челендж у щотижневій когорті; День 6 — живий ефір із блогером, День 7 — живий ефір із викладачем (за потреби порядок можна міняти). Після завершення — 48 годин на зарахування вартості челенджу в Basic або Premium.</div>
   <div class="grid g2">
     <div class="card">
       <div class="tname" style="font-size:15px;margin-bottom:4px">Blogger flow <span class="badge">hard paywall</span></div>
       <div class="grid g2" style="margin-top:12px">
-        <div class="metric"><div class="lab">Конверсія D6</div><div class="val" style="font-size:24px">20–25%</div></div>
-        <div class="metric"><div class="lab">LTV (3 міс)</div><div class="val" style="font-size:24px">$100–150</div></div>
+        <div class="metric"><div class="lab">Конверсія D7</div><div class="val" style="font-size:24px">0%</div></div>
+        <div class="metric"><div class="lab">Дохід / покупця</div><div class="val" style="font-size:24px">$0</div></div>
       </div>
     </div>
     <div class="card">
       <div class="tname" style="font-size:15px;margin-bottom:4px">Organic flow <span class="badge" style="color:var(--teal);background:var(--teal-soft)">soft lock</span></div>
       <div class="grid g2" style="margin-top:12px">
-        <div class="metric"><div class="lab">Конверсія D6</div><div class="val" style="font-size:24px">10–15%</div></div>
-        <div class="metric"><div class="lab">LTV (3 міс)</div><div class="val" style="font-size:24px">$60–80</div></div>
+        <div class="metric"><div class="lab">Конверсія D7</div><div class="val" style="font-size:24px">0%</div></div>
+        <div class="metric"><div class="lab">Дохід / покупця</div><div class="val" style="font-size:24px">$0</div></div>
       </div>
     </div>
   </div>
 </div>
 <div class="panel" id="onboarding">
   <div class="head"><div><h2>Онбординг Дня 1</h2><div class="sub">Портрет аудиторії + де кидають квіз знайомства</div></div>
-  <div class="xref" onclick="goAnalytics()"><span>📈</span><span>Огляд. <b>Повні дані онбордингу</b> — в Аналітиці. <b>Відкрити →</b></span></div><div class="demo-pill">● демо-дані</div></div>
+  <div class="xref" onclick="goAnalytics()"><span>📈</span><span>Огляд. <b>Повні дані онбордингу</b> — в Аналітиці. <b>Відкрити →</b></span></div><div class="demo-pill">● очікуємо реальні дані</div></div>
   <div class="grid g3">
     <div class="metric accent"><div class="lab">Відкрили квіз</div><div class="val" data-k="onb_opened">0</div><div class="delta flat">почали знайомство</div></div>
     <div class="metric"><div class="lab">Завершили</div><div class="val" data-k="onb_completed">0</div><div class="delta up">пройшли до кінця</div></div>
@@ -342,7 +343,7 @@ body{font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
 </div>
 
 <div class="panel" id="diagnostic" style="display:none">
-  <div class="head"><div><h2>Діагностика Дня 4</h2><div class="sub">Рівні аудиторії, прогалини й скільки говорять уголос</div></div><div class="demo-pill">● демо-дані</div></div>
+  <div class="head"><div><h2>Діагностика Дня 4</h2><div class="sub">Рівні аудиторії, прогалини й скільки говорять уголос</div></div><div class="demo-pill">● очікуємо реальні дані</div></div>
   <div class="xref" onclick="goAnalytics()"><span>📈</span><span>Огляд. <b>Повна діагностика</b> — рівні, прогалини — в Аналітиці. <b>Відкрити →</b></span></div>
   <div class="grid g3">
     <div class="metric accent"><div class="lab">Завершили тест</div><div class="val" data-k="diag_done">0</div><div class="delta flat">пройшли діагностику</div></div>
@@ -361,30 +362,30 @@ body{font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
 
 <div class="panel" id="money">
   <div class="head"><div><h2>Гроші</h2><div class="sub">Тарифи, дохід блогерів та юніт-економіка</div></div>
-  <div class="xref" onclick="goAnalytics()"><span>📈</span><span>Тарифи й юніт-економіка — <b>це рішення</b>. Живі цифри доходу — в Аналітиці. <b>Відкрити →</b></span></div><div class="demo-pill">● демо-дані</div></div>
+  <div class="xref" onclick="goAnalytics()"><span>📈</span><span>Тарифи й юніт-економіка — <b>це рішення</b>. Живі цифри доходу — в Аналітиці. <b>Відкрити →</b></span></div><div class="demo-pill">● очікуємо реальні дані</div></div>
   <div class="section-t">Тарифи</div>
   <div class="grid g2">
     <div class="tier">
       <div class="tname">Basic</div>
-      <div class="price">$19.77<small>/міс</small></div>
-      <div class="perday">$0.66 на день · $99 за 6 міс (−25%)</div>
+      <div class="price">$22<small>/міс</small></div>
+      <div class="perday">$109 за 6 міс · від блогера $19.77/$99</div>
       <ul>
-        <li><span class="chk">✓</span>ШІ-репетитор та уроки</li>
+        <li><span class="chk">✓</span>Повний репетиторський курс самостійно</li>
         <li><span class="chk">✓</span>Записи мовлення</li>
-        <li><span class="chk">✓</span>Speaking challenge зі спільнотою</li>
+        <li><span class="chk">✓</span>Живе спілкування з учасниками</li>
         <li><span class="chk">✓</span>Картотека фраз + інтервальні повторення</li>
       </ul>
     </div>
     <div class="tier feat">
       <div class="tname">Premium <span class="badge">найпопулярніший</span></div>
-      <div class="price">$79<small>/міс</small></div>
-      <div class="perday">$2.63 на день · $397 за 6 міс (−29%)</div>
+      <div class="price">$93<small>/міс</small></div>
+      <div class="perday">$475 за 6 міс · від блогера $79/$397</div>
       <ul>
         <li><span class="chk">✓</span>Усе з Basic, плюс:</li>
-        <li><span class="chk">✓</span>Питання тижня від блогера</li>
-        <li><span class="chk">✓</span>Щотижневий розбір помилок</li>
-        <li><span class="chk">✓</span>Speaking buddy вашого рівня</li>
-        <li><span class="chk">✓</span>Закрита спільнота + сертифікат</li>
+        <li><span class="chk">✓</span>Живі ефіри з викладачем</li>
+        <li><span class="chk">✓</span>Груповий розбір помилок</li>
+        <li><span class="chk">✓</span>Зворотний зв’язок і підтримка</li>
+        <li><span class="chk">✓</span>Метод, з яким навчаються один раз, а далі підтримують рівень самостійно</li>
       </ul>
     </div>
   </div>
@@ -399,7 +400,7 @@ body{font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
     <div class="metric"><div class="lab">При 20–30% активності</div><div class="val" style="font-size:24px">$36–54</div><div class="delta flat">на місяць на AI</div></div>
     <div class="metric"><div class="lab">Ліміт безкоштовних</div><div class="val" style="font-size:24px">20/день</div><div class="delta flat">контекст 4 повід.</div></div>
   </div>
-  <div class="note">Реферальна економіка: студент отримує знижку 15%, блогер — 25% від платежу. Кожне нове відео блогера запускає новий потік у воронку — це й робить її «вічнозеленою».</div>
+  <div class="note">Після оплаченого челенджу 48 годин діє credit: від блогера Basic $11 за перший місяць або $89/6 міс; Premium $69 за перший місяць або $388/6 міс. Далі застосовуються стандартні органічні або реферальні ціни.</div>
 </div>
 <div class="panel" id="unitcalc">
   <div class="head"><div><h2>Юніт-економіка</h2><div class="sub">Прогноз «а що якщо» · крути параметри → бачиш маржу і LTV</div></div><div class="demo-pill">● прогноз, не факт</div></div>
@@ -582,11 +583,11 @@ const DATA = {
   aicost_d: 'Claude + Whisper',
   losers: '0',
   losers_d: 'витрати > виручки',
-  mrr:"$12,400", mrr_d:"▲ 18% за місяць",
-  dau:"640", dau_d:"▲ 9% за тиждень",
-  paid:"412", paid_d:"▲ 27 нових",
-  conv:"22%", conv_d:"стабільно",
-  d1:"58%", d7:"41%", d30:"34%",
+  mrr:"$0", mrr_d:"—",
+  dau:"0", dau_d:"—",
+  paid:"0", paid_d:"—",
+  conv:"0%", conv_d:"—",
+  d1:"0%", d7:"0%", d30:"0%",
   cac:"—", cac_d:"додайте marketing spend у Фінансах",
   started_share:"—", started_share_d:"—",
   d7_completion:"—", d7_completion_d:"—",
@@ -594,22 +595,19 @@ const DATA = {
   refunds:"—", refunds_d:"—",
   buyer_rev30:"—", buyer_rev30_d:"—", buyer_rev60:"—", buyer_rev60_d:"—",
   buyer_rev90:"—", buyer_rev90_d:"—",
-  aicost:"$0.04", chain:"7.3", payout:"$3,100",
+  aicost:"$0", chain:"0", payout:"$0",
   was:"0", was_d:"0% social-аудиторії", speak_min:"0",
   view_response:"0%", first_phrase:"—"
 };
 const FUNNEL = [
-  {name:"Перегляд відео блогера", v:100, c:"#D85A30"},
-  {name:"Перехід у бот (/start)", v:46, c:"#D85A30"},
-  {name:"Перший AI-фідбек", v:38, c:"#5B4B9E"},
-  {name:"Завершив челендж D6", v:24, c:"#5B4B9E"},
-  {name:"Оплатив тариф", v:13, c:"#3B6D11"}
+  {name:"Відкрили фразу блогера", v:0, c:"#D85A30"},
+  {name:"Повторили фразу голосом", v:0, c:"#D85A30"},
+  {name:"Оплатили челендж", v:0, c:"#5B4B9E"},
+  {name:"Завершили день 7", v:0, c:"#5B4B9E"},
+  {name:"Оплатили Basic/Premium", v:0, c:"#3B6D11"}
 ];
 const BLOGGER = [
-  {lab:"100", v:612, max:24499},
-  {lab:"500", v:3062, max:24499},
-  {lab:"1 000", v:6125, max:24499},
-  {lab:"4 000", v:24499, max:24499}
+  {lab:"—", v:0, max:1}
 ];
 
 function fillData(){
@@ -638,7 +636,7 @@ function goAnalytics(){
 function _fmtMoney(n){ return '$' + Math.round(n).toLocaleString('en-US'); }
 function _setDemoBadge(live){
   document.querySelectorAll('.demo-pill').forEach(el=>{
-    el.textContent = live ? '● живі дані' : '● демо-дані';
+    el.textContent = live ? '● живі дані' : '● очікуємо реальні дані';
     el.style.color = live ? 'var(--green)' : 'var(--amber)';
     el.style.background = live ? 'var(--green-soft)' : 'var(--amber-soft)';
     el.style.borderColor = live ? '#bcd89a' : '#f0d9b0';
