@@ -1264,6 +1264,9 @@ window.addEventListener('load', function(){
   <div class="s" id="hero-s">Відео, повторення і розмова · приблизно 10 хв</div>
   <button class="go" id="hero-go" onclick="runHomePrimary()">Почати →</button>
 </div>
+<button id="live-now-card" class="net-item" style="display:none;width:100%;border-color:rgba(247,110,110,.55);margin-bottom:10px;text-align:left" onclick="openCurrentLive()">
+  <span class="ic">🔴</span><div class="body"><div class="t">Ефір зараз</div><div class="s" id="live-now-title">Відкрити активність</div></div><span class="ch">›</span>
+</button>
 <div class="sec-h"><span class="ti">Скільки часу маєш?</span><span class="meta" id="session-choice-meta">план на сьогодні</span></div>
 <div class="session-picker" id="session-picker" aria-label="Тривалість сесії">
   <button onclick="setSessionMinutes(5)">5 хв</button><button class="on" onclick="setSessionMinutes(15)">15 хв</button>
@@ -2658,6 +2661,7 @@ function setSessionMinutes(minutes,quiet){
 async function renderHome(){
   const D=await load('s-home');
   TODAY_HOME=D||{};
+  renderCurrentLive();
   renderTop(D);
   setSessionMinutes(Number(D.session_minutes||D.time_per_day||SESSION_MINUTES),true);
   mergeErrorSrs(D.due_errors||D.errors_due||[]);
@@ -4720,6 +4724,26 @@ function openProfileVideoGuide(){
     window.open(link,'_blank','noopener');
   }
   catch(e){ window.open(link,'_blank','noopener'); }
+}
+
+let CURRENT_LIVE_SESSION=null;
+async function renderCurrentLive(){
+  const card=$('#live-now-card'); if(!card||!TG?.initData)return;
+  try{
+    const res=await fetch(ACTIVITY_API+'/api/v1/live-sessions/me',{headers:{'X-Telegram-Init-Data':TG.initData}});
+    const payload=await res.json();
+    const sessions=Array.isArray(payload.sessions)?payload.sessions:[];
+    CURRENT_LIVE_SESSION=sessions.find(s=>s.status==='live')||sessions.find(s=>s.status==='scheduled'&&new Date(s.scheduled_at)<=new Date());
+    if(!CURRENT_LIVE_SESSION){card.style.display='none';return;}
+    $('#live-now-title').textContent=CURRENT_LIVE_SESSION.title+' · запустити активність';
+    card.style.display='flex';
+  }catch(e){card.style.display='none'}
+}
+function openCurrentLive(){
+  const s=CURRENT_LIVE_SESSION;if(!s)return;
+  const url=s.runner_url||('https://discoveritschool-hub.github.io/speakchain-app/live_activity.html?session='+encodeURIComponent(s.invite_code)+'&api='+encodeURIComponent(ACTIVITY_API));
+  try{if(TG&&typeof TG.openLink==='function'){TG.openLink(url);return}}catch(e){}
+  location.assign(url);
 }
 async function renderLiveActivityResults(){
   const section=$('#live-activity-results-section'),host=$('#live-activity-results');
