@@ -863,12 +863,15 @@ textarea.form-input { resize:vertical; min-height:76px; line-height:1.5; }
   <div class="divider"></div>
 
   <div class="section fold">
-    <div class="section-title fold-h" onclick="toggleFold(this)">Live заняття · Premium<span class="fold-arr">›</span></div><div class="fold-b">
+    <div class="section-title fold-h" onclick="toggleFold(this)">Відкриті ефіри<span class="fold-arr">›</span></div><div class="fold-b">
+    <div class="hint-box"><b>Створити ефір</b><br>Запрошення можна поширити за кілька днів — активність відкриється у заданий час.</div>
     <input class="form-input" id="live-title" placeholder="Назва заняття" value="Розмовна практика">
     <input class="form-input" id="live-time" type="datetime-local" style="margin-top:8px">
     <input class="form-input" id="live-stream" placeholder="Посилання на ефір (необов’язково)" style="margin-top:8px">
-    <input class="form-input" id="live-activity" placeholder="Шаблон активності" value="live-rehearsal" style="margin-top:8px">
-    <button class="btn btn-full" onclick="createLiveSession()" style="margin-top:10px">Запланувати Live</button>
+    <select class="form-input" id="live-activity" aria-label="Активність або шаблон" style="margin-top:8px">
+      <option value="live-rehearsal">Універсальна Live-активність</option>
+    </select>
+    <button class="btn btn-full" onclick="createLiveSession()" style="margin-top:10px">Створити ефір</button>
     <div id="live-session-list" style="margin-top:12px"></div>
     <div class="hint-box">
       Одне Telegram-посилання можна розміщувати всюди за кілька днів. Учень приєднається наперед, а активність відкриється у заданий час.<br><br>
@@ -1083,11 +1086,17 @@ function renderLiveSessions() {
   const rows = D.live_sessions || [];
   box.innerHTML = rows.length ? rows.slice(0,8).map(s => `<div class="hint-box" style="margin-top:8px">
     <b>${esc(s.title)}</b><br>${new Date(s.scheduled_at).toLocaleString('uk-UA')} · ${esc(s.status)}<br>
-    Зареєстровано: <b>${Number(s.registered||0)}</b> · Відкрили: <b>${Number(s.joined||0)}</b> · Завершили: <b>${Number(s.completed||0)}</b><br>
+    Учасники: <b>${Number(s.registered||0)}</b> · Відкрили: <b>${Number(s.opened??s.joined??0)}</b> · Почали: <b>${Number(s.started||0)}</b><br>
+    Завершили: <b>${Number(s.completed||0)}</b> · Помилки: <b>${Number(s.errors||0)}</b><br>
     <button class="btn btn-full btn-ghost" style="margin-top:8px" onclick="copyLiveLink('${esc(s.invite_url)}')">Скопіювати запрошення</button>
+    <button class="btn btn-full" style="margin-top:8px" onclick="sendLiveInvite('${esc(s.invite_code)}')">Надіслати моїм учням</button>
   </div>`).join('') : '<div class="status-line">Ще немає запланованих сесій</div>';
 }
 async function copyLiveLink(url) { try { await navigator.clipboard.writeText(url); toast('Посилання скопійовано'); } catch(e) { prompt('Скопіюйте посилання', url); } }
+async function sendLiveInvite(invite_code) {
+  const ok = await maAction('blogger_live_notify', {invite_code});
+  toast(ok ? 'Запрошення поставлено в чергу для ваших учнів' : 'Не вдалося надіслати запрошення');
+}
 
 /* ── Вкладки ── */
 function showTab(name, el) {

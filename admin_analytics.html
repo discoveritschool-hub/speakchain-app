@@ -3524,11 +3524,21 @@ async function sendNudge(segKey) {
 function renderOverview() {
   const d = data.overview;
   const live = data.live_sessions || [];
-  const liveHtml = live.length ? live.slice(0,20).map(s => `<tr>
+  const totals = live.reduce((a,s) => ({
+    participants:a.participants+Number(s.registered||0),
+    opened:a.opened+Number(s.opened??s.joined??0), started:a.started+Number(s.started||0),
+    completed:a.completed+Number(s.completed||0), errors:a.errors+Number(s.errors||0)
+  }), {participants:0,opened:0,started:0,completed:0,errors:0});
+  const liveHtml = live.length ? live.slice(0,50).map(s => `<tr>
     <td><b>${esc(s.title)}</b><br><span class="muted">@${esc(s.owner_blogger_name||s.owner_blogger_id)}</span></td>
     <td>${new Date(s.scheduled_at).toLocaleString('uk-UA')}</td><td>${esc(s.status)}</td>
-    <td>${fmt(s.registered||0)}</td><td>${fmt(s.joined||0)}</td><td>${fmt(s.completed||0)}</td>
-  </tr>`).join('') : '<tr><td colspan="6">Live-сесій ще немає</td></tr>';
+    <td>${fmt(s.registered||0)}</td><td>${fmt(s.opened??s.joined??0)}</td><td>${fmt(s.started||0)}</td><td>${fmt(s.completed||0)}</td>
+    <td>${fmt(s.errors||0)}</td><td><div style="display:flex;gap:5px;flex-wrap:wrap">
+      <button class="mini-btn" onclick="adminLiveAction('admin_live_open','${esc(s.invite_code)}')">Відкрити</button>
+      <button class="mini-btn" onclick="adminLiveAction('admin_live_close','${esc(s.invite_code)}')">Закрити</button>
+      <button class="mini-btn" onclick="adminLiveAction('admin_live_duplicate','${esc(s.invite_code)}')">Дублювати</button>
+    </div></td>
+  </tr>`).join('') : '<tr><td colspan="9">Live-сесій ще немає</td></tr>';
   return `
   <div class="cards">
     <div class="card accent">
@@ -3583,8 +3593,28 @@ function renderOverview() {
   </div>
   <div class="chart-block">
     <div class="chart-title">Live-сесії · старі групові та нові активності</div>
-    <div style="overflow:auto"><table><thead><tr><th>Сесія / блогер</th><th>Час</th><th>Статус</th><th>Приєднались</th><th>Відкрили</th><th>Завершили</th></tr></thead><tbody>${liveHtml}</tbody></table></div>
+    <div class="cards" style="margin:12px 0">
+      <div class="card"><div class="card-label">Учасники</div><div class="card-value">${fmt(totals.participants)}</div></div>
+      <div class="card"><div class="card-label">Відкрили</div><div class="card-value">${fmt(totals.opened)}</div></div>
+      <div class="card"><div class="card-label">Почали</div><div class="card-value">${fmt(totals.started)}</div></div>
+      <div class="card"><div class="card-label">Завершили</div><div class="card-value">${fmt(totals.completed)}</div></div>
+      <div class="card"><div class="card-label">Помилки</div><div class="card-value">${fmt(totals.errors)}</div></div>
+      <div class="card"><div class="card-label">Поточне навантаження</div><div class="card-value">${fmt(Math.max(0,live.filter(s=>s.status==='live').reduce((n,s)=>n+Number(s.started||0)-Number(s.completed||0),0)))}</div></div>
+    </div>
+    <div style="overflow:auto"><table><thead><tr><th>Сесія / блогер</th><th>Час</th><th>Статус</th><th>Учасники</th><th>Відкрили</th><th>Почали</th><th>Завершили</th><th>Помилки</th><th>Дії</th></tr></thead><tbody>${liveHtml}</tbody></table></div>
   </div>`;
+}
+
+async function adminLiveAction(action, invite_code) {
+  try {
+    const res = await fetch('https://speakchain-bot-production.up.railway.app/miniapp_action', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action, invite_code, init_data:tg?.initData||'', uid:tg?.initDataUnsafe?.user?.id||0})
+    });
+    const payload = await res.json().catch(()=>({}));
+    if(!res.ok || !payload.ok) throw new Error(payload.error||`HTTP ${res.status}`);
+    await loadData();
+  } catch(e) { alert('Не вдалося виконати дію: '+e.message); }
 }
 
 // ── RETENTION ───────────────────────────────────────────
