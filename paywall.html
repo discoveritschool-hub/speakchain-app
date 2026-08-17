@@ -294,7 +294,7 @@ body{
       <span class="plan-icon">⚡️</span>
       <div>
         <div class="plan-name">Basic</div>
-        <div class="plan-tagline">Повна система опанування англійської<br>через мовлення та практику</div>
+        <div class="plan-tagline">Повний репетиторський курс<br>для самостійного проходження</div>
       </div>
       <div class="plan-price-wrap">
         <div class="plan-price" id="basic-price">$22</div>
@@ -308,6 +308,7 @@ body{
       <div class="feat-row"><span class="feat-icon">🔍</span>Gap analysis — твої прогалини після уроку</div>
       <div class="feat-row"><span class="feat-icon">📊</span>Прогрес A1→B2 · Roadmap і статистика</div>
       <div class="feat-row"><span class="feat-icon">🎯</span>Speaking-челенджі та дуелі з друзями</div>
+      <div class="feat-row"><span class="feat-icon">🎙</span>Живе спілкування з іншими учасниками</div>
       <div class="feat-row"><span class="feat-icon">💬</span>Картотека фраз · SRS-повторення</div>
       <div class="feat-row"><span class="feat-icon">🏆</span>Leaderboard · Ланцюжок · XP</div>
       <div class="feat-row"><span class="feat-icon">📈</span>Звіти прогресу — щомісячний аналіз</div>
@@ -322,7 +323,7 @@ body{
       <span class="plan-icon">🌟</span>
       <div>
         <div class="plan-name">Premium</div>
-        <div class="plan-tagline">Все з Basic + зворотній зв'язок<br>живого викладача</div>
+        <div class="plan-tagline">Той самий повний курс<br>із живим супроводом</div>
       </div>
       <div class="plan-price-wrap">
         <div class="plan-price" id="prem-price">$93</div>
@@ -331,7 +332,8 @@ body{
       </div>
     </div>
     <div class="plan-feats">
-      <div class="feat-row"><span class="feat-icon">🎙</span>Speaking Buddy — жива розмова з партнером</div>
+      <div class="feat-row"><span class="feat-icon">🎙</span>Усі можливості Basic</div>
+      <div class="feat-row"><span class="feat-icon">📺</span>Живі ефіри з викладачами</div>
       <div class="feat-row"><span class="feat-icon">✏️</span>Розбір помилок + щотижнева перевірка прогресу</div>
       <div class="feat-row"><span class="feat-icon">🔥</span>Щоденна жива практика мовлення — говориш кожен день</div>
       <div class="feat-row"><span class="feat-icon">🔒</span>Закрита спільнота</div>
@@ -367,8 +369,9 @@ body{
       <tr><td class="feat-col">Картотека фраз</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
       <tr><td class="feat-col">Leaderboard · XP</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
       <tr><td class="feat-col">Звіти прогресу</td><td class="no">—</td><td class="yes">✓</td><td class="yes">✓</td></tr>
-      <tr><td class="feat-col">Speaking Buddy</td><td class="no">—</td><td class="no">—</td><td class="yes">✓</td></tr>
-      <tr><td class="feat-col">Щоденна практика мовлення</td><td class="no">—</td><td class="no">—</td><td class="yes">✓</td></tr>
+      <tr><td class="feat-col">Живе спілкування з учасниками</td><td class="no">—</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+      <tr><td class="feat-col">Щоденна практика мовлення</td><td class="no">—</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+      <tr><td class="feat-col">Живі ефіри з викладачами</td><td class="no">—</td><td class="no">—</td><td class="yes">✓</td></tr>
       <tr><td class="feat-col">Розбір помилок</td><td class="no">—</td><td class="no">—</td><td class="yes">✓</td></tr>
       <tr><td class="feat-col">Закрита спільнота</td><td class="no">—</td><td class="no">—</td><td class="yes">✓</td></tr>
       <tr><td class="feat-col">Сертифікат</td><td class="no">—</td><td class="no">—</td><td class="yes">✓</td></tr>
@@ -736,9 +739,6 @@ let current6mPlan = 'basic';
 let current6mLink = '';
 
 function fill6Month(){
-  // Credit checkout is currently a first-month product. Keep the choice
-  // unambiguous instead of offering a six-month payment without the credit.
-  if(D.challenge_credit_available) return;
   const hasPrem6m  = D.prem_6m  && parseFloat(D.prem_6m)  > 0;
   const hasBasic6m = D.basic_6m && parseFloat(D.basic_6m) > 0;
   if(!hasPrem6m && !hasBasic6m) return;
@@ -775,11 +775,14 @@ function update6mDisplay(plan){
   document.getElementById('6m-price-big').textContent =
     `$${money(price6m)}`;
   document.getElementById('6m-monthly').textContent   =
-    `≈ $${perMonth.toFixed(2).replace('.00','')}/міс · Ощадливіше ніж помісячно`;
+    `$${perMonth.toFixed(2).replace('.00','')}/міс · Вигідніше, ніж платити щомісяця`;
   document.getElementById('6m-save-badge').textContent=
     savedPct > 0 ? `Економія ${savedPct}%` : '6 місяців';
   document.getElementById('btn-6m').textContent =
     `🔐 ${isPrem?'Premium':'Basic'} на 6 місяців — $${money(price6m)}`;
+  if(D.challenge_credit_available){
+    document.getElementById('6m-save-badge').textContent='Челендж враховано';
+  }
 }
 
 function pay6m(){
