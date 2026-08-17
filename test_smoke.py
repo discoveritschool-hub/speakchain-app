@@ -884,6 +884,20 @@ def test_production_assets_and_browser_chainy_auth():
     else:
         ok("paywall має × і «Нагадати пізніше» закриває модальне вікно")
 
+    paywall = (ROOT / "paywall.html").read_text(encoding="utf-8")
+    credit_markers = (
+        "challenge_credit_available",
+        "challenge_credit_expires_at",
+        "updateChallengeCreditCountdown",
+        "За сім днів Ви почали говорити",
+        "390 грн уже зараховано",
+    )
+    missing_credit = [marker for marker in credit_markers if marker not in paywall]
+    if missing_credit:
+        fail(f"paywall не показує 48-годинне зарахування челенджу: {missing_credit}")
+    else:
+        ok("paywall показує наступний крок, кредит челенджу й живий 48-годинний таймер")
+
     explicit_finish = 'aria-label="Завершити на сьогодні">✓ Завершити</button>'
     if explicit_finish not in buddy or explicit_finish.replace('"', '\\"') not in shell:
         fail("Chainy знову має неочевидну кнопку завершення замість явної дії")

@@ -5102,7 +5102,7 @@ function renderChallenge(){
     }
     html+='<div style="background:linear-gradient(145deg,rgba(124,110,247,.18),var(--bg-card));border:1px solid var(--purple);border-radius:var(--r);padding:16px;margin-bottom:10px">'
       +'<div style="font-size:22px;font-weight:850;margin-bottom:6px">🚀 '+esc(O.title||'Продовжуйте свій шлях')+'</div>'
-      +'<div style="font-size:var(--fs-sm);color:var(--text2);line-height:1.5;margin-bottom:12px">Відео навчає. Chainy тренує. Жива розмова вмикає мовлення.</div>'
+      +'<div style="font-size:var(--fs-sm);color:var(--text2);line-height:1.5;margin-bottom:12px">'+esc(O.next_step||'Тепер потрібно зробити мовлення стабільним і перенести його на роботу, подорожі та реальні розмови.')+'</div>'
       +(O.credit_note?'<div style="padding:9px 11px;background:rgba(90,216,166,.12);border-radius:var(--r-sm);color:var(--green);font-size:var(--fs-sm);font-weight:700;margin-bottom:10px">✓ '+esc(O.credit_note)+'</div>':'')
       +'<div style="padding:10px 0;border-top:.5px solid var(--line);font-size:var(--fs-sm)">⚡ <b>Basic — $'+esc(String(O.basic||''))+'/міс</b><br><span style="color:var(--text2)">Щоденні уроки, Chainy, карта і прогрес</span></div>'
       +(O.premium_visible?'<div style="padding:10px 0;border-top:.5px solid var(--line);font-size:var(--fs-sm)">🌟 <b>Premium — $'+esc(String(O.premium||''))+'/міс</b><br><span style="color:var(--text2)">Усе з Basic та щотижневі живі ефіри</span></div>':'')

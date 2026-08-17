@@ -241,6 +241,20 @@ body{
   <div class="chain-verdict" id="chain-verdict"></div>
 </div>
 
+<!-- Paid-challenge credit: rendered only from server-authoritative data. -->
+<div class="discount-banner" id="challenge-credit-banner" style="display:none">
+  <div class="discount-top">
+    <span class="discount-icon">✅</span>
+    <div>
+      <div class="discount-who">390 грн уже зараховано</div>
+      <div class="discount-who-sub">Вартість пройденого челенджу віднята від першої оплати SpeakChain</div>
+    </div>
+  </div>
+  <div id="challenge-credit-note" style="font-size:var(--fs-sm);line-height:1.5;color:var(--text)"></div>
+  <div id="challenge-credit-countdown" role="timer" aria-live="polite"
+       style="margin-top:8px;color:var(--green);font-size:var(--fs-sm);font-weight:700"></div>
+</div>
+
 <!-- Discount banner (blogger / friend) -->
 <div id="discount-banner" style="display:none">
   <!-- Blogger variant -->
@@ -507,10 +521,8 @@ function fillHero(){
   } else if (D.challenge_done) {
     /* ЧЕЛЕНДЖ ПОЗАДУ — тут і є момент рішення. Спираємось на зроблене. */
     icon.textContent = '🏁';
-    ttl.textContent  = name ? `${name}, розблокуйте далі` : 'Розблокуйте далі';
-    sub.textContent  = lessons
-      ? `${lessons} ${plural(lessons,'урок','уроки','уроків')} позаду. Наступний рівень — попереду.`
-      : 'Тиждень позаду. Наступний рівень — попереду.';
+    ttl.textContent  = 'За сім днів Ви почали говорити';
+    sub.textContent  = 'Тепер потрібно зробити мовлення стабільним і перенести його на роботу, подорожі та реальні розмови.';
 
   } else {
     /* ЩЕ НЕ ПОЧАЛА — просто показуємо, що є. */
@@ -583,7 +595,13 @@ function fillPrices(){
   const FULL_BASIC = parseFloat(D.full_basic || '22');
   const FULL_PREM  = parseFloat(D.full_prem  || '93');
 
-  if(src === 'blogger' && D.blogger_name){
+  if(D.challenge_credit_available){
+    const banner=document.getElementById('challenge-credit-banner');
+    banner.style.display='block';
+    document.getElementById('challenge-credit-note').textContent =
+      D.challenge_credit_note || 'Вартість челенджу повністю зарахована в оплату SpeakChain.';
+    updateChallengeCreditCountdown();
+  } else if(src === 'blogger' && D.blogger_name){
     document.getElementById('discount-banner').style.display  = 'block';
     document.getElementById('discount-blogger').style.display = 'block';
 
@@ -617,6 +635,23 @@ function fillPrices(){
     document.getElementById('prem-note').style.display  = 'block';
     document.getElementById('prem-note').textContent    = 'Ціна для друзів';
   }
+}
+
+function updateChallengeCreditCountdown(){
+  if(!D.challenge_credit_available || !D.challenge_credit_expires_at) return;
+  const el=document.getElementById('challenge-credit-countdown');
+  const deadline=new Date(D.challenge_credit_expires_at).getTime();
+  const left=Math.max(0,deadline-Date.now());
+  if(!isFinite(deadline) || !el) return;
+  if(left<=0){
+    el.textContent='48-годинне зарахування завершилося. Оновіть сторінку для актуальної ціни.';
+    document.getElementById('cta-btn').disabled=true;
+    return;
+  }
+  const hours=Math.floor(left/3600000);
+  const minutes=Math.floor((left%3600000)/60000);
+  el.textContent=`Зарахування діє ще ${hours} год ${String(minutes).padStart(2,'0')} хв`;
+  setTimeout(updateChallengeCreditCountdown,30000);
 }
 
 /* ── Plan selection ── */
@@ -701,6 +736,9 @@ let current6mPlan = 'basic';
 let current6mLink = '';
 
 function fill6Month(){
+  // Credit checkout is currently a first-month product. Keep the choice
+  // unambiguous instead of offering a six-month payment without the credit.
+  if(D.challenge_credit_available) return;
   const hasPrem6m  = D.prem_6m  && parseFloat(D.prem_6m)  > 0;
   const hasBasic6m = D.basic_6m && parseFloat(D.basic_6m) > 0;
   if(!hasPrem6m && !hasBasic6m) return;
