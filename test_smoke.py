@@ -914,7 +914,7 @@ def test_visible_feature_map_and_role_workspaces():
     shell = SHELL.read_text(encoding="utf-8") if SHELL.exists() else ""
     markers = (
         'id="session-picker"', "function setSessionMinutes(minutes,quiet)",
-        'id="home-chain-signal"', 'id="home-rank-signal"', 'id="home-online-signal"',
+        'id="daily-meta"', 'id="chain-meta"', 'id="tb-rank"',
         'id="md-book"', "playerUrl.searchParams.set('minutes'",
         'id="ov-features"', "const FEATURE_REGISTRY=[", "renderFeatureRegistry()",
         'id="ov-chain"', "openProgressArea('chain')", "openProgressArea('rating')",
@@ -1097,8 +1097,8 @@ def test_own_video_is_visible_and_uses_the_shared_learning_loop():
     shell = SHELL.read_text(encoding="utf-8") if SHELL.exists() else ""
     player = (ROOT / "player.html").read_text(encoding="utf-8")
     markers = (
-        "Працювати зі своїм відео",
-        "встав YouTube-посилання · 15–60 хв",
+        "name:'Своє відео · 15–60 хв'",
+        "where:'Практика'",
         "function openOwnVideo()",
         "if(SESSION_MINUTES<15)",
         "setSessionMinutes(15)",
@@ -1211,7 +1211,7 @@ def test_guided_native_navigation():
     section("PWA — керована нативна навігація і SRS помилок")
     shell = SHELL.read_text(encoding="utf-8") if SHELL.exists() else ""
     markers = (
-        'id="guided-card"', "const GUIDED_STATE_KEY=", "const ERROR_SRS_KEY=",
+        "function runHomePrimary()", "const GUIDED_STATE_KEY=", "const ERROR_SRS_KEY=",
         "function guidedRecommendation(D)", "function runGuidedAction()",
         "function dismissGuidedAction()", "function renderGuidedNavigation(D)",
         "function mergeErrorSrs(items)", "function dueErrors(D)",
@@ -1242,7 +1242,7 @@ def test_visible_lexical_streak_and_blogger_entry():
         'id="s-prog"', 'id="route-lexical"', "const LEXICAL_ROUTE_FALLBACK=",
         "function lexicalItems(D,level)", "function pgSetRoute(route)",
         "practice_pct", "grammar_progress", "vocab_practiced", "vocab_mastered",
-        'id="home-streak-signal"', "sc.querySelector('.l').textContent='Streak'",
+        'id="tb-streak"', "sc.querySelector('.l').textContent='Streak'",
         "const BLOGGER_ENTRY=", "function activateBloggerEntry(entry)",
         "blogger_phrase_repeat", "blogger_phrase_chainy",
         "function startBloggerPhraseChainy(entry)", "resource_kind:'blogger_phrase'",

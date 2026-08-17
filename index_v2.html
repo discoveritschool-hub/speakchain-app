@@ -1262,34 +1262,15 @@ window.addEventListener('load', function(){
   <div class="k" id="hero-k">Наступна дія</div>
   <div class="t" id="hero-t">Почни з короткої практики</div>
   <div class="s" id="hero-s">Відео, повторення і розмова · приблизно 10 хв</div>
-  <button class="go" id="hero-go" onclick="flow()">Почати →</button>
-</div>
-<div class="guided-card" id="guided-card" aria-live="polite">
-  <div class="guided-head"><span class="guided-ic" id="guided-ic">✨</span><div class="guided-copy">
-    <div class="guided-title" id="guided-title">Наступний крок</div>
-    <div class="guided-sub" id="guided-sub"></div><div class="guided-why" id="guided-why"></div>
-  </div></div>
-  <div class="guided-actions"><button class="guided-primary" id="guided-go" onclick="runGuidedAction()">Продовжити →</button><button class="guided-skip" onclick="dismissGuidedAction()">Пізніше</button></div>
+  <button class="go" id="hero-go" onclick="runHomePrimary()">Почати →</button>
 </div>
 <div class="sec-h"><span class="ti">Скільки часу маєш?</span><span class="meta" id="session-choice-meta">план на сьогодні</span></div>
 <div class="session-picker" id="session-picker" aria-label="Тривалість сесії">
   <button onclick="setSessionMinutes(5)">5 хв</button><button class="on" onclick="setSessionMinutes(15)">15 хв</button>
   <button onclick="setSessionMinutes(30)">30 хв</button><button onclick="setSessionMinutes(60)">60+ хв</button>
 </div>
-<div class="signal-strip" aria-label="Короткий прогрес">
-  <div class="signal" onclick="openProgressArea('streak')"><b id="home-streak-signal">🔥 0</b><small>Streak</small></div>
-  <div class="signal" onclick="openProgressArea('chain')"><b id="home-chain-signal">🔗 0</b><small>Chain</small></div>
-  <div class="signal" onclick="openProgressArea('rating')"><b id="home-rank-signal">🏆 —</b><small>позиція</small></div>
-  <div class="signal" onclick="go('s-social')"><b id="home-online-signal">🟢 0</b><small>онлайн</small></div>
-</div>
 <div class="sec-h"><span class="ti">Сьогодні</span><span class="meta" id="daily-meta">0 із 3</span></div>
 <div class="daily-card"><div class="daily-flow" id="daily-flow"></div></div>
-<div class="sec-h"><span class="ti">Обери формат</span><span class="meta">можна змінити будь-коли</span></div>
-<div class="tiles">
-  <div class="tile primary" onclick="openLessonNow()"><span class="ic">🎬</span><div class="t">Урок з відео</div><div class="s">одразу відкрити плеєр</div></div>
-  <div class="tile primary" onclick="openChainyNow()"><span class="ic">🗣</span><div class="t">Поговорити з Chainy</div><div class="s">одразу почати розмову</div></div>
-  <button class="tile own-video-entry" type="button" style="grid-column:1/-1" onclick="openOwnVideo()"><span class="ic">🔗</span><span class="t">Працювати зі своїм відео</span><span class="s">встав YouTube-посилання · 15–60 хв</span></button>
-</div>
 <div id="inbox-wrap" style="display:none">
   <div class="inbox-hd"><span class="ti">✨ Сьогодні для тебе</span><span class="badge" id="inbox-n">0</span></div>
   <div id="inbox"></div>
@@ -1521,7 +1502,7 @@ window.addEventListener('load', function(){
 <div class="sec-h"><span class="ti">Як слухати правильно</span></div>
 <div class="instr-card">
   <b>Активне</b> — 10–15 хв. Зупиняй, повторюй вголос, записуй. Це найшвидший шлях до вимови.<br><br>
-  <b>Фонове</b> — фоном, поки миєш посуд чи їдеш. Вухо звикає до ритму навіть без уваги.<br><br>
+  <b>Фонове</b> — фоном, поки займаєшся своїми справами. Слух звикає до ритму навіть без уваги.<br><br>
   Обидва рахують ланку. Головне — не пропустити день.
 </div>
 </div>
@@ -1618,14 +1599,6 @@ window.addEventListener('load', function(){
       <div class="desktop-progress">
         <div class="desktop-progress-ring" id="desktop-progress-ring"><span id="desktop-progress-value">0/1</span></div>
         <div class="desktop-progress-copy"><b id="desktop-progress-title">Одна завершена практика</b><span id="desktop-progress-copy">Відео, повторення і розмова формують результат дня.</span></div>
-      </div>
-    </section>
-    <section class="desktop-card">
-      <div class="desktop-card-title">Швидкий старт</div>
-      <div class="desktop-quick">
-        <button onclick="openLessonNow()"><span>🎬</span>Продовжити урок</button>
-        <button onclick="openChainyNow()"><span>🗣</span>Поговорити з Chainy</button>
-        <button onclick="openOwnVideo()"><span>🔗</span>Додати своє відео</button>
       </div>
     </section>
     <section class="desktop-card desktop-tip"><div class="desktop-card-title">Фокус дня</div><b>Говори, не перекладай.</b><br>Сьогодні повтори одну фразу у трьох власних ситуаціях.</section>
@@ -2583,10 +2556,18 @@ async function startBloggerPhraseChainy(entry){
   await cyLaunch(w=>w.startVideoChat&&w.startVideoChat({title:'Фраза від '+(entry.blogger||'блогера'),mode:'discuss',phrases:[entry.phrase],resource_kind:'blogger_phrase',summary:'Help the learner use this blogger phrase naturally in a personal answer: '+entry.phrase}));
 }
 function renderGuidedNavigation(D){
-  GUIDED_ACTION=guidedRecommendation(D||TODAY_HOME||{});const card=$('#guided-card');if(!card)return;
-  if(!GUIDED_ACTION){card.classList.remove('on');return;}
-  $('#guided-ic').textContent=GUIDED_ACTION.ic;$('#guided-title').textContent=GUIDED_ACTION.title;$('#guided-sub').textContent=GUIDED_ACTION.sub;$('#guided-why').textContent=GUIDED_ACTION.why;$('#guided-go').textContent=GUIDED_ACTION.cta+' →';card.classList.add('on');
+  GUIDED_ACTION=guidedRecommendation(D||TODAY_HOME||{});
+  /* Backend nudge is the canonical home action. On older payloads the local
+     recommendation occupies the same hero instead of creating a second CTA. */
+  if(!GUIDED_ACTION||D?.nudge)return;
+  const k=$('#hero-k'),title=$('#hero-t'),sub=$('#hero-s'),go=$('#hero-go');
+  if(!k||!title||!sub||!go)return;
+  k.textContent=GUIDED_ACTION.ic+' Наступний крок';
+  title.textContent=GUIDED_ACTION.title;
+  sub.textContent=GUIDED_ACTION.sub;
+  go.textContent=GUIDED_ACTION.cta+' →';
 }
+function runHomePrimary(){if(NUDGE)return flow();if(GUIDED_ACTION)return runGuidedAction();return flow();}
 function runGuidedAction(){if(!GUIDED_ACTION)return;const state=guidedState();state.seen[GUIDED_ACTION.id]=Date.now();state.last_action=GUIDED_ACTION.id;writeLocalJson(GUIDED_STATE_KEY,state);trackUx('guided_action_open',{action:GUIDED_ACTION.id});GUIDED_ACTION.run();}
 function dismissGuidedAction(){if(!GUIDED_ACTION)return;const state=guidedState();state.dismissed[GUIDED_ACTION.id]=Date.now();writeLocalJson(GUIDED_STATE_KEY,state);trackUx('guided_action_later',{action:GUIDED_ACTION.id});GUIDED_ACTION=null;$('#guided-card')?.classList.remove('on');}
 function openGuidedErrors(){
@@ -2666,13 +2647,8 @@ async function renderHome(){
   renderTop(D);
   setSessionMinutes(Number(D.session_minutes||D.time_per_day||SESSION_MINUTES),true);
   mergeErrorSrs(D.due_errors||D.errors_due||[]);
-  renderGuidedNavigation(D);
-  const rank=Number(D.rank_position||D.leaderboard_position||D.my_rank||0);
-  $('#home-streak-signal').textContent='🔥 '+Number(D.streak_days||0);
-  $('#home-chain-signal').textContent='🔗 '+Number(D.chain_length||0);
-  $('#home-rank-signal').textContent='🏆 '+(rank?('#'+rank):'—');
-  $('#home-online-signal').textContent='🟢 '+Number(D.online_count||D.people_online||0);
   paintNudge(D);           /* одна картка «що робити зараз» — замість вибору */
+  renderGuidedNavigation(D); /* fallback теж використовує hero, без другого CTA */
   const len=D.chain_length||0;
   const nm=(D.name||'').split(' ')[0];
   /* Старий бекенд без nudge: даємо зрозумілий fallback.
@@ -4055,8 +4031,8 @@ let CHALLENGE_STARTING = false;
 
 function paintNudge(D){
   const n = D && D.nudge;
+  NUDGE = n || null;
   if(!n) return;                       /* старий бекенд — лишаємо як було */
-  NUDGE = n;
   const k=$('#hero-k'), t=$('#hero-t'), sb=$('#hero-s'), g=$('#hero-go');
   if(!k||!t||!sb||!g) return;
   k.textContent  = n.icon ? (n.icon + ' ' + (n.kind==='done' ? 'Готово' : 'Зараз')) : 'Зараз';
