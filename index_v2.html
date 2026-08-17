@@ -265,6 +265,8 @@
   .challenge-card .s{font-size:var(--fs-sm);color:var(--purple-text);margin-top:3px}
   .net-item{display:flex;align-items:center;gap:12px;background:var(--bg-card);
     border:0.5px solid var(--line);border-radius:var(--r);padding:12px 14px;margin-bottom:8px;cursor:pointer}
+  .net-item[type="button"]{width:100%;color:inherit;font:inherit;text-align:left}
+  .net-item[type="button"]:focus-visible{outline:2px solid var(--purple);outline-offset:2px}
   .net-item:active{background:var(--bg-card2)}
   .net-item .ic{font-size:var(--fs-lg);width:24px;text-align:center}
   .net-item .body{flex:1}
@@ -1468,6 +1470,11 @@ window.addEventListener('load', function(){
   <div class="t">🎬 Крок 1 · урок з відео</div>
   <div class="s">Обери режим нижче, а потім відкрий плеєр. Після уроку застосуєш фрази в розмові.</div>
 </div>
+<button class="net-item own-video-entry" type="button" onclick="openOwnVideo()">
+  <span class="ic"><span class="yt"></span></span>
+  <span class="body"><span class="t">Своє відео з YouTube</span><span class="s">встав посилання · розберемо фрази разом</span></span>
+  <span class="ch" aria-hidden="true">›</span>
+</button>
 <div class="practice-loop"><b>Почуй</b><span>→</span><b>Повтори</b><span>→</span><b>Скажи з Chainy</b></div>
 <div class="sec-h"><span class="ti">Обери режим</span></div>
 <div class="mode-row">
