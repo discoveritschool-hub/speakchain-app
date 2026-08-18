@@ -714,6 +714,16 @@
   .social-live-card .s{font-size:var(--fs-xs);color:#c9c2ff;margin-top:2px}
   .live-dot{width:10px;height:10px;border-radius:50%;background:#5ad8a6;box-shadow:0 0 0 5px rgba(90,216,166,.16)}
   .social-arrow{font-size:24px;color:#c9c2ff}
+  .global-live-banner{display:flex;align-items:center;gap:10px;flex-shrink:0;margin:8px 12px 0;
+    padding:10px 12px;border:1px solid rgba(247,110,110,.32);border-radius:13px;
+    background:linear-gradient(135deg,rgba(247,110,110,.14),rgba(124,110,247,.12));cursor:pointer}
+  .global-live-banner:focus-visible{outline:2px solid var(--purple);outline-offset:2px}
+  .global-live-banner .live-dot{background:var(--red);box-shadow:0 0 0 4px rgba(247,110,110,.14)}
+  .global-live-banner[data-status="live"] .live-dot{animation:livePulse 1.2s ease-in-out infinite}
+  .global-live-banner .body{flex:1;min-width:0}.global-live-banner .t{font-size:var(--fs-sm);font-weight:850}
+  .global-live-banner .s{font-size:var(--fs-xs);color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+  .global-live-banner .cta{padding:6px 9px;border-radius:99px;background:var(--red);color:#fff;font-size:10px;font-weight:850}
+  @keyframes livePulse{50%{transform:scale(.72);box-shadow:0 0 0 8px rgba(247,110,110,.06)}}
   .social-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;padding:4px;margin-bottom:12px;
     border-radius:var(--r-pill);background:var(--bg-card2)}
   .social-tabs button{border:0;background:none;color:var(--text2);padding:9px 4px;border-radius:var(--r-pill);
@@ -1256,6 +1266,15 @@ window.addEventListener('load', function(){
     </div>
   </div>
 
+  <div class="global-live-banner" id="global-live-banner" data-status="announced"
+       role="button" tabindex="0" aria-label="Відкрити інформацію про живі ефіри"
+       onclick="openLiveBroadcast()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openLiveBroadcast()}">
+    <span class="live-dot" aria-hidden="true"></span>
+    <div class="body"><div class="t" id="global-live-title">Живі ефіри SpeakChain</div>
+      <div class="s" id="global-live-sub">4 групові ефіри щомісяця на YouTube</div></div>
+    <span class="cta" id="global-live-cta">Деталі</span>
+  </div>
+
   <div class="scroll">
     <div class="screen on" id="s-home">
 <div class="hero">
@@ -1625,6 +1644,17 @@ window.addEventListener('load', function(){
     <button data-s="s-buddy" aria-label="Chainy"><span class="ic" aria-hidden="true">🗣️</span><span class="lbl">Chainy</span></button>
     <button data-s="s-social" aria-label="Спільнота"><span class="ic" aria-hidden="true">👥</span><span class="lbl">Спільнота</span></button>
     <button data-s="s-prog" aria-label="Прогрес"><span class="ic" aria-hidden="true">📊</span><span class="lbl">Прогрес</span></button>
+  </div>
+</div>
+
+<div class="overlay" id="ov-live-broadcast">
+  <div class="sheet">
+    <div class="grip"></div>
+    <h3 id="live-broadcast-title">🎬 Живі ефіри SpeakChain</h3>
+    <p id="live-broadcast-sub">Практикуємо фрази й теми наживо разом з іншими учасниками.</p>
+    <button class="go" id="live-broadcast-primary" onclick="openLivePrimary()">Стежити за анонсами</button>
+    <button class="plan-btn" id="live-broadcast-calendar" style="display:none;margin-top:8px" onclick="openLiveCalendar()">🗓 Додати в календар</button>
+    <button class="plan-btn" id="live-broadcast-plans" style="margin-top:8px" onclick="showLivePlans()">Дізнатися про Premium</button>
   </div>
 </div>
 
@@ -2331,7 +2361,12 @@ async function load(scr){
         base:BOT_API,operation:'read',attempts:2,timeout:6000,signal:controller.signal,body:{screen:scr}
       });
       if(!window.SC_API.isCurrent(scope,generation))return {};
-      if(payload?.ok&&payload.d){hideOfflineBanner();PAYLOAD[scr]=payload.d;return payload.d;}
+      if(payload?.ok&&payload.d){
+        hideOfflineBanner();
+        PAYLOAD[scr]=payload.d;
+        syncGlobalLiveBroadcast(payload.d.live_broadcast);
+        return payload.d;
+      }
       throw new window.SC_API.ApiError('invalid_response',payload?.error||'Invalid payload');
     }catch(error){
       if(!window.SC_API.isCurrent(scope,generation))return {};
@@ -5014,6 +5049,42 @@ function openChannel(){
   const l='https://t.me/SpeakChain_News';
   try{ TG?.openTelegramLink?.(l) || window.open(l); }catch(e){ window.open(l); }
 }
+
+let LIVE_BROADCAST={visible:true,kind:'premium',title:'Живі ефіри SpeakChain',
+  subtitle:'4 групові ефіри щомісяця на YouTube',status:'announced',has_access:false,
+  starts_at:'',join_url:'',calendar_url:'',recording_url:''};
+function syncGlobalLiveBroadcast(data){
+  if(data&&typeof data==='object')LIVE_BROADCAST=Object.assign({},LIVE_BROADCAST,data);
+  const b=$('#global-live-banner');if(!b)return;
+  b.style.display=LIVE_BROADCAST.visible===false?'none':'flex';
+  b.dataset.status=LIVE_BROADCAST.status||'announced';
+  $('#global-live-title').textContent=LIVE_BROADCAST.status==='live'?'🔴 Ефір уже триває':(LIVE_BROADCAST.title||'Живі ефіри SpeakChain');
+  $('#global-live-sub').textContent=LIVE_BROADCAST.subtitle||'Практика англійської наживо';
+  $('#global-live-cta').textContent=LIVE_BROADCAST.status==='live'?'Увійти':'Деталі';
+}
+function openLiveUrl(url){
+  if(!/^https?:\/\//i.test(String(url||'')))return false;
+  try{TG?.openLink?.(url)||window.open(url,'_blank');}catch(e){window.open(url,'_blank');}
+  return true;
+}
+function openLiveBroadcast(){
+  const L=LIVE_BROADCAST;
+  $('#live-broadcast-title').textContent=(L.status==='live'?'🔴 ':'🎬 ')+(L.title||'Живі ефіри SpeakChain');
+  $('#live-broadcast-sub').textContent=L.subtitle||'Практикуємо англійську наживо разом.';
+  const primary=$('#live-broadcast-primary');
+  primary.textContent=L.join_url?'Приєднатися до ефіру':L.recording_url?'Переглянути запис':'Стежити за анонсами';
+  const calendar=$('#live-broadcast-calendar');calendar.style.display=L.calendar_url?'block':'none';
+  $('#live-broadcast-plans').style.display=L.has_access?'none':'block';
+  openOv('ov-live-broadcast');
+  trackUx('live_broadcast_open',{status:L.status||'announced',kind:L.kind||'premium'});
+}
+function openLivePrimary(){
+  const L=LIVE_BROADCAST;
+  if(openLiveUrl(L.join_url)||openLiveUrl(L.recording_url)){trackUx('live_broadcast_join',{kind:L.kind});return;}
+  openChannel();
+}
+function openLiveCalendar(){if(openLiveUrl(LIVE_BROADCAST.calendar_url))trackUx('live_broadcast_calendar',{kind:LIVE_BROADCAST.kind});}
+function showLivePlans(){closeOv();openOv('ov-plans');trackUx('live_broadcast_upgrade');}
 
 function money(v){
   const f=parseFloat(v);
