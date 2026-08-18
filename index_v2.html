@@ -1994,6 +1994,7 @@ window.addEventListener('load', function(){
       <button data-value="community" onclick="setComposeVisibility('community')">Спільнота</button>
     </div>
     <textarea class="field-input" id="compose-transcript" maxlength="1200" rows="2" placeholder="За бажанням додай субтитри або короткий текст"></textarea>
+    <label class="toggle-line" id="compose-analysis-row" style="display:none"><input type="checkbox" id="compose-analysis-consent"> Перевірити граматику й мої слова в записі. Аудіо буде тимчасово розшифровано для аналізу.</label>
     <button class="diag-cta" id="compose-publish" onclick="publishSocialResponse()">Переглянути й опублікувати</button>
     <div style="font-size:11px;color:var(--text3);line-height:1.4;margin-top:8px">Публікацію можна видалити. Контент проходить автоматичну перевірку; скарги переглядає команда.</div>
   </div>
@@ -2849,15 +2850,20 @@ function openWeeklyChallenge(challenge){
   if(c.done)parts.push('Ти вже долучилась цього тижня ✓');
   $('#weekly-challenge-meta').textContent=parts.join(' · ');
   const guide=$('#weekly-challenge-guide');
+  const grammar=(c.grammar_targets||[]).map(x=>x.label||x.id).filter(Boolean);
+  const lexicon=(c.lexical_targets||[]).map(x=>x.text).filter(Boolean);
   if(guide)guide.innerHTML='<b>Як долучитися</b><br>'+esc(c.instructions||'Подивись зразок, запиши 20–60 секунд англійською і передай естафету іншій людині.')
+    +(grammar.length?'<br><br><b>Граматична ціль:</b> '+grammar.map(esc).join(' · '):'')
+    +(lexicon.length?'<br><b>Твої слова:</b> '+lexicon.map(esc).join(' · '):'')
     +(c.example_answer?'<br><br><b>Орієнтир:</b> '+esc(c.example_answer):'');
   openOv('ov-weekly-challenge');
 }
 function practiceWeeklyChallenge(){
   const c=ACTIVE_WEEKLY_CHALLENGE;if(!c)return;
   closeOv();go('s-buddy');
-  const context=['Weekly challenge preparation.',c.topic||'',c.video_title?('Sample video: '+c.video_title):'',c.chainy_context||'',c.example_answer?('Example answer: '+c.example_answer):'',c.video_url?'The learner has access to a sample video. Ask whether they watched it before discussing details.':'There is no sample video. Never say or imply that the learner watched one.'].filter(Boolean).join(' ');
-  cyLaunch(w=>w.startVideoChat&&w.startVideoChat(context,'discuss','',[c.phrase||c.topic].filter(Boolean)));
+  const words=(c.lexical_targets||[]).map(x=>x.text).filter(Boolean), grammar=(c.grammar_targets||[]).map(x=>x.label||x.id).filter(Boolean);
+  const context=['Weekly challenge preparation.',c.topic||'',grammar.length?('Grammar targets: '+grammar.join(', ')):'',words.length?('The learner should naturally use these private vocabulary targets: '+words.join(', ')):'',c.video_title?('Sample video: '+c.video_title):'',c.chainy_context||'',c.example_answer?('Example answer: '+c.example_answer):'',c.video_url?'The learner has access to a sample video. Ask whether they watched it before discussing details.':'There is no sample video. Never say or imply that the learner watched one.'].filter(Boolean).join(' ');
+  cyLaunch(w=>w.startVideoChat&&w.startVideoChat(context,'discuss','',[c.phrase,...words].filter(Boolean)));
 }
 function recordWeeklyChallenge(){
   const c=ACTIVE_WEEKLY_CHALLENGE||{};closeOv();
@@ -3093,6 +3099,7 @@ async function openProgressArea(area){
 const LVLS=['A1','A2','B1','B2','C1','C2'];
 let pgLvl=null;
 let pgRoute='grammar';
+let PG_CURRICULUM={};
 
 async function renderProg(){
   const D=await load('s-prog');
@@ -3101,7 +3108,11 @@ async function renderProg(){
     +[['🗣',ss.speaking_minutes||0,'хв'],['💬',ss.responses||0,'відповіді'],['✨',ss.phrases_applied||0,'фрази'],['🏆',ss.challenges_done||0,'челенджі'],['🔗',ss.relay_links||0,'ланки']]
       .map(x=>'<div style="text-align:center;padding:10px 3px;border-radius:10px;background:var(--bg-card)"><div>'+x[0]+'</div><b>'+x[1]+'</b><div style="font-size:9px;color:var(--text2)">'+x[2]+'</div></div>').join('')
     +'</div><button class="diag-cta" onclick="openSocialComposer({mode:\'progress\',topic:\'What can you say better now than last week?\'})">Додати хвилину говоріння</button>';
-  const G=D.cefr_grammar||{}, TD=D.topics_data||{};
+  PG_CURRICULUM=D.grammar_curriculum||{};
+  const hasCanonical=Object.keys(PG_CURRICULUM).length>0;
+  const G=hasCanonical?Object.fromEntries(LVLS.map(l=>[l,(PG_CURRICULUM[l]||[]).map(x=>x.id)])):(D.cefr_grammar||{});
+  const TD=hasCanonical?(D.canonical_topics_data||{}):(D.topics_data||{});
+  const topicMeta=id=>hasCanonical?(LVLS.flatMap(l=>PG_CURRICULUM[l]||[]).find(x=>x.id===id)||{}):{label:id,title_en:id};
   const cur=D.level||'A1';
   if(!pgLvl) pgLvl=cur;
 
@@ -3197,7 +3208,7 @@ async function renderProg(){
     const err=TD[t]?.buddy_errors||0;
     const locked=!hasDiag;
     return '<div class="topic'+(locked?' topic-locked':'')+'" onclick="'+(locked?'':'pgTopic(\''+t.replace(/'/g,"\\'")+'\')')+'">'
-      +'<div class="them"><div class="nm">'+esc(t)
+      +'<div class="them"><div class="nm">'+esc(topicMeta(t).label||t)
       +(err?' <span style="color:var(--red);font-size:var(--fs-xs)">⚠ '+err+'</span>':'')+'</div>'
       +(locked
         ? '<div class="rv"><span class="lock-ico">🔒</span><span class="rr g-gray">—</span></div>'
@@ -3230,10 +3241,12 @@ async function startLexicalTopic(id,label){
   }));
 }
 async function pgTopic(t){
-  setLearningContext('grammar_topic',t,{level:pgLvl});
+  const meta=(PG_CURRICULUM[pgLvl]||[]).find(x=>x.id===t)||{};
+  const title=meta.title_en||meta.label||t;
+  setLearningContext('grammar_topic',title,{level:pgLvl,topic_id:t});
   const ov=$('#ov-prog'); ov.classList.add('on'); tgBack(true);
   const win=await mountApp('s-prog',$('#ov-prog-host'),'s-prog');
-  try{ win.openTopic(t); }catch(e){ console.warn('topic',e.message); }
+  try{ win.openTopic(title); }catch(e){ console.warn('topic',e.message); }
 }
 
 /* ══════════ ДРУЗІ ══════════ */
@@ -3306,12 +3319,14 @@ function openFriendsSection(tab){
 }
 function renderSocialChallenge(){
   const c=SOCIAL.challenge||{};
+  const personalWords=(c.lexical_targets||[]).map(x=>x.text).filter(Boolean);
   $('#social-challenge-card').innerHTML=c.topic
     ?'<div class="challenge-card" onclick="openUnifiedChallenge()">'
       +'<div class="source-badge">'+esc(c.source_label||'SpeakChain')+'</div>'
       +'<div class="t" style="margin-top:8px">🏆 '+esc(c.title||'Челендж тижня')+'</div>'
       +'<div class="source-badge" style="margin-top:8px">'+(c.video_url?'▶ Відеозразок':'🎬 Зразок готується')+'</div>'
       +'<div class="s">'+esc(c.topic)+'</div>'
+      +(personalWords.length?'<div class="s" style="margin-top:7px"><b>Твої слова:</b> '+personalWords.map(esc).join(' · ')+'</div>':'')
       +'<div style="display:flex;gap:7px;margin-top:10px">'
       +'<button class="cr-primary" onclick="event.stopPropagation();openSocialComposer({mode:\'challenge_week\',challenge:SOCIAL.challenge,topic:SOCIAL.challenge.topic,phrase:SOCIAL.challenge.phrase})">Записати відповідь</button>'
       +'<button class="cr-secondary" onclick="event.stopPropagation();startRelay()">Передати естафету</button></div></div>'
@@ -3613,7 +3628,11 @@ function openSocialComposer(ctx){
   COMPOSE_VIS=guided?'friends':COMPOSE_VIS;
   ['#compose-topic','#compose-phrase','#compose-transcript','#compose-visibility'].forEach(sel=>{const el=$(sel);if(el)el.style.display=guided?'none':'';});
   $$('#ov-social-compose .field-label').forEach(el=>el.style.display=guided?'none':'');
-  $('#compose-state').textContent=guided?'15–30 секунд. Скажи головну думку й використай дві нові фрази.':videoChallenge?'Запиши відеовідповідь за зразком — до 45 секунд. Можна перезаписати.':'До 45 секунд. Можна перезаписати перед публікацією.';
+  const privateWords=(COMPOSE_CTX.challenge?.lexical_targets||[]).map(x=>x.text).filter(Boolean);
+  const canVerify=Boolean(COMPOSE_CTX.challenge?.verification_contract);
+  $('#compose-analysis-row').style.display=canVerify?'flex':'none';
+  $('#compose-analysis-consent').checked=false;
+  $('#compose-state').textContent=(guided?'15–30 секунд. Скажи головну думку й використай дві нові фрази.':videoChallenge?'Запиши відеовідповідь за зразком — до 45 секунд. Можна перезаписати.':'До 45 секунд. Можна перезаписати перед публікацією.')+(privateWords.length?' Твої слова: '+privateWords.join(' · ')+'.':'');
   $('#compose-publish').textContent=guided?'Переглянути відео':'Переглянути й опублікувати';
   setComposeVisibility(COMPOSE_VIS);openOv('ov-social-compose');
 }
@@ -3650,7 +3669,8 @@ function closeSocialComposer(){saveComposeDraft();stopComposeMedia();closeOv();}
 function prepareComposeWithChainy(){
   const topic=$('#compose-topic').value.trim(),phrase=$('#compose-phrase').value.trim();
   COMPOSE_CTX.topic=topic;COMPOSE_CTX.phrase=phrase;saveComposeDraft();closeOv();go('s-buddy');
-  cyLaunch(w=>w.startVideoChat&&w.startVideoChat(topic||'Prepare my speaking response','discuss','',phrase?[phrase]:[]));
+  const words=(COMPOSE_CTX.challenge?.lexical_targets||[]).map(x=>x.text).filter(Boolean);
+  cyLaunch(w=>w.startVideoChat&&w.startVideoChat(topic||'Prepare my speaking response','discuss','',[phrase,...words].filter(Boolean)));
   toast('Після репетиції повернись до запису');
 }
 async function publishSocialResponse(){
@@ -3673,13 +3693,19 @@ async function publishSocialResponse(){
     }
     const response=await socialApi('publish',{topic,phrase,transcript,visibility:COMPOSE_VIS,
       media_type:COMPOSE_TYPE,media_b64:COMPOSE_B64,response_to:COMPOSE_CTX.response_to||'',
-      media_mime:COMPOSE_MIME,relay_room_id:relayRoom,duration_sec:COMPOSE_SEC,challenge:COMPOSE_CTX.challenge||SOCIAL.challenge||{}});
+      media_mime:COMPOSE_MIME,relay_room_id:relayRoom,duration_sec:COMPOSE_SEC,
+      analysis_consent:Boolean($('#compose-analysis-consent')?.checked),challenge:COMPOSE_CTX.challenge||SOCIAL.challenge||{}});
     if(COMPOSE_CTX.mode==='challenge'&&COMPOSE_CTX.target_uid){
       await socialApi('challenge_send',{target_uid:COMPOSE_CTX.target_uid,topic,phrase,legacy_ref:SOCIAL.challenge?.legacy_ref||{}});
     }
     const lessonShare=COMPOSE_CTX.mode==='lesson_share';
     if(lessonShare){LESSON_FINISH.video_data=COMPOSE_B64;LESSON_FINISH.video_mime=COMPOSE_MIME||'video/webm';}
-    await discardComposeDraft();stopComposeMedia();closeOv();toast(response.moderation==='blocked'?'Відповідь збережено, але приховано до перевірки':'Твоя speaking-відповідь опублікована ✓');
+    await discardComposeDraft();stopComposeMedia();closeOv();
+    const verification=response.verification||{};
+    const verifiedText=verification.status==='verified'
+      ?(' · граматика '+Number(verification.grammar?.hits||0)+'/'+Number(verification.grammar?.required||0)+', слова '+Number(verification.lexicon?.hits||0)+'/'+Number(verification.lexicon?.required||0))
+      :verification.status==='awaiting_consent'?' · аналіз не вмикався':verification.status==='analysis_unavailable'?' · аналіз тимчасово недоступний':'';
+    toast(response.moderation==='blocked'?'Відповідь збережено, але приховано до перевірки':'Відповідь опублікована ✓'+verifiedText);
     trackUx('social_publish',{mode:COMPOSE_CTX.mode||'free',visibility:COMPOSE_VIS});
     await refreshSocial();socialTab('feed');
     if(lessonShare)setTimeout(()=>showLessonFinishShare(),250);
