@@ -1298,13 +1298,13 @@ def test_desktop_shell_keeps_mobile_navigation_intact():
         ok("desktop має ліве меню, широку робочу зону й праву панель; mobile-nav збережено")
 
 
-def test_live_rooms_fail_closed_until_two_account_gate():
-    """Rooms stay hidden and blocked until the two-account production proof exists."""
-    section("L0-7 — live rooms fail-closed gate")
+def test_live_rooms_public_beta_is_visible_with_server_authority():
+    """Public-beta rooms stay visible while the backend remains authoritative."""
+    section("Audio rooms — visible public beta")
     pwa = (ROOT / "pwa.js").read_text(encoding="utf-8")
     sw = (ROOT / "sw.js").read_text(encoding="utf-8")
     markers = (
-        "const LIVE_ROOMS_ENABLED = false",
+        "const LIVE_ROOMS_ENABLED = true",
         "window.SC_FEATURES = Object.assign({}, window.SC_FEATURES, {liveRooms: LIVE_ROOMS_ENABLED})",
         "sc-live-rooms-gate",
         "startLiveMatch",
@@ -1314,7 +1314,31 @@ def test_live_rooms_fail_closed_until_two_account_gate():
     if missing or not shell_cache_is_current(sw):
         fail(f"rooms gate або cache rollover неповні: {missing}")
     else:
-        ok("live rooms приховані client-side; backend gate лишається авторитетним")
+        ok("audio rooms доступні client-side; backend gate і аналітика лишаються авторитетними")
+
+
+def test_synchronized_live_lesson_screens():
+    """Learner feedback, private vocabulary and the stream host screen stay wired."""
+    section("Відкритий урок — синхронний учень, ведучий і прогрес")
+    learner = (ROOT / "live_activity.html").read_text(encoding="utf-8")
+    host = (ROOT / "live_host.html").read_text(encoding="utf-8")
+    blogger = (ROOT / "blogger.html").read_text(encoding="utf-8")
+    learner_markers = (
+        "/vocab_data", "/check", "session.control?.current_step_id",
+        "live_lesson_done", "personal_lexicon", "Результат у прогресі",
+    )
+    host_markers = (
+        "host_token", "/host/step", "step_stats", "особиста фраза учня",
+        "Показати відповідь", "Відповіді наживо",
+    )
+    blogger_markers = ("grammar-live-week-1", "host_url", "openHostScreen", "Відкрити екран ведучого для YouTube")
+    missing = [f"learner:{m}" for m in learner_markers if m not in learner]
+    missing += [f"host:{m}" for m in host_markers if m not in host]
+    missing += [f"blogger:{m}" for m in blogger_markers if m not in blogger]
+    if missing:
+        fail("live lesson screens incomplete: " + ", ".join(missing))
+    else:
+        ok("особиста SRS-лексика лишається на телефоні; відповіді синхронізуються й пишуться у прогрес")
 
 
 def test_interactive_captions_and_vocabulary_workspace():
@@ -1726,7 +1750,8 @@ def main():
     test_guided_native_navigation()
     test_visible_lexical_streak_and_blogger_entry()
     test_desktop_shell_keeps_mobile_navigation_intact()
-    test_live_rooms_fail_closed_until_two_account_gate()
+    test_live_rooms_public_beta_is_visible_with_server_authority()
+    test_synchronized_live_lesson_screens()
     test_interactive_captions_and_vocabulary_workspace()
     test_chainy_memory_controls_contract()
     test_chainy_interest_ui_contract()

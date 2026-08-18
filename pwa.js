@@ -8,7 +8,7 @@
   const USER_KEY = 'speakchain.pwa.user.v1';
   const PROVIDER_KEY = 'speakchain.pwa.provider.v1';
   const ACCOUNT_LINK_PATHS = new Set(['/api/v1/account-link/intents', '/api/v1/account-link/complete']);
-  const LIVE_ROOMS_ENABLED = false;
+  const LIVE_ROOMS_ENABLED = true;
   const nativeFetch = window.fetch.bind(window);
   let installPrompt = null;
   let authResolve = null;
