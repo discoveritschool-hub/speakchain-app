@@ -1710,13 +1710,6 @@ function fill() {
   const basic   = D.basic   || 0;
   const premium = D.premium || 0;
   const revenue = D.revenue || 0;
-  const liveTime = document.getElementById('live-time');
-  if (liveTime && !liveTime.value) {
-    const next = new Date(Date.now() + 24 * 60 * 60 * 1000);
-    next.setHours(19, 0, 0, 0);
-    liveTime.value = new Date(next.getTime() - next.getTimezoneOffset()*60000).toISOString().slice(0,16);
-  }
-
   document.getElementById('avatar-initials').textContent = initials(name);
   document.getElementById('header-name').textContent     = '@' + name;
   document.getElementById('header-sub').textContent      =
