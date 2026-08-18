@@ -4830,6 +4830,11 @@ function renderSpeakingSocial() {
       sCell('Реакції підтримки', value(lv.facilitator_reactions), '👏 🔥 💡 🙌'),
       sCell('Сер. командний бал', value(lv.facilitator_avg_team_score), 'у завершених кімнатах'),
     ], 2)}
+    ${sRow([
+      sCell('Автоматично зараховано', value(lv.facilitator_answers_verified), 'без перевірки людиною', 'var(--green)'),
+      sCell('Попросили повторити', value(lv.facilitator_answer_retries), 'граматика або лексика не підтвердились'),
+      sCell('Auto-acceptance', pct(lv.facilitator_auto_acceptance_rate), 'з усіх спроб перевірки'),
+    ], 2)}
     ${sTitle('Які кімнати обирають', 'Джерела тем і формати універсальних розмов')}
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
       <div><div class="table-title">Джерело теми</div>${cBars(rooms.sources || [], 'var(--accent)')}</div>

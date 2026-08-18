@@ -36,6 +36,10 @@ class LiveVideoCallContractTests(unittest.TestCase):
             "function liveGameReaction(emoji)",
             "renderLiveRoomGame(d.game||null)",
             "viewer_uid='+encodeURIComponent(UID)",
+            'id="live-game-answer-text"',
+            "function captureLiveGameAnswer()",
+            "answer_text:answerText",
+            "r.event?.type==='answer_needs_retry'",
         ):
             self.assertIn(marker, self.source)
 

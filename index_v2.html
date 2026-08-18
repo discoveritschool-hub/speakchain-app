@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>SpeakChain</title>
+<link rel="canonical" href="https://discoveritschool-hub.github.io/speakchain-app/">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="https://www.youtube.com/iframe_api"></script>
 <script src="https://discoveritschool-hub.github.io/speakchain-app/toast_rewards.js"></script>
@@ -169,6 +170,7 @@
 .room-host-score{margin-left:auto;font-size:12px;font-weight:800;color:var(--yellow)}.room-host-title{font-size:18px;font-weight:850;margin:7px 0 4px}.room-host-prompt{font-size:14px;font-weight:750;line-height:1.4;margin:8px 0}
 .room-host-mission{padding:9px 10px;border-radius:11px;background:var(--bg-card);font-size:13px;line-height:1.4}.room-host-progress{height:5px;margin:10px 0 6px;border-radius:99px;background:var(--bg-card3);overflow:hidden}.room-host-progress span{display:block;height:100%;border-radius:inherit;background:var(--purple);transition:width .3s}
 .room-host-reactions{display:flex;gap:7px;margin:9px 0}.room-host-reactions button{width:40px;height:36px;border:1px solid var(--line);border-radius:10px;background:var(--bg-card);font-size:18px}.room-host-feed{min-height:18px;color:var(--text2);font-size:11px}
+.room-host-answer{margin:9px 0;padding:9px;border-radius:12px;background:var(--bg-card)}.room-host-answer input{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px;background:var(--bg-card2);color:var(--text);font-size:13px}.room-host-answer-actions{display:flex;gap:7px;margin-top:7px}.room-host-answer-actions button{flex:1;border:1px solid var(--line);border-radius:9px;padding:8px;background:var(--bg-card2);color:var(--text);font-size:11px;font-weight:750}.room-host-targets{font-size:11px;color:var(--text2);line-height:1.45;margin-bottom:7px}.room-host-feedback{font-size:12px;line-height:1.4;margin-top:7px;color:var(--yellow)}
 .cr-primary,.cr-secondary{border:none;border-radius:10px;padding:9px 10px;
   font-size:var(--fs-xs);font-weight:800;cursor:pointer}
 .cr-primary{background:var(--purple);color:#fff}
@@ -2039,6 +2041,13 @@ window.addEventListener('load', function(){
         <div id="live-game-state" style="font-size:11px;color:var(--text2)">Раунд почнеться, коли готові обоє.</div>
         <div class="room-host-reactions" id="live-game-reactions" style="display:none"><button onclick="liveGameReaction('👏')">👏</button><button onclick="liveGameReaction('🔥')">🔥</button><button onclick="liveGameReaction('💡')">💡</button><button onclick="liveGameReaction('🙌')">🙌</button></div>
         <div class="room-host-feed" id="live-game-feed"></div>
+        <div class="room-host-answer" id="live-game-answer" style="display:none">
+          <div class="room-host-targets" id="live-game-targets"></div>
+          <input id="live-game-answer-text" maxlength="1200" autocomplete="off" placeholder="Скажи або введи своє речення англійською">
+          <div class="room-host-answer-actions"><button type="button" onclick="captureLiveGameAnswer()">🎙 Сказати для перевірки</button><button type="button" onclick="document.getElementById('live-game-answer-text').focus()">⌨️ Ввести текстом</button></div>
+          <div style="font-size:10px;color:var(--text3);margin-top:6px">Перевіряє система, не людина. Для складних C1/C2 може аналізуватися лише цей короткий текст.</div>
+          <div class="room-host-feedback" id="live-game-feedback"></div>
+        </div>
         <button class="diag-cta" id="live-game-done" style="display:none" onclick="completeLiveGameStage()">Виконала свою місію ✓</button>
       </div>
       <div id="live-audio-status" class="instr-note">Після готовності обох підключимо живу розмову.</div>
@@ -3274,7 +3283,7 @@ let lbC='chain', lbP='week';
 let SOCIAL={}, SOCIAL_TAB='feed', SOCIAL_PROFILE=null, SOCIAL_SETTINGS={format:'any',visibility:'private'};
 let COMPOSE_CTX={}, COMPOSE_VIS='private', COMPOSE_TYPE='audio', COMPOSE_REC=null;
 let COMPOSE_STREAM=null, COMPOSE_CHUNKS=[], COMPOSE_B64='', COMPOSE_MIME='', COMPOSE_TIMER=null, COMPOSE_SEC=0, COMPOSE_CONFIRMED=false;
-let LIVE_MATCH=null, LIVE_POLL=null, LIVE_TIMER_INT=null, LIVE_REC=null, LIVE_STREAM=null, LIVE_CHUNKS=[], LIVE_DEADLINE=0;
+let LIVE_MATCH=null, LIVE_POLL=null, LIVE_TIMER_INT=null, LIVE_REC=null, LIVE_STREAM=null, LIVE_CHUNKS=[], LIVE_DEADLINE=0, LIVE_GAME_CURRENT=null, LIVE_GAME_RECOGNITION=null;
 let LIVE_PC=null,LIVE_LOCAL_STREAM=null,LIVE_REMOTE_STREAM=null,LIVE_SIGNAL_POLL=null,LIVE_SIGNAL_LAST='',LIVE_RTC_STARTED=false,LIVE_PENDING_CANDIDATES=[],LIVE_CAMERA_FACING='user';
 let CHAINY_COMPOSE_OBSERVER=null;
 
@@ -5102,17 +5111,17 @@ function openChannel(){
   try{ TG?.openTelegramLink?.(l) || window.open(l); }catch(e){ window.open(l); }
 }
 function renderLiveRoomGame(game){
-  const done=$('#live-game-done'),reactions=$('#live-game-reactions');
+  LIVE_GAME_CURRENT=game;const done=$('#live-game-done'),reactions=$('#live-game-reactions'),answerBox=$('#live-game-answer');
   if(!game||game.status==='lobby'){
     $('#live-game-title').textContent='Що відбудеться після старту';
     $('#live-game-prompt').textContent='5 коротких раундів: знайомство, думка, фразова місія, зміна ролей і спільний фінал.';
     $('#live-game-mission').textContent='Натисніть «Я готова». Далі Chainy покаже кожному власну роль і підкаже, хто говорить першим.';
-    $('#live-game-state').textContent='Раунд почнеться, коли готові обоє.';$('#live-game-score').textContent='0 командних балів';$('#live-game-progress').style.width='0%';done.style.display='none';reactions.style.display='none';return;
+    $('#live-game-state').textContent='Раунд почнеться, коли готові обоє.';$('#live-game-score').textContent='0 командних балів';$('#live-game-progress').style.width='0%';done.style.display='none';reactions.style.display='none';answerBox.style.display='none';return;
   }
   if(game.status==='completed'){
     $('#live-game-title').textContent='Місію кімнати виконано! 🏆';$('#live-game-prompt').textContent='Ви пройшли всі раунди разом.';
     $('#live-game-mission').textContent='Результат уже зараховано у прогрес обом учасникам.';$('#live-game-state').textContent='Можна завершити розмову й переглянути мовний підсумок.';
-    $('#live-game-progress').style.width='100%';$('#live-game-score').textContent=Number(game.team_score||0)+' командних балів';done.style.display='none';reactions.style.display='none';return;
+    $('#live-game-progress').style.width='100%';$('#live-game-score').textContent=Number(game.team_score||0)+' командних балів';done.style.display='none';reactions.style.display='none';answerBox.style.display='none';return;
   }
   const stage=game.stage||{},count=Math.max(1,Number(game.stage_count||1)),index=Number(game.stage_index||0);
   $('#live-game-title').textContent=(stage.icon||'🎯')+' '+(stage.title||'Наступна місія');
@@ -5121,14 +5130,22 @@ function renderLiveRoomGame(game){
   $('#live-game-progress').style.width=Math.min(100,((index+(1-left/Math.max(1,Number(stage.duration_sec||60))))/count)*100)+'%';
   $('#live-game-score').textContent=Number(game.team_score||0)+' командних балів';
   $('#live-game-state').textContent='Раунд '+(index+1)+' із '+count+' · орієнтир '+Math.ceil(left)+' с'+(game.partner_done?' · партнер уже готовий':'');
-  done.style.display='';done.disabled=Boolean(game.my_done);done.textContent=game.my_done?'Готово — чекаємо партнера…':'Виконала свою місію ✓';reactions.style.display='flex';
+  const needsAnswer=Boolean(stage.answer_required);answerBox.style.display=needsAnswer?'':'none';
+  if(needsAnswer){const grammar=(game.grammar_targets||[]).map(x=>x.label||x.id).filter(Boolean),words=(game.lexical_targets||[]).map(x=>x.text).filter(Boolean);$('#live-game-targets').innerHTML=(grammar.length?'<b>Модель:</b> '+grammar.map(esc).join(' · ')+'<br>':'')+(words.length?'<b>Твої слова:</b> '+words.map(esc).join(' · '):'');}
+  done.style.display='';done.disabled=Boolean(game.my_done);done.textContent=game.my_done?'Готово — чекаємо партнера…':needsAnswer?'Перевірити й завершити раунд':'Виконала свою місію ✓';reactions.style.display='flex';
   const incoming=(game.reactions||[]).filter(x=>x.to_me).slice(-3);$('#live-game-feed').textContent=incoming.length?'Партнер підтримує тебе: '+incoming.map(x=>x.emoji).join(' '):'Підтримай партнера реакцією — це додає командний бал.';
 }
 async function liveGameAction(action,reaction=''){
-  if(!LIVE_MATCH?.room_id)return;try{const r=await socialApi('live_game_action',{room_id:LIVE_MATCH.room_id,action,reaction});renderLiveRoomGame(r.game);if(r.event?.type==='stage_advanced')toast('Наступний раунд!');if(r.event?.type==='game_completed')toast('Місію виконано — прогрес зараховано 🏆');}catch(e){toast('Не вдалося оновити місію');}
+  if(!LIVE_MATCH?.room_id)return;const answerText=action==='complete_stage'?($('#live-game-answer-text')?.value||'').trim():'';
+  try{const r=await socialApi('live_game_action',{room_id:LIVE_MATCH.room_id,action,reaction,answer_text:answerText,speech_seconds:0});renderLiveRoomGame(r.game);const feedback=$('#live-game-feedback');if(r.verification){feedback.textContent=r.verification.feedback_uk||'';feedback.style.color=r.verification.verdict==='accepted'?'var(--green)':'var(--yellow)';}if(r.event?.type==='answer_needs_retry'){toast('Спробуй ще раз — підказка вже на екрані');return;}if(r.event?.type==='stage_advanced'){if($('#live-game-answer-text'))$('#live-game-answer-text').value='';if(feedback)feedback.textContent='';toast('Зараховано. Наступний раунд!');}if(r.event?.type==='game_completed')toast('Місію виконано — прогрес зараховано 🏆');}catch(e){toast('Не вдалося оновити місію');}
 }
 function completeLiveGameStage(){liveGameAction('complete_stage');}
 function liveGameReaction(emoji){liveGameAction('reaction',emoji);}
+function captureLiveGameAnswer(){
+  const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition,input=$('#live-game-answer-text'),feedback=$('#live-game-feedback');
+  if(!SpeechRecognition){feedback.textContent='У цьому браузері немає безкоштовного розпізнавання. Введи речення текстом.';input.focus();return;}
+  try{LIVE_GAME_RECOGNITION?.abort?.();const recognition=new SpeechRecognition();LIVE_GAME_RECOGNITION=recognition;recognition.lang='en-US';recognition.interimResults=false;recognition.maxAlternatives=1;feedback.textContent='Слухаю одну коротку відповідь…';recognition.onresult=e=>{input.value=Array.from(e.results).map(r=>r[0].transcript).join(' ').trim();feedback.textContent='Розпізнано. Перевір текст і натисни «Перевірити».';};recognition.onerror=()=>{feedback.textContent='Не вдалося розпізнати. Спробуй ще раз або введи текстом.';};recognition.onend=()=>{LIVE_GAME_RECOGNITION=null;};recognition.start();}catch(e){feedback.textContent='Мікрофон зайнятий дзвінком. Введи речення текстом.';input.focus();}
+}
 
 let LIVE_BROADCAST={visible:true,kind:'premium',title:'Живі ефіри SpeakChain',
   subtitle:'8 ефірів щотижня: 4 з блогером і 4 з викладачем',status:'announced',has_access:false,
