@@ -33,6 +33,13 @@ class SalesLandingTests(unittest.TestCase):
         self.assertIn("start=plans_premium_6m", source)
         self.assertIn("plans_${plan}_${selectedTerm", source)
 
+    def test_challenge_is_primary_and_freemium_is_a_secondary_exit(self):
+        source = (ROOT / "challenge_landing.html").read_text(encoding="utf-8")
+        self.assertIn("Приєднатися за 390 грн", source)
+        self.assertIn('data-target="easyenglish_free"', source)
+        self.assertIn("Продовжити безкоштовно", source)
+        self.assertLess(source.index("Забронювати місце за 390 грн"), source.index("Продовжити безкоштовно"))
+
     def test_plans_copy_keeps_live_communication_in_basic(self):
         source = (ROOT / "plans_landing.html").read_text(encoding="utf-8")
         self.assertIn("Живе спілкування з учасниками", source)
@@ -47,7 +54,7 @@ class SalesLandingTests(unittest.TestCase):
             for script in scripts:
                 result = subprocess.run(
                     ["node", "--check", "-"], input=script,
-                    text=True, capture_output=True, check=False,
+                    text=True, encoding="utf-8", capture_output=True, check=False,
                 )
                 self.assertEqual(0, result.returncode, result.stderr)
 
