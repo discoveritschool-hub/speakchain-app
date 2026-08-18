@@ -4824,6 +4824,12 @@ function renderSpeakingSocial() {
         (lv.fallback_rate || 0) > 25 ? 'var(--amber)' : null),
       sCell('Очікування партнера', duration(lv.avg_match_wait_sec), 'середнє'),
     ], 2)}
+    ${sRow([
+      sCell('Ігрові кімнати почали', value(lv.facilitator_started), 'Chainy веде раунди'),
+      sCell('Усі місії завершили', value(lv.facilitator_completed), pct(lv.facilitator_completion_rate), 'var(--green)'),
+      sCell('Реакції підтримки', value(lv.facilitator_reactions), '👏 🔥 💡 🙌'),
+      sCell('Сер. командний бал', value(lv.facilitator_avg_team_score), 'у завершених кімнатах'),
+    ], 2)}
     ${sTitle('Які кімнати обирають', 'Джерела тем і формати універсальних розмов')}
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
       <div><div class="table-title">Джерело теми</div>${cBars(rooms.sources || [], 'var(--accent)')}</div>

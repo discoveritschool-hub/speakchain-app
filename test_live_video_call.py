@@ -27,6 +27,18 @@ class LiveVideoCallContractTests(unittest.TestCase):
         self.assertIn("LIVE_LOCAL_STREAM?.getTracks().forEach(t=>t.stop())", self.source)
         self.assertIn("LIVE_REMOTE_STREAM?.getTracks().forEach(t=>t.stop())", self.source)
 
+    def test_room_has_synchronised_zero_ai_facilitator(self):
+        for marker in (
+            'id="live-room-host"',
+            'Chainy веде кімнату',
+            "socialApi('live_game_action'",
+            "function completeLiveGameStage()",
+            "function liveGameReaction(emoji)",
+            "renderLiveRoomGame(d.game||null)",
+            "viewer_uid='+encodeURIComponent(UID)",
+        ):
+            self.assertIn(marker, self.source)
+
 
 if __name__ == "__main__":
     unittest.main()

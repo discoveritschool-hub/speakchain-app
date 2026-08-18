@@ -1,5 +1,5 @@
 // v37 opens optional audio rooms and publishes synchronized live-lesson screens.
-const CACHE = 'speakchain-shell-v37';
+const CACHE = 'speakchain-shell-v38';
 const SHELL = [
   './index_v2.html', './telegram_auth_callback.html', './offline.html', './player.html', './vocab.html', './speaking_buddy.html',
   './progress.html', './tokens.css', './pwa.js', './api_client.js', './account_linking.js', './notification_center.js', './chainy_memory.js', './chainy_interest.js', './player_seek.js', './manifest.webmanifest',
