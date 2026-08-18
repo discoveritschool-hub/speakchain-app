@@ -1331,7 +1331,11 @@ def test_synchronized_live_lesson_screens():
         "host_token", "/host/step", "step_stats", "особиста фраза учня",
         "Показати відповідь", "Відповіді наживо",
     )
-    blogger_markers = ("grammar-live-week-1", "host_url", "openHostScreen", "Відкрити екран ведучого для YouTube")
+    blogger_markers = (
+        "grammar-live-week-1", "host_url", "openHostScreen",
+        "Відкрити екран ведучого для YouTube", "працюють без AI-викликів",
+        "платні транскрипція і TURN вимкнені",
+    )
     missing = [f"learner:{m}" for m in learner_markers if m not in learner]
     missing += [f"host:{m}" for m in host_markers if m not in host]
     missing += [f"blogger:{m}" for m in blogger_markers if m not in blogger]
