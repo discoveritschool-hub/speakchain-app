@@ -29,7 +29,7 @@ class SalesLandingTests(unittest.TestCase):
     def test_plans_copy_keeps_live_communication_in_basic(self):
         source = (ROOT / "plans_landing.html").read_text(encoding="utf-8")
         self.assertIn("Живе спілкування з учасниками", source)
-        self.assertIn("Ефіри з викладачами", source)
+        self.assertIn("8 ефірів із блогером і викладачем", source)
         self.assertNotIn("персональ", source.lower())
         self.assertNotIn("наставниц", source.lower())
 

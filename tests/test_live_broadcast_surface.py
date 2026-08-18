@@ -20,6 +20,14 @@ class LiveBroadcastSurfaceTests(unittest.TestCase):
         self.assertIn("L.join_url?'Приєднатися до ефіру'", SOURCE)
         self.assertIn("L.has_access?'none':'block'", SOURCE)
 
+    def test_weekly_schedule_and_replay_lesson_are_rendered(self):
+        self.assertIn('id="live-broadcast-week"', SOURCE)
+        self.assertIn("function renderLiveWeek()", SOURCE)
+        self.assertIn("function startLiveReplay(index)", SOURCE)
+        self.assertIn("playerAction('live_replay_started'", SOURCE)
+        self.assertIn("8 ефірів щотижня: 4 з блогером і 4 з викладачем", SOURCE)
+        self.assertIn("Дедлайн минув", SOURCE)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -18,7 +18,7 @@ class ChallengeCreditPaywallTests(unittest.TestCase):
         self.assertIn("Повний репетиторський курс", source)
         self.assertIn("Живе спілкування з іншими учасниками", source)
         self.assertIn("Той самий повний курс", source)
-        self.assertIn("Живі ефіри з викладачами", source)
+        self.assertIn("8 ефірів щотижня + записи до п’ятниці", source)
 
 
     def test_six_month_value_is_expressed_as_effective_monthly_price(self):

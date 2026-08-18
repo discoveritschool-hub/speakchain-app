@@ -723,6 +723,13 @@
   .global-live-banner .body{flex:1;min-width:0}.global-live-banner .t{font-size:var(--fs-sm);font-weight:850}
   .global-live-banner .s{font-size:var(--fs-xs);color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
   .global-live-banner .cta{padding:6px 9px;border-radius:99px;background:var(--red);color:#fff;font-size:10px;font-weight:850}
+  .live-week{display:grid;gap:8px;margin:14px 0;max-height:42vh;overflow:auto}
+  .live-week-item{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;padding:11px 12px;
+    border:.5px solid var(--line);border-radius:12px;background:var(--bg-card);text-align:left}
+  .live-week-item .t{font-size:var(--fs-sm);font-weight:850}.live-week-item .s{font-size:var(--fs-xs);color:var(--text2);margin-top:2px}
+  .live-week-item button{border:0;border-radius:99px;padding:7px 10px;background:var(--purple);color:#fff;font-size:10px;font-weight:850;cursor:pointer}
+  .live-week-item button[disabled]{background:var(--bg-card2);color:var(--text3);cursor:default}
+  .live-lesson-task{padding:9px 10px;margin-top:7px;border-left:3px solid var(--purple);background:var(--purple-soft);font-size:var(--fs-xs);color:var(--text2)}
   @keyframes livePulse{50%{transform:scale(.72);box-shadow:0 0 0 8px rgba(247,110,110,.06)}}
   .social-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;padding:4px;margin-bottom:12px;
     border-radius:var(--r-pill);background:var(--bg-card2)}
@@ -1271,7 +1278,7 @@ window.addEventListener('load', function(){
        onclick="openLiveBroadcast()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openLiveBroadcast()}">
     <span class="live-dot" aria-hidden="true"></span>
     <div class="body"><div class="t" id="global-live-title">Живі ефіри SpeakChain</div>
-      <div class="s" id="global-live-sub">4 групові ефіри щомісяця на YouTube</div></div>
+      <div class="s" id="global-live-sub">8 ефірів щотижня · записи до п’ятниці</div></div>
     <span class="cta" id="global-live-cta">Деталі</span>
   </div>
 
@@ -1652,6 +1659,7 @@ window.addEventListener('load', function(){
     <div class="grip"></div>
     <h3 id="live-broadcast-title">🎬 Живі ефіри SpeakChain</h3>
     <p id="live-broadcast-sub">Практикуємо фрази й теми наживо разом з іншими учасниками.</p>
+    <div id="live-broadcast-week" class="live-week" aria-label="Розклад восьми ефірів"></div>
     <button class="go" id="live-broadcast-primary" onclick="openLivePrimary()">Стежити за анонсами</button>
     <button class="plan-btn" id="live-broadcast-calendar" style="display:none;margin-top:8px" onclick="openLiveCalendar()">🗓 Додати в календар</button>
     <button class="plan-btn" id="live-broadcast-plans" style="margin-top:8px" onclick="showLivePlans()">Дізнатися про Premium</button>
@@ -4829,7 +4837,7 @@ async function renderProfile(){
   const PLAN_INFO={
     free:    {name:'Free',    feats:[[true,'Урок дня, ланцюжок, рейтинг'],[false,'Chainy без ліміту, Premium-група']]},
     basic:   {name:'Basic',   feats:[[true,'Chainy без ліміту щодня'],[true,'Прогрес, ролбоуп A1→C2'],[false,'Живі ефіри, Premium-група']]},
-    premium: {name:'Premium', feats:[[true,'Усе з Basic'],[true,'Живі ефіри щомісяця'],[true,'Premium-група']]},
+    premium: {name:'Premium', feats:[[true,'Усе з Basic'],[true,'8 ефірів щотижня + записи'],[true,'Premium-група']]},
   };
   const plan=D.current_plan||'free';
   const info=PLAN_INFO[plan]||PLAN_INFO.free;
@@ -5051,8 +5059,8 @@ function openChannel(){
 }
 
 let LIVE_BROADCAST={visible:true,kind:'premium',title:'Живі ефіри SpeakChain',
-  subtitle:'4 групові ефіри щомісяця на YouTube',status:'announced',has_access:false,
-  starts_at:'',join_url:'',calendar_url:'',recording_url:''};
+  subtitle:'8 ефірів щотижня: 4 з блогером і 4 з викладачем',status:'announced',has_access:false,
+  starts_at:'',join_url:'',calendar_url:'',recording_url:'',events:[]};
 function syncGlobalLiveBroadcast(data){
   if(data&&typeof data==='object')LIVE_BROADCAST=Object.assign({},LIVE_BROADCAST,data);
   const b=$('#global-live-banner');if(!b)return;
@@ -5071,6 +5079,7 @@ function openLiveBroadcast(){
   const L=LIVE_BROADCAST;
   $('#live-broadcast-title').textContent=(L.status==='live'?'🔴 ':'🎬 ')+(L.title||'Живі ефіри SpeakChain');
   $('#live-broadcast-sub').textContent=L.subtitle||'Практикуємо англійську наживо разом.';
+  renderLiveWeek();
   const primary=$('#live-broadcast-primary');
   primary.textContent=L.join_url?'Приєднатися до ефіру':L.recording_url?'Переглянути запис':'Стежити за анонсами';
   const calendar=$('#live-broadcast-calendar');calendar.style.display=L.calendar_url?'block':'none';
@@ -5080,8 +5089,39 @@ function openLiveBroadcast(){
 }
 function openLivePrimary(){
   const L=LIVE_BROADCAST;
-  if(openLiveUrl(L.join_url)||openLiveUrl(L.recording_url)){trackUx('live_broadcast_join',{kind:L.kind});return;}
+  if(L.join_url&&openLiveUrl(L.join_url)){trackUx('live_broadcast_join',{kind:L.kind});return;}
+  if(L.recording_url){startLiveReplay((L.events||[]).findIndex(e=>e.id===L.id));return;}
   openChannel();
+}
+function liveEventTime(value){
+  try{return new Intl.DateTimeFormat('uk-UA',{weekday:'short',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit',timeZone:'Europe/Kyiv'}).format(new Date(value));}
+  catch(e){return String(value||'');}
+}
+function renderLiveWeek(){
+  const host=$('#live-broadcast-week'),events=LIVE_BROADCAST.events||[];if(!host)return;
+  if(!events.length){host.innerHTML='<div class="instr-note">Розклад восьми ефірів готується.</div>';return;}
+  host.innerHTML=events.map((event,index)=>{
+    const label=event.status==='live'?'Увійти':event.status==='recording'?'Пройти запис':event.status==='expired'?'Дедлайн минув':event.status==='upcoming'?'Календар':'Запис готується';
+    const enabled=LIVE_BROADCAST.has_access&&(event.join_url||event.recording_url||event.calendar_url);
+    const deadline=event.replay_deadline?(' · наздогнати до '+liveEventTime(event.replay_deadline)) : '';
+    const task=event.status==='recording'&&event.lesson?.task?'<div class="live-lesson-task">'+esc(event.lesson.task)+'</div>':'';
+    return '<div class="live-week-item"><div><div class="t">'+(event.kind==='blogger'?'🎙 ':'👩‍🏫 ')+esc(event.title||'Ефір')+'</div><div class="s">'+esc(liveEventTime(event.starts_at)+deadline)+'</div>'+task+'</div><button '+(enabled?'onclick="openLiveEvent('+index+')"':'disabled')+'>'+label+'</button></div>';
+  }).join('');
+}
+function openLiveEvent(index){
+  const event=(LIVE_BROADCAST.events||[])[index];if(!event)return;
+  if(event.status==='recording'&&event.recording_url){startLiveReplay(index);return;}
+  if(openLiveUrl(event.join_url)||openLiveUrl(event.calendar_url))trackUx('live_event_open',{event_id:event.id,status:event.status});
+}
+async function startLiveReplay(index){
+  const event=(LIVE_BROADCAST.events||[])[index];
+  if(!event?.recording_url||!event.lesson?.video_id){toast('Запис уроку ще не готовий');return;}
+  try{
+    await playerAction('live_replay_started',{event_id:event.id,video_id:event.lesson.video_id,
+      deadline:event.replay_deadline,title:event.title,task:event.lesson.task||'',phrases:event.lesson.phrases||[]});
+    trackUx('live_replay_open',{event_id:event.id,deadline:event.replay_deadline});
+    closeOv();LMODE='active';await openPlayer(event.recording_url);
+  }catch(e){toast('Термін проходження запису вже завершився');}
 }
 function openLiveCalendar(){if(openLiveUrl(LIVE_BROADCAST.calendar_url))trackUx('live_broadcast_calendar',{kind:LIVE_BROADCAST.kind});}
 function showLivePlans(){closeOv();openOv('ov-plans');trackUx('live_broadcast_upgrade');}
@@ -5146,7 +5186,7 @@ function renderPlans(){
     '🏆 Leaderboard · Ланцюжок · XP',
   ].map(F).join('');
   const premFeats=[
-    '🎬 4 групові живі ефіри щомісяця на YouTube',
+    '🎬 8 ефірів щотижня: 4 з блогером і 4 з викладачем',
     '🚀 Практика фраз і тем з бота — наживо, разом з іншими',
     '🔒 Закрита спільнота',
     '🏅 Сертифікат + Зала слави',
