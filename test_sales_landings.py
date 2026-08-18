@@ -16,7 +16,7 @@ class SalesLandingTests(unittest.TestCase):
     def test_landings_are_valid_and_have_one_purchase_route(self):
         expected = {
             "challenge_landing.html": "start=easy_english_challenge",
-            "plans_landing.html": "start=plans",
+            "plans_landing.html": "start=plans_basic_6m",
         }
         for filename, route in expected.items():
             source = (ROOT / filename).read_text(encoding="utf-8")
@@ -25,6 +25,13 @@ class SalesLandingTests(unittest.TestCase):
             self.assertIn(route, source)
             self.assertIn("SpeakChain", source)
             self.assertNotIn("Chainy без обмежень", source)
+            self.assertIn("attribution_token", source)
+
+    def test_plan_ctas_preserve_product_and_period(self):
+        source = (ROOT / "plans_landing.html").read_text(encoding="utf-8")
+        self.assertIn("start=plans_basic_6m", source)
+        self.assertIn("start=plans_premium_6m", source)
+        self.assertIn("plans_${plan}_${selectedTerm", source)
 
     def test_plans_copy_keeps_live_communication_in_basic(self):
         source = (ROOT / "plans_landing.html").read_text(encoding="utf-8")

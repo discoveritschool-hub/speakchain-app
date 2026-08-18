@@ -777,11 +777,16 @@ function captionAuthHeaders(targetUrl){
 
 // ── Register referral ──
 if (refCode && apiBase) {
-  const uid = TG?.initDataUnsafe?.user?.id;
-  if (uid) {
+  const authHeaders = captionAuthHeaders(`${apiBase}/register_ref`);
+  if (Object.keys(authHeaders).length) {
+    const attribution = {};
+    ['blogger_id','utm_source','utm_medium','utm_campaign','utm_content','utm_term',
+     'gclid','fbclid','ttclid','phrase_id'].forEach(key=>{
+      const value=params.get(key); if(value) attribution[key]=value;
+    });
     fetch(`${apiBase}/register_ref`, {
-      method: "POST", headers: {"Content-Type":"application/json"},
-      body: JSON.stringify({uid, ref_code: refCode})
+      method: "POST", headers: {"Content-Type":"application/json", ...authHeaders},
+      body: JSON.stringify({ref_code: refCode, ref: refCode, video_id: videoId||'', ...attribution})
     }).catch(()=>{});
   }
 }
