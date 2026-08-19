@@ -65,6 +65,16 @@ class MassLivePersonalLearningSurfaceTests(unittest.TestCase):
         self.assertIn("Почати ефір", host)
         self.assertIn("Завершити ефір?", host)
 
+    def test_all_live_screens_migrate_legacy_links_to_the_canonical_api(self):
+        canonical = "https://speakchain-bot-production.up.railway.app"
+        legacy = "https://robust-grace-production-dee4.up.railway.app"
+        for filename in ("live_activity.html", "live_host.html", "live_present.html"):
+            source = (ROOT / filename).read_text(encoding="utf-8")
+            self.assertIn(f"canonicalLiveApi='{canonical}'", source)
+            self.assertIn(f"legacyLiveApi='{legacy}'", source)
+            self.assertIn("history.replaceState", source)
+            self.assertIn("livePageUrl.searchParams.set('api',canonicalLiveApi)", source)
+
     def test_admin_has_mass_live_route_and_stage_analytics(self):
         source = (ROOT / "admin_analytics.html").read_text(encoding="utf-8")
         self.assertIn("Mass Live, Personal Learning", source)

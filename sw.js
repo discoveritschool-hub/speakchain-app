@@ -1,5 +1,5 @@
-// v44 publishes resilient, responsive live lesson screens and host lifecycle controls.
-const CACHE = 'speakchain-shell-v44';
+// v45 consolidates live lessons on the canonical production API.
+const CACHE = 'speakchain-shell-v45';
 const SHELL = [
   './index_v2.html', './telegram_auth_callback.html', './offline.html', './player.html', './vocab.html', './speaking_buddy.html',
   './progress.html', './tokens.css', './pwa.js', './api_client.js', './account_linking.js', './notification_center.js', './chainy_memory.js', './chainy_interest.js', './player_seek.js', './manifest.webmanifest',
