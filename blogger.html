@@ -1036,6 +1036,17 @@ function toast(msg) {
 /* ── Уніфікована відправка дії в бот (HTTP, sendData як фолбек) ── */
 let lastMaActionError = '';
 let lastMaActionData = null;
+function maErrorMessage(data, status) {
+  const code = String(data?.error || '');
+  const known = {
+    internal: 'Внутрішня помилка сервера. Спробуйте ще раз за хвилину.',
+    live_session_create_failed: 'Не вдалося створити ефір. Перевірте шаблон уроку та повторіть.',
+    blogger_access_required: 'Увійдіть Telegram-акаунтом зареєстрованого блогера.',
+    activity_template_unavailable: 'Шаблон уроку ще публікується. Оновіть сторінку за хвилину.'
+  };
+  return String(data?.message || data?.msg || known[code] || code ||
+    (status === 401 ? 'Увійдіть через Telegram ще раз.' : 'Запит не виконано.'));
+}
 async function maAction(action, extra) {
   lastMaActionError = '';
   lastMaActionData = null;
@@ -1070,10 +1081,7 @@ async function maAction(action, extra) {
     httpReached = true;
     lastMaActionData = await res.json().catch(() => ({}));
     ok = res.ok && lastMaActionData?.ok !== false;
-    if (!ok) lastMaActionError = String(
-      lastMaActionData?.message || lastMaActionData?.msg || lastMaActionData?.error ||
-      (res.status === 401 ? 'Увійдіть через Telegram ще раз.' : 'Запит не виконано.')
-    );
+    if (!ok) lastMaActionError = maErrorMessage(lastMaActionData, res.status);
   } catch (e) {
     ok = false;
     lastMaActionError = 'Немає зв’язку із сервером. Спробуйте ще раз.';

@@ -92,6 +92,9 @@ class MassLivePersonalLearningSurfaceTests(unittest.TestCase):
         self.assertIn("renderLiveSessions();", source)
         self.assertIn("duration_minutes: 60", source)
         self.assertIn("У режимі перегляду створення вимкнене", source)
+        self.assertIn("function maErrorMessage", source)
+        self.assertIn("Внутрішня помилка сервера", source)
+        self.assertIn("activity_template_unavailable", source)
 
 
 if __name__ == "__main__":
