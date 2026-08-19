@@ -1322,6 +1322,7 @@ def test_synchronized_live_lesson_screens():
     section("Відкритий урок — синхронний учень, ведучий і прогрес")
     learner = (ROOT / "live_activity.html").read_text(encoding="utf-8")
     host = (ROOT / "live_host.html").read_text(encoding="utf-8")
+    present = (ROOT / "live_present.html").read_text(encoding="utf-8")
     blogger = (ROOT / "blogger.html").read_text(encoding="utf-8")
     learner_markers = (
         "/vocab_data", "/check", "session.control?.current_step_id",
@@ -1329,15 +1330,20 @@ def test_synchronized_live_lesson_screens():
     )
     host_markers = (
         "host_token", "/host/step", "step_stats", "особиста фраза учня",
-        "Показати відповідь", "Відповіді наживо",
+        "Показати відповідь", "Відповіді наживо", "live_present.html",
+    )
+    present_markers = (
+        "host_token", "step_stats", "host_visible!==false", "__plan__",
+        "__routes__", "__questions__", "Лише агрегована статистика",
     )
     blogger_markers = (
-        "grammar-live-week-1", "host_url", "openHostScreen",
-        "Відкрити екран ведучого для YouTube", "працюють без AI-викликів",
+        "grammar-live-week-1", "host_url", "present_url", "openHostScreen",
+        "Відкрити пульт блогера", "Відкрити чистий екран YouTube", "працюють без AI-викликів",
         "платні транскрипція і TURN вимкнені",
     )
     missing = [f"learner:{m}" for m in learner_markers if m not in learner]
     missing += [f"host:{m}" for m in host_markers if m not in host]
+    missing += [f"present:{m}" for m in present_markers if m not in present]
     missing += [f"blogger:{m}" for m in blogger_markers if m not in blogger]
     if missing:
         fail("live lesson screens incomplete: " + ", ".join(missing))
