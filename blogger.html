@@ -1044,8 +1044,10 @@ function maErrorMessage(data, status) {
     blogger_access_required: 'Увійдіть Telegram-акаунтом зареєстрованого блогера.',
     activity_template_unavailable: 'Шаблон уроку ще публікується. Оновіть сторінку за хвилину.'
   };
-  return String(data?.message || data?.msg || known[code] || code ||
+  const message = String(data?.message || data?.msg || known[code] || code ||
     (status === 401 ? 'Увійдіть через Telegram ще раз.' : 'Запит не виконано.'));
+  const requestId = String(data?.request_id || '').trim();
+  return requestId ? `${message} Код: ${requestId}` : message;
 }
 async function maAction(action, extra) {
   lastMaActionError = '';
