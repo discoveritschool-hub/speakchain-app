@@ -3527,18 +3527,29 @@ function renderOverview() {
   const totals = live.reduce((a,s) => ({
     participants:a.participants+Number(s.registered||0),
     opened:a.opened+Number(s.opened??s.joined??0), started:a.started+Number(s.started||0),
-    completed:a.completed+Number(s.completed||0), errors:a.errors+Number(s.errors||0)
-  }), {participants:0,opened:0,started:0,completed:0,errors:0});
+    completed:a.completed+Number(s.completed||0), errors:a.errors+Number(s.errors||0),
+    prepared:a.prepared+Number(s.personal_learning?.preparation_completed||0),
+    grammar:a.grammar+Number(s.personal_learning?.grammar_completed||0),
+    phrases:a.phrases+Number(s.personal_learning?.phrases_completed||0),
+    speaking:a.speaking+Number(s.personal_learning?.speaking_completed||0),
+    video:a.video+Number(s.personal_learning?.video_completed||0),
+    clicks:a.clicks+Number(s.personal_learning?.personalized_clicks||0),
+    correct:a.correct+Number(s.personal_learning?.personalized_correct||0),
+    routes:Object.entries(s.personal_learning?.route_distribution||{}).reduce((r,[k,v])=>(r[k]=(r[k]||0)+Number(v||0),r),a.routes)
+  }), {participants:0,opened:0,started:0,completed:0,errors:0,prepared:0,grammar:0,phrases:0,speaking:0,video:0,clicks:0,correct:0,routes:{}});
+  const routeLabel = s => ['A1','A2','B1','B2','C1_C2'].map(k=>`${k==='C1_C2'?'C1/C2':k}: ${Number(s.personal_learning?.route_distribution?.[k]||0)}`).join(' · ');
   const liveHtml = live.length ? live.slice(0,50).map(s => `<tr>
-    <td><b>${esc(s.title)}</b><br><span class="muted">@${esc(s.owner_blogger_name||s.owner_blogger_id)}</span></td>
+    <td><b>${esc(s.title)}</b><br><span class="muted">@${esc(s.owner_blogger_name||s.owner_blogger_id)}</span><br><span class="muted">${routeLabel(s)}</span></td>
     <td>${new Date(s.scheduled_at).toLocaleString('uk-UA')}</td><td>${esc(s.status)}</td>
     <td>${fmt(s.registered||0)}</td><td>${fmt(s.opened??s.joined??0)}</td><td>${fmt(s.started||0)}</td><td>${fmt(s.completed||0)}</td>
-    <td>${fmt(s.errors||0)}</td><td><div style="display:flex;gap:5px;flex-wrap:wrap">
+    <td>${fmt(s.personal_learning?.preparation_completed||0)}</td><td>${fmt(s.personal_learning?.grammar_completed||0)}</td>
+    <td>${fmt(s.personal_learning?.phrases_completed||0)}</td><td>${fmt(s.personal_learning?.speaking_completed||0)}</td>
+    <td>${fmt(s.personal_learning?.video_completed||0)}</td><td>${fmt(s.errors||0)}</td><td><div style="display:flex;gap:5px;flex-wrap:wrap">
       <button class="mini-btn" onclick="adminLiveAction('admin_live_open','${esc(s.invite_code)}')">Відкрити</button>
       <button class="mini-btn" onclick="adminLiveAction('admin_live_close','${esc(s.invite_code)}')">Закрити</button>
       <button class="mini-btn" onclick="adminLiveAction('admin_live_duplicate','${esc(s.invite_code)}')">Дублювати</button>
     </div></td>
-  </tr>`).join('') : '<tr><td colspan="9">Live-сесій ще немає</td></tr>';
+  </tr>`).join('') : '<tr><td colspan="14">Live-сесій ще немає</td></tr>';
   return `
   <div class="cards">
     <div class="card accent">
@@ -3592,16 +3603,20 @@ function renderOverview() {
     <div class="chart-wrap"><canvas id="chart-active"></canvas></div>
   </div>
   <div class="chart-block">
-    <div class="chart-title">Live-сесії · старі групові та нові активності</div>
+    <div class="chart-title">Mass Live, Personal Learning · воронка функції</div>
     <div class="cards" style="margin:12px 0">
       <div class="card"><div class="card-label">Учасники</div><div class="card-value">${fmt(totals.participants)}</div></div>
-      <div class="card"><div class="card-label">Відкрили</div><div class="card-value">${fmt(totals.opened)}</div></div>
-      <div class="card"><div class="card-label">Почали</div><div class="card-value">${fmt(totals.started)}</div></div>
-      <div class="card"><div class="card-label">Завершили</div><div class="card-value">${fmt(totals.completed)}</div></div>
-      <div class="card"><div class="card-label">Помилки</div><div class="card-value">${fmt(totals.errors)}</div></div>
-      <div class="card"><div class="card-label">Поточне навантаження</div><div class="card-value">${fmt(Math.max(0,live.filter(s=>s.status==='live').reduce((n,s)=>n+Number(s.started||0)-Number(s.completed||0),0)))}</div></div>
+      <div class="card"><div class="card-label">Підготовка</div><div class="card-value">${fmt(totals.prepared)}</div><div class="card-delta delta-flat">${pct(totals.prepared,totals.participants)}</div></div>
+      <div class="card"><div class="card-label">Граматика</div><div class="card-value">${fmt(totals.grammar)}</div><div class="card-delta delta-flat">${pct(totals.grammar,totals.participants)}</div></div>
+      <div class="card"><div class="card-label">Особисті фрази</div><div class="card-value">${fmt(totals.phrases)}</div><div class="card-delta delta-flat">${pct(totals.phrases,totals.participants)}</div></div>
+      <div class="card"><div class="card-label">Розмова</div><div class="card-value">${fmt(totals.speaking)}</div><div class="card-delta delta-flat">${pct(totals.speaking,totals.participants)}</div></div>
+      <div class="card"><div class="card-label">Відео</div><div class="card-value">${fmt(totals.video)}</div><div class="card-delta delta-flat">${pct(totals.video,totals.participants)}</div></div>
     </div>
-    <div style="overflow:auto"><table><thead><tr><th>Сесія / блогер</th><th>Час</th><th>Статус</th><th>Учасники</th><th>Відкрили</th><th>Почали</th><th>Завершили</th><th>Помилки</th><th>Дії</th></tr></thead><tbody>${liveHtml}</tbody></table></div>
+    <div class="cards" style="margin:12px 0">
+      ${['A1','A2','B1','B2','C1_C2'].map(k=>`<div class="card"><div class="card-label">Маршрут ${k==='C1_C2'?'C1/C2':k}</div><div class="card-value">${fmt(totals.routes[k]||0)}</div></div>`).join('')}
+      <div class="card"><div class="card-label">Персональні кліки</div><div class="card-value">${fmt(totals.clicks)}</div><div class="card-delta delta-flat">${totals.clicks?Math.round(totals.correct/totals.clicks*100):0}% правильно</div></div>
+    </div>
+    <div style="overflow:auto"><table><thead><tr><th>Сесія / блогер / рівні</th><th>Час</th><th>Статус</th><th>Учасники</th><th>Відкрили</th><th>Почали</th><th>Завершили</th><th>Підгот.</th><th>Грам.</th><th>Фрази</th><th>Розмова</th><th>Відео</th><th>Помилки</th><th>Дії</th></tr></thead><tbody>${liveHtml}</tbody></table></div>
   </div>`;
 }
 
