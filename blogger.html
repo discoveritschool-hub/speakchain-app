@@ -2,7 +2,7 @@
 <html lang="uk">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>SpeakChain — Панель блогера</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script src="https://accounts.google.com/gsi/client" async></script>
@@ -504,7 +504,38 @@ textarea.form-input { resize:vertical; min-height:76px; line-height:1.5; }
 .workspace-switcher select{max-width:180px;min-width:128px;height:34px;padding:0 28px 0 10px;
   border:1px solid var(--line);border-radius:var(--r-pill);background:var(--bg-card2);color:var(--text);
   font-size:var(--fs-xs);font-weight:var(--fw-bold);cursor:pointer}
-@media(max-width:600px){.workspace-switcher{width:100%;margin-left:0}.workspace-switcher select{flex:1;min-width:0}}
+.window-collapse{
+  min-height:38px;padding:0 13px;border:1px solid var(--line);border-radius:var(--r-pill);
+  background:var(--bg-card2);color:var(--text);font:inherit;font-size:var(--fs-sm);
+  font-weight:var(--fw-bold);cursor:pointer;white-space:nowrap
+}
+.window-collapse:hover{border-color:rgba(124,110,247,.55);background:var(--bg-card3)}
+.window-collapse:focus-visible,.workspace-switcher select:focus-visible,.tab:focus-visible,.acc-head:focus-visible{
+  outline:3px solid rgba(124,110,247,.45);outline-offset:2px
+}
+@media(min-width:900px){
+  :root{--fs-xs:13px;--fs-sm:14px;--fs:16px;--fs-md:18px;--fs-lg:22px;--fs-xl:30px}
+  .header{padding:18px 22px 16px}
+  .avatar{width:50px;height:50px;font-size:18px}
+  .header-name{font-size:19px}
+  .header-sub{font-size:14px}
+  .badge{font-size:13px;padding:6px 13px}
+  .workspace-switcher select{height:40px;min-width:160px;font-size:14px}
+  .window-collapse{min-height:40px;font-size:14px}
+  .tab{padding:14px 6px 12px;font-size:14px}
+  .tab-emoji{font-size:20px;margin-bottom:4px}
+}
+@media(max-width:600px){
+  .header{padding:14px 12px 12px}
+  .header-top{flex-wrap:wrap}
+  .badge{margin-left:auto}
+  .workspace-switcher{width:100%;margin-left:0}
+  .workspace-switcher select{flex:1;min-width:0}
+  .window-collapse{min-width:42px;padding:0 11px}
+  .window-collapse-label{display:none}
+  .tab{min-height:58px;font-size:12px}
+  .tab-emoji{font-size:18px}
+}
 </style>
 <script src="pwa.js?v=20260805-auth1"></script>
 </head>
@@ -520,6 +551,9 @@ textarea.form-input { resize:vertical; min-height:76px; line-height:1.5; }
     </div>
     <div class="badge">📣 Блогер</div>
     <div class="workspace-switcher">
+      <button class="window-collapse" type="button" onclick="collapseMiniApp()" aria-label="Згорнути вікно">
+        ↙ <span class="window-collapse-label">Згорнути</span>
+      </button>
       <select id="workspace-mode-select" aria-label="Перемкнути режим" onchange="switchWorkspaceMode()">
         <option value="learner">🎓 Режим учня</option>
         <option value="blogger" selected>📣 Режим блогера</option>
@@ -965,15 +999,40 @@ textarea.form-input { resize:vertical; min-height:76px; line-height:1.5; }
    ══════════════════════════════════════════════════════════════ */
 
 const TG = (typeof Telegram !== 'undefined' && Telegram.WebApp) ? Telegram.WebApp : null;
-if (TG) { try { TG.ready(); TG.expand(); } catch(e){} }
-// 22.07: повний екран (Bot API 8.0+), безпечно для старих клієнтів
-if (TG) { try { if (typeof TG.requestFullscreen === 'function') TG.requestFullscreen(); } catch(e){} }
+if (TG) {
+  try {
+    TG.ready();
+    if (typeof TG.enableVerticalSwipes === 'function') TG.enableVerticalSwipes();
+  } catch(e){}
+}
 
 const BOT_API = 'https://speakchain-bot-production.up.railway.app';
 function openLearnerMode(){location.assign(new URL('index_v2.html',location.href).toString());}
 const WORKSPACE_MODE_KEY = 'sc_workspace_mode';
 const ADMIN_BLOGGER_KEY = 'sc_admin_selected_blogger';
 const ADMIN_BLOGGER_LIST_KEY = 'sc_admin_blogger_list';
+
+async function collapseMiniApp(){
+  let exitedFullscreen = false;
+  try {
+    if (document.fullscreenElement && typeof document.exitFullscreen === 'function') {
+      await document.exitFullscreen();
+      exitedFullscreen = true;
+    }
+  } catch(e) {}
+  if (TG) {
+    try {
+      if (typeof TG.enableVerticalSwipes === 'function') TG.enableVerticalSwipes();
+      if (typeof TG.exitFullscreen === 'function') {
+        TG.exitFullscreen();
+        exitedFullscreen = true;
+      }
+    } catch(e) {}
+  }
+  toast(exitedFullscreen
+    ? 'Повноекранний режим вимкнено'
+    : 'Вікно можна згорнути жестом вниз або кнопкою Telegram');
+}
 
 const params  = new URLSearchParams(window.location.search);
 const dataRaw = params.get('d');
