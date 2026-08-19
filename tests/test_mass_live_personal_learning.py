@@ -96,13 +96,16 @@ class MassLivePersonalLearningSurfaceTests(unittest.TestCase):
         self.assertIn("Внутрішня помилка сервера", source)
         self.assertIn("activity_template_unavailable", source)
 
-    def test_blogger_panel_is_readable_and_can_leave_fullscreen(self):
+    def test_blogger_panel_is_readable_and_can_toggle_fullscreen(self):
         source = (ROOT / "blogger.html").read_text(encoding="utf-8")
-        self.assertNotIn("TG.requestFullscreen()", source)
         self.assertNotIn("TG.expand()", source)
         self.assertIn("TG.enableVerticalSwipes()", source)
-        self.assertIn("function collapseMiniApp()", source)
+        self.assertIn("function toggleMiniAppSize()", source)
+        self.assertIn("TG.requestFullscreen()", source)
         self.assertIn("TG.exitFullscreen()", source)
+        self.assertIn("document.documentElement.requestFullscreen", source)
+        self.assertIn("document.exitFullscreen()", source)
+        self.assertIn("fullscreenChanged", source)
         self.assertIn('class="window-collapse"', source)
         self.assertIn("@media(min-width:900px)", source)
         self.assertIn("--fs-xs:13px", source)

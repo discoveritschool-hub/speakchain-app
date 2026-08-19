@@ -551,8 +551,8 @@ textarea.form-input { resize:vertical; min-height:76px; line-height:1.5; }
     </div>
     <div class="badge">📣 Блогер</div>
     <div class="workspace-switcher">
-      <button class="window-collapse" type="button" onclick="collapseMiniApp()" aria-label="Згорнути вікно">
-        ↙ <span class="window-collapse-label">Згорнути</span>
+      <button class="window-collapse" id="window-size-toggle" type="button" onclick="toggleMiniAppSize()" aria-label="Відкрити на весь екран">
+        <span id="window-size-icon">⛶</span> <span class="window-collapse-label" id="window-size-label">На весь екран</span>
       </button>
       <select id="workspace-mode-select" aria-label="Перемкнути режим" onchange="switchWorkspaceMode()">
         <option value="learner">🎓 Режим учня</option>
@@ -1012,27 +1012,49 @@ const WORKSPACE_MODE_KEY = 'sc_workspace_mode';
 const ADMIN_BLOGGER_KEY = 'sc_admin_selected_blogger';
 const ADMIN_BLOGGER_LIST_KEY = 'sc_admin_blogger_list';
 
-async function collapseMiniApp(){
-  let exitedFullscreen = false;
-  try {
-    if (document.fullscreenElement && typeof document.exitFullscreen === 'function') {
-      await document.exitFullscreen();
-      exitedFullscreen = true;
-    }
-  } catch(e) {}
-  if (TG) {
-    try {
-      if (typeof TG.enableVerticalSwipes === 'function') TG.enableVerticalSwipes();
-      if (typeof TG.exitFullscreen === 'function') {
-        TG.exitFullscreen();
-        exitedFullscreen = true;
-      }
-    } catch(e) {}
-  }
-  toast(exitedFullscreen
-    ? 'Повноекранний режим вимкнено'
-    : 'Вікно можна згорнути жестом вниз або кнопкою Telegram');
+function miniAppIsFullscreen(){
+  return Boolean(document.fullscreenElement || (TG && TG.isFullscreen));
 }
+function syncWindowSizeButton(){
+  const expanded = miniAppIsFullscreen();
+  const button = document.getElementById('window-size-toggle');
+  const icon = document.getElementById('window-size-icon');
+  const label = document.getElementById('window-size-label');
+  if (button) button.setAttribute('aria-label', expanded ? 'Згорнути вікно' : 'Відкрити на весь екран');
+  if (icon) icon.textContent = expanded ? '↙' : '⛶';
+  if (label) label.textContent = expanded ? 'Згорнути' : 'На весь екран';
+}
+async function toggleMiniAppSize(){
+  const expanded = miniAppIsFullscreen();
+  if (expanded) {
+    try {
+      if (TG && typeof TG.enableVerticalSwipes === 'function') TG.enableVerticalSwipes();
+      if (TG && typeof TG.exitFullscreen === 'function') TG.exitFullscreen();
+      if (document.fullscreenElement && typeof document.exitFullscreen === 'function') {
+        await document.exitFullscreen();
+      }
+      toast('Вікно згорнуто');
+    } catch(e) { toast('Не вдалося згорнути вікно'); }
+  } else {
+    let requested = false;
+    try {
+      if (TG && typeof TG.requestFullscreen === 'function') {
+        TG.requestFullscreen();
+        requested = true;
+      } else if (document.documentElement.requestFullscreen) {
+        await document.documentElement.requestFullscreen();
+        requested = true;
+      }
+      toast(requested ? 'Повноекранний режим увімкнено' : 'Цей браузер не підтримує повноекранний режим');
+    } catch(e) { toast('Не вдалося відкрити на весь екран'); }
+  }
+  setTimeout(syncWindowSizeButton, 120);
+}
+document.addEventListener('fullscreenchange', syncWindowSizeButton);
+if (TG && typeof TG.onEvent === 'function') {
+  try { TG.onEvent('fullscreenChanged', syncWindowSizeButton); } catch(e) {}
+}
+syncWindowSizeButton();
 
 const params  = new URLSearchParams(window.location.search);
 const dataRaw = params.get('d');
