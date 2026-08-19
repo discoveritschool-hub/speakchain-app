@@ -1122,13 +1122,14 @@ function renderLiveSessions() {
     <b>${esc(s.title)}</b><br>${new Date(s.scheduled_at).toLocaleString('uk-UA')} · ${esc(s.status)}<br>
     Учасники: <b>${Number(s.registered||0)}</b> · Відкрили: <b>${Number(s.opened??s.joined??0)}</b> · Почали: <b>${Number(s.started||0)}</b><br>
     Завершили: <b>${Number(s.completed||0)}</b> · Помилки: <b>${Number(s.errors||0)}</b><br>
-    <button class="btn btn-full btn-purple" style="margin-top:8px" onclick="openHostScreen('${esc(s.host_url||'')}')">Відкрити екран ведучого для YouTube</button>
+    <button class="btn btn-full btn-purple" style="margin-top:8px" onclick="openHostScreen('${esc(s.host_url||'')}')">Відкрити пульт блогера</button>
+    <button class="btn btn-full btn-ghost" style="margin-top:8px" onclick="openHostScreen('${esc(s.present_url||'')}')">Відкрити чистий екран YouTube</button>
     <button class="btn btn-full btn-ghost" style="margin-top:8px" onclick="copyLiveLink('${esc(s.invite_url)}')">Скопіювати запрошення</button>
     <button class="btn btn-full" style="margin-top:8px" onclick="sendLiveInvite('${esc(s.invite_code)}')">Надіслати моїм учням</button>
   </div>`).join('') : '<div class="status-line">Ще немає запланованих сесій</div>';
 }
 async function copyLiveLink(url) { try { await navigator.clipboard.writeText(url); toast('Посилання скопійовано'); } catch(e) { prompt('Скопіюйте посилання', url); } }
-function openHostScreen(url) { if (!url) { toast('Оновіть панель, щоб отримати екран ведучого'); return; } window.open(url, '_blank', 'noopener'); }
+function openHostScreen(url) { if (!url) { toast('Оновіть панель, щоб отримати потрібний екран'); return; } window.open(url, '_blank', 'noopener'); }
 async function sendLiveInvite(invite_code) {
   const ok = await maAction('blogger_live_notify', {invite_code});
   toast(ok ? 'Запрошення поставлено в чергу для ваших учнів' : 'Не вдалося надіслати запрошення');

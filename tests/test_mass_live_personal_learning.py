@@ -28,6 +28,21 @@ class MassLivePersonalLearningSurfaceTests(unittest.TestCase):
         self.assertIn("personalized_accuracy", source)
         self.assertIn("особиста лексика учнів приховані", source)
 
+    def test_private_console_controls_a_separate_clean_youtube_screen(self):
+        host = (ROOT / "live_host.html").read_text(encoding="utf-8")
+        present = (ROOT / "live_present.html").read_text(encoding="utf-8")
+        blogger = (ROOT / "blogger.html").read_text(encoding="utf-8")
+        for state in ("__plan__", "__routes__", "__questions__"):
+            self.assertIn(state, host)
+            self.assertIn(state, present)
+        self.assertIn("live_present.html", host)
+        self.assertIn("host_visible!==false", present)
+        self.assertNotIn('id="next"', present)
+        self.assertNotIn('id="prev"', present)
+        self.assertIn("present_url", blogger)
+        self.assertIn("Відкрити пульт блогера", blogger)
+        self.assertIn("Відкрити чистий екран YouTube", blogger)
+
     def test_admin_has_mass_live_route_and_stage_analytics(self):
         source = (ROOT / "admin_analytics.html").read_text(encoding="utf-8")
         self.assertIn("Mass Live, Personal Learning", source)

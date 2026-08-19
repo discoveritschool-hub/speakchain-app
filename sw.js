@@ -1,5 +1,5 @@
-// v42 publishes Mass Live, Personal Learning routes and admin funnel analytics.
-const CACHE = 'speakchain-shell-v42';
+// v43 publishes the split blogger console and clean YouTube presentation screen.
+const CACHE = 'speakchain-shell-v43';
 const SHELL = [
   './index_v2.html', './telegram_auth_callback.html', './offline.html', './player.html', './vocab.html', './speaking_buddy.html',
   './progress.html', './tokens.css', './pwa.js', './api_client.js', './account_linking.js', './notification_center.js', './chainy_memory.js', './chainy_interest.js', './player_seek.js', './manifest.webmanifest',
