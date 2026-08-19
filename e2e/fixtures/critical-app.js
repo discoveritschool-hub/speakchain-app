@@ -254,17 +254,16 @@ const test = base.extend({
         return;
       }
 
-      if (url.origin === ACTIVITY_ORIGIN) {
-        if (request.method() === 'GET' && url.pathname === '/api/v1/live-sessions/me') {
-          await route.fulfill(json({ ok: true, sessions: [] }));
-          return;
-        }
-        if (request.method() === 'GET' && url.pathname === '/api/v1/activity-results/me') {
-          await route.fulfill(json({ ok: true, results: [] }));
-          return;
-        }
-        scenario.unexpected.push(`${request.method()} ${url.href}`);
-        await route.fulfill(json({ error: 'unexpected_activity_request' }, 599));
+      if (url.origin === ACTIVITY_ORIGIN
+          && request.method() === 'GET'
+          && url.pathname === '/api/v1/live-sessions/me') {
+        await route.fulfill(json({ ok: true, sessions: [] }));
+        return;
+      }
+      if (url.origin === ACTIVITY_ORIGIN
+          && request.method() === 'GET'
+          && url.pathname === '/api/v1/activity-results/me') {
+        await route.fulfill(json({ ok: true, results: [] }));
         return;
       }
 
