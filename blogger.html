@@ -1219,6 +1219,19 @@ function renderLiveSessions() {
     <button class="btn btn-full" style="margin-top:8px" onclick="sendLiveInvite('${esc(s.invite_code)}')">Надіслати моїм учням</button>
   </div>`).join('') : '<div class="status-line">Ще немає запланованих сесій</div>';
 }
+async function loadLiveTemplates() {
+  const select = document.getElementById('live-activity');
+  if (!select) return;
+  const selected = select.value;
+  const ok = await maAction('blogger_live_templates');
+  const templates = ok && Array.isArray(lastMaActionData?.templates)
+    ? lastMaActionData.templates : [];
+  if (!templates.length) return;
+  select.innerHTML = templates.map(item =>
+    `<option value="${esc(item.slug)}">${esc(item.title)} · v${Number(item.version || 1)}</option>`
+  ).join('');
+  if (templates.some(item => item.slug === selected)) select.value = selected;
+}
 async function copyLiveLink(url) { try { await navigator.clipboard.writeText(url); toast('Посилання скопійовано'); } catch(e) { prompt('Скопіюйте посилання', url); } }
 function openHostScreen(url) { if (!url) { toast('Оновіть панель, щоб отримати потрібний екран'); return; } window.open(url, '_blank', 'noopener'); }
 async function sendLiveInvite(invite_code) {
@@ -1956,6 +1969,7 @@ async function initializeBloggerPanel() {
   }
   initializeWorkspaceSwitcher();
   fill();
+  await loadLiveTemplates();
 }
 
 initializeBloggerPanel();

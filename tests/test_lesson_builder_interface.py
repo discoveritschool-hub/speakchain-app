@@ -22,6 +22,11 @@ class LessonBuilderInterfaceTests(unittest.TestCase):
         html = (ROOT / "admin_analytics.html").read_text(encoding="utf-8")
         self.assertIn("lesson_builder.html", html)
 
+    def test_blogger_selector_loads_every_published_lesson(self):
+        html = (ROOT / "blogger.html").read_text(encoding="utf-8")
+        self.assertIn("blogger_live_templates", html)
+        self.assertIn("await loadLiveTemplates()", html)
+
 
 if __name__ == "__main__":
     unittest.main()
