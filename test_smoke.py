@@ -1327,14 +1327,17 @@ def test_synchronized_live_lesson_screens():
     learner_markers = (
         "/vocab_data", "/check", "session.control?.current_step_id",
         "live_lesson_done", "personal_lexicon", "Результат у прогресі",
+        "visibilitychange", "Відновлюємо зв’язок",
     )
     host_markers = (
         "host_token", "/host/step", "step_stats", "особиста фраза учня",
         "Показати відповідь", "Відповіді наживо", "live_present.html",
+        "/host/status", "Почати ефір", "Завершити ефір",
     )
     present_markers = (
         "host_token", "step_stats", "host_visible!==false", "__plan__",
         "__routes__", "__questions__", "Лише агрегована статистика",
+        "@SpeakChainBot", "visibilitychange", "main{grid-template-columns:1fr",
     )
     blogger_markers = (
         "grammar-live-week-1", "host_url", "present_url", "openHostScreen",

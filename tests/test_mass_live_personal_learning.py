@@ -43,6 +43,28 @@ class MassLivePersonalLearningSurfaceTests(unittest.TestCase):
         self.assertIn("Відкрити пульт блогера", blogger)
         self.assertIn("Відкрити чистий екран YouTube", blogger)
 
+    def test_live_surfaces_are_mobile_safe_and_reconnect_automatically(self):
+        learner = (ROOT / "live_activity.html").read_text(encoding="utf-8")
+        host = (ROOT / "live_host.html").read_text(encoding="utf-8")
+        present = (ROOT / "live_present.html").read_text(encoding="utf-8")
+        for source in (learner, host, present):
+            self.assertIn('name="referrer" content="no-referrer"', source)
+            self.assertIn("visibilitychange", source)
+            self.assertIn("Math.min(15000", source)
+            self.assertIn("navigator.onLine", source)
+        self.assertIn("repeat(2,minmax(0,1fr))", host)
+        self.assertIn("main{grid-template-columns:1fr", present)
+        self.assertIn("env(safe-area-inset-bottom)", learner)
+        self.assertIn("min-height:52px", learner)
+
+    def test_blogger_can_start_and_end_the_session_from_the_private_console(self):
+        host = (ROOT / "live_host.html").read_text(encoding="utf-8")
+        self.assertIn('id="start"', host)
+        self.assertIn('id="end"', host)
+        self.assertIn("/host/status", host)
+        self.assertIn("Почати ефір", host)
+        self.assertIn("Завершити ефір?", host)
+
     def test_admin_has_mass_live_route_and_stage_analytics(self):
         source = (ROOT / "admin_analytics.html").read_text(encoding="utf-8")
         self.assertIn("Mass Live, Personal Learning", source)
