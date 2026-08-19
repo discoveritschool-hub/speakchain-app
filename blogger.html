@@ -1034,9 +1034,13 @@ function toast(msg) {
 }
 
 /* ── Уніфікована відправка дії в бот (HTTP, sendData як фолбек) ── */
+let lastMaActionError = '';
+let lastMaActionData = null;
 async function maAction(action, extra) {
+  lastMaActionError = '';
+  lastMaActionData = null;
   if (D.admin_view) {
-    toast('Перегляд адміністратора: редагування вимкнене');
+    lastMaActionError = 'Це перегляд від імені адміна. Увійдіть акаунтом самого блогера.';
     return false;
   }
   if (!D.uid && window.SC_PWA?.ready) {
@@ -1050,16 +1054,31 @@ async function maAction(action, extra) {
     uid: TG?.initDataUnsafe?.user?.id || D.uid || 0,
     init_data: TG?.initData || '',
   }, extra || {});
-  let ok = false;
+  if (!body.init_data) {
+    try {
+      const token = localStorage.getItem('speakchain.pwa.access.v1') || '';
+      if (token) body.pwa_access_token = token;
+    } catch(e) {}
+  }
+  let ok = false, httpReached = false;
   try {
     const res = await fetch(BOT_API + '/miniapp_action', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify(body),
     });
-    ok = res.ok;
-  } catch (e) { ok = false; }
-  if (!ok && TG && typeof TG.sendData === 'function') {
+    httpReached = true;
+    lastMaActionData = await res.json().catch(() => ({}));
+    ok = res.ok && lastMaActionData?.ok !== false;
+    if (!ok) lastMaActionError = String(
+      lastMaActionData?.message || lastMaActionData?.msg || lastMaActionData?.error ||
+      (res.status === 401 ? 'Увійдіть через Telegram ще раз.' : 'Запит не виконано.')
+    );
+  } catch (e) {
+    ok = false;
+    lastMaActionError = 'Немає зв’язку із сервером. Спробуйте ще раз.';
+  }
+  if (!ok && !httpReached && TG && typeof TG.sendData === 'function') {
     try { TG.sendData(JSON.stringify(body)); } catch(e){}
   }
   if (TG && TG.HapticFeedback) {
@@ -1071,6 +1090,10 @@ async function maAction(action, extra) {
 function sendAction(cbData) { maAction(cbData); }
 
 async function createLiveSession() {
+  if (D.admin_view) {
+    toast('У режимі перегляду створення вимкнене. Увійдіть акаунтом блогера.');
+    return;
+  }
   const title = (document.getElementById('live-title').value || '').trim();
   const scheduled_at = document.getElementById('live-time').value;
   if (!title || !scheduled_at) { toast('Вкажіть назву, дату й час'); return; }
@@ -1078,9 +1101,18 @@ async function createLiveSession() {
     title, scheduled_at,
     stream_url: (document.getElementById('live-stream').value || '').trim(),
     activity_slug: (document.getElementById('live-activity').value || 'grammar-live-week-1').trim(),
-    duration_minutes: 90
+    duration_minutes: 60
   });
-  toast(ok ? 'Live-сесію створено — посилання надійшло в бот' : 'Не вдалося створити сесію');
+  if (!ok) {
+    toast(lastMaActionError || 'Не вдалося створити сесію');
+    return;
+  }
+  if (lastMaActionData?.session) {
+    D.live_sessions = [lastMaActionData.session, ...(D.live_sessions || [])
+      .filter(item => item.invite_code !== lastMaActionData.session.invite_code)];
+    renderLiveSessions();
+  }
+  toast('Live-сесію створено — запрошення вже на екрані й у боті');
 }
 
 function renderLiveSessions() {

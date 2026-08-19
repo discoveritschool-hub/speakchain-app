@@ -37,6 +37,15 @@ class MassLivePersonalLearningSurfaceTests(unittest.TestCase):
         self.assertIn("speaking_completed", source)
         self.assertIn("video_completed", source)
 
+    def test_browser_blogger_can_create_and_see_invitation_immediately(self):
+        source = (ROOT / "blogger.html").read_text(encoding="utf-8")
+        self.assertIn("speakchain.pwa.access.v1", source)
+        self.assertIn("lastMaActionError", source)
+        self.assertIn("lastMaActionData?.session", source)
+        self.assertIn("renderLiveSessions();", source)
+        self.assertIn("duration_minutes: 60", source)
+        self.assertIn("У режимі перегляду створення вимкнене", source)
+
 
 if __name__ == "__main__":
     unittest.main()
