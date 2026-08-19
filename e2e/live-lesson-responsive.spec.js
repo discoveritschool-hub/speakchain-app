@@ -3,9 +3,15 @@ const { test, expect } = require('@playwright/test');
 const activity = {
   slug: 'grammar-live-week-1', title: 'Week 1', version: 1,
   spec: {
+    visual_story: {cards: [{
+      id: 'morning_routine', image: 'assets/chainy/week-1/morning-routine.png',
+      alt: 'Chainy starts a morning routine', question: 'What does Chainy usually do first?',
+      phrase: 'I usually start my day with a simple routine.', pattern: 'I usually + base verb…'
+    }]},
     steps: [{
       id: 'shared_context', type: 'information', live_phase: 'context',
-      title: 'Спільний контекст', body: 'Починаємо з однієї ситуації для всіх.'
+      title: 'Спільний контекст', body: 'Починаємо з однієї ситуації для всіх.',
+      visual_card_id: 'morning_routine'
     }],
     run_of_show: [{start_minute: 0, duration_minutes: 60, title: 'Урок', interaction: 'Кліки й мовлення'}],
     speaking_mission: {prompt: 'Запиши коротку відповідь.'},
@@ -62,6 +68,7 @@ test('private host console is operable without horizontal overflow', async ({ pa
   await mockLiveApi(page);
   await page.goto('/live_host.html?session=DEMO&api=https%3A%2F%2Fapi.test&host_token=test');
   await expect(page.getByText('Спільний контекст', {exact: true})).toBeVisible();
+  await expect(page.locator('.visual-card img')).toBeVisible();
   await expect(page.locator('#start')).toBeVisible();
   await expect(page.locator('#present')).toBeVisible();
   await expectNoHorizontalOverflow(page);
@@ -72,7 +79,8 @@ test('private host console is operable without horizontal overflow', async ({ pa
 test('clean broadcast screen is responsive and contains no private controls', async ({ page }) => {
   await mockLiveApi(page);
   await page.goto('/live_present.html?session=DEMO&api=https%3A%2F%2Fapi.test&host_token=test');
-  await expect(page.getByText('Спільний контекст', {exact: true})).toBeVisible();
+  await expect(page.getByText('What does Chainy usually do first?', {exact: true})).toBeVisible();
+  await expect(page.locator('.visual-stage img')).toBeVisible();
   await expect(page.locator('#join')).toContainText('код DEMO');
   await expect(page.locator('#start')).toHaveCount(0);
   await expect(page.locator('#next')).toHaveCount(0);
@@ -83,6 +91,7 @@ test('learner screen stays touch-safe and synchronized', async ({ page }) => {
   await mockLiveApi(page);
   await page.goto('/live_activity.html?session=DEMO&api=https%3A%2F%2Fapi.test');
   await expect(page.getByText('Спільний контекст', {exact: true})).toBeVisible();
+  await expect(page.locator('.story-visual img')).toBeVisible();
   await expect(page.locator('#connection')).toContainText('Синхронізовано');
   await expect(page.locator('#askOpen')).toBeVisible();
   await expectNoHorizontalOverflow(page);

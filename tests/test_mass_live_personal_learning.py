@@ -43,6 +43,18 @@ class MassLivePersonalLearningSurfaceTests(unittest.TestCase):
         self.assertIn("Відкрити пульт блогера", blogger)
         self.assertIn("Відкрити чистий екран YouTube", blogger)
 
+    def test_one_visual_story_drives_host_broadcast_and_learner_screens(self):
+        host = (ROOT / "live_host.html").read_text(encoding="utf-8")
+        present = (ROOT / "live_present.html").read_text(encoding="utf-8")
+        learner = (ROOT / "live_activity.html").read_text(encoding="utf-8")
+        self.assertIn("function visualCard(st)", host)
+        self.assertIn("function visualCard(st)", present)
+        self.assertIn("function visualCard(st)", learner)
+        self.assertIn("sc_live_reveal_", host)
+        self.assertIn("sc_live_reveal_", present)
+        self.assertIn("story-visual", learner)
+        self.assertIn("visual-stage", present)
+
     def test_live_surfaces_are_mobile_safe_and_reconnect_automatically(self):
         learner = (ROOT / "live_activity.html").read_text(encoding="utf-8")
         host = (ROOT / "live_host.html").read_text(encoding="utf-8")
