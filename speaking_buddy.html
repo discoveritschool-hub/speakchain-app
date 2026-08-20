@@ -496,17 +496,15 @@
 </div>
 
 <!-- ══ MY SITUATION MODAL ══ -->
-<div class="ms-overlay" id="ms-overlay" onclick="if(event.target===this)closeMySituation()">
-  <div class="ms-modal">
-    <div class="ms-title">⭐ Своя ситуація</div>
-    <label class="ms-label">Хто твій співрозмовник?</label>
-    <input class="ms-input" id="ms-who" placeholder="напр: венчурний інвестор з Кремнієвої долини">
-    <label class="ms-label">Яка ситуація?</label>
-    <input class="ms-input" id="ms-what" placeholder="напр: пітч мого стартапу, захист дисертації">
-    <label class="ms-label">Що хочеш відпрацювати?</label>
-    <input class="ms-input" id="ms-focus" placeholder="напр: складні питання про монетизацію і конкурентів">
-    <button class="ms-start" onclick="startMySituation()">Почати розмову →</button>
-    <button class="ms-cancel" onclick="closeMySituation()">Скасувати</button>
+<div class="ms-overlay" id="ms-overlay" onclick="if(event.target===this)closeMySituation()" aria-hidden="true">
+  <div class="ms-modal" role="dialog" aria-modal="true" aria-labelledby="ms-title" aria-describedby="ms-help">
+    <div class="ms-title" id="ms-title">⭐ Моя ситуація</div>
+    <p id="ms-help" class="ms-label">Коротко опиши, з ким і про що хочеш поговорити та що відпрацювати.</p>
+    <label class="ms-label" for="ms-situation">Моя ситуація</label>
+    <textarea class="ms-input" id="ms-situation" rows="5" maxlength="600" placeholder="Наприклад: співбесіда з рекрутером — хочу впевнено розповісти про досвід і поставити питання про роль."></textarea>
+    <div class="ms-label" id="ms-situation-count" aria-live="polite">0/600</div>
+    <button class="ms-start" type="button" onclick="startMySituation()">Почати розмову →</button>
+    <button class="ms-cancel" type="button" onclick="closeMySituation()">Скасувати</button>
   </div>
 </div>
 
@@ -1409,34 +1407,105 @@ async function startChainyChat() {
 }
 
 // ── Своя ситуація ──
+let mySituationReturnFocus = null;
 function openMySituation() {
-  document.getElementById('ms-overlay').classList.add('show');
+  const overlay = document.getElementById('ms-overlay');
+  const input = document.getElementById('ms-situation');
+  mySituationReturnFocus = document.activeElement;
+  overlay.classList.add('show');
+  overlay.setAttribute('aria-hidden', 'false');
+  input.value = loadMySituationDraft();
+  updateMySituationCount();
+  requestAnimationFrame(() => input.focus());
 }
 function closeMySituation() {
-  document.getElementById('ms-overlay').classList.remove('show');
+  const overlay = document.getElementById('ms-overlay');
+  overlay.classList.remove('show');
+  overlay.setAttribute('aria-hidden', 'true');
+  mySituationReturnFocus?.focus?.();
 }
-function startMySituation() {
-  stopRealtimeSession();
-  const who   = document.getElementById('ms-who').value.trim();
-  const what  = document.getElementById('ms-what').value.trim();
-  const focus = document.getElementById('ms-focus').value.trim();
-  if (!who && !what) {
-    alert('Опиши хоча б співрозмовника і ситуацію 🙂');
+const MY_SITUATION_DRAFT_KEY = 'speakchain.my-situation.v2';
+let mySituationLegacy = null;
+function conversationBriefFromInput(value) {
+  if (typeof value === 'string') return { version: 'conversation-brief.v2', situation: value.slice(0, 600) };
+  if (!value || typeof value !== 'object') return { version: 'conversation-brief.v2', situation: '' };
+  const legacyValue = value.legacy && typeof value.legacy === 'object'
+    ? value.legacy
+    : (['who', 'what', 'focus'].some(key => Object.hasOwn(value, key)) ? value : null);
+  const legacy = legacyValue ? {
+    who: String(legacyValue.who || '').trim().slice(0, 120),
+    what: String(legacyValue.what || '').trim().slice(0, 220),
+    focus: String(legacyValue.focus || '').trim().slice(0, 200),
+  } : null;
+  let situation = String(value.situation || '').trim().slice(0, 600);
+  if (!situation && legacy) {
+    situation = `Conversation partner: ${legacy.who || 'a relevant conversation partner'}\n`
+      + `Situation: ${legacy.what || 'a realistic everyday situation'}\n`
+      + `Practice goal: ${legacy.focus || 'natural conversation and useful vocabulary'}`;
+  }
+  return { version: 'conversation-brief.v2', situation: situation.slice(0, 600), ...(legacy ? { legacy } : {}) };
+}
+function loadMySituationDraft() {
+  try {
+    const raw = localStorage.getItem(MY_SITUATION_DRAFT_KEY) || '';
+    let stored = raw;
+    try { stored = raw ? JSON.parse(raw) : ''; } catch (_) {}
+    const brief = conversationBriefFromInput(stored);
+    mySituationLegacy = brief.legacy || null;
+    return brief.situation;
+  }
+  catch (_) { return ''; }
+}
+function saveMySituationDraft(value) {
+  try {
+    const brief = conversationBriefFromInput({ situation: value, legacy: mySituationLegacy });
+    localStorage.setItem(MY_SITUATION_DRAFT_KEY, JSON.stringify(brief));
+  }
+  catch (_) {}
+}
+function updateMySituationCount() {
+  const input = document.getElementById('ms-situation');
+  document.getElementById('ms-situation-count').textContent = `${input.value.length}/600`;
+}
+document.getElementById('ms-situation').addEventListener('input', event => {
+  saveMySituationDraft(event.target.value);
+  updateMySituationCount();
+});
+document.getElementById('ms-overlay').addEventListener('keydown', event => {
+  if (event.key === 'Escape') {
+    event.preventDefault();
+    closeMySituation();
     return;
   }
-  const whoTxt   = who   || 'a relevant conversation partner';
-  const whatTxt  = what  || 'a realistic everyday situation';
-  const focusTxt = focus || 'natural conversation and useful vocabulary';
+  if (event.key === 'Tab') {
+    const focusable = [...event.currentTarget.querySelectorAll('textarea,button:not(:disabled)')];
+    const first = focusable[0], last = focusable[focusable.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault(); last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault(); first.focus();
+    }
+  }
+});
+function startMySituation() {
+  stopRealtimeSession();
+  const situation = document.getElementById('ms-situation').value.trim().slice(0, 600);
+  if (!situation) {
+    alert('Коротко опиши свою ситуацію 🙂');
+    document.getElementById('ms-situation').focus();
+    return;
+  }
+  saveMySituationDraft(situation);
 
   currentScenario = {
     catId:    'chainy',
     idx:      0,
-    title:    who ? who.slice(0, 28) : 'Моя ситуація',
+    title:    'Моя ситуація',
     emoji:    '⭐',
-    desc:     whatTxt,
+    desc:     situation,
     video:    '',
     isChainy: false,
-    mySituation: { who: who, what: what, focus: focus },
+    mySituation: conversationBriefFromInput({ situation, legacy: mySituationLegacy }),
   };
   selectedRole = 'chainy';
   history = [];
@@ -1452,7 +1521,7 @@ function startMySituation() {
   updateCounter();
   showScreen('s-chat');
 
-  const greeting = `Alright — I'm now ${whoTxt}. Let's begin: ${whatTxt}. Go ahead and start the conversation whenever you're ready! 🎬`;
+  const greeting = `Great — let's practise this situation: ${situation}. Start whenever you're ready! 🎬`;
   addMessage('ai', greeting, []);
   history.push({ role: 'user',      content: '[START]' });
   history.push({ role: 'assistant', content: greeting });
