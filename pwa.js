@@ -78,6 +78,11 @@
       return page === 'blogger.html' && new URLSearchParams(location.search).has('d');
     } catch (_) { return false; }
   }
+  function isStandaloneDisplay() {
+    try {
+      return navigator.standalone === true || matchMedia('(display-mode: standalone)').matches;
+    } catch (_) { return false; }
+  }
   async function jsonPost(path, body, options) {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), Number(options?.timeout || 15000));
@@ -256,7 +261,15 @@
       else authStatus('Google тимчасово не завантажився. Спробуйте Telegram.', true);
       return;
     }
-    window.google.accounts.id.initialize({client_id: clientId, callback: googleLogin, auto_select: false});
+    window.google.accounts.id.initialize({
+      client_id: clientId,
+      callback: googleLogin,
+      auto_select: false,
+      // Keep account selection inside supported Chrome/Android PWA windows.
+      // Without FedCM the OS backgrounds the standalone app for a popup and
+      // some WebViews never deliver the credential callback after returning.
+      use_fedcm_for_button: true
+    });
     const availableWidth = Math.max(220, Math.min(360, Math.floor(host.getBoundingClientRect().width || 300)));
     window.google.accounts.id.renderButton(host, {theme: 'filled_black', size: 'large', shape: 'pill', width: availableWidth, text: 'continue_with'});
   }
@@ -272,12 +285,17 @@
     script.setAttribute('data-radius', '12');
     script.setAttribute('data-userpic', 'false');
     script.setAttribute('data-request-access', 'write');
-    // Redirect back to our own origin instead of relying on Telegram's
-    // cross-window callback. Some browsers close the OAuth popup but block
-    // the callback to its opener; the same-origin return can always persist
-    // the session in shared localStorage.
-    const authUrl = new URL('telegram_auth_callback.html', location.href);
-    script.setAttribute('data-auth-url', authUrl.href);
+    if (isStandaloneDisplay()) {
+      // A standalone PWA and the external browser may have separate storage
+      // (notably on iOS). Complete auth in the originating app instead of
+      // hoping that a callback tab can hand its localStorage session back.
+      script.setAttribute('data-onauth', 'SC_PWA.telegramLogin(user)');
+    } else {
+      // Regular browser tabs use a same-origin return page. It survives popup
+      // opener restrictions and shares the browser's session storage.
+      const authUrl = new URL('telegram_auth_callback.html', location.href);
+      script.setAttribute('data-auth-url', authUrl.href);
+    }
     host.replaceChildren(script);
   }
   async function showAuthGate() {
@@ -401,7 +419,7 @@
 
   window.SC_PWA = {
     ready: ensureSession(), install, logout, telegramLogin, googleLogin,
-    isStandalone: () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true,
+    isStandalone: isStandaloneDisplay,
     hasSession: accessValid,
     refresh: ensureSession,
     userId: () => Number(read(USER_KEY)) || 0,

@@ -490,6 +490,10 @@ def test_pwa_identity_handoff():
         ok("Google/Telegram-вхід відновлює стару вкладку й явно ловить незбережену сесію")
 
     telegram_return_markers = (
+        "function isStandaloneDisplay()",
+        "use_fedcm_for_button: true",
+        "if (isStandaloneDisplay())",
+        "script.setAttribute('data-onauth', 'SC_PWA.telegramLogin(user)')",
         "function telegramReturnUser()",
         "function sessionFromTelegramLoginReturn()",
         "script.setAttribute('data-auth-url', authUrl.href)",
@@ -499,16 +503,14 @@ def test_pwa_identity_handoff():
         "resumeStoredSession('telegram-return')",
         "history.replaceState({}, document.title",
     )
-    forbidden_telegram_markers = ("data-onauth", "SC_PWA.telegramLogin(user)")
     missing = [marker for marker in telegram_return_markers if marker not in pwa]
-    forbidden = [marker for marker in forbidden_telegram_markers if marker in pwa]
-    if missing or forbidden:
-        fail(f"Telegram popup не має надійного same-origin callback: missing={missing}, forbidden={forbidden}")
+    if missing:
+        fail(f"Provider login does not preserve standalone PWA completion and browser fallback: missing={missing}")
     else:
-        ok("Telegram popup повертає підписані дані на same-origin URL і відновлює головне вікно")
+        ok("Google uses FedCM and Telegram preserves standalone PWA completion with a browser callback fallback")
 
     telegram_callback = (ROOT / "telegram_auth_callback.html").read_text(encoding="utf-8")
-    versioned_pwa = 'pwa.js?v=20260809-account-linking'
+    versioned_pwa = 'pwa.js?v=20260812-standalone-auth'
     callback_markers = (versioned_pwa, 'window.SC_PWA.ready', "location.replace('index_v2.html')")
     missing = [marker for marker in callback_markers if marker not in telegram_callback]
     if missing:
@@ -822,7 +824,7 @@ def test_production_assets_and_browser_chainy_auth():
 
     buddy = (ROOT / "speaking_buddy.html").read_text(encoding="utf-8")
     shell = SHELL.read_text(encoding="utf-8") if SHELL.exists() else ""
-    if 'src="pwa.js"' not in buddy or "window.SC_PWA?.ready" not in buddy:
+    if not re.search(r'src="pwa\.js(?:\?[^"#]+)?"', buddy) or "window.SC_PWA?.ready" not in buddy:
         fail("standalone Chainy не підключає браузерну PWA-сесію")
     else:
         ok("standalone Chainy підключає браузерну PWA-сесію")
@@ -1008,7 +1010,7 @@ def test_blogger_panel_uses_shared_pwa_auth():
     section("Blogger panel — shared Google/PWA session")
     blogger = (ROOT / "blogger.html").read_text(encoding="utf-8")
     markers = (
-        'src="pwa.js?v=20260805-auth1"', 'window.SC_PWA?.ready',
+        'src="pwa.js?v=20260812-standalone-auth"', 'window.SC_PWA?.ready',
         "screen: 'blogger'", "pwa.js додає токен",
         "admin_view: adminView",
         "Авторитетна перевірка живе на", "initializeBloggerPanel()",

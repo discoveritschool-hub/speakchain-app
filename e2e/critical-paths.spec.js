@@ -6,6 +6,21 @@ const {
   test
 } = require('./fixtures/critical-app.js');
 
+test('standalone PWA keeps provider completion in the app window', async ({ appPage: page, context }) => {
+  await context.addInitScript(() => {
+    Object.defineProperty(navigator, 'standalone', { configurable: true, value: true });
+  });
+
+  await page.goto('/index_v2.html');
+
+  await expect(page.locator('#sc-auth-gate')).toBeVisible();
+  await expect.poll(() => page.evaluate(() => window.__googleIdentityInit?.use_fedcm_for_button))
+    .toBe(true);
+  const telegramWidget = page.locator('script[src*="telegram-widget.js"]');
+  await expect(telegramWidget).toHaveAttribute('data-onauth', 'SC_PWA.telegramLogin(user)');
+  await expect(telegramWidget).not.toHaveAttribute('data-auth-url', /.+/);
+});
+
 test('browser Telegram callback persists and resumes one PWA session', async ({ appPage: page, scenario }) => {
   await page.goto('/telegram_auth_callback.html?id=7001&first_name=Browser&auth_date=1786104000&hash=signed-e2e');
 
