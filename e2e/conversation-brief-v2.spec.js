@@ -3,9 +3,20 @@ const { expect, test } = require('@playwright/test');
 const KEY = 'speakchain.my-situation.v2';
 const legacy = { who: 'a recruiter', what: 'a product interview', focus: 'clear examples' };
 
-test('My Situation adapts legacy, persists edits and submits v2 accessibly', async ({ page }) => {
+function installConversationSession(context) {
+  return context.addInitScript(() => {
+    localStorage.setItem('speakchain.pwa.access.v1', 'access-stored');
+    localStorage.setItem('speakchain.pwa.refresh.v1', 'refresh-stored');
+    localStorage.setItem('speakchain.pwa.access.exp.v1', '2099-01-01T00:00:00.000Z');
+    localStorage.setItem('speakchain.pwa.user.v1', '7001');
+    localStorage.setItem('speakchain.pwa.provider.v1', 'google');
+  });
+}
+
+test('My Situation adapts legacy, persists edits and submits v2 accessibly', async ({ page, context }) => {
   const logs = [];
   page.on('console', message => logs.push(message.text()));
+  await installConversationSession(context);
   await page.goto('/speaking_buddy.html');
   await page.evaluate(({ key, legacy }) => localStorage.setItem(key, JSON.stringify(legacy)), { key: KEY, legacy });
   await page.reload();
@@ -38,7 +49,8 @@ test('My Situation adapts legacy, persists edits and submits v2 accessibly', asy
   expect(logs.join('\n')).not.toContain('a recruiter');
 });
 
-test('My Situation stays usable when draft storage is unavailable', async ({ page }) => {
+test('My Situation stays usable when draft storage is unavailable', async ({ page, context }) => {
+  await installConversationSession(context);
   await page.addInitScript(key => {
     const getItem = Storage.prototype.getItem;
     const setItem = Storage.prototype.setItem;
