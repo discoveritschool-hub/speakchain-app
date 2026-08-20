@@ -208,6 +208,7 @@ const test = base.extend({
       accountLinkIntentResponses: [],
       accountLinkCompleteResponses: [],
       sessionMode: 'success',
+      phraselabAccess: { ok: true, access: true, reason: 'student_plan', purchase_price_usd: 7 },
       pageErrors: [],
       consoleErrors: [],
       localFailures: [],
@@ -414,6 +415,10 @@ const test = base.extend({
           if (screen === 's-profile') Object.assign(payload, scenario.profileSettings);
           await route.fulfill(json({ ok: true, d: payload })).catch(() => {});
         }
+        return;
+      }
+      if (url.pathname === '/phraselab_access') {
+        await route.fulfill(json(scenario.phraselabAccess));
         return;
       }
       if (url.pathname === '/api/v1/notifications') {
