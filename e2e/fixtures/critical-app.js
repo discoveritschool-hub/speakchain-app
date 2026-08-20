@@ -131,7 +131,15 @@ function sdkStub(request, url) {
     })();`;
   }
   if (resource === 'accounts.google.com/gsi/client') {
-    return 'window.google = window.google || undefined;';
+    return `window.google = { accounts: { id: {
+      initialize(options) { window.__googleIdentityInit = options; },
+      renderButton(host) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.textContent = 'Continue with Google';
+        host.replaceChildren(button);
+      }
+    } } };`;
   }
   if (resource === 'discoveritschool-hub.github.io/speakchain-app/toast_rewards.js') return '';
   return null;
