@@ -1,7 +1,7 @@
-// v45 consolidates live lessons on the canonical production API.
-const CACHE = 'speakchain-shell-v45';
+// v46 publishes the complete 16-situation PhraseLab companion.
+const CACHE = 'speakchain-shell-v46';
 const SHELL = [
-  './index_v2.html', './telegram_auth_callback.html', './offline.html', './player.html', './vocab.html', './speaking_buddy.html',
+  './index_v2.html', './telegram_auth_callback.html', './offline.html', './player.html', './vocab.html', './speaking_buddy.html', './phraselab.html', './phraselab_content.json',
   './progress.html', './tokens.css', './pwa.js', './api_client.js', './account_linking.js', './notification_center.js', './chainy_memory.js', './chainy_interest.js', './player_seek.js', './manifest.webmanifest',
   './icon-192.png', './icon-512.png', './Chainy.png', './toast_rewards.js'
 ];

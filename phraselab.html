@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0d0d14">
+  <title>SpeakChain PhraseLab</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script>window.SC_BOT_API='https://speakchain-bot-production.up.railway.app';</script>
+  <script src="pwa.js?v=20260820-phraselab16"></script>
+  <style>
+    :root{--bg:#0d0d14;--card:#171720;--card2:#20202c;--line:#2d2d3d;--text:#f2f1fb;
+      --muted:#9695ad;--purple:#7c6ef7;--purple2:#a78bfa;--green:#5ad8a6;--red:#f76e6e}
+    *{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 85% -5%,#292052 0,transparent 34%),var(--bg);
+      color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;min-height:100dvh}
+    button,select{font:inherit}.app{width:min(760px,100%);margin:auto;padding:calc(14px + env(safe-area-inset-top)) 14px calc(30px + env(safe-area-inset-bottom))}
+    .top{display:flex;align-items:center;gap:12px;margin-bottom:14px}.back{width:42px;height:42px;border:1px solid var(--line);border-radius:13px;background:var(--card);color:#fff;font-size:25px}
+    .brand{flex:1}.brand b{font-size:17px}.brand small{display:block;color:var(--purple2);font-size:11px;font-weight:800;letter-spacing:.08em;margin-top:2px}
+    .hero{padding:20px;border:1px solid rgba(124,110,247,.35);border-radius:22px;background:linear-gradient(145deg,rgba(124,110,247,.2),rgba(23,23,32,.93));box-shadow:0 20px 60px rgba(0,0,0,.24)}
+    .eyebrow{font-size:10px;font-weight:900;letter-spacing:.14em;color:var(--purple2)}h1{font-size:clamp(23px,6vw,34px);line-height:1.08;margin:8px 0 9px}.goal{color:#c7c5d7;font-size:14px;line-height:1.5;margin:0}
+    .method{display:flex;gap:5px;overflow:auto;margin:16px -3px 0;padding:0 3px 3px}.method span{white-space:nowrap;font-size:10px;font-weight:800;background:rgba(255,255,255,.07);padding:7px 9px;border-radius:99px}
+    .progress{margin-top:17px}.progress-head{display:flex;justify-content:space-between;color:var(--muted);font-size:11px;margin-bottom:6px}.track{height:7px;border-radius:99px;background:#292938;overflow:hidden}.fill{height:100%;width:0;background:linear-gradient(90deg,var(--green),var(--purple));transition:width .3s}
+    .toolbar{display:grid;grid-template-columns:1fr auto;gap:8px;margin:13px 0}.topic-select,.all{min-height:44px;border:1px solid var(--line);border-radius:13px;background:var(--card);color:var(--text);padding:0 12px}.all{background:var(--purple);border-color:var(--purple);font-weight:800;padding:0 14px}
+    .privacy{display:flex;gap:9px;align-items:flex-start;padding:10px 12px;border-radius:13px;background:rgba(90,216,166,.09);color:#bfeeda;font-size:11px;line-height:1.4;margin-bottom:12px}
+    .phrases{display:grid;gap:10px}.phrase{border:1px solid var(--line);border-radius:18px;background:var(--card);padding:15px;transition:border-color .2s}.phrase.done{border-color:rgba(90,216,166,.48)}
+    .num{color:var(--purple2);font-size:10px;font-weight:900;letter-spacing:.1em}.en{font-size:18px;font-weight:850;line-height:1.3;margin:7px 0 4px}.en.hidden{filter:blur(7px);user-select:none}.uk{font-size:12px;line-height:1.4;color:var(--muted)}
+    .alternatives{margin-top:11px;padding:10px;border-left:3px solid var(--purple);border-radius:0 11px 11px 0;background:rgba(124,110,247,.08)}.alternatives b{display:block;color:var(--purple2);font-size:10px;letter-spacing:.06em;margin-bottom:6px}.alt-row{display:flex;align-items:center;gap:7px;margin-top:5px;font-size:12px;line-height:1.35}.alt-row button{flex:0 0 auto;width:31px;height:31px;border:1px solid rgba(124,110,247,.4);border-radius:9px;background:var(--card2);color:#fff}.alt-row span{color:#dedced}
+    .dialogue{margin:14px 0 18px;border:1px solid rgba(124,110,247,.38);border-radius:20px;background:linear-gradient(160deg,rgba(124,110,247,.15),rgba(32,32,44,.92));padding:15px}.dialogue-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}.dialogue-head h2{font-size:17px;margin:0}.dialogue-head button{border:0;border-radius:11px;background:var(--purple);color:#fff;font-weight:800;padding:10px 12px}.turn{display:grid;grid-template-columns:31px 1fr;gap:8px;align-items:start;padding:9px 0;border-top:1px solid rgba(255,255,255,.07)}.turn:first-of-type{border-top:0}.turn button{width:31px;height:31px;border:1px solid var(--line);border-radius:9px;background:var(--card2);color:#fff}.turn-copy b{display:block;color:#7db7ff;font-size:10px;letter-spacing:.05em;margin-bottom:2px}.turn.learner .turn-copy{border-left:3px solid var(--purple);padding-left:9px}.turn.learner .turn-copy b{color:var(--purple2)}.dialogue-note{font-size:11px;color:var(--muted);line-height:1.45;margin:10px 0 0}.section-kicker{font-size:11px;color:var(--purple2);font-weight:900;letter-spacing:.07em;margin:16px 0 8px}
+    .checks{display:flex;gap:5px;flex-wrap:wrap;margin-top:10px}.check{font-size:10px;color:var(--muted);background:var(--card2);padding:5px 7px;border-radius:99px}.check.on{color:#bff0dc;background:rgba(90,216,166,.12)}
+    .actions{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:11px}.actions button{min-height:40px;border:1px solid var(--line);border-radius:11px;background:var(--card2);color:var(--text);font-size:11px;font-weight:800;padding:6px}.actions button.primary{background:var(--purple);border-color:var(--purple)}.actions button.recording{background:var(--red);border-color:var(--red)}.actions button:disabled{opacity:.38}
+    .recording-note{display:none;color:#ffb6b6;font-size:11px;margin-top:8px}.recording-note.on{display:block}
+    .finish{width:100%;min-height:50px;border:0;border-radius:15px;background:linear-gradient(135deg,var(--green),#36b98a);color:#09241a;font-weight:900;margin:16px 0 7px}.journal{text-align:center;color:var(--muted);font-size:11px;min-height:18px}
+    .gate,.loading{display:grid;place-items:center;min-height:70dvh;text-align:center;padding:24px}.gate-card{max-width:420px;padding:26px;border:1px solid var(--line);border-radius:22px;background:var(--card)}.gate h1{font-size:25px}.gate p{color:var(--muted);line-height:1.55}.gate a{display:block;text-decoration:none;padding:13px;border-radius:13px;background:var(--purple);color:#fff;font-weight:850;margin-top:9px}.gate a.alt{background:var(--card2);border:1px solid var(--line)}
+    .spinner{width:34px;height:34px;border:3px solid var(--line);border-top-color:var(--purple);border-radius:50%;animation:spin .8s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
+    .toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,20px);opacity:0;background:#fff;color:#171720;border-radius:99px;padding:10px 15px;font-size:12px;font-weight:800;transition:.2s;pointer-events:none;z-index:30}.toast.on{opacity:1;transform:translate(-50%,0)}
+    @media(max-width:430px){.actions{grid-template-columns:repeat(2,1fr)}.toolbar{grid-template-columns:1fr}.all{width:100%}}
+  </style>
+</head>
+<body>
+  <main id="root" class="loading"><div><div class="spinner"></div><p>Відкриваємо PhraseLab…</p></div></main>
+  <div class="toast" id="toast" role="status"></div>
+  <script>
+  const API=window.SC_BOT_API;
+  const TG=window.Telegram?.WebApp;
+  if(TG){TG.ready();TG.expand();}
+  const params=new URLSearchParams(location.search);
+  const EXPECTED_TOPIC_IDS=Array.from({length:16},(_,i)=>String(i+1).padStart(2,'0'));
+  const TOPIC_ID_PATTERN=/^(0[1-9]|1[0-6])$/;
+  let topicId=TOPIC_ID_PATTERN.test(params.get('topic')||'')?params.get('topic'):'01';
+  let catalogue=null,activeRecorder=null,activeStream=null,activeIndex=-1,recordings=new Map();
+  const PROGRESS_KEY='speakchain.phraselab.progress.v1';
+  const readProgress=()=>{try{return JSON.parse(localStorage.getItem(PROGRESS_KEY)||'{}')}catch(_){return {}}};
+  const saveProgress=p=>{try{localStorage.setItem(PROGRESS_KEY,JSON.stringify(p))}catch(_){}};
+  const topicProgress=id=>{const p=readProgress();return p[id]||{phrases:{}}};
+  const mark=(index,key,value=true)=>{const p=readProgress(),t=p[topicId]||(p[topicId]={phrases:{}}),row=t.phrases[index]||(t.phrases[index]={});row[key]=value;saveProgress(p);paintProgress();};
+  function toast(text){const el=document.getElementById('toast');el.textContent=text;el.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>el.classList.remove('on'),1800)}
+  function speak(text,rate=.88){return new Promise(resolve=>{if(!window.speechSynthesis){toast('Озвучення не підтримується на цьому пристрої');return resolve()}
+    window.speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang='en-US';u.rate=rate;const voices=window.speechSynthesis.getVoices();u.voice=voices.find(v=>/^en-(GB|US)/.test(v.lang))||voices.find(v=>v.lang.startsWith('en'))||null;u.onend=resolve;u.onerror=resolve;window.speechSynthesis.speak(u);});}
+  async function listen(index){const row=current().phrases[index];await speak(row.en);mark(index,'listened');}
+  async function listenSlow(index){const row=current().phrases[index];await speak(row.en,.68);mark(index,'listened');toast('Повільна вимова')}
+  async function listenAlternative(index,alternativeIndex){const text=current().phrases[index].alternatives?.[alternativeIndex];if(text)await speak(text,.86)}
+  async function listenDialogue(){const text=(current().dialogue||[]).map(turn=>turn.text).join(' ');if(text)await speak(text,.9)}
+  async function listenDialogueTurn(index){const text=current().dialogue?.[index]?.text;if(text)await speak(text,.9)}
+  function renderDialogue(t){return '<section class="dialogue"><div class="dialogue-head"><h2>Повний діалог</h2><button onclick="listenDialogue()">🔊 Прослухати весь</button></div>'+(t.dialogue||[]).map((turn,i)=>'<div class="turn '+(turn.is_learner?'learner':'')+'"><button onclick="listenDialogueTurn('+i+')" aria-label="Прослухати репліку">🔊</button><div class="turn-copy"><b>'+(turn.is_learner?'ВАША РОЛЬ':turn.speaker.toUpperCase())+'</b><span>'+turn.text+'</span></div></div>').join('')+'<p class="dialogue-note">Спочатку прослухай увесь діалог. Потім програй роль You: слухай співрозмовника, став паузу й відповідай уголос.</p></section><div class="section-kicker">КЛЮЧОВІ ФРАЗИ ПІСЛЯ ДІАЛОГУ</div>'}
+  function repeated(index){const p=topicProgress(topicId),row=p.phrases?.[index]||{},next=Math.min(3,Number(row.repeats||0)+1);mark(index,'repeats',next);toast(next<3?`Повтор ${next}/3`:'Три повтори — готово ✓');renderChecks(index);}
+  async function toggleRecord(index){
+    if(activeRecorder){if(activeIndex===index)activeRecorder.stop();else toast('Спочатку заверши поточний запис');return;}
+    if(!navigator.mediaDevices?.getUserMedia||!window.MediaRecorder){toast('Запис голосу не підтримується');return;}
+    try{activeStream=await navigator.mediaDevices.getUserMedia({audio:true});const chunks=[];activeRecorder=new MediaRecorder(activeStream);activeIndex=index;
+      activeRecorder.ondataavailable=e=>{if(e.data.size)chunks.push(e.data)};activeRecorder.onstop=()=>{const old=recordings.get(index);if(old)URL.revokeObjectURL(old);const url=URL.createObjectURL(new Blob(chunks,{type:activeRecorder.mimeType||'audio/webm'}));recordings.set(index,url);activeStream?.getTracks().forEach(t=>t.stop());activeRecorder=null;activeStream=null;activeIndex=-1;mark(index,'recorded');renderPhraseState(index);toast('Запис готовий — тепер порівняй')};activeRecorder.start();renderPhraseState(index);
+    }catch(_){toast('Дозволь доступ до мікрофона в налаштуваннях')}
+  }
+  function playRecording(index){const url=recordings.get(index);if(!url)return toast('Спочатку запиши себе');new Audio(url).play();}
+  async function compare(index){const url=recordings.get(index);if(!url)return toast('Спочатку запиши себе');await listen(index);setTimeout(()=>new Audio(url).play(),300);mark(index,'compared');renderChecks(index);}
+  function memory(index){const el=document.getElementById('en-'+index);el.classList.toggle('hidden');if(el.classList.contains('hidden')){toast('Скажи фразу без тексту');mark(index,'memory');setTimeout(()=>el.classList.remove('hidden'),5500)}}
+  function current(){return catalogue.topics.find(t=>t.id===topicId)||catalogue.topics[0]}
+  function validateCatalogue(content){
+    const ids=Array.isArray(content?.topics)?content.topics.map(topic=>topic.id):[];
+    if(content?.topic_count!==EXPECTED_TOPIC_IDS.length||ids.join(',')!==EXPECTED_TOPIC_IDS.join(','))throw new Error('PhraseLab content mismatch');
+    return content;
+  }
+  function renderChecks(index){const p=topicProgress(topicId).phrases?.[index]||{};const host=document.getElementById('checks-'+index);if(!host)return;host.innerHTML=[['listened','🔊 аудіо'],['repeats','🔁 '+Math.min(3,p.repeats||0)+'/3'],['recorded','🎙 запис'],['compared','✓ порівняно'],['memory','⚡ без тексту']].map(([k,label])=>`<span class="check ${p[k]?'on':''}">${label}</span>`).join('');document.getElementById('phrase-'+index)?.classList.toggle('done',Boolean(p.compared&&p.repeats>=3));}
+  function renderPhraseState(index){const rec=document.getElementById('rec-'+index),note=document.getElementById('note-'+index),play=document.getElementById('play-'+index),cmp=document.getElementById('cmp-'+index);const running=activeRecorder&&activeIndex===index;rec.textContent=running?'■ Зупинити':'🎙 Запис';rec.classList.toggle('recording',running);note.classList.toggle('on',running);play.disabled=!recordings.has(index);cmp.disabled=!recordings.has(index);renderChecks(index);}
+  async function listenAll(){const btn=document.getElementById('listen-all');btn.disabled=true;for(let i=0;i<current().phrases.length;i++){await listen(i)}btn.disabled=false;toast('Усі фрази прослухано')}
+  function paintProgress(){const p=topicProgress(topicId),done=current().phrases.filter((_,i)=>{const x=p.phrases?.[i]||{};return x.repeats>=3&&x.compared}).length;document.getElementById('progress-copy').textContent=`${done} із ${current().phrases.length} фраз`;document.getElementById('progress-fill').style.width=(done/current().phrases.length*100)+'%';current().phrases.forEach((_,i)=>renderChecks(i));}
+  function finishTopic(){const p=readProgress(),t=p[topicId]||(p[topicId]={phrases:{}});t.completed=true;t.date=new Date().toISOString().slice(0,10);saveProgress(p);document.getElementById('journal').textContent=`✓ Виконано ${t.date.split('-').reverse().join('.')}`;toast('Ситуацію відмічено у щоденнику ✓')}
+  function changeTopic(value){if(!TOPIC_ID_PATTERN.test(value))return;topicId=value;history.replaceState({},'',`phraselab.html?topic=${value}`);recordings.forEach(URL.revokeObjectURL);recordings=new Map();renderApp()}
+  function renderApp(){const t=current(),p=topicProgress(topicId);document.getElementById('root').className='app';document.getElementById('root').innerHTML=`
+    <header class="top"><button class="back" onclick="history.length>1?history.back():location.assign('index_v2.html?s=s-listen')" aria-label="Назад">‹</button><div class="brand"><b>SpeakChain PhraseLab</b><small>LISTEN · REPEAT · RECORD · COMPARE · SPEAK</small></div></header>
+    <section class="hero"><div class="eyebrow">СИТУАЦІЯ ${Number(t.id)} З 12</div><h1>${t.title}</h1><p class="goal">Мета: ${t.goal}.</p><div class="method">${catalogue.method.map(x=>`<span>${x}</span>`).join('')}</div><div class="progress"><div class="progress-head"><span>Прогрес ситуації</span><b id="progress-copy"></b></div><div class="track"><div class="fill" id="progress-fill"></div></div></div></section>
+    <div class="toolbar"><select class="topic-select" onchange="changeTopic(this.value)" aria-label="Обрати ситуацію">${catalogue.topics.map(x=>`<option value="${x.id}" ${x.id===topicId?'selected':''}>${Number(x.id)}. ${x.title}</option>`).join('')}</select><button class="all" id="listen-all" onclick="listenAll()">🔊 Слухати всі</button></div>
+    <div class="privacy"><span>🔐</span><span><b>Ти почуєш повний діалог і саме ті фрази, що надруковані в книжечці.</b> Для кожної фрази є природний і повільний темп. Озвучення створює голос пристрою, а твій запис не завантажується на сервер.</span></div>
+    ${renderDialogue(t)}
+    <section class="phrases">${t.phrases.map((x,i)=>`<article class="phrase" id="phrase-${i}"><div class="num">ФРАЗА ${i+1}</div><div class="en" id="en-${i}">${x.en}</div><div class="uk">${x.uk}</div>${x.alternatives?.length?`<div class="alternatives"><b>СКАЖИ ІНАКШЕ</b>${x.alternatives.map((alt,j)=>`<div class="alt-row"><button onclick="listenAlternative(${i},${j})" aria-label="Послухати альтернативну фразу">🔊</button><span>${alt}</span></div>`).join('')}</div>`:''}<div class="checks" id="checks-${i}"></div><div class="actions"><button class="primary" onclick="listen(${i})">🔊 Природно</button><button onclick="listenSlow(${i})">🐢 Повільно</button><button onclick="repeated(${i})">🔁 Я повторив/ла</button><button id="rec-${i}" onclick="toggleRecord(${i})">🎙 Запис</button><button id="play-${i}" onclick="playRecording(${i})" disabled>▶ Мій голос</button><button id="cmp-${i}" onclick="compare(${i})" disabled>↔ Порівняти</button><button onclick="memory(${i})">⚡ Без тексту</button></div><div class="recording-note" id="note-${i}">● Запис іде… Скажи фразу й натисни «Зупинити».</div></article>`).join('')}</section>
+    <button class="finish" onclick="finishTopic()">Відмітити ситуацію виконаною ✓</button><div class="journal" id="journal">${p.completed&&p.date?'✓ Виконано '+p.date.split('-').reverse().join('.'):''}</div>`;
+    t.phrases.forEach((_,i)=>renderPhraseState(i));paintProgress();window.scrollTo(0,0)}
+  function gate(price){document.getElementById('root').className='gate';document.getElementById('root').innerHTML=`<div class="gate-card"><div style="font-size:46px">🎙</div><h1>PhraseLab чекає на тебе</h1><p>Для студентів SpeakChain тренажер безкоштовний. Також його можна отримати за проходження челенджу про страх говорити або придбати окремо${price?' за $'+price:''}.</p><a href="https://t.me/SpeakChainBot?start=phraselab_${topicId}">Отримати через челендж</a><a class="alt" href="https://t.me/SpeakChainBot?start=phraselab_${topicId}">Купити окремо</a></div>`}
+  async function boot(){try{const [content,session]=await Promise.all([fetch('phraselab_content.json?v=5').then(r=>r.json()),window.SC_PWA?.ready||Promise.resolve(null)]);catalogue=validateCatalogue(content);let uid=Number(TG?.initDataUnsafe?.user?.id||session?.userId||window.SC_PWA?.userId?.()||0);const response=await fetch(API+'/phraselab_access',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({uid,init_data:TG?.initData||''})});const access=await response.json();if(!response.ok||!access.ok)throw new Error(access.error||'auth');if(!access.access)return gate(access.purchase_price_usd);renderApp()}catch(error){document.getElementById('root').className='gate';document.getElementById('root').innerHTML='<div class="gate-card"><h1>Не вдалося відкрити PhraseLab</h1><p>'+String(error.message||'Перевір інтернет і спробуй ще раз.')+'</p><a href="https://t.me/SpeakChainBot?start=phraselab_'+topicId+'">Відкрити через Telegram</a></div>'}}
+  boot();
+  </script>
+</body>
+</html>

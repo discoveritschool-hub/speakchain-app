@@ -1,0 +1,1901 @@
+{
+  "version": 4,
+  "topic_count": 16,
+  "method": [
+    "Listen",
+    "Repeat",
+    "Record",
+    "Compare",
+    "Speak"
+  ],
+  "topics": [
+    {
+      "id": "01",
+      "title": "Small talk без ступору",
+      "goal": "почати, підтримати й природно завершити коротку розмову",
+      "dialogue": [
+        {
+          "speaker": "You",
+          "text": "Hi, is this your first time here?",
+          "is_learner": true
+        },
+        {
+          "speaker": "Alex",
+          "text": "Yes, it is. I came with a colleague.",
+          "is_learner": false
+        },
+        {
+          "speaker": "You",
+          "text": "Nice! What do you do?",
+          "is_learner": true
+        },
+        {
+          "speaker": "Alex",
+          "text": "I design mobile apps.",
+          "is_learner": false
+        },
+        {
+          "speaker": "You",
+          "text": "That sounds interesting. How did you get into that?",
+          "is_learner": true
+        },
+        {
+          "speaker": "Alex",
+          "text": "I started as a graphic designer.",
+          "is_learner": false
+        },
+        {
+          "speaker": "You",
+          "text": "Great talking to you. Shall we stay in touch?",
+          "is_learner": true
+        },
+        {
+          "speaker": "Alex",
+          "text": "Sure. Let me add you on LinkedIn.",
+          "is_learner": false
+        }
+      ],
+      "phrases": [
+        {
+          "en": "Hi, how's your day going?",
+          "uk": "Привіт, як проходить твій день?",
+          "alternatives": [
+            "Hi, how's your day?",
+            "Hi, how are you doing today?"
+          ]
+        },
+        {
+          "en": "Is this your first time here?",
+          "uk": "Ти тут уперше?",
+          "alternatives": []
+        },
+        {
+          "en": "How do you know the host?",
+          "uk": "Звідки ти знаєш організатора?",
+          "alternatives": []
+        },
+        {
+          "en": "What brings you here?",
+          "uk": "Що привело тебе сюди?",
+          "alternatives": []
+        },
+        {
+          "en": "What do you do?",
+          "uk": "Чим ти займаєшся?",
+          "alternatives": [
+            "What kind of work do you do?",
+            "What do you do for work?"
+          ]
+        },
+        {
+          "en": "What are you working on these days?",
+          "uk": "Над чим ти зараз працюєш?",
+          "alternatives": []
+        },
+        {
+          "en": "That sounds interesting.",
+          "uk": "Звучить цікаво.",
+          "alternatives": []
+        },
+        {
+          "en": "How did you get into that?",
+          "uk": "Як ти почав/почала цим займатися?",
+          "alternatives": []
+        },
+        {
+          "en": "Really? Tell me more.",
+          "uk": "Справді? Розкажи більше.",
+          "alternatives": []
+        },
+        {
+          "en": "I've had a similar experience.",
+          "uk": "У мене був схожий досвід.",
+          "alternatives": []
+        },
+        {
+          "en": "It was great talking to you.",
+          "uk": "Було приємно поспілкуватися.",
+          "alternatives": [
+            "It was nice talking to you.",
+            "I enjoyed our conversation."
+          ]
+        },
+        {
+          "en": "Shall we stay in touch?",
+          "uk": "Залишимося на зв'язку?",
+          "alternatives": []
+        }
+      ]
+    },
+    {
+      "id": "02",
+      "title": "Аеропорт і паспортний контроль",
+      "goal": "пройти реєстрацію, контроль і знайти потрібний вихід",
+      "dialogue": [
+        {
+          "speaker": "Agent",
+          "text": "Good morning. Where are you flying today?",
+          "is_learner": false
+        },
+        {
+          "speaker": "You",
+          "text": "To London. I'd like to check in for my flight.",
+          "is_learner": true
+        },
+        {
+          "speaker": "Agent",
+          "text": "Do you have any bags to check?",
+          "is_learner": false
+        },
+        {
+          "speaker": "You",
+          "text": "One suitcase. Is the flight on time?",
+          "is_learner": true
+        },
+        {
+          "speaker": "Agent",
+          "text": "Yes. Boarding starts at 10:20 at gate 14.",
+          "is_learner": false
+        },
+        {
+          "speaker": "You",
+          "text": "Thank you. Where is security control?",
+          "is_learner": true
+        },
+        {
+          "speaker": "Agent",
+          "text": "Straight ahead, then turn left.",
+          "is_learner": false
+        },
+        {
+          "speaker": "You",
+          "text": "Thanks for your help.",
+          "is_learner": true
+        }
+      ],
+      "phrases": [
+        {
+          "en": "I'd like to check in for my flight.",
+          "uk": "Я хочу зареєструватися на рейс.",
+          "alternatives": []
+        },
+        {
+          "en": "Can I see your passport, please?",
+          "uk": "Можна ваш паспорт?",
+          "alternatives": []
+        },
+        {
+          "en": "Do I need to check this bag?",
+          "uk": "Чи треба здавати цю сумку в багаж?",
+          "alternatives": []
+        },
+        {
+          "en": "Is the flight on time?",
+          "uk": "Рейс вчасно?",
+          "alternatives": []
+        },
+        {
+          "en": "Where is security control?",
+          "uk": "Де контроль безпеки?",
+          "alternatives": [
+            "Where is security?",
+            "How do I get to security?"
+          ]
+        },
+        {
+          "en": "Which gate does the flight leave from?",
+          "uk": "З якого виходу вилітає рейс?",
+          "alternatives": []
+        },
+        {
+          "en": "How long is the delay?",
+          "uk": "На скільки затримка?",
+          "alternatives": []
+        },
+        {
+          "en": "I have a connecting flight.",
+          "uk": "У мене пересадка.",
+          "alternatives": [
+            "I'm catching a connecting flight.",
+            "I have a connection."
+          ]
+        },
+        {
+          "en": "Where can I collect my luggage?",
+          "uk": "Де отримати багаж?",
+          "alternatives": []
+        },
+        {
+          "en": "My bag hasn't arrived.",
+          "uk": "Мій багаж не прибув.",
+          "alternatives": [
+            "My luggage is missing.",
+            "I can't find my suitcase."
+          ]
+        },
+        {
+          "en": "I'm here for tourism.",
+          "uk": "Я приїхав/приїхала як турист.",
+          "alternatives": []
+        },
+        {
+          "en": "I'll be staying for ten days.",
+          "uk": "Я залишуся на десять днів.",
+          "alternatives": []
+        }
+      ]
+    },
+    {
+      "id": "03",
+      "title": "Кафе й ресторан",
+      "goal": "замовити, уточнити склад, розв'язати проблему й оплатити",
+      "dialogue": [
+        {
+          "speaker": "Server",
+          "text": "Hi. Are you ready to order?",
+          "is_learner": false
+        },
+        {
+          "speaker": "You",
+          "text": "Almost. What do you recommend?",
+          "is_learner": true
+        },
+        {
+          "speaker": "Server",
+          "text": "The grilled salmon is very popular.",
+          "is_learner": false
+        },
+        {
+          "speaker": "You",
+          "text": "Great. Does it contain dairy?",
+          "is_learner": true
+        },
+        {
+          "speaker": "Server",
+          "text": "The sauce does, but we can serve it separately.",
+          "is_learner": false
+        },
+        {
+          "speaker": "You",
+          "text": "Perfect. I'll have that, please.",
+          "is_learner": true
+        },
+        {
+          "speaker": "Server",
+          "text": "Anything to drink?",
+          "is_learner": false
+        },
+        {
+          "speaker": "You",
+          "text": "Still water, please.",
+          "is_learner": true
+        }
+      ],
+      "phrases": [
+        {
+          "en": "A table for two, please.",
+          "uk": "Столик на двох, будь ласка.",
+          "alternatives": []
+        },
+        {
+          "en": "Could we see the menu?",
+          "uk": "Можна меню?",
+          "alternatives": []
+        },
+        {
+          "en": "What do you recommend?",
+          "uk": "Що ви рекомендуєте?",
+          "alternatives": []
+        },
+        {
+          "en": "I'd like the chicken, please.",
+          "uk": "Я хотів/хотіла б курку.",
+          "alternatives": [
+            "I'll have the chicken, please.",
+            "Can I get the chicken, please?"
+          ]
+        },
+        {
+          "en": "Can I have it without onions?",
+          "uk": "Можна без цибулі?",
+          "alternatives": []
+        },
+        {
+          "en": "Does this contain nuts?",
+          "uk": "Це містить горіхи?",
+          "alternatives": []
+        },
+        {
+          "en": "I'm allergic to dairy.",
+          "uk": "У мене алергія на молочні продукти.",
+          "alternatives": []
+        },
+        {
+          "en": "Could we have some water?",
+          "uk": "Можна води?",
+          "alternatives": []
+        },
+        {
+          "en": "This isn't what I ordered.",
+          "uk": "Це не те, що я замовляв/замовляла.",
+          "alternatives": [
+            "I ordered something else.",
+            "I ordered a different dish."
+          ]
+        },
+        {
+          "en": "Could you warm this up?",
+          "uk": "Можете це підігріти?",
+          "alternatives": []
+        },
+        {
+          "en": "Could we have the bill, please?",
+          "uk": "Рахунок, будь ласка.",
+          "alternatives": [
+            "Can we get the bill, please?",
+            "The check, please."
+          ]
+        },
+        {
+          "en": "Can we pay separately?",
+          "uk": "Можемо заплатити окремо?",
+          "alternatives": []
+        }
+      ]
+    },
+    {
+      "id": "04",
+      "title": "Готель",
+      "goal": "заселитися, уточнити умови й домогтися вирішення проблеми",
+      "dialogue": [
+        {
+          "speaker": "Reception",
+          "text": "Welcome. How can I help?",
+          "is_learner": false
+        },
+        {
+          "speaker": "You",
+          "text": "I have a reservation under Kovalenko.",
+          "is_learner": true
+        },
+        {
+          "speaker": "Reception",
+          "text": "Yes, a double room for three nights.",
+          "is_learner": false
+        },
+        {
+          "speaker": "You",
+          "text": "That's right. Is breakfast included?",
+          "is_learner": true
+        },
+        {
+          "speaker": "Reception",
+          "text": "Yes, from 7 to 10 downstairs.",
+          "is_learner": false
+        },
+        {
+          "speaker": "You",
+          "text": "Great. Could I have the Wi-Fi password?",
+          "is_learner": true
+        },
+        {
+          "speaker": "Reception",
+          "text": "It's on your key-card holder.",
+          "is_learner": false
+        },
+        {
+          "speaker": "You",
+          "text": "Thank you.",
+          "is_learner": true
+        }
+      ],
+      "phrases": [
+        {
+          "en": "I have a reservation under Kovalenko.",
+          "uk": "У мене бронювання на прізвище Коваленко.",
+          "alternatives": [
+            "The booking is under Kovalenko.",
+            "I booked a room under Kovalenko."
+          ]
+        },
+        {
+          "en": "Can I check in early?",
+          "uk": "Можна заселитися раніше?",
+          "alternatives": []
+        },
+        {
+          "en": "What time is check-out?",
+          "uk": "О котрій виселення?",
+          "alternatives": []
+        },
+        {
+          "en": "Is breakfast included?",
+          "uk": "Сніданок включено?",
+          "alternatives": []
+        },
+        {
+          "en": "Could I have the Wi-Fi password?",
+          "uk": "Можна пароль від Wi-Fi?",
+          "alternatives": []
+        },
+        {
+          "en": "Could you store my luggage?",
+          "uk": "Можете залишити мій багаж на зберігання?",
+          "alternatives": []
+        },
+        {
+          "en": "The air conditioning isn't working.",
+          "uk": "Кондиціонер не працює.",
+          "alternatives": []
+        },
+        {
+          "en": "There is no hot water.",
+          "uk": "Немає гарячої води.",
+          "alternatives": []
+        },
+        {
+          "en": "The room is too noisy.",
+          "uk": "У номері надто шумно.",
+          "alternatives": [
+            "It's very noisy in my room.",
+            "The noise in the room is a problem."
+          ]
+        },
+        {
+          "en": "Could I change rooms?",
+          "uk": "Можна змінити номер?",
+          "alternatives": [
+            "Could I move to another room?",
+            "Is another room available?"
+          ]
+        },
+        {
+          "en": "Could you call me a taxi?",
+          "uk": "Можете викликати таксі?",
+          "alternatives": []
+        },
+        {
+          "en": "I'd like to check out.",
+          "uk": "Я хочу виселитися.",
+          "alternatives": []
+        }
+      ]
+    },
+    {
+      "id": "05",
+      "title": "Співбесіда",
+      "goal": "чітко представити досвід, сильні сторони й поставити запитання",
+      "dialogue": [
+        {
+          "speaker": "Interviewer",
+          "text": "Tell me about yourself.",
+          "is_learner": false
+        },
+        {
+          "speaker": "You",
+          "text": "I'm a project coordinator with three years of experience in education.",
+          "is_learner": true
+        },
+        {
+          "speaker": "Interviewer",
+          "text": "What result are you most proud of?",
+          "is_learner": false
+        },
+        {
+          "speaker": "You",
+          "text": "I redesigned our onboarding and reduced support requests by 25%.",
+          "is_learner": true
+        },
+        {
+          "speaker": "Interviewer",
+          "text": "Why are you interested in this role?",
+          "is_learner": false
+        },
+        {
+          "speaker": "You",
+          "text": "It combines customer work with process improvement.",
+          "is_learner": true
+        },
+        {
+          "speaker": "Interviewer",
+          "text": "Any questions for us?",
+          "is_learner": false
+        },
+        {
+          "speaker": "You",
+          "text": "Yes. What would success look like in the first three months?",
+          "is_learner": true
+        }
+      ],
+      "phrases": [
+        {
+          "en": "Thank you for inviting me.",
+          "uk": "Дякую за запрошення.",
+          "alternatives": []
+        },
+        {
+          "en": "I've worked in this field for three years.",
+          "uk": "Я працюю в цій сфері три роки.",
+          "alternatives": [
+            "I have three years of experience in this field.",
+            "I've been in this field for three years."
+          ]
+        },
+        {
+          "en": "My main responsibility was...",
+          "uk": "Моїм головним обов'язком було...",
+          "alternatives": []
+        },
+        {
+          "en": "One result I'm proud of is...",
+          "uk": "Один результат, яким я пишаюся...",
+          "alternatives": [
+            "One achievement I'm proud of is...",
+            "A result I'm particularly proud of is..."
+          ]
+        },
+        {
+          "en": "My strength is turning ideas into action.",
+          "uk": "Моя сильна сторона — перетворювати ідеї на дії.",
+          "alternatives": []
+        },
+        {
+          "en": "I'm currently improving...",
+          "uk": "Зараз я вдосконалюю...",
+          "alternatives": []
+        },
+        {
+          "en": "I handled the situation by...",
+          "uk": "Я владнав/владнала ситуацію так...",
+          "alternatives": []
+        },
+        {
+          "en": "I work well both independently and in a team.",
+          "uk": "Я добре працюю і самостійно, і в команді.",
+          "alternatives": []
+        },
+        {
+          "en": "I'm interested in this role because...",
+          "uk": "Мене цікавить ця роль, тому що...",
+          "alternatives": []
+        },
+        {
+          "en": "Could you clarify the question?",
+          "uk": "Можете уточнити запитання?",
+          "alternatives": []
+        },
+        {
+          "en": "What would success look like in this role?",
+          "uk": "Як виглядає успіх у цій ролі?",
+          "alternatives": []
+        },
+        {
+          "en": "What are the next steps?",
+          "uk": "Які наступні кроки?",
+          "alternatives": [
+            "What happens next?",
+            "Could you tell me about the next stage?"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "06",
+      "title": "Робота й зустрічі",
+      "goal": "висловити думку, уточнити, не погодитися та зафіксувати рішення",
+      "dialogue": [
+        {
+          "speaker": "Lead",
+          "text": "Could you give us an update?",
+          "is_learner": false
+        },
+        {
+          "speaker": "You",
+          "text": "The draft is ready, but we're waiting for legal review.",
+          "is_learner": true
+        },
+        {
+          "speaker": "Lead",
+          "text": "What's the impact on the timeline?",
+          "is_learner": false
+        },
+        {
+          "speaker": "You",
+          "text": "My concern is that we may miss Friday's deadline.",
+          "is_learner": true
+        },
+        {
+          "speaker": "Lead",
+          "text": "Could we release the first part now?",
+          "is_learner": false
+        },
+        {
+          "speaker": "You",
+          "text": "Yes. I can prepare it by Thursday.",
+          "is_learner": true
+        },
+        {
+          "speaker": "Lead",
+          "text": "Great. Who will notify the client?",
+          "is_learner": false
+        },
+        {
+          "speaker": "You",
+          "text": "I'll do it and send a summary today.",
+          "is_learner": true
+        }
+      ],
+      "phrases": [
+        {
+          "en": "Shall we get started?",
+          "uk": "Почнемо?",
+          "alternatives": []
+        },
+        {
+          "en": "The goal of today's meeting is...",
+          "uk": "Мета сьогоднішньої зустрічі...",
+          "alternatives": []
+        },
+        {
+          "en": "Could you walk us through it?",
+          "uk": "Можете провести нас через це?",
+          "alternatives": []
+        },
+        {
+          "en": "If I understand correctly...",
+          "uk": "Якщо я правильно розумію...",
+          "alternatives": [
+            "If I've understood correctly...",
+            "So, if I'm following you correctly..."
+          ]
+        },
+        {
+          "en": "I agree with the main point.",
+          "uk": "Я погоджуюся з головною думкою.",
+          "alternatives": []
+        },
+        {
+          "en": "I see it differently.",
+          "uk": "Я бачу це інакше.",
+          "alternatives": [
+            "I have a different view.",
+            "I look at it a little differently."
+          ]
+        },
+        {
+          "en": "My concern is the timeline.",
+          "uk": "Мене непокоїть термін.",
+          "alternatives": []
+        },
+        {
+          "en": "Could we explore another option?",
+          "uk": "Можемо розглянути інший варіант?",
+          "alternatives": []
+        },
+        {
+          "en": "Can we make a decision today?",
+          "uk": "Можемо ухвалити рішення сьогодні?",
+          "alternatives": []
+        },
+        {
+          "en": "Who will take ownership of this?",
+          "uk": "Хто відповідатиме за це?",
+          "alternatives": []
+        },
+        {
+          "en": "I'll send a summary after the meeting.",
+          "uk": "Я надішлю підсумок після зустрічі.",
+          "alternatives": []
+        },
+        {
+          "en": "Let's revisit this next week.",
+          "uk": "Повернімося до цього наступного тижня.",
+          "alternatives": [
+            "Let's come back to this next week.",
+            "We can discuss this again next week."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "07",
+      "title": "Телефон і відеодзвінки",
+      "goal": "почати дзвінок, упоратися зі зв'язком і домовитися про дію",
+      "dialogue": [
+        {
+          "speaker": "You",
+          "text": "Hi, this is Olena from SpeakChain. Is now still a good time?",
+          "is_learner": true
+        },
+        {
+          "speaker": "Client",
+          "text": "Yes, but I only have ten minutes.",
+          "is_learner": false
+        },
+        {
+          "speaker": "You",
+          "text": "No problem. I'm calling about Friday's workshop.",
+          "is_learner": true
+        },
+        {
+          "speaker": "Client",
+          "text": "Sorry, your sound is breaking up.",
+          "is_learner": false
+        },
+        {
+          "speaker": "You",
+          "text": "Thanks for telling me. Is this better?",
+          "is_learner": true
+        },
+        {
+          "speaker": "Client",
+          "text": "Yes, much better.",
+          "is_learner": false
+        },
+        {
+          "speaker": "You",
+          "text": "Great. Let me confirm the start time: 3 p.m.",
+          "is_learner": true
+        },
+        {
+          "speaker": "Client",
+          "text": "Correct. Please follow up by email.",
+          "is_learner": false
+        }
+      ],
+      "phrases": [
+        {
+          "en": "Hi, this is Olena from SpeakChain.",
+          "uk": "Привіт, це Олена зі SpeakChain.",
+          "alternatives": []
+        },
+        {
+          "en": "Is now still a good time?",
+          "uk": "Зараз усе ще зручно?",
+          "alternatives": [
+            "Is this still a good time to talk?",
+            "Do you have a moment to talk?"
+          ]
+        },
+        {
+          "en": "I'm calling about...",
+          "uk": "Я телефоную щодо...",
+          "alternatives": []
+        },
+        {
+          "en": "Could I speak to Daniel?",
+          "uk": "Можна поговорити з Деніелом?",
+          "alternatives": []
+        },
+        {
+          "en": "Can you hear me clearly?",
+          "uk": "Мене добре чути?",
+          "alternatives": []
+        },
+        {
+          "en": "Your sound is breaking up.",
+          "uk": "Ваш звук переривається.",
+          "alternatives": [
+            "The audio keeps cutting out.",
+            "I can't hear you clearly."
+          ]
+        },
+        {
+          "en": "You're on mute.",
+          "uk": "У вас вимкнений мікрофон.",
+          "alternatives": []
+        },
+        {
+          "en": "Could you share your screen?",
+          "uk": "Можете показати екран?",
+          "alternatives": []
+        },
+        {
+          "en": "Could you say that again?",
+          "uk": "Можете повторити?",
+          "alternatives": []
+        },
+        {
+          "en": "Let me confirm the details.",
+          "uk": "Дозвольте уточнити деталі.",
+          "alternatives": []
+        },
+        {
+          "en": "I'll follow up by email.",
+          "uk": "Я продублюю електронною поштою.",
+          "alternatives": [
+            "I'll send you an email afterwards.",
+            "I'll confirm everything by email."
+          ]
+        },
+        {
+          "en": "Thanks for your time.",
+          "uk": "Дякую за ваш час.",
+          "alternatives": []
+        }
+      ]
+    },
+    {
+      "id": "08",
+      "title": "Лікар і аптека",
+      "goal": "описати симптоми, зрозуміти рекомендації й безпечно уточнити ліки",
+      "dialogue": [
+        {
+          "speaker": "Doctor",
+          "text": "What seems to be the problem?",
+          "is_learner": false
+        },
+        {
+          "speaker": "You",
+          "text": "I've had a fever and a sore throat for two days.",
+          "is_learner": true
+        },
+        {
+          "speaker": "Doctor",
+          "text": "Any difficulty breathing?",
+          "is_learner": false
+        },
+        {
+          "speaker": "You",
+          "text": "No, but it hurts when I swallow.",
+          "is_learner": true
+        },
+        {
+          "speaker": "Doctor",
+          "text": "Are you allergic to any medication?",
+          "is_learner": false
+        },
+        {
+          "speaker": "You",
+          "text": "Yes, I'm allergic to penicillin.",
+          "is_learner": true
+        },
+        {
+          "speaker": "Doctor",
+          "text": "I'll prescribe something else.",
+          "is_learner": false
+        },
+        {
+          "speaker": "You",
+          "text": "How often should I take it?",
+          "is_learner": true
+        }
+      ],
+      "phrases": [
+        {
+          "en": "I'd like to make an appointment.",
+          "uk": "Я хочу записатися на прийом.",
+          "alternatives": []
+        },
+        {
+          "en": "I've had a fever for two days.",
+          "uk": "У мене температура два дні.",
+          "alternatives": [
+            "I've had a temperature for two days.",
+            "My fever started two days ago."
+          ]
+        },
+        {
+          "en": "I have a sharp pain here.",
+          "uk": "У мене гострий біль тут.",
+          "alternatives": []
+        },
+        {
+          "en": "It hurts when I breathe.",
+          "uk": "Болить, коли я дихаю.",
+          "alternatives": []
+        },
+        {
+          "en": "The pain is getting worse.",
+          "uk": "Біль посилюється.",
+          "alternatives": [
+            "The pain is becoming more severe.",
+            "It hurts more than before."
+          ]
+        },
+        {
+          "en": "I'm allergic to penicillin.",
+          "uk": "У мене алергія на пеніцилін.",
+          "alternatives": []
+        },
+        {
+          "en": "I take this medication daily.",
+          "uk": "Я приймаю ці ліки щодня.",
+          "alternatives": []
+        },
+        {
+          "en": "Is it serious?",
+          "uk": "Це серйозно?",
+          "alternatives": []
+        },
+        {
+          "en": "Do I need any tests?",
+          "uk": "Мені потрібні аналізи?",
+          "alternatives": []
+        },
+        {
+          "en": "How often should I take it?",
+          "uk": "Як часто це приймати?",
+          "alternatives": [
+            "How many times a day should I take it?",
+            "When should I take this medicine?"
+          ]
+        },
+        {
+          "en": "Are there any side effects?",
+          "uk": "Є побічні ефекти?",
+          "alternatives": []
+        },
+        {
+          "en": "Do I need a prescription?",
+          "uk": "Потрібен рецепт?",
+          "alternatives": []
+        }
+      ]
+    },
+    {
+      "id": "09",
+      "title": "Покупки, оплата й повернення",
+      "goal": "знайти товар, приміряти, оплатити або повернути без конфлікту",
+      "dialogue": [
+        {
+          "speaker": "Assistant",
+          "text": "Can I help you find anything?",
+          "is_learner": false
+        },
+        {
+          "speaker": "You",
+          "text": "Do you have this jacket in a medium?",
+          "is_learner": true
+        },
+        {
+          "speaker": "Assistant",
+          "text": "Let me check. Yes, here you are.",
+          "is_learner": false
+        },
+        {
+          "speaker": "You",
+          "text": "Thanks. Can I try it on?",
+          "is_learner": true
+        },
+        {
+          "speaker": "Assistant",
+          "text": "Of course. The fitting rooms are over there.",
+          "is_learner": false
+        },
+        {
+          "speaker": "You",
+          "text": "It fits. Is there a discount on this?",
+          "is_learner": true
+        },
+        {
+          "speaker": "Assistant",
+          "text": "Yes, it's 20% off today.",
+          "is_learner": false
+        },
+        {
+          "speaker": "You",
+          "text": "Great. I'll take it.",
+          "is_learner": true
+        }
+      ],
+      "phrases": [
+        {
+          "en": "I'm just looking, thanks.",
+          "uk": "Я лише дивлюся, дякую.",
+          "alternatives": [
+            "I'm only browsing, thank you.",
+            "I'm just having a look."
+          ]
+        },
+        {
+          "en": "Do you have this in a smaller size?",
+          "uk": "Є це в меншому розмірі?",
+          "alternatives": []
+        },
+        {
+          "en": "Can I try this on?",
+          "uk": "Можна приміряти?",
+          "alternatives": []
+        },
+        {
+          "en": "Where are the fitting rooms?",
+          "uk": "Де примірочні?",
+          "alternatives": []
+        },
+        {
+          "en": "How much is this?",
+          "uk": "Скільки це коштує?",
+          "alternatives": []
+        },
+        {
+          "en": "Is there a discount on this?",
+          "uk": "На це є знижка?",
+          "alternatives": []
+        },
+        {
+          "en": "Can I pay by card?",
+          "uk": "Можна оплатити карткою?",
+          "alternatives": []
+        },
+        {
+          "en": "Could I have a receipt?",
+          "uk": "Можна чек?",
+          "alternatives": []
+        },
+        {
+          "en": "I'd like to return this.",
+          "uk": "Я хочу це повернути.",
+          "alternatives": []
+        },
+        {
+          "en": "It doesn't fit.",
+          "uk": "Це не підходить за розміром.",
+          "alternatives": [
+            "It's the wrong size.",
+            "The fit isn't right."
+          ]
+        },
+        {
+          "en": "It's faulty.",
+          "uk": "Товар несправний/із браком.",
+          "alternatives": []
+        },
+        {
+          "en": "Could I get a refund?",
+          "uk": "Можна повернення коштів?",
+          "alternatives": [
+            "Can I have my money back?",
+            "Could you refund this, please?"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "10",
+      "title": "Транспорт, таксі й дорога",
+      "goal": "знайти маршрут, купити квиток і пояснити водієві, куди їхати",
+      "dialogue": [
+        {
+          "speaker": "You",
+          "text": "Excuse me, which bus goes to the station?",
+          "is_learner": true
+        },
+        {
+          "speaker": "Local",
+          "text": "Take the 24 from the stop across the road.",
+          "is_learner": false
+        },
+        {
+          "speaker": "You",
+          "text": "Do I need to change?",
+          "is_learner": true
+        },
+        {
+          "speaker": "Local",
+          "text": "No, it's direct. Get off after the museum.",
+          "is_learner": false
+        },
+        {
+          "speaker": "You",
+          "text": "How long will it take?",
+          "is_learner": true
+        },
+        {
+          "speaker": "Local",
+          "text": "About twenty minutes.",
+          "is_learner": false
+        },
+        {
+          "speaker": "You",
+          "text": "Thank you. Where can I buy a ticket?",
+          "is_learner": true
+        },
+        {
+          "speaker": "Local",
+          "text": "You can tap your card on the bus.",
+          "is_learner": false
+        }
+      ],
+      "phrases": [
+        {
+          "en": "How do I get to the city centre?",
+          "uk": "Як дістатися центру?",
+          "alternatives": [
+            "What's the best way to get to the city centre?",
+            "Could you tell me how to reach the city centre?"
+          ]
+        },
+        {
+          "en": "Is it within walking distance?",
+          "uk": "Туди можна дійти пішки?",
+          "alternatives": []
+        },
+        {
+          "en": "Which bus goes to the station?",
+          "uk": "Який автобус їде до вокзалу?",
+          "alternatives": []
+        },
+        {
+          "en": "Where can I buy a ticket?",
+          "uk": "Де купити квиток?",
+          "alternatives": []
+        },
+        {
+          "en": "Is this seat taken?",
+          "uk": "Це місце зайняте?",
+          "alternatives": []
+        },
+        {
+          "en": "Does this train stop at Oxford?",
+          "uk": "Цей потяг зупиняється в Оксфорді?",
+          "alternatives": []
+        },
+        {
+          "en": "Where do I need to change?",
+          "uk": "Де треба зробити пересадку?",
+          "alternatives": [
+            "Where should I transfer?",
+            "Which station do I change at?"
+          ]
+        },
+        {
+          "en": "I'd like to go to this address.",
+          "uk": "Я хочу доїхати за цією адресою.",
+          "alternatives": []
+        },
+        {
+          "en": "Could you drop me off here?",
+          "uk": "Можете висадити мене тут?",
+          "alternatives": [
+            "Could you let me out here?",
+            "This is fine, thank you."
+          ]
+        },
+        {
+          "en": "How long will it take?",
+          "uk": "Скільки це займе часу?",
+          "alternatives": []
+        },
+        {
+          "en": "Could you use the meter, please?",
+          "uk": "Увімкніть лічильник, будь ласка.",
+          "alternatives": []
+        },
+        {
+          "en": "I think we've gone the wrong way.",
+          "uk": "Здається, ми їдемо не туди.",
+          "alternatives": []
+        }
+      ]
+    },
+    {
+      "id": "11",
+      "title": "Оренда житла й побутові проблеми",
+      "goal": "поставити правильні питання до оренди та домогтися ремонту",
+      "dialogue": [
+        {
+          "speaker": "Agent",
+          "text": "What would you like to know?",
+          "is_learner": false
+        },
+        {
+          "speaker": "You",
+          "text": "Are bills included in the rent?",
+          "is_learner": true
+        },
+        {
+          "speaker": "Agent",
+          "text": "Water is included, but electricity and heating are separate.",
+          "is_learner": false
+        },
+        {
+          "speaker": "You",
+          "text": "How much is the deposit?",
+          "is_learner": true
+        },
+        {
+          "speaker": "Agent",
+          "text": "One month's rent.",
+          "is_learner": false
+        },
+        {
+          "speaker": "You",
+          "text": "Could I see the contract before I decide?",
+          "is_learner": true
+        },
+        {
+          "speaker": "Agent",
+          "text": "Of course. I'll email it today.",
+          "is_learner": false
+        },
+        {
+          "speaker": "You",
+          "text": "Thank you. When is the earliest move-in date?",
+          "is_learner": true
+        }
+      ],
+      "phrases": [
+        {
+          "en": "Is the apartment still available?",
+          "uk": "Квартира ще доступна?",
+          "alternatives": []
+        },
+        {
+          "en": "How much is the rent?",
+          "uk": "Яка орендна плата?",
+          "alternatives": []
+        },
+        {
+          "en": "Are bills included?",
+          "uk": "Комунальні послуги включено?",
+          "alternatives": [
+            "Does the rent include utilities?",
+            "Are utilities included in the rent?"
+          ]
+        },
+        {
+          "en": "How much is the deposit?",
+          "uk": "Який депозит?",
+          "alternatives": []
+        },
+        {
+          "en": "What's the minimum rental period?",
+          "uk": "Який мінімальний строк оренди?",
+          "alternatives": []
+        },
+        {
+          "en": "Is the apartment furnished?",
+          "uk": "Квартира мебльована?",
+          "alternatives": []
+        },
+        {
+          "en": "When can I move in?",
+          "uk": "Коли можна заселитися?",
+          "alternatives": []
+        },
+        {
+          "en": "Could I see the contract first?",
+          "uk": "Можна спершу переглянути договір?",
+          "alternatives": []
+        },
+        {
+          "en": "The heating isn't working.",
+          "uk": "Опалення не працює.",
+          "alternatives": [
+            "The heating doesn't work.",
+            "There's a problem with the heating."
+          ]
+        },
+        {
+          "en": "There's a leak under the sink.",
+          "uk": "Під раковиною протікає.",
+          "alternatives": []
+        },
+        {
+          "en": "When can someone repair it?",
+          "uk": "Коли хтось може це полагодити?",
+          "alternatives": [
+            "When can somebody come and fix it?",
+            "How soon can this be repaired?"
+          ]
+        },
+        {
+          "en": "Could you confirm this in writing?",
+          "uk": "Підтвердьте це письмово, будь ласка.",
+          "alternatives": []
+        }
+      ]
+    },
+    {
+      "id": "12",
+      "title": "Екстрені ситуації, поліція й загублені речі",
+      "goal": "швидко повідомити хто ви, де ви, що сталося і яка допомога потрібна",
+      "dialogue": [
+        {
+          "speaker": "Operator",
+          "text": "Emergency. Which service do you need?",
+          "is_learner": false
+        },
+        {
+          "speaker": "You",
+          "text": "An ambulance, please. There's been an accident.",
+          "is_learner": true
+        },
+        {
+          "speaker": "Operator",
+          "text": "What's your exact location?",
+          "is_learner": false
+        },
+        {
+          "speaker": "You",
+          "text": "We're outside 24 King Street, near the pharmacy.",
+          "is_learner": true
+        },
+        {
+          "speaker": "Operator",
+          "text": "Is anyone injured?",
+          "is_learner": false
+        },
+        {
+          "speaker": "You",
+          "text": "Yes, one person is bleeding but conscious.",
+          "is_learner": true
+        },
+        {
+          "speaker": "Operator",
+          "text": "Help is on the way. Stay on the line.",
+          "is_learner": false
+        },
+        {
+          "speaker": "You",
+          "text": "Okay. I'll stay here.",
+          "is_learner": true
+        }
+      ],
+      "phrases": [
+        {
+          "en": "I need help.",
+          "uk": "Мені потрібна допомога.",
+          "alternatives": [
+            "I need assistance.",
+            "Can someone help me, please?"
+          ]
+        },
+        {
+          "en": "Please call the police.",
+          "uk": "Викличте поліцію, будь ласка.",
+          "alternatives": []
+        },
+        {
+          "en": "Please call an ambulance.",
+          "uk": "Викличте швидку, будь ласка.",
+          "alternatives": []
+        },
+        {
+          "en": "There's been an accident.",
+          "uk": "Сталася аварія.",
+          "alternatives": []
+        },
+        {
+          "en": "Someone is injured.",
+          "uk": "Хтось травмований.",
+          "alternatives": []
+        },
+        {
+          "en": "We're at 24 King Street.",
+          "uk": "Ми на Кінг-стріт, 24.",
+          "alternatives": []
+        },
+        {
+          "en": "I'm not in immediate danger.",
+          "uk": "Я не в безпосередній небезпеці.",
+          "alternatives": []
+        },
+        {
+          "en": "My phone was stolen.",
+          "uk": "Мій телефон украли.",
+          "alternatives": [
+            "Someone stole my phone.",
+            "I've had my phone stolen."
+          ]
+        },
+        {
+          "en": "I've lost my passport.",
+          "uk": "Я загубив/загубила паспорт.",
+          "alternatives": []
+        },
+        {
+          "en": "I'd like to report a theft.",
+          "uk": "Я хочу повідомити про крадіжку.",
+          "alternatives": []
+        },
+        {
+          "en": "Can I have the report number?",
+          "uk": "Можна номер заяви?",
+          "alternatives": []
+        },
+        {
+          "en": "I need an interpreter.",
+          "uk": "Мені потрібен перекладач.",
+          "alternatives": [
+            "Could I have an interpreter?",
+            "I need someone who speaks Ukrainian."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "13",
+      "title": "Банк і фінанси",
+      "goal": "відкрити рахунок, уточнити комісії та швидко відреагувати на підозрілу операцію",
+      "dialogue": [
+        {
+          "speaker": "Adviser",
+          "text": "Good morning. How can I help you?",
+          "is_learner": false
+        },
+        {
+          "speaker": "You",
+          "text": "I'd like to open an account.",
+          "is_learner": true
+        },
+        {
+          "speaker": "Adviser",
+          "text": "Of course. May I see your ID and proof of address?",
+          "is_learner": false
+        },
+        {
+          "speaker": "You",
+          "text": "Certainly. Are there any monthly fees?",
+          "is_learner": true
+        },
+        {
+          "speaker": "Adviser",
+          "text": "No, but you need to keep a minimum balance of fifty pounds.",
+          "is_learner": false
+        },
+        {
+          "speaker": "You",
+          "text": "I see. Could I have a debit card as well?",
+          "is_learner": true
+        },
+        {
+          "speaker": "Adviser",
+          "text": "Yes. It will arrive within five working days.",
+          "is_learner": false
+        },
+        {
+          "speaker": "You",
+          "text": "Great. How do I activate online banking?",
+          "is_learner": true
+        }
+      ],
+      "phrases": [
+        {
+          "en": "I'd like to open an account.",
+          "uk": "Я хочу відкрити рахунок.",
+          "alternatives": [
+            "I'd like to set up a bank account.",
+            "I want to open a new account."
+          ]
+        },
+        {
+          "en": "What documents do I need?",
+          "uk": "Які документи потрібні?",
+          "alternatives": []
+        },
+        {
+          "en": "Is there a minimum balance?",
+          "uk": "Чи є мінімальний залишок?",
+          "alternatives": []
+        },
+        {
+          "en": "Are there any monthly fees?",
+          "uk": "Є щомісячна комісія?",
+          "alternatives": []
+        },
+        {
+          "en": "Could I have a debit card?",
+          "uk": "Можна отримати дебетову картку?",
+          "alternatives": []
+        },
+        {
+          "en": "How do I activate online banking?",
+          "uk": "Як активувати онлайн-банкінг?",
+          "alternatives": []
+        },
+        {
+          "en": "My card has been blocked.",
+          "uk": "Мою картку заблоковано.",
+          "alternatives": []
+        },
+        {
+          "en": "I don't recognise this transaction.",
+          "uk": "Я не впізнаю цю операцію.",
+          "alternatives": [
+            "I don't know what this payment is.",
+            "This transaction wasn't made by me."
+          ]
+        },
+        {
+          "en": "Could you freeze the card, please?",
+          "uk": "Можете заблокувати картку, будь ласка?",
+          "alternatives": [
+            "Could you block the card, please?",
+            "Please put an immediate freeze on the card."
+          ]
+        },
+        {
+          "en": "When will the money be refunded?",
+          "uk": "Коли повернуть гроші?",
+          "alternatives": []
+        },
+        {
+          "en": "Could you explain the exchange rate?",
+          "uk": "Можете пояснити курс?",
+          "alternatives": []
+        },
+        {
+          "en": "Could I get this in writing?",
+          "uk": "Можна отримати це письмово?",
+          "alternatives": []
+        }
+      ]
+    },
+    {
+      "id": "14",
+      "title": "Державні установи й документи",
+      "goal": "записатися, подати документи та отримати чітке підтвердження наступного кроку",
+      "dialogue": [
+        {
+          "speaker": "Officer",
+          "text": "Good morning. What can I help you with?",
+          "is_learner": false
+        },
+        {
+          "speaker": "You",
+          "text": "I'd like to apply for a residence document.",
+          "is_learner": true
+        },
+        {
+          "speaker": "Officer",
+          "text": "Have you completed the online form?",
+          "is_learner": false
+        },
+        {
+          "speaker": "You",
+          "text": "Yes. Which documents are required?",
+          "is_learner": true
+        },
+        {
+          "speaker": "Officer",
+          "text": "Your passport, proof of address and one photograph.",
+          "is_learner": false
+        },
+        {
+          "speaker": "You",
+          "text": "Do you need the originals or copies?",
+          "is_learner": true
+        },
+        {
+          "speaker": "Officer",
+          "text": "Please bring the originals. We'll make copies here.",
+          "is_learner": false
+        },
+        {
+          "speaker": "You",
+          "text": "Thank you. How long will the process take?",
+          "is_learner": true
+        }
+      ],
+      "phrases": [
+        {
+          "en": "I'd like to make an appointment.",
+          "uk": "Я хочу записатися.",
+          "alternatives": []
+        },
+        {
+          "en": "Which form do I need?",
+          "uk": "Яка форма мені потрібна?",
+          "alternatives": []
+        },
+        {
+          "en": "Could you help me fill this in?",
+          "uk": "Можете допомогти це заповнити?",
+          "alternatives": []
+        },
+        {
+          "en": "Which documents are required?",
+          "uk": "Які документи потрібні?",
+          "alternatives": [
+            "What documents do I need?",
+            "Which documents should I bring?"
+          ]
+        },
+        {
+          "en": "Do you need the original or a copy?",
+          "uk": "Потрібен оригінал чи копія?",
+          "alternatives": []
+        },
+        {
+          "en": "Does this document need to be translated?",
+          "uk": "Цей документ потрібно перекласти?",
+          "alternatives": []
+        },
+        {
+          "en": "Where should I sign?",
+          "uk": "Де підписати?",
+          "alternatives": []
+        },
+        {
+          "en": "Is there an application fee?",
+          "uk": "Є плата за подання заяви?",
+          "alternatives": []
+        },
+        {
+          "en": "How long will the process take?",
+          "uk": "Скільки триватиме процес?",
+          "alternatives": [
+            "How long does the process usually take?",
+            "When should I expect a decision?"
+          ]
+        },
+        {
+          "en": "Can I track my application online?",
+          "uk": "Можна відстежувати заяву онлайн?",
+          "alternatives": []
+        },
+        {
+          "en": "Could I get written confirmation?",
+          "uk": "Можна письмове підтвердження?",
+          "alternatives": [
+            "Could you confirm that in writing?",
+            "Can you send me a confirmation email?"
+          ]
+        },
+        {
+          "en": "Who should I contact if there is a problem?",
+          "uk": "До кого звернутися, якщо виникне проблема?",
+          "alternatives": []
+        }
+      ]
+    },
+    {
+      "id": "15",
+      "title": "Школа й дитячий садок",
+      "goal": "записати дитину, повідомити важливі потреби та обговорити навчання з учителем",
+      "dialogue": [
+        {
+          "speaker": "Administrator",
+          "text": "Hello. How can I help?",
+          "is_learner": false
+        },
+        {
+          "speaker": "You",
+          "text": "I'd like to enrol my child for next term.",
+          "is_learner": true
+        },
+        {
+          "speaker": "Administrator",
+          "text": "Certainly. How old is your child?",
+          "is_learner": false
+        },
+        {
+          "speaker": "You",
+          "text": "She's seven. Which documents are required?",
+          "is_learner": true
+        },
+        {
+          "speaker": "Administrator",
+          "text": "Her passport, birth certificate and proof of address.",
+          "is_learner": false
+        },
+        {
+          "speaker": "You",
+          "text": "Thank you. She's still learning English. Is language support available?",
+          "is_learner": true
+        },
+        {
+          "speaker": "Administrator",
+          "text": "Yes, she'll have two support sessions each week.",
+          "is_learner": false
+        },
+        {
+          "speaker": "You",
+          "text": "That's helpful. Could you send me the timetable by email?",
+          "is_learner": true
+        }
+      ],
+      "phrases": [
+        {
+          "en": "I'd like to enrol my child.",
+          "uk": "Я хочу записати дитину.",
+          "alternatives": [
+            "I'd like to register my child.",
+            "I want to apply for a school place for my child."
+          ]
+        },
+        {
+          "en": "Which documents are required?",
+          "uk": "Які документи потрібні?",
+          "alternatives": []
+        },
+        {
+          "en": "Is there a place available?",
+          "uk": "Чи є вільне місце?",
+          "alternatives": []
+        },
+        {
+          "en": "When does the school day start?",
+          "uk": "Коли починається навчальний день?",
+          "alternatives": []
+        },
+        {
+          "en": "Who is the class teacher?",
+          "uk": "Хто класний керівник?",
+          "alternatives": []
+        },
+        {
+          "en": "My child has a food allergy.",
+          "uk": "У моєї дитини харчова алергія.",
+          "alternatives": []
+        },
+        {
+          "en": "My child is still learning English.",
+          "uk": "Моя дитина ще вивчає англійську.",
+          "alternatives": [
+            "My child is learning English as an additional language.",
+            "My child's English is still developing."
+          ]
+        },
+        {
+          "en": "Is language support available?",
+          "uk": "Чи є мовна підтримка?",
+          "alternatives": []
+        },
+        {
+          "en": "How can I report an absence?",
+          "uk": "Як повідомити про відсутність?",
+          "alternatives": []
+        },
+        {
+          "en": "Could we discuss their progress?",
+          "uk": "Можемо обговорити успіхи?",
+          "alternatives": [
+            "Could we talk about how they're doing?",
+            "Could we arrange a progress meeting?"
+          ]
+        },
+        {
+          "en": "Is there anything we should practise at home?",
+          "uk": "Що нам варто практикувати вдома?",
+          "alternatives": []
+        },
+        {
+          "en": "Could you send me the information by email?",
+          "uk": "Можете надіслати інформацію електронною поштою?",
+          "alternatives": []
+        }
+      ]
+    },
+    {
+      "id": "16",
+      "title": "Пошта й доставка",
+      "goal": "відправити посилку, обрати доставку та подати зрозумілу претензію",
+      "dialogue": [
+        {
+          "speaker": "Clerk",
+          "text": "Hello. What would you like to send?",
+          "is_learner": false
+        },
+        {
+          "speaker": "You",
+          "text": "I'd like to send this parcel to Germany.",
+          "is_learner": true
+        },
+        {
+          "speaker": "Clerk",
+          "text": "Would you like standard or tracked delivery?",
+          "is_learner": false
+        },
+        {
+          "speaker": "You",
+          "text": "How much is tracked delivery?",
+          "is_learner": true
+        },
+        {
+          "speaker": "Clerk",
+          "text": "It's twelve pounds and should arrive within four working days.",
+          "is_learner": false
+        },
+        {
+          "speaker": "You",
+          "text": "Is insurance included?",
+          "is_learner": true
+        },
+        {
+          "speaker": "Clerk",
+          "text": "Yes, up to fifty pounds.",
+          "is_learner": false
+        },
+        {
+          "speaker": "You",
+          "text": "Great. Could I have the tracking number, please?",
+          "is_learner": true
+        }
+      ],
+      "phrases": [
+        {
+          "en": "I'd like to send this parcel.",
+          "uk": "Я хочу надіслати посилку.",
+          "alternatives": [
+            "I'd like to post this package.",
+            "I need to send this parcel abroad."
+          ]
+        },
+        {
+          "en": "How much does it weigh?",
+          "uk": "Скільки це важить?",
+          "alternatives": []
+        },
+        {
+          "en": "How much is tracked delivery?",
+          "uk": "Скільки коштує доставка з відстеженням?",
+          "alternatives": []
+        },
+        {
+          "en": "When will it arrive?",
+          "uk": "Коли це прибуде?",
+          "alternatives": []
+        },
+        {
+          "en": "Do I need to complete a customs form?",
+          "uk": "Треба заповнити митну декларацію?",
+          "alternatives": []
+        },
+        {
+          "en": "Is insurance included?",
+          "uk": "Страхування включено?",
+          "alternatives": []
+        },
+        {
+          "en": "Could I have the tracking number?",
+          "uk": "Можна номер відстеження?",
+          "alternatives": []
+        },
+        {
+          "en": "My parcel hasn't arrived.",
+          "uk": "Моя посилка не прибула.",
+          "alternatives": [
+            "My package still hasn't been delivered.",
+            "The parcel is overdue."
+          ]
+        },
+        {
+          "en": "The tracking hasn't updated.",
+          "uk": "Відстеження не оновлюється.",
+          "alternatives": []
+        },
+        {
+          "en": "The package was damaged.",
+          "uk": "Посилку пошкоджено.",
+          "alternatives": []
+        },
+        {
+          "en": "Could you check the tracking number?",
+          "uk": "Можете перевірити номер відстеження?",
+          "alternatives": []
+        },
+        {
+          "en": "How do I make a claim?",
+          "uk": "Як подати претензію?",
+          "alternatives": [
+            "How can I submit a claim?",
+            "What do I need to do to claim compensation?"
+          ]
+        }
+      ]
+    }
+  ]
+}

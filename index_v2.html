@@ -1328,6 +1328,7 @@ window.addEventListener('load', function(){
 <div class="habit-chain" id="chain"></div>
 <div class="sec-h"><span class="ti">Інструменти</span><span class="meta" onclick="openOv('ov-features')" style="cursor:pointer;color:var(--purple)">Усі можливості →</span></div>
 <div class="tiles">
+  <div class="tile primary" id="home-phraselab" style="grid-column:1/-1" onclick="openPhraseLab()"><span class="ic">🎙</span><div class="t">PhraseLab · 16 ситуацій</div><div class="s" id="home-phraselab-sub">слухай · повторюй · записуй · порівнюй</div></div>
   <div class="tile" onclick="openOv('ov-vocab')"><span class="ic">📚</span><div class="t">Словник</div><div class="s">твої збережені фрази</div></div>
   <div class="tile" onclick="act('chain_invite_screen')"><span class="ic">🤝</span><div class="t">Запросити</div><div class="s">друг = міцніший ланцюг</div></div>
 </div>
@@ -1503,6 +1504,11 @@ window.addEventListener('load', function(){
 </div>
 </div>
 <div class="screen" id="s-listen">
+<div class="net-item" style="margin:8px 12px 12px;border-color:rgba(124,110,247,.55);background:linear-gradient(135deg,rgba(124,110,247,.15),var(--bg-card))" onclick="openPhraseLab()">
+  <span class="ic">🎙</span>
+  <div class="body"><div class="t">SpeakChain PhraseLab</div>
+  <div class="s" id="practice-phraselab-sub">16 життєвих ситуацій · 192 фрази · твій голос</div></div><span class="ch">›</span>
+</div>
 <div class="sec-h"><span class="ti">Мої конспекти</span><span class="meta" id="chainy-notes-meta">після розмов із Chainy</span></div>
 <div class="chainy-notes" id="chainy-notes-panel"><div class="chainy-note-empty">Заверши розмову з Chainy й натисни «Зберегти конспект». Тут з’являться речення для повторення.</div></div>
 <div class="challenge-card" style="margin-top:8px">
@@ -4050,6 +4056,14 @@ function renderChainyNoteDraft(note){
   if(preview)preview.textContent=CHAINY_NOTE_DRAFT?.summary||'';
   if(phrases)phrases.innerHTML=items.map(p=>'<div class="chainy-note-phrase">“'+esc(p)+'”</div>').join('');
   if(button){button.disabled=false;button.textContent='Зберегти у «Мої конспекти»';}
+}
+function openPhraseLab(topic){
+  const info=(TODAY_HOME||{}).phraselab||{};
+  const id=String(Math.min(16,Math.max(1,Number(topic)||1))).padStart(2,'0');
+  let url=info.url||('phraselab.html?topic='+id);
+  try{const parsed=new URL(url,location.href);parsed.searchParams.set('topic',id);url=parsed.href;}catch(e){}
+  trackUx('phraselab_open',{topic:id,access:Boolean(info.access),reason:info.reason||'unknown'});
+  location.assign(url);
 }
 function renderPractice(){ setMode(LMODE);loadChainyNotes(); }
 function setMode(m){
