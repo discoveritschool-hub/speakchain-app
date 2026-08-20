@@ -9,7 +9,8 @@ class LessonBuilderInterfaceTests(unittest.TestCase):
     def test_builder_exposes_the_review_gated_workflow(self):
         html = (ROOT / "lesson_builder.html").read_text(encoding="utf-8")
         for action in (
-            "admin_lesson_generate", "admin_lesson_load", "admin_lesson_validate",
+            "admin_lesson_generate", "admin_lesson_ai_generate", "admin_lesson_ai_status",
+            "admin_lesson_load", "admin_lesson_validate",
             "admin_lesson_save", "admin_lesson_publish",
         ):
             self.assertIn(action, html)
@@ -17,6 +18,10 @@ class LessonBuilderInterfaceTests(unittest.TestCase):
             self.assertIn(f'data-review="{check}"', html)
         self.assertIn("speakchain.pwa.access.v1", html)
         self.assertIn("Telegram?.WebApp", html)
+        self.assertIn("Створити готовий AI-урок", html)
+        self.assertIn("Брендова якість", html)
+        self.assertIn("speakchain.lesson-generation-job.v1", html)
+        self.assertIn("progressBar", html)
 
     def test_admin_panel_links_to_the_builder(self):
         html = (ROOT / "admin_analytics.html").read_text(encoding="utf-8")
